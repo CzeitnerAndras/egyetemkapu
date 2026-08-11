@@ -26,4 +26,19 @@ public class NoteController {
     public Note createNote(@RequestBody Note note) {
         return noteRepository.save(note);
     }
+
+    @PutMapping("/{id}")
+    public Note updateNote(@PathVariable Long id, @RequestBody Note updatedNote) {
+        return noteRepository.findById(id)
+                .map(note -> {
+                    note.setContent(updatedNote.getContent());
+                    return noteRepository.save(note);
+                })
+                .orElseThrow(() -> new RuntimeException("A jegyzet nem található ezzel az ID-val: " + id));
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteNote(@PathVariable Long id) {
+        noteRepository.deleteById(id);
+    }
 }
