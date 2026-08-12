@@ -19,4 +19,9 @@ public class TaskController {
     public Task createTask(@RequestBody Task task) {
         return taskRepository.save(task);
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteTask(@PathVariable Long id) {
+        taskRepository.deleteById(id);
+    }
 }

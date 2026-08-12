@@ -43,7 +43,7 @@ public class AiService {
 
             //Kérés összeállítása
             Map<String, Object> requestBody = Map.of(
-                    "model", "llama3-8b-8192",
+                    "model", "llama-3.3-70b-versatile",
                     "messages", List.of(
                             Map.of("role", "system", "content", "Te egy segítőkész, barátságos egyetemi asszisztens vagy. Válaszolj röviden és lényegretörően."),
                             Map.of("role", "user", "content", userPrompt)
