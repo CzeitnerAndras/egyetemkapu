@@ -21,12 +21,20 @@ public class TaskNotificationService {
     }
 
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 * * * * *") // test alatt percenként
     public void checkDeadlinesAndPing() {
-        System.out.println("Ellenőrzöm a közeledő határidőket...");
+        System.out.println("Időzítő lefutott: Ellenőrzöm a közeledő határidőket...");
 
-        // Test
-        sendDiscordMessage("Teszt Elek");
+        var activeTasks = taskRepository.findAllByCompletedFalse();
+        var now = java.time.LocalDateTime.now();
+
+        for (var task : activeTasks) {
+            if (task.isPingDayBefore() && task.getDeadline().isAfter(now) && task.getDeadline().isBefore(now.plusHours(24))) {
+                String message = "Cimbora, holnap lejár a(z) **" + task.getTitle() + "** (" + task.getTaskType() + ") határideje! " +
+                        "Ideje volna elkezdeni tanulni.....";
+                sendDiscordMessage(message);
+            }
+        }
     }
 
     private void sendDiscordMessage(String message) {
