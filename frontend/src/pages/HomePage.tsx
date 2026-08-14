@@ -4,7 +4,7 @@ export default function HomePage() {
   return (
     <main className="max-w-7xl mx-auto p-4 mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-      {/* ---Bal oldal: Hírek --- */}
+      {/* --- Bal oldal: Hírek --- */}
       <div className="md:col-span-2 space-y-4">
         <div className="flex border-2 border-[#800000] bg-[#fdfbf7] h-48">
           <div className="w-1/3 border-r-2 border-[#800000] flex items-center justify-center text-[#800000] font-bold">

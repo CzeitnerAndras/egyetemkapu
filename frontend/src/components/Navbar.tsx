@@ -4,22 +4,23 @@ import { Link } from 'react-router-dom';
 export default function Navbar() {
   return (
     <nav className="bg-[#800000] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black">
-      <div className="flex items-center space-x-12">
+      
+      {/* --- Bal oldal: Ikonok és Menüpontok --- */}
+      <div className="flex items-center space-x-10">
         <Link to="/" className="cursor-pointer">
           <span className="text-2xl font-bold border-2 border-white px-2">ƎK</span>
         </Link>
 
-        {/* --- Menüpontok --- */}
         <div className="hidden md:flex space-x-6 text-lg font-medium">
-          <Link to="/kalendar" className="hover:text-gray-300">Kalendar</Link>
-          <Link to="/ai" className="hover:text-gray-300">AI</Link>
-          <Link to="/szamologep" className="hover:text-gray-300">Számológép</Link>
-          <Link to="/review" className="hover:text-gray-300">Review</Link>
-          <Link to="/hivatkozas" className="hover:text-gray-300">Hivatkozás gen</Link>
+          <Link to="/naptar" className="hover:text-gray-300 transition-colors">Naptár</Link>
+          <Link to="/ai" className="hover:text-gray-300 transition-colors">AI Asszisztens</Link>
+          <Link to="/kalkulator" className="hover:text-gray-300 transition-colors">Kalkulátorok</Link>
+          <Link to="/ertekelo" className="hover:text-gray-300 transition-colors">Tárgyértékelés</Link>
+          <Link to="/hivatkozas" className="hover:text-gray-300 transition-colors">Hivatkozás Generátor</Link>
         </div>
       </div>
 
-      {/* --- Jobb oldali ikonok --- */}
+      {/* --- Jobb oldal: Ikonok --- */}
       <div className="flex items-center space-x-4">
         <Mail className="w-6 h-6 cursor-pointer hover:text-gray-300" />
         <User className="w-6 h-6 cursor-pointer hover:text-gray-300" />
