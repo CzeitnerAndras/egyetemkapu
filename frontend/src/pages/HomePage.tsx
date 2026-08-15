@@ -48,11 +48,11 @@ export default function HomePage() {
           events.map((item) => (
             <div key={item.id} className="flex border-2 border-[#800000] bg-[#fdfbf7] h-40 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedNews(item)}>
               
-              <div className="w-1/3 border-r-2 border-[#800000] flex items-center justify-center text-[#800000] font-bold bg-gray-100 overflow-hidden">
+              <div className="w-1/3 border-r-2 border-[#800000] flex items-center justify-center bg-white overflow-hidden">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                 ) : (
-                  <span>KÉP</span>
+                  <span className="text-[#800000] font-bold">KÉP</span>
                 )}
               </div>
               
@@ -109,20 +109,12 @@ export default function HomePage() {
               <X className="w-8 h-8" />
             </button>
 
-            <div className="w-full h-64 bg-gray-200 border-2 border-[#800000] flex items-center justify-center text-gray-500 font-bold text-xl mb-6 mt-10 overflow-hidden">
-              {selectedNews.imageUrl ? (
-                <img src={selectedNews.imageUrl} alt={selectedNews.title} className="w-full h-full object-cover" />
-              ) : (
-                <span>KÉP</span>
-              )}
-            </div>
-
-            <h1 className="text-3xl font-bold text-[#800000] mb-2">{selectedNews.title}</h1>
+            <h1 className="text-3xl font-bold text-[#800000] mb-2 mt-8">{selectedNews.title}</h1>
             <span className="text-sm font-bold text-gray-500 mb-4 block border-b-2 border-gray-300 pb-2">
               Dátum: {selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString('hu-HU') : 'Nincs dátum'}
             </span>
 
-            <p className="text-gray-800 text-lg leading-relaxed text-justify">
+            <p className="text-gray-800 text-lg leading-relaxed text-justify whitespace-pre-wrap">
               {selectedNews.description}
             </p>
             

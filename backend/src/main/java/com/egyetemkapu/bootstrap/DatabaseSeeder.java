@@ -43,13 +43,14 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // --- Hírek generálása ---
+        eventRepository.deleteAll();
         if (eventRepository.count() == 0) {
             Event event = new Event();
             event.setTitle("DEHÖK Gólyatábor 2026");
             event.setDescription("A Debreceni Egyetem Hallgatói Önkormányzata idén is megrendezi a gólyatáborokat! Az ÁJK, ÁOK, ETK, FOK, GYTK, MK, TTK, ZK karok hallgatóinak augusztus 24. és 27. között, míg a BTK, GTK, GYGYK, IK, MÉK karoknak augusztus 31. és szeptember 3. között kerül megrendezésre. A részvételi díj 44.500 Ft. Jelentkezési és postára adási határidő: 2026. augusztus 7. További részletek az online felületen!");
             event.setEventDate(LocalDateTime.of(2026, 8, 24, 8, 0)); 
+            event.setImageUrl("/images/golyatabor.webp");
             eventRepository.save(event);
-
             System.out.println("Feltöltve!");
         }
     }
