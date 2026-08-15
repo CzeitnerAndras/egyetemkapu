@@ -7,6 +7,7 @@ interface EventItem {
   description: string;
   eventDate?: string;
   createdAt?: string;
+  imageUrl?: string; 
 }
 
 export default function HomePage() {
@@ -45,17 +46,18 @@ export default function HomePage() {
           </div>
         ) : (
           events.map((item) => (
-            <div key={item.id} className="flex border-2 border-[#800000] bg-[#fdfbf7] h-40 hover:shadow-lg transition-shadow">
+            <div key={item.id} className="flex border-2 border-[#800000] bg-[#fdfbf7] h-40 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedNews(item)}>
               
-              <div className="w-1/3 border-r-2 border-[#800000] flex items-center justify-center text-[#800000] font-bold bg-gray-100">
-                KÉP
+              <div className="w-1/3 border-r-2 border-[#800000] flex items-center justify-center text-[#800000] font-bold bg-gray-100 overflow-hidden">
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                ) : (
+                  <span>KÉP</span>
+                )}
               </div>
               
               <div className="w-2/3 p-4 flex flex-col">
-                <h2 
-                  onClick={() => setSelectedNews(item)}
-                  className="text-xl font-bold border-b-2 border-[#800000] text-[#800000] pb-1 mb-2 cursor-pointer hover:text-red-600 transition-colors"
-                >
+                <h2 className="text-xl font-bold border-b-2 border-[#800000] text-[#800000] pb-1 mb-2 hover:text-red-600 transition-colors">
                   {item.title}
                 </h2>
                 <p className="text-[#800000] text-sm grow line-clamp-2">
@@ -102,13 +104,17 @@ export default function HomePage() {
             
             <button 
               onClick={() => setSelectedNews(null)}
-              className="absolute top-4 right-4 text-[#800000] hover:text-red-600 transition-colors"
+              className="absolute top-4 right-4 text-[#800000] hover:text-red-600 transition-colors bg-[#fdfbf7] rounded-full z-10"
             >
               <X className="w-8 h-8" />
             </button>
 
-            <div className="w-full h-64 bg-gray-200 border-2 border-[#800000] flex items-center justify-center text-gray-500 font-bold text-xl mb-6 mt-4">
-              KÉP (Nagy felbontás)
+            <div className="w-full h-64 bg-gray-200 border-2 border-[#800000] flex items-center justify-center text-gray-500 font-bold text-xl mb-6 mt-10 overflow-hidden">
+              {selectedNews.imageUrl ? (
+                <img src={selectedNews.imageUrl} alt={selectedNews.title} className="w-full h-full object-cover" />
+              ) : (
+                <span>KÉP</span>
+              )}
             </div>
 
             <h1 className="text-3xl font-bold text-[#800000] mb-2">{selectedNews.title}</h1>
