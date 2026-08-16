@@ -7,9 +7,9 @@ import RegistrationPage from './pages/RegistrationPage';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#fdfbf7]">
+      <div className="min-h-screen bg-[#fdfbf7] dark:bg-[#121212] transition-colors duration-300">
         <Navbar />
-        
+
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />

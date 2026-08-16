@@ -56,22 +56,22 @@ export default function RegistrationPage() {
     };
 
     return (
-        <main className="max-w-md mx-auto mt-6 p-6 border-4 border-[#800000] bg-[#fdfbf7] shadow-xl relative">
+        <main className="max-w-md mx-auto mt-6 p-6 border-4 border-[#800000] dark:border-[#a855f7] bg-[#fdfbf7] dark:bg-[#1e1e1e] shadow-xl relative transition-colors duration-300">
 
-            <h1 className="text-3xl font-bold text-[#800000] text-center mb-6 border-b-2 border-[#800000] pb-4">
+            <h1 className="text-3xl font-bold text-[#800000] dark:text-[#c084fc] text-center mb-6 border-b-2 border-[#800000] dark:border-[#a855f7] pb-4 transition-colors">
                 Regisztráció
             </h1>
 
             {/* --- Hibaüzenet megjelenítése --- */}
             {error && (
-                <div className="bg-red-100 border-l-4 border-red-600 text-red-700 p-3 mb-6 font-medium text-sm">
+                <div className="bg-red-100 dark:bg-red-900/40 border-l-4 border-red-600 dark:border-red-500 text-red-700 dark:text-red-300 p-3 mb-6 font-medium text-sm transition-colors">
                     {error}
                 </div>
             )}
 
             {/* --- Sikeres regisztráció üzenet --- */}
             {success && (
-                <div className="bg-green-100 border-l-4 border-green-600 text-green-700 p-3 mb-6 font-medium text-sm">
+                <div className="bg-green-100 dark:bg-green-900/40 border-l-4 border-green-600 dark:border-green-500 text-green-700 dark:text-green-300 p-3 mb-6 font-medium text-sm transition-colors">
                     {success}
                 </div>
             )}
@@ -79,41 +79,41 @@ export default function RegistrationPage() {
             <form onSubmit={handleRegister} className="space-y-4">
                 {/* --- Felhasználónév --- */}
                 <div className="flex flex-col">
-                    <label className="text-[#800000] font-bold mb-1">Felhasználónév</label>
+                    <label className="text-[#800000] dark:text-[#c084fc] font-bold mb-1 transition-colors">Felhasználónév</label>
                     <input
                         type="text" required value={username} onChange={(e) => setUsername(e.target.value)}
-                        className="border-2 border-black p-2 outline-none focus:border-[#800000] bg-white"
+                        className="border-2 border-black dark:border-[#a855f7] p-2 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] transition-colors bg-white dark:bg-[#121212] dark:text-white"
                     />
                 </div>
 
                 {/* --- E-mail cím --- */}
                 <div className="flex flex-col">
-                    <label className="text-[#800000] font-bold mb-1">E-mail cím</label>
+                    <label className="text-[#800000] dark:text-[#c084fc] font-bold mb-1 transition-colors">E-mail cím</label>
                     <input
                         type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                        className="border-2 border-black p-2 outline-none focus:border-[#800000] bg-white"
+                        className="border-2 border-black dark:border-[#a855f7] p-2 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] transition-colors bg-white dark:bg-[#121212] dark:text-white"
                     />
                 </div>
 
                 {/* --- Jelszó --- */}
                 <div className="flex flex-col">
-                    <label className="text-[#800000] font-bold mb-1">Jelszó</label>
+                    <label className="text-[#800000] dark:text-[#c084fc] font-bold mb-1 transition-colors">Jelszó</label>
                     <input
                         type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="border-2 border-black p-2 outline-none focus:border-[#800000] bg-white"
+                        className="border-2 border-black dark:border-[#a855f7] p-2 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] transition-colors bg-white dark:bg-[#121212] dark:text-white"
                     />
                 </div>
 
                 {/* --- Jelszó újra --- */}
                 <div className="flex flex-col">
-                    <label className="text-[#800000] font-bold mb-1">Jelszó megint</label>
+                    <label className="text-[#800000] dark:text-[#c084fc] font-bold mb-1 transition-colors">Jelszó megint</label>
                     <input
                         type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="border-2 border-black p-2 outline-none focus:border-[#800000] bg-white"
+                        className="border-2 border-black dark:border-[#a855f7] p-2 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] transition-colors bg-white dark:bg-[#121212] dark:text-white"
                     />
                 </div>
 
-                <button type="submit" className="w-full bg-[#800000] text-white font-bold py-3 mt-2 hover:bg-red-800 transition-colors border-2 border-black shadow-sm">
+                <button type="submit" className="w-full bg-[#800000] dark:bg-[#a855f7] text-white font-bold py-3 mt-2 hover:bg-red-800 dark:hover:bg-[#9333ea] transition-colors border-2 border-black dark:border-transparent shadow-sm">
                     Regisztráció
                 </button>
             </form>

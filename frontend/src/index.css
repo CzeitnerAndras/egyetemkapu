@@ -1,1 +1,26 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body {
+    min-height: 100vh;
+    background-color: #ffffff;
+    transition: background-color 0.3s ease;
+}
+
+html.dark,
+html.dark body {
+    background-color: #121212 !important;
+}
+
+.notepad-lines {
+    line-height: 32px;
+    font-size: 16px;
+    background-image: linear-gradient(transparent, transparent 31px, #ccc 31px, #ccc 32px);
+    background-size: 100% 32px;
+    background-attachment: local;
+}
+
+html.dark .notepad-lines {
+    background-image: linear-gradient(transparent, transparent 31px, #4b5563 31px, #4b5563 32px);
+}

@@ -124,16 +124,16 @@ export default function HomePage() {
       {/* --- Bal oldal: Hírek --- */}
       <div className="lg:col-span-2 space-y-6 h-[550px] overflow-y-auto pr-2">
         {loading ? (
-          <div className="text-[#800000] font-bold p-4">Hírek betöltése a szerverről...</div>
+          <div className="text-[#800000] dark:text-[#c084fc] font-bold p-4">Hírek betöltése a szerverről...</div>
         ) : events.length === 0 ? (
-          <div className="text-gray-600 p-4 border-2 border-dashed border-[#800000]">
+          <div className="text-gray-600 dark:text-gray-400 p-4 border-2 border-dashed border-[#800000] dark:border-[#a855f7]">
             Jelenleg nincs feltöltött hír az adatbázisban.
           </div>
         ) : (
           events.map((item) => (
-            <div key={item.id} className="flex border-2 border-[#800000] bg-[#fdfbf7] h-52 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedNews(item)}>
+            <div key={item.id} className="flex border-2 border-[#800000] dark:border-[#a855f7] bg-[#fdfbf7] dark:bg-[#1e1e1e] h-52 hover:shadow-lg transition-all cursor-pointer" onClick={() => setSelectedNews(item)}>
 
-              <div className="w-[40%] border-r-2 border-[#800000] flex items-center justify-center bg-[#06261b] overflow-hidden">
+              <div className="w-[40%] border-r-2 border-[#800000] dark:border-[#a855f7] flex items-center justify-center bg-[#06261b] dark:bg-black overflow-hidden transition-colors">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
                 ) : (
@@ -142,13 +142,13 @@ export default function HomePage() {
               </div>
 
               <div className="w-[60%] p-6 flex flex-col">
-                <h2 className="text-2xl font-bold border-b-2 border-[#800000] text-[#800000] pb-2 mb-3 hover:text-red-600 transition-colors">
+                <h2 className="text-2xl font-bold border-b-2 border-[#800000] dark:border-[#a855f7] text-[#800000] dark:text-[#c084fc] pb-2 mb-3 hover:text-red-600 dark:hover:text-[#e879f9] transition-colors">
                   {item.title}
                 </h2>
-                <p className="text-[#800000] text-md flex-grow line-clamp-3">
+                <p className="text-[#800000] dark:text-gray-300 text-md flex-grow line-clamp-3">
                   {item.description}
                 </p>
-                <span className="text-sm text-gray-500 mt-2 font-medium">
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
                   {item.eventDate ? new Date(item.eventDate).toLocaleDateString('hu-HU') : 'Nincs megadva dátum'}
                 </span>
               </div>
@@ -159,15 +159,9 @@ export default function HomePage() {
       </div>
 
       {/* --- Jobb oldal: Jegyzetfüzet --- */}
-      <div className="lg:col-span-1 border-2 border-black bg-[#fefce8] relative flex flex-col h-[550px] shadow-md">
+      <div className="lg:col-span-1 border-2 border-black dark:border-[#a855f7] bg-[#fefce8] dark:bg-[#1e1e1e] relative flex flex-col h-[550px] shadow-md transition-colors duration-300">
         <textarea
-          className="w-full h-full bg-transparent resize-none outline-none px-4 py-2"
-          style={{
-            lineHeight: '32px',
-            backgroundImage: 'linear-gradient(transparent, transparent 31px, #ccc 31px, #ccc 32px)',
-            backgroundSize: '100% 32px',
-            backgroundAttachment: 'local'
-          }}
+          className="w-full h-full bg-transparent resize-none outline-none px-4 py-2 notepad-lines text-black dark:text-gray-100"
           placeholder="Ide írhatod a jegyzeteket..."
           value={noteContent}
           onChange={(e) => setNoteContent(e.target.value)}
@@ -183,7 +177,7 @@ export default function HomePage() {
           </button>
           <button
             onClick={handleSaveNote}
-            className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
+            className="p-2 bg-blue-600 dark:bg-[#a855f7] text-white rounded hover:bg-blue-700 dark:hover:bg-[#9333ea] transition-colors shadow-sm cursor-pointer"
             title="Mentés"
           >
             <Save className="w-5 h-5" />
@@ -193,22 +187,22 @@ export default function HomePage() {
 
       {/* --- Felugró ablak (Modal) --- */}
       {selectedNews && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#fdfbf7] border-4 border-[#800000] w-full max-w-4xl rounded-sm p-8 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#fdfbf7] dark:bg-[#1e1e1e] border-4 border-[#800000] dark:border-[#a855f7] w-full max-w-4xl rounded-sm p-8 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto transition-colors">
 
             <button
               onClick={() => setSelectedNews(null)}
-              className="absolute top-4 right-4 text-[#800000] hover:text-red-600 transition-colors bg-[#fdfbf7] rounded-full z-10 cursor-pointer"
+              className="absolute top-4 right-4 text-[#800000] dark:text-gray-400 hover:text-red-600 dark:hover:text-white transition-colors bg-transparent rounded-full z-10 cursor-pointer"
             >
               <X className="w-8 h-8" />
             </button>
 
-            <h1 className="text-4xl font-bold text-[#800000] mb-4 mt-2">{selectedNews.title}</h1>
-            <span className="text-md font-bold text-gray-500 mb-6 block border-b-2 border-gray-300 pb-2">
+            <h1 className="text-4xl font-bold text-[#800000] dark:text-[#c084fc] mb-4 mt-2">{selectedNews.title}</h1>
+            <span className="text-md font-bold text-gray-500 dark:text-gray-400 mb-6 block border-b-2 border-gray-300 dark:border-gray-600 pb-2">
               Dátum: {selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString('hu-HU') : 'Nincs dátum'}
             </span>
 
-            <p className="text-gray-800 text-xl leading-relaxed text-justify whitespace-pre-wrap">
+            <p className="text-gray-800 dark:text-gray-200 text-xl leading-relaxed text-justify whitespace-pre-wrap">
               {selectedNews.description}
             </p>
 

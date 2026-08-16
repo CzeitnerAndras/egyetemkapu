@@ -42,7 +42,7 @@ export default function Navbar() {
     setIsMenuOpen(false);
     setIsAnimating(true);
     setToggleCount(0);
-    
+
     setCrtClass('crt-off');
 
     setTimeout(() => {
@@ -58,7 +58,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-[#800000] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black relative z-40">
+      <nav className="bg-[#800000] dark:bg-[#2e1065] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] relative z-40 transition-colors duration-300">
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
           <Link to="/" className="cursor-pointer">
@@ -82,18 +82,18 @@ export default function Navbar() {
           <Link to="/login">
             <User className="w-6 h-6 cursor-pointer hover:text-gray-300 transition-colors" />
           </Link>
-          <Menu 
-            onClick={() => setIsMenuOpen(!isMenuOpen)} 
-            className="w-7 h-7 cursor-pointer hover:text-gray-300" 
+          <Menu
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-7 h-7 cursor-pointer hover:text-gray-300"
           />
         </div>
 
         {/* --- Dropdown Menü --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-[#800000] w-56 shadow-2xl flex flex-col z-50 border-l-4 border-b-4 border-black">
-            
+          <div className="absolute top-full right-0 mt-[4px] bg-[#800000] dark:bg-[#2e1065] w-56 shadow-2xl flex flex-col z-50 border-l-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
+
             {/* --- Sötét / Világos mód kapcsoló --- */}
-            <div className="flex items-center justify-between p-4 border-b-2 border-black/20">
+            <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-black/50">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
                   <Moon className="w-5 h-5 text-indigo-300" />
@@ -106,18 +106,16 @@ export default function Navbar() {
               </div>
 
               {/* --- A Toggle --- */}
-              <button 
+              <button
                 onClick={handleThemeToggle}
-                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer ${
-                  isDarkMode ? 'bg-indigo-900' : 'bg-white'
-                }`}
+                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer ${isDarkMode ? 'bg-[#a855f7]' : 'bg-white'
+                  }`}
               >
-                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 ${
-                  isDarkMode ? 'bg-white translate-x-1' : 'bg-gray-400 translate-x-6'
-                }`}></div>
+                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 ${isDarkMode ? 'bg-white translate-x-6' : 'bg-gray-400 translate-x-1'
+                  }`}></div>
               </button>
             </div>
-            
+
           </div>
         )}
       </nav>
