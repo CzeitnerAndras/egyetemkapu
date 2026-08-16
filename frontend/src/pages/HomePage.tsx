@@ -7,7 +7,7 @@ interface EventItem {
   description: string;
   eventDate?: string;
   createdAt?: string;
-  imageUrl?: string; 
+  imageUrl?: string;
 }
 
 interface NoteItem {
@@ -23,7 +23,7 @@ export default function HomePage() {
   const [noteId, setNoteId] = useState<number | null>(null);
 
   useEffect(() => {
-    {/* --- Hírek lekérése (GET) --- */}
+    {/* --- Hírek lekérése (GET) --- */ }
     fetch('http://localhost:8080/api/events')
       .then((res) => res.json())
       .then((data: EventItem[]) => {
@@ -35,7 +35,7 @@ export default function HomePage() {
         setLoading(false);
       });
 
-    {/* --- Jegyzetek lekérése (GET) --- */}
+    {/* --- Jegyzetek lekérése (GET) --- */ }
     fetch('http://localhost:8080/api/notes')
       .then((res) => res.json())
       .then((notes: NoteItem[]) => {
@@ -47,10 +47,10 @@ export default function HomePage() {
       .catch((err) => console.error('Hiba a jegyzetek lekérésekor:', err));
   }, []);
 
-  {/* --- Jegyzet mentése (POST/PUT) --- */}
+  {/* --- Jegyzet mentése (POST/PUT) --- */ }
   const handleSaveNote = () => {
     if (noteId) {
-      {/* --- Frissítés (PUT) --- */}
+      {/* --- Frissítés (PUT) --- */ }
       fetch(`http://localhost:8080/api/notes/${noteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,7 @@ export default function HomePage() {
         .then(() => alert('Jegyzet sikeresen frissítve!'))
         .catch((err) => console.error('Hiba a mentéskor:', err));
     } else {
-      {/* --- Új létrehozása (POST) --- */}
+      {/* --- Új létrehozása (POST) --- */ }
       fetch('http://localhost:8080/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,7 +75,7 @@ export default function HomePage() {
     }
   };
 
-  {/* --- Jegyzet törlése (DELETE) --- */}
+  {/* --- Jegyzet törlése (DELETE) --- */ }
   const handleDeleteNote = () => {
     if (noteId) {
       fetch(`http://localhost:8080/api/notes/${noteId}`, {
@@ -106,7 +106,7 @@ export default function HomePage() {
         ) : (
           events.map((item) => (
             <div key={item.id} className="flex border-2 border-[#800000] bg-[#fdfbf7] h-40 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedNews(item)}>
-              
+
               <div className="w-1/3 border-r-2 border-[#800000] flex items-center justify-center bg-gray-100 overflow-hidden">
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
@@ -114,7 +114,7 @@ export default function HomePage() {
                   <span className="text-[#800000] font-bold">KÉP</span>
                 )}
               </div>
-              
+
               <div className="w-2/3 p-4 flex flex-col">
                 <h2 className="text-xl font-bold border-b-2 border-[#800000] text-[#800000] pb-1 mb-2 hover:text-red-600 transition-colors">
                   {item.title}
@@ -134,9 +134,9 @@ export default function HomePage() {
 
       {/* --- Jobb oldal: Jegyzetfüzet --- */}
       <div className="md:col-span-1 border-2 border-black bg-[#fefce8] relative flex flex-col h-125 shadow-md">
-        <textarea 
+        <textarea
           className="w-full h-full bg-transparent resize-none outline-none px-4 py-2"
-          style={{ 
+          style={{
             lineHeight: '32px',
             backgroundImage: 'linear-gradient(transparent, transparent 31px, #ccc 31px, #ccc 32px)',
             backgroundSize: '100% 32px',
@@ -146,16 +146,16 @@ export default function HomePage() {
           value={noteContent}
           onChange={(e) => setNoteContent(e.target.value)}
         ></textarea>
-        
+
         <div className="absolute bottom-2 right-2 flex space-x-2">
-          <button 
+          <button
             onClick={handleDeleteNote}
             className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
             title="Törlés"
           >
             <Trash2 className="w-5 h-5" />
           </button>
-          <button 
+          <button
             onClick={handleSaveNote}
             className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors shadow-sm cursor-pointer"
             title="Mentés"
@@ -168,10 +168,10 @@ export default function HomePage() {
       {/* --- Felugró ablak (Modal) --- */}
       {selectedNews && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          
+
           <div className="bg-[#fdfbf7] border-4 border-[#800000] w-full max-w-3xl rounded-sm p-8 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto">
-            
-            <button 
+
+            <button
               onClick={() => setSelectedNews(null)}
               className="absolute top-4 right-4 text-[#800000] hover:text-red-600 transition-colors bg-[#fdfbf7] rounded-full z-10 cursor-pointer"
             >
@@ -186,7 +186,7 @@ export default function HomePage() {
             <p className="text-gray-800 text-lg leading-relaxed text-justify whitespace-pre-wrap">
               {selectedNews.description}
             </p>
-            
+
           </div>
         </div>
       )}
