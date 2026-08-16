@@ -23,7 +23,9 @@ export default function Navbar() {
       {/* --- Jobb oldal: Ikonok --- */}
       <div className="flex items-center space-x-4">
         <Mail className="w-6 h-6 cursor-pointer hover:text-gray-300" />
-        <User className="w-6 h-6 cursor-pointer hover:text-gray-300" />
+        <Link to="/login">
+          <User className="w-6 h-6 cursor-pointer hover:text-gray-300 transition-colors" />
+        </Link>
         <Menu className="w-7 h-7 cursor-pointer hover:text-gray-300" />
       </div>
     </nav>
