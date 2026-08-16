@@ -28,14 +28,20 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
         String username = request.get("username");
+        String email = request.get("email");
         String password = request.get("password");
 
         if (userRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Ez a felhasználónév már foglalt!"));
         }
+        
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Ez az e-mail cím már regisztrálva van!"));
+        }
 
         User newUser = new User();
         newUser.setUsername(username);
+        newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
         userRepository.save(newUser);
 
@@ -44,16 +50,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
+        String email = request.get("email");
         String password = request.get("password");
-
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getPassword())) {
-            String token = jwtUtil.generateToken(username);
+            String token = jwtUtil.generateToken(userOpt.get().getUsername());
             return ResponseEntity.ok(Map.of("token", token));
         }
 
-        return ResponseEntity.status(401).body(Map.of("error", "Hibás felhasználónév vagy jelszó!"));
+        return ResponseEntity.status(401).body(Map.of("error", "Hibás e-mail cím vagy jelszó!"));
     }
 }
