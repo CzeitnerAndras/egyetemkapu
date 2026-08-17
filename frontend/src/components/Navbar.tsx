@@ -23,8 +23,10 @@ export default function Navbar() {
 
     if (newTheme) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
 
     clickCountRef.current = (clickCountRef.current || 0) + 1;
