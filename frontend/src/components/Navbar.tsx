@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [username, setUsername] = useState('Felhasználó');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [crtClass, setCrtClass] = useState('');
@@ -15,6 +16,20 @@ export default function Navbar() {
   useEffect(() => {
     if (document.documentElement.classList.contains('dark')) {
       setIsDarkMode(true);
+    }
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('http://localhost:8080/api/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.username) {
+            setUsername(data.username);
+          }
+        })
+        .catch(err => console.error("Hiba a név lekérésekor:", err));
     }
   }, []);
 
@@ -44,7 +59,7 @@ export default function Navbar() {
 
   const triggerSecretEffect = () => {
     setIsMenuOpen(false);
-    setIsProfileMenuOpen(false); 
+    setIsProfileMenuOpen(false);
     setIsAnimating(true);
     clickCountRef.current = 0;
 
@@ -67,29 +82,29 @@ export default function Navbar() {
   const handleProfileClick = () => {
     const token = localStorage.getItem('token');
     if (token) {
-        setIsProfileMenuOpen(!isProfileMenuOpen);
-        setIsMenuOpen(false);
+      setIsProfileMenuOpen(!isProfileMenuOpen);
+      setIsMenuOpen(false);
     } else {
-        navigate('/login');
+      navigate('/login');
     }
   };
 
   const handleLogout = () => {
-      localStorage.removeItem('token');
-      setIsProfileMenuOpen(false);
-      navigate('/');
-      window.location.reload();
+    localStorage.removeItem('token');
+    setIsProfileMenuOpen(false);
+    navigate('/');
+    window.location.reload();
   };
 
   const handleMenuClick = () => {
-      setIsMenuOpen(!isMenuOpen);
-      setIsProfileMenuOpen(false);
+    setIsMenuOpen(!isMenuOpen);
+    setIsProfileMenuOpen(false);
   };
 
   return (
     <>
       <nav className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] shadow-[0_4px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] relative z-40 transition-all duration-300">
-        
+
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
           <Link to="/" className="cursor-pointer group">
@@ -110,10 +125,10 @@ export default function Navbar() {
         {/* --- Jobb oldal: Ikonok --- */}
         <div className="flex items-center space-x-4">
           <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
-          
-          <User 
+
+          <User
             onClick={handleProfileClick}
-            className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" 
+            className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform"
           />
 
           <Menu
@@ -151,17 +166,23 @@ export default function Navbar() {
 
         {/* --- Profil Dropdown Menü --- */}
         {isProfileMenuOpen && (
-          <div className="absolute top-full right-[72px] mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-48 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
-            <Link 
-              to="/profile" 
+          <div className="absolute top-full right-[72px] mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
+
+            <div className="px-4 py-3 border-b-4 border-black/20 dark:border-[#a855f7]/30 bg-black/10 dark:bg-black/20 cursor-default">
+              <span className="block text-xs text-white/70 font-medium uppercase tracking-wider mb-0.5">Bejelentkezve mint:</span>
+              <span className="font-bold text-xl text-white drop-shadow-md truncate block">{username}</span>
+            </div>
+
+            <Link
+              to="/profile"
               onClick={() => setIsProfileMenuOpen(false)}
-              className="px-4 py-3 border-b-2 border-black/20 dark:border-[#a855f7]/30 text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+              className="px-4 py-3 border-b-2 border-black/10 dark:border-[#a855f7]/20 text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center"
             >
-              Profilom
+              <User className="w-4 h-4 mr-2" /> Profilom
             </Link>
-            <button 
+            <button
               onClick={handleLogout}
-              className="px-4 py-3 text-left text-red-200 hover:text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+              className="px-4 py-3 text-left text-red-200 hover:text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer flex items-center"
             >
               Kijelentkezés
             </button>

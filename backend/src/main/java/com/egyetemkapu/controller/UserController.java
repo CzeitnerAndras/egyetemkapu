@@ -31,6 +31,19 @@ public class UserController {
         return userRepository.findByUsername(username);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getUserInfo() {
+        Optional<User> userOpt = getCurrentUser();
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
+
+        User user = userOpt.get();
+        return ResponseEntity.ok(Map.of(
+                "username", user.getUsername(),
+                "email", user.getEmail(),
+                "role", user.getRole()
+        ));
+    }
+
     @PutMapping("/username")
     public ResponseEntity<?> updateUsername(@RequestBody Map<String, String> request) {
         Optional<User> userOpt = getCurrentUser();
