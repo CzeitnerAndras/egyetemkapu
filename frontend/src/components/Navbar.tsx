@@ -35,23 +35,21 @@ export default function Navbar() {
     }, 500);
 
     if (clickCountRef.current >= 10 && !isAnimating) {
-      triggerCyberpunkEffect();
+      triggerSecretEffect();
     }
   };
 
-  const triggerCyberpunkEffect = () => {
+  const triggerSecretEffect = () => {
     setIsMenuOpen(false);
     setIsAnimating(true);
     clickCountRef.current = 0;
 
     setCrtClass('crt-off');
     setTimeout(() => {
-      document.documentElement.classList.add('cyberpunk');
+      document.documentElement.classList.add('secret');
       document.documentElement.classList.add('dark');
       setIsDarkMode(true);
-
       navigate('/secret');
-
       setTimeout(() => {
         setCrtClass('crt-on');
         setTimeout(() => {

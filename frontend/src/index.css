@@ -25,29 +25,31 @@ html.dark .notepad-lines {
     background-image: linear-gradient(transparent, transparent 31px, #4b5563 31px, #4b5563 32px);
 }
 
-/* --- CYBERPUNK MÓD STÍLUSOK --- */
-html.cyberpunk body {
-    background-color: #050505 !important;
+/* --- SECRET (FALLOUT) MÓD STÍLUSOK --- */
+html.secret body {
+    background-color: #031e08 !important;
 }
 
-html.cyberpunk nav, 
-html.cyberpunk nav div.absolute {
-    background-color: #fce205 !important;
-    border-color: #00ffff !important;
+html.secret nav,
+html.secret nav div.absolute {
+    background-color: #000000 !important;
+    border-color: #1cf85d !important;
 }
 
-html.cyberpunk nav span,
-html.cyberpunk nav a,
-html.cyberpunk nav svg,
-html.cyberpunk nav button {
-    color: #000000 !important;
-}
-
-html.cyberpunk nav span.text-2xl {
+html.secret nav span,
+html.secret nav a,
+html.secret nav svg,
+html.secret nav button {
+    color: #1cf85d !important;
     font-family: 'Courier New', Courier, monospace;
-    border-color: #000000 !important;
+    text-shadow: 0 0 6px rgba(28, 248, 93, 0.5);
 }
 
+html.secret nav span.text-2xl {
+    border-color: #1cf85d !important;
+}
+
+/* --- CRT ANIMÁCIÓK --- */
 .crt-overlay {
     position: fixed;
     top: 0;
@@ -81,6 +83,7 @@ html.cyberpunk nav span.text-2xl {
 .crt-off::before {
     animation: crtBg 0.6s ease-out forwards;
 }
+
 .crt-off::after {
     animation: crtTurnOff 0.6s ease-out forwards;
 }
@@ -88,29 +91,79 @@ html.cyberpunk nav span.text-2xl {
 .crt-on::before {
     animation: crtBgOn 0.6s ease-in forwards;
 }
+
 .crt-on::after {
     animation: crtTurnOn 0.6s ease-in forwards;
 }
 
 @keyframes crtBg {
-    0%, 9% { opacity: 0; }
-    10%, 100% { opacity: 1; }
+
+    0%,
+    9% {
+        opacity: 0;
+    }
+
+    10%,
+    100% {
+        opacity: 1;
+    }
 }
+
 @keyframes crtBgOn {
-    0%, 90% { opacity: 1; }
-    100% { opacity: 0; }
+
+    0%,
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
 }
 
 @keyframes crtTurnOff {
-    0% { transform: scale(1, 1); opacity: 0; }
-    10% { opacity: 1; transform: scale(1, 1); }
-    40% { transform: scale(1, 0.005); }
-    70% { transform: scale(0.005, 0.005); }
-    100% { transform: scale(0, 0); opacity: 0; }
+    0% {
+        transform: scale(1, 1);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+        transform: scale(1, 1);
+    }
+
+    40% {
+        transform: scale(1, 0.005);
+    }
+
+    70% {
+        transform: scale(0.005, 0.005);
+    }
+
+    100% {
+        transform: scale(0, 0);
+        opacity: 0;
+    }
 }
+
 @keyframes crtTurnOn {
-    0% { transform: scale(0, 0); opacity: 0; }
-    30% { transform: scale(0.005, 0.005); opacity: 1; }
-    60% { transform: scale(1, 0.005); opacity: 1; }
-    100% { transform: scale(1, 1); opacity: 0; }
+    0% {
+        transform: scale(0, 0);
+        opacity: 0;
+    }
+
+    30% {
+        transform: scale(0.005, 0.005);
+        opacity: 1;
+    }
+
+    60% {
+        transform: scale(1, 0.005);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1, 1);
+        opacity: 0;
+    }
 }

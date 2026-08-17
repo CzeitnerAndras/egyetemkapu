@@ -2,39 +2,58 @@ import { Link } from 'react-router-dom';
 
 export default function SecretPage() {
     return (
-        <main className="min-h-[calc(100vh-80px)] bg-black text-[#00ff41] font-mono p-8 relative overflow-hidden flex flex-col items-center justify-center selection:bg-[#00ff41] selection:text-black">
+        <main className="min-h-[calc(100vh-80px)] bg-[#031e08] text-[#1cf85d] font-mono p-8 relative flex flex-col items-center justify-center selection:bg-[#1cf85d] selection:text-black">
 
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] pointer-events-none z-10"></div>
+            {/* --- CRT Scanline (vízszintes csíkozás) --- */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,0,0,0.4)_50%)] bg-[length:100%_4px] pointer-events-none z-10"></div>
 
-            <div className="border border-[#00ff41] bg-black p-6 w-full max-w-4xl shadow-[0_0_15px_#00ff41] z-20">
-                <div className="border-b border-[#00ff41] pb-2 mb-4 flex justify-between">
-                    <span>SYSTEM_OVERRIDE_INITIATED</span>
-                    <span>v.2077.4</span>
+            {/* --- Vignette effekt (sötétedő képernyősarkok) --- */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.9)_100%)] pointer-events-none z-10"></div>
+
+            {/* --- Terminál tartalom (Foszfor ragyogás text-shadow-val) --- */}
+            <div className="w-full max-w-4xl z-20 relative text-lg md:text-xl leading-relaxed [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
+
+                {/* --- Fejléc --- */}
+                <div className="text-center mb-8">
+                    <p>BANDI INDUSTRIES UNIFIED OPERATING SYSTEM</p>
+                    <p>COPYRIGHT 2075-2077 BANDI INDUSTRIES</p>
+                    <p>-Server 76-</p>
                 </div>
 
-                <div className="space-y-4">
-                    <p className="animate-pulse">&gt; Csatlakozás a szerverhez...</p>
-                    <p>&gt; Hitelesítés: SIKERES</p>
-                    <p>&gt; Üdvözöllek a Hálózatban, User_9942.</p>
+                {/* --- Alfejléc --- */}
+                <div className="mb-6">
+                    <p>-BANDI Trespasser Management System-</p>
+                    <p>=========================================</p>
+                    <p className="invisible">Ures sor</p>
+                    <p>=========================================</p>
+                </div>
 
-                    <div className="mt-8 pt-8 border-t border-[#00ff41]/30">
-                        <p className="text-sm text-[#00ff41]/70 mb-4">// Válassz menüpontot a folytatáshoz:</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <button className="border border-[#00ff41] p-3 hover:bg-[#00ff41] hover:text-black transition-colors text-left cursor-pointer">
-                                [1] Még kitalálom, de valami menü lesz itt
-                            </button>
-                            <button className="border border-[#00ff41] p-3 hover:bg-[#00ff41] hover:text-black transition-colors text-left cursor-pointer">
-                                [2] Itt is lesz valami, de még nem tudom, hogy mi
-                            </button>
-                        </div>
+                {/* --- Log adatok --- */}
+                <div className="mb-6 space-y-1">
+                    <p>| User Log:</p>
+                    <p>| &gt;&gt; Administrator: UNKOWN</p>
+                    <p>| &gt;&gt; Helpdesk</p>
+                    <p>|========</p>
+                </div>
+
+                {/* --- Interaktív rész --- */}
+                <div className="mt-8 space-y-2">
+                    <div className="pt-6 flex flex-col space-y-2">
+                        <button className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase">
+                            run:// search valami
+                        </button>
+                        <button className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase">
+                            run:// search valami más
+                        </button>
                     </div>
                 </div>
+
+                <div className="mt-16">
+                    <Link to="/" className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase block">
+                        &lt;&lt; Logoff
+                    </Link>
+                </div>
             </div>
-
-            <Link to="/" className="mt-8 z-20 text-[#00ff41]/50 hover:text-[#00ff41] underline cursor-pointer">
-                &lt;&lt; Visszatérés a normál rendszerbe
-            </Link>
-
         </main>
     );
 }
