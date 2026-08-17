@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [crtClass, setCrtClass] = useState('');
@@ -43,6 +44,7 @@ export default function Navbar() {
 
   const triggerSecretEffect = () => {
     setIsMenuOpen(false);
+    setIsProfileMenuOpen(false); 
     setIsAnimating(true);
     clickCountRef.current = 0;
 
@@ -60,6 +62,28 @@ export default function Navbar() {
         }, 600);
       }, 1500);
     }, 600);
+  };
+
+  const handleProfileClick = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        setIsProfileMenuOpen(!isProfileMenuOpen);
+        setIsMenuOpen(false);
+    } else {
+        navigate('/login');
+    }
+  };
+
+  const handleLogout = () => {
+      localStorage.removeItem('token');
+      setIsProfileMenuOpen(false);
+      navigate('/');
+      window.location.reload();
+  };
+
+  const handleMenuClick = () => {
+      setIsMenuOpen(!isMenuOpen);
+      setIsProfileMenuOpen(false);
   };
 
   return (
@@ -86,19 +110,21 @@ export default function Navbar() {
         {/* --- Jobb oldal: Ikonok --- */}
         <div className="flex items-center space-x-4">
           <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
-          <Link to="/login">
-            <User className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
-          </Link>
+          
+          <User 
+            onClick={handleProfileClick}
+            className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" 
+          />
+
           <Menu
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={handleMenuClick}
             className="w-7 h-7 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform"
           />
         </div>
 
-        {/* --- Dropdown Menü --- */}
+        {/* --- Fő Dropdown Menü --- */}
         {isMenuOpen && (
           <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-l-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
-            {/* --- Sötét / Világos mód kapcsoló --- */}
             <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-[#a855f7]/30">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
@@ -111,7 +137,6 @@ export default function Navbar() {
                 </span>
               </div>
 
-              {/* --- A Toggle --- */}
               <button
                 onClick={handleThemeToggle}
                 className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner ${isDarkMode ? 'bg-[#a855f7] shadow-[0_0_10px_rgba(168,85,247,0.6)]' : 'bg-black/30'
@@ -123,6 +148,26 @@ export default function Navbar() {
             </div>
           </div>
         )}
+
+        {/* --- Profil Dropdown Menü --- */}
+        {isProfileMenuOpen && (
+          <div className="absolute top-full right-[72px] mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-48 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
+            <Link 
+              to="/profile" 
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="px-4 py-3 border-b-2 border-black/20 dark:border-[#a855f7]/30 text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              Profilom
+            </Link>
+            <button 
+              onClick={handleLogout}
+              className="px-4 py-3 text-left text-red-200 hover:text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              Kijelentkezés
+            </button>
+          </div>
+        )}
+
       </nav>
 
       {/* --- Teljes képernyős TV effekt --- */}
