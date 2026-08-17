@@ -43,7 +43,7 @@ public class AiService {
 
             //Kérés összeállítása
             Map<String, Object> requestBody = Map.of(
-                    "model", "llama-3.3-70b-versatile",
+                    "model", "openai/gpt-oss-120b",
                     "messages", List.of(
                             Map.of("role", "system", "content", "Te egy segítőkész, barátságos egyetemi asszisztens vagy. Válaszolj röviden és lényegretörően."),
                             Map.of("role", "user", "content", userPrompt)
