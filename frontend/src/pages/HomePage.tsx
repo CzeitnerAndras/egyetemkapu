@@ -23,7 +23,7 @@ export default function HomePage() {
   const [noteId, setNoteId] = useState<number | null>(null);
 
   useEffect(() => {
-    {/* --- Hírek lekérése (GET) --- */ }
+    {/* --- Hírek lekérése (GET) --- */}
     fetch('http://localhost:8080/api/events')
       .then((res) => res.json())
       .then((data: EventItem[]) => {
@@ -35,7 +35,7 @@ export default function HomePage() {
         setLoading(false);
       });
 
-    {/* --- Jegyzetek lekérése (GET) --- */ }
+    {/* --- Jegyzetek lekérése (GET) --- */}
     const token = localStorage.getItem('token');
     if (token) {
       fetch('http://localhost:8080/api/notes', {
@@ -55,7 +55,7 @@ export default function HomePage() {
     }
   }, []);
 
-  {/* --- Jegyzet mentése (POST/PUT) --- */ }
+  {/* --- Jegyzet mentése (POST/PUT) --- */}
   const handleSaveNote = () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -69,7 +69,7 @@ export default function HomePage() {
     };
 
     if (noteId) {
-      {/* --- Frissítés (PUT) --- */ }
+      {/* --- Frissítés (PUT) --- */}
       fetch(`http://localhost:8080/api/notes/${noteId}`, {
         method: 'PUT',
         headers,
@@ -79,7 +79,7 @@ export default function HomePage() {
         .then(() => alert('Jegyzet sikeresen frissítve!'))
         .catch((err) => console.error('Hiba a mentéskor:', err));
     } else {
-      {/* --- Új létrehozása (POST) --- */ }
+      {/* --- Új létrehozása (POST) --- */}
       fetch('http://localhost:8080/api/notes', {
         method: 'POST',
         headers,
@@ -94,7 +94,7 @@ export default function HomePage() {
     }
   };
 
-  {/* --- Jegyzet törlése (DELETE) --- */ }
+  {/* --- Jegyzet törlése (DELETE) --- */}
   const handleDeleteNote = () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -122,7 +122,7 @@ export default function HomePage() {
     <main className="w-full px-6 lg:px-16 mx-auto mt-8 grid grid-cols-1 lg:grid-cols-3 gap-10 relative">
 
       {/* --- Bal oldal: Hírek --- */}
-      <div className="lg:col-span-2 space-y-6 h-[550px] overflow-y-auto pr-2">
+      <div className="lg:col-span-2 space-y-6 h-[550px] overflow-y-auto pt-4 pl-2 pr-4 pb-4 custom-scrollbar">
         {loading ? (
           <div className="text-[#800000] dark:text-[#c084fc] font-bold p-4">Hírek betöltése a szerverről...</div>
         ) : events.length === 0 ? (
@@ -131,9 +131,14 @@ export default function HomePage() {
           </div>
         ) : (
           events.map((item) => (
-            <div key={item.id} className="flex border-2 border-[#800000] dark:border-[#a855f7] bg-[#fdfbf7] dark:bg-[#1e1e1e] h-52 hover:shadow-lg transition-all cursor-pointer" onClick={() => setSelectedNews(item)}>
-
-              <div className="w-[40%] border-r-2 border-[#800000] dark:border-[#a855f7] flex items-center justify-center bg-[#06261b] dark:bg-black overflow-hidden transition-colors">
+            <div 
+              key={item.id} 
+              className="flex border-2 border-[#800000] dark:border-[#a855f7] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] h-52 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(128,0,0,0.15)] dark:hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition-all duration-300 cursor-pointer" 
+              onClick={() => setSelectedNews(item)}
+            >
+              <div className="w-52 shrink-0 border-r-2 border-[#800000] dark:border-[#a855f7] flex items-center justify-center bg-[#06261b] dark:bg-black/60 overflow-hidden transition-colors relative">
+                <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] pointer-events-none"></div>
+                
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
                 ) : (
@@ -141,8 +146,8 @@ export default function HomePage() {
                 )}
               </div>
 
-              <div className="w-[60%] p-6 flex flex-col">
-                <h2 className="text-2xl font-bold border-b-2 border-[#800000] dark:border-[#a855f7] text-[#800000] dark:text-[#c084fc] pb-2 mb-3 hover:text-red-600 dark:hover:text-[#e879f9] transition-colors">
+              <div className="flex-1 p-6 flex flex-col overflow-hidden relative">
+                <h2 className="text-2xl font-bold border-b-2 border-[#800000] dark:border-[#a855f7] text-[#800000] dark:text-[#c084fc] pb-2 mb-3 hover:text-red-600 dark:hover:text-[#e879f9] transition-colors truncate">
                   {item.title}
                 </h2>
                 <p className="text-[#800000] dark:text-gray-300 text-md flex-grow line-clamp-3">
@@ -152,14 +157,13 @@ export default function HomePage() {
                   {item.eventDate ? new Date(item.eventDate).toLocaleDateString('hu-HU') : 'Nincs megadva dátum'}
                 </span>
               </div>
-
             </div>
           ))
         )}
       </div>
 
       {/* --- Jobb oldal: Jegyzetfüzet --- */}
-      <div className="lg:col-span-1 border-2 border-black dark:border-[#a855f7] bg-[#fefce8] dark:bg-[#1e1e1e] relative flex flex-col h-[550px] shadow-md transition-colors duration-300">
+      <div className="lg:col-span-1 border-2 border-black dark:border-[#a855f7] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] relative flex flex-col h-[550px] shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] hover:shadow-[4px_4px_25px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_0_35px_rgba(168,85,247,0.35)] transition-all duration-300">
         <textarea
           className="w-full h-full bg-transparent resize-none outline-none px-4 py-2 notepad-lines text-black dark:text-gray-100"
           placeholder="Ide írhatod a jegyzeteket..."
@@ -170,14 +174,14 @@ export default function HomePage() {
         <div className="absolute bottom-2 right-2 flex space-x-2">
           <button
             onClick={handleDeleteNote}
-            className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
+            className="p-2 bg-red-600 text-white rounded hover:bg-red-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             title="Törlés"
           >
             <Trash2 className="w-5 h-5" />
           </button>
           <button
             onClick={handleSaveNote}
-            className="p-2 bg-blue-600 dark:bg-[#a855f7] text-white rounded hover:bg-blue-700 dark:hover:bg-[#9333ea] transition-colors shadow-sm cursor-pointer"
+            className="p-2 bg-[#800000] dark:bg-[#a855f7] text-white rounded hover:bg-red-800 dark:hover:bg-[#c084fc] hover:shadow-[0_0_15px_rgba(168,85,247,0.6)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             title="Mentés"
           >
             <Save className="w-5 h-5" />
@@ -187,12 +191,12 @@ export default function HomePage() {
 
       {/* --- Felugró ablak (Modal) --- */}
       {selectedNews && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#fdfbf7] dark:bg-[#1e1e1e] border-4 border-[#800000] dark:border-[#a855f7] w-full max-w-4xl rounded-sm p-8 relative shadow-2xl flex flex-col max-h-[90vh] overflow-y-auto transition-colors">
-
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] border-4 border-[#800000] dark:border-[#a855f7] w-full max-w-4xl rounded-sm p-8 relative shadow-[0_20px_50px_rgba(128,0,0,0.2)] dark:shadow-[0_0_50px_rgba(168,85,247,0.5)] flex flex-col max-h-[90vh] overflow-y-auto transition-colors">
+            
             <button
               onClick={() => setSelectedNews(null)}
-              className="absolute top-4 right-4 text-[#800000] dark:text-gray-400 hover:text-red-600 dark:hover:text-white transition-colors bg-transparent rounded-full z-10 cursor-pointer"
+              className="absolute top-4 right-4 text-[#800000] dark:text-[#a855f7] hover:text-red-600 dark:hover:text-[#c084fc] transition-colors bg-transparent rounded-full z-10 cursor-pointer"
             >
               <X className="w-8 h-8" />
             </button>

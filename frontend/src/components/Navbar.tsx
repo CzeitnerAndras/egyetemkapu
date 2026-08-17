@@ -64,47 +64,47 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-[#800000] dark:bg-[#2e1065] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] relative z-40 transition-colors duration-300">
+      <nav className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] shadow-[0_4px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] relative z-40 transition-all duration-300">
+        
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
-          <Link to="/" className="cursor-pointer">
-            <span className="inline-flex items-center justify-center text-2xl font-bold border-2 border-white w-12 h-10 leading-none">
+          <Link to="/" className="cursor-pointer group">
+            <span className="inline-flex items-center justify-center text-2xl font-bold border-2 border-white w-12 h-10 leading-none group-hover:bg-white group-hover:text-[#800000] dark:group-hover:text-[#a855f7] transition-all duration-300 shadow-sm">
               ƎK
             </span>
           </Link>
 
           <div className="hidden md:flex space-x-6 text-lg font-medium">
-            <Link to="/naptar" className="hover:text-gray-300 transition-colors">Naptár</Link>
-            <Link to="/ai" className="hover:text-gray-300 transition-colors">AI Asszisztens</Link>
-            <Link to="/kalkulator" className="hover:text-gray-300 transition-colors">Kalkulátorok</Link>
-            <Link to="/ertekelo" className="hover:text-gray-300 transition-colors">Tárgyértékelés</Link>
-            <Link to="/hivatkozas" className="hover:text-gray-300 transition-colors">Hivatkozás Generátor</Link>
+            <Link to="/naptar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Naptár</Link>
+            <Link to="/ai" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">AI Asszisztens</Link>
+            <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Kalkulátorok</Link>
+            <Link to="/ertekelo" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Tárgyértékelés</Link>
+            <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Hivatkozás Generátor</Link>
           </div>
         </div>
 
         {/* --- Jobb oldal: Ikonok --- */}
         <div className="flex items-center space-x-4">
-          <Mail className="w-6 h-6 cursor-pointer hover:text-gray-300" />
+          <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
           <Link to="/login">
-            <User className="w-6 h-6 cursor-pointer hover:text-gray-300 transition-colors" />
+            <User className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
           </Link>
           <Menu
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-7 h-7 cursor-pointer hover:text-gray-300"
+            className="w-7 h-7 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform"
           />
         </div>
 
         {/* --- Dropdown Menü --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-[#800000] dark:bg-[#2e1065] w-56 shadow-2xl flex flex-col z-50 border-l-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
-
+          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-l-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
             {/* --- Sötét / Világos mód kapcsoló --- */}
-            <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-black/50">
+            <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-[#a855f7]/30">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
-                  <Moon className="w-5 h-5 text-indigo-300" />
+                  <Moon className="w-5 h-5 text-indigo-300 drop-shadow-[0_0_5px_rgba(165,180,252,0.8)]" />
                 ) : (
-                  <Sun className="w-5 h-5 text-yellow-400" />
+                  <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" />
                 )}
                 <span className="font-bold text-sm text-white">
                   {isDarkMode ? 'Sötét' : 'Világos'}
@@ -114,14 +114,13 @@ export default function Navbar() {
               {/* --- A Toggle --- */}
               <button
                 onClick={handleThemeToggle}
-                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer ${isDarkMode ? 'bg-[#a855f7]' : 'bg-white'
+                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner ${isDarkMode ? 'bg-[#a855f7] shadow-[0_0_10px_rgba(168,85,247,0.6)]' : 'bg-black/30'
                   }`}
               >
-                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 ${isDarkMode ? 'bg-white translate-x-6' : 'bg-gray-400 translate-x-1'
+                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-white translate-x-6' : 'bg-white translate-x-1'
                   }`}></div>
               </button>
             </div>
-
           </div>
         )}
       </nav>

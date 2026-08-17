@@ -9,7 +9,7 @@ import AIAssistantPage from './pages/AIAssistantPage';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#fdfbf7] dark:bg-[#121212] transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-[#fdfbf7] via-[#fdfbf7] to-[#efe6d5] dark:from-[#121212] dark:via-[#121212] dark:to-[#2e1065] transition-colors duration-500">
         <Navbar />
 
         <Routes>

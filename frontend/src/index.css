@@ -25,7 +25,6 @@ html.dark .notepad-lines {
     background-image: linear-gradient(transparent, transparent 31px, #4b5563 31px, #4b5563 32px);
 }
 
-/* --- SECRET (FALLOUT) MÓD STÍLUSOK --- */
 html.secret body {
     background-color: #031e08 !important;
 }
@@ -33,6 +32,8 @@ html.secret body {
 html.secret nav,
 html.secret nav div.absolute {
     background-color: #000000 !important;
+    background-image: none !important;
+    box-shadow: none !important;
     border-color: #1cf85d !important;
 }
 
@@ -47,6 +48,18 @@ html.secret nav button {
 
 html.secret nav span.text-2xl {
     border-color: #1cf85d !important;
+}
+
+html.secret nav button.w-11 {
+    background-color: #000000 !important;
+    border: 1px solid #1cf85d !important;
+    box-shadow: none !important;
+}
+
+html.secret nav button.w-11 div {
+    background-color: #1cf85d !important;
+    box-shadow: 0 0 6px rgba(28, 248, 93, 0.5) !important;
+    top: 3px !important; 
 }
 
 /* --- CRT ANIMÁCIÓK --- */
