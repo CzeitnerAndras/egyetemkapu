@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import SecretPage from './pages/SecretPage';
+import AIAssistantPage from './pages/AIAssistantPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/secret" element={<SecretPage />} />
+          <Route path="/ai" element={<AIAssistantPage />} />
         </Routes>
       </div>
     </Router>
