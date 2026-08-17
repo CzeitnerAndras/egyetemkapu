@@ -6,6 +6,7 @@ import RegistrationPage from './pages/RegistrationPage';
 import SecretPage from './pages/SecretPage';
 import AIAssistantPage from './pages/AIAssistantPage';
 import CalendarPage from './pages/CalendarPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/secret" element={<SecretPage />} />
           <Route path="/ai" element={<AIAssistantPage />} />
           <Route path="/naptar" element={<CalendarPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </div>
     </Router>
