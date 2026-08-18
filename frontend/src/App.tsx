@@ -9,6 +9,7 @@ import CalendarPage from './pages/CalendarPage';
 import ProfilePage from './pages/ProfilePage';
 import CalculatorPage from './pages/CalculatorPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
+import ReferencePage from './pages/ReferencePage';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/kalkulator" element={<CalculatorPage />} />
           <Route path="/tudastar" element={<KnowledgeBasePage />} />
+          <Route path="/hivatkozas" element={<ReferencePage />} />
         </Routes>
       </div>
     </Router>
