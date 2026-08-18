@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import CalculatorPage from './pages/CalculatorPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 import ReferencePage from './pages/ReferencePage';
+import FocusRoomPage from './pages/FocusRoomPage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/kalkulator" element={<CalculatorPage />} />
           <Route path="/tudastar" element={<KnowledgeBasePage />} />
           <Route path="/hivatkozas" element={<ReferencePage />} />
+          <Route path="/fokusz" element={<FocusRoomPage />} />
         </Routes>
       </div>
     </Router>

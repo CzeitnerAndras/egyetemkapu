@@ -30,4 +30,19 @@ public class TaskController {
     public List<Task> getAllTasks() {
         return taskRepository.findAll();
     }
+
+    @PutMapping("/{id}")
+    public Task updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
+        return taskRepository.findById(id)
+                .map(task -> {
+                    task.setTitle(updatedTask.getTitle());
+                    task.setTaskType(updatedTask.getTaskType());
+                    task.setDeadline(updatedTask.getDeadline());
+                    task.setCompleted(updatedTask.isCompleted());
+                    task.setPingDayBefore(updatedTask.isPingDayBefore());
+                    task.setPingOnDay(updatedTask.isPingOnDay());
+                    return taskRepository.save(task);
+                })
+                .orElseThrow(() -> new RuntimeException("A feladat nem található ezzel az ID-val: " + id));
+    }
 }

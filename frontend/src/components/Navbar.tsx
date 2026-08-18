@@ -177,6 +177,7 @@ export default function Navbar() {
             <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Kalkulátorok</Link>
             <Link to="/tudastar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Tudástár</Link>
             <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Hivatkozás Generátor</Link>
+            <Link to="/fokusz" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Fókusz Szoba</Link>
           </div>
         </div>
 
