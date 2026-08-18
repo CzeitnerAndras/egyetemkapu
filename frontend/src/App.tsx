@@ -7,6 +7,7 @@ import SecretPage from './pages/SecretPage';
 import AIAssistantPage from './pages/AIAssistantPage';
 import CalendarPage from './pages/CalendarPage';
 import ProfilePage from './pages/ProfilePage';
+import CalculatorPage from './pages/CalculatorPage';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/ai" element={<AIAssistantPage />} />
           <Route path="/naptar" element={<CalendarPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/kalkulator" element={<CalculatorPage />} />
         </Routes>
       </div>
     </Router>
