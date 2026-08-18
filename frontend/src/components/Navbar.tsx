@@ -8,6 +8,7 @@ export default function Navbar() {
   const [username, setUsername] = useState('Felhasználó');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSecretMode, setIsSecretMode] = useState(false);
+  const [isFatalError, setIsFatalError] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [crtClass, setCrtClass] = useState('');
   const clickCountRef = useRef<number | null>(0);
@@ -65,8 +66,12 @@ export default function Navbar() {
       clickCountRef.current = 0;
     }, 500);
 
-    if (clickCountRef.current >= 10 && !isAnimating) {
-      triggerSecretEffect();
+    if (clickCountRef.current >= 10 && !isAnimating && !isFatalError) {
+      if (isSecretMode) {
+        triggerFatalErrorEffect();
+      } else {
+        triggerSecretEffect();
+      }
     }
   };
 
@@ -90,6 +95,24 @@ export default function Navbar() {
           setCrtClass('');
         }, 600);
       }, 1500);
+    }, 600);
+  };
+
+  const triggerFatalErrorEffect = () => {
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+    setIsAnimating(true);
+    clickCountRef.current = 0;
+
+    setCrtClass('crt-off');
+
+    setTimeout(() => {
+      setIsFatalError(true);
+      setCrtClass('crt-on');
+      setTimeout(() => {
+        setIsAnimating(false);
+        setCrtClass('');
+      }, 600);
     }, 600);
   };
 
@@ -131,8 +154,8 @@ export default function Navbar() {
             <Link to="/naptar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Naptár</Link>
             <Link to="/ai" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">AI Asszisztens</Link>
             <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Kalkulátorok</Link>
-            <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Hivatkozás Generátor</Link>
             <Link to="/tudastar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Tudástár</Link>
+            <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Hivatkozás Generátor</Link>
           </div>
         </div>
 
@@ -208,6 +231,33 @@ export default function Navbar() {
       {/* --- Teljes képernyős TV effekt --- */}
       {isAnimating && (
         <div className={`crt-overlay ${crtClass}`}></div>
+      )}
+
+      {/* --- Végleges Fatal Error Képernyő --- */}
+      {isFatalError && (
+        <div className="fixed inset-0 bg-black z-[99990] flex flex-col items-center justify-center text-[#1cf85d] font-mono p-6 text-center selection:bg-[#1cf85d] selection:text-black">
+          <p className="text-3xl md:text-5xl font-bold mb-4 [text-shadow:0_0_10px_rgba(28,248,93,0.8)] animate-pulse">
+            FATAL ERROR: SYSTEM CORRUPT
+          </p>
+          <p className="text-lg md:text-xl mb-2 opacity-80 uppercase">
+            Bandi_OS.sys has encountered an unrecoverable fault.
+          </p>
+          <p className="text-lg md:text-xl mb-12 opacity-80 uppercase">
+            Stop Code: 0x000000F4 MEMORY_MANAGEMENT
+          </p>
+          <p className="text-md mb-8 animate-bounce">
+            Press [ RESET ] to restart the system.
+          </p>
+          <button
+            onClick={() => {
+              document.documentElement.classList.remove('secret');
+              window.location.href = '/';
+            }}
+            className="border-2 border-[#1cf85d] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl [text-shadow:0_0_5px_rgba(28,248,93,0.8)]"
+          >
+            [ RESET ]
+          </button>
+        </div>
       )}
     </>
   );
