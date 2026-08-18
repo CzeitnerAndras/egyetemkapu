@@ -113,7 +113,7 @@ export default function Navbar() {
           setIsAnimating(false);
           setCrtClass('');
         }, 600);
-      }, 1500);
+      }, 3000);
     }, 600);
   };
 
@@ -133,7 +133,7 @@ export default function Navbar() {
           setIsAnimating(false);
           setCrtClass('');
         }, 600);
-      }, 1500);
+      }, 3000);
     }, 600);
   };
 
@@ -197,7 +197,7 @@ export default function Navbar() {
 
         {/* --- Fő Dropdown Menü --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-l-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
             <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-[#a855f7]/30">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
@@ -224,7 +224,7 @@ export default function Navbar() {
 
         {/* --- Profil Dropdown Menü --- */}
         {isProfileMenuOpen && (
-          <div className="absolute top-full right-[72px] mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
             <div className="px-4 py-3 border-b-4 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-black/10 dark:bg-black/20 secret:bg-transparent cursor-default">
               <span className="block text-xs text-white/70 secret:text-[#1cf85d]/70 font-medium uppercase tracking-wider mb-0.5 secret:font-mono">Bejelentkezve mint:</span>
@@ -265,9 +265,6 @@ export default function Navbar() {
           </p>
           <p className="text-lg md:text-xl mb-12 opacity-80 uppercase">
             Stop Code: 0x000000F4 MEMORY_MANAGEMENT
-          </p>
-          <p className="text-md mb-8 animate-bounce">
-            Press [ RESET ] to restart the system.
           </p>
           <button
             onClick={() => {
