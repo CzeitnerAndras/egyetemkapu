@@ -3,6 +3,7 @@ package com.egyetemkapu.controller;
 import com.egyetemkapu.model.Task;
 import com.egyetemkapu.repository.TaskRepository;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
