@@ -8,6 +8,7 @@ import AIAssistantPage from './pages/AIAssistantPage';
 import CalendarPage from './pages/CalendarPage';
 import ProfilePage from './pages/ProfilePage';
 import CalculatorPage from './pages/CalculatorPage';
+import KnowledgeBasePage from './pages/KnowledgeBasePage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/naptar" element={<CalendarPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/kalkulator" element={<CalculatorPage />} />
+          <Route path="/tudastar" element={<KnowledgeBasePage />} />
         </Routes>
       </div>
     </Router>

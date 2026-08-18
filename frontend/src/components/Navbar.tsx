@@ -131,8 +131,8 @@ export default function Navbar() {
             <Link to="/naptar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Naptár</Link>
             <Link to="/ai" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">AI Asszisztens</Link>
             <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Kalkulátorok</Link>
-            <Link to="/ertekelo" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Tárgyértékelés</Link>
             <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Hivatkozás Generátor</Link>
+            <Link to="/tudastar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Tudástár</Link>
           </div>
         </div>
 
