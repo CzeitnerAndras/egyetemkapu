@@ -15,8 +15,6 @@ export default function CalendarPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-    {/* --- Űrlap state-ek --- */ }
     const [title, setTitle] = useState('');
     const [taskType, setTaskType] = useState('Vizsga');
     const [time, setTime] = useState('08:00');
@@ -151,7 +149,7 @@ export default function CalendarPage() {
     };
 
     return (
-        <main className="w-full max-w-7xl mx-auto mt-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20">
+        <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20">
 
             {/* --- BAL OLDAL: NAPTÁR --- */}
             <div className="lg:col-span-2 flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
@@ -224,7 +222,7 @@ export default function CalendarPage() {
             {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
             <div className="lg:col-span-1 flex flex-col space-y-4">
                 <div className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col h-[260px]">
-                    <div className="bg-[#800000] dark:bg-[#2e1065] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
+                    <div className="bg-[#b91c1c] dark:bg-[#2e1065] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {selectedDate.toLocaleDateString('hu-HU')} Teendői
                     </div>
 
