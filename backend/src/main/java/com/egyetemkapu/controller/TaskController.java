@@ -18,6 +18,7 @@ public class TaskController {
 
     @PostMapping
     public Task createTask(@RequestBody Task task) {
+        if (task.getTaskType() == null) task.setTaskType("Naptár");
         return taskRepository.save(task);
     }
 
@@ -28,7 +29,7 @@ public class TaskController {
 
     @GetMapping
     public List<Task> getAllTasks() {
-        return taskRepository.findAll();
+        return taskRepository.findAllByCompletedFalse();
     }
 
     @PutMapping("/{id}")
@@ -36,8 +37,8 @@ public class TaskController {
         return taskRepository.findById(id)
                 .map(task -> {
                     task.setTitle(updatedTask.getTitle());
-                    task.setTaskType(updatedTask.getTaskType());
-                    task.setDeadline(updatedTask.getDeadline());
+                    if (updatedTask.getTaskType() != null) task.setTaskType(updatedTask.getTaskType());
+                    if (updatedTask.getDeadline() != null) task.setDeadline(updatedTask.getDeadline());
                     task.setCompleted(updatedTask.isCompleted());
                     task.setPingDayBefore(updatedTask.isPingDayBefore());
                     task.setPingOnDay(updatedTask.isPingOnDay());

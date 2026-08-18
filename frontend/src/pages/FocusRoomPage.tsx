@@ -5,7 +5,7 @@ interface Task {
     id: number;
     title: string;
     taskType: string;
-    deadline: string;
+    deadline: string | number[];
     completed: boolean;
     pingDayBefore: boolean;
     pingOnDay: boolean;
@@ -114,11 +114,12 @@ export default function FocusRoomPage() {
         const token = localStorage.getItem('token');
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
+        const localDeadline = todayEnd.toISOString().split('.')[0];
 
         const newTaskObj = { 
             title: newTaskTitle, 
             taskType: 'Fókusz', 
-            deadline: todayEnd.toISOString(),
+            deadline: localDeadline,
             completed: false,
             pingDayBefore: false,
             pingOnDay: false
@@ -149,13 +150,19 @@ export default function FocusRoomPage() {
         const taskToUpdate = tasks.find(t => t.id === id);
         if (!taskToUpdate) return;
 
-        const updatedTask = { ...taskToUpdate, completed: !taskToUpdate.completed };
-        const token = localStorage.getItem('token');
+        let safeDeadline = taskToUpdate.deadline;
+        if (Array.isArray(safeDeadline)) {
+            const [y, m, d, h, min, s] = safeDeadline;
+            safeDeadline = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}T${String(h || 0).padStart(2, '0')}:${String(min || 0).padStart(2, '0')}:${String(s || 0).padStart(2, '0')}`;
+        }
 
+        const updatedTask = { ...taskToUpdate, deadline: safeDeadline, completed: true };
+        const token = localStorage.getItem('token');
+        const previousTasks = [...tasks];
         setTasks(tasks.filter(t => t.id !== id));
 
         try {
-            await fetch(`http://localhost:8080/api/tasks/${id}`, {
+            const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
                 method: 'PUT',
                 headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -163,9 +170,13 @@ export default function FocusRoomPage() {
                 },
                 body: JSON.stringify(updatedTask)
             });
+
+            if (!res.ok) {
+                setTasks(previousTasks);
+            }
         } catch (error) {
             console.error("Hiba a feladat frissítésekor:", error);
-            setTasks([...tasks, taskToUpdate]);
+            setTasks(previousTasks);
         }
     };
 
@@ -361,7 +372,7 @@ export default function FocusRoomPage() {
                         <iframe 
                             width="100%" 
                             height="100%" 
-                            src="https://www.youtube.com/embed/jfKfPfyJRmac?autoplay=0&controls=1" 
+                            src="https://www.youtube.com/embed/53gNFOqDFcE?autoplay=0&controls=1" 
                             title="lofi hip hop radio" 
                             frameBorder="0" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -371,7 +382,7 @@ export default function FocusRoomPage() {
                     </div>
                     
                     <p className="text-xs text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/60 mt-4 secret:font-mono uppercase">
-                        Zene: Lofi Girl (YouTube Live)
+                        Zene: Lofi Hip Hop Mix
                     </p>
                 </div>
 
