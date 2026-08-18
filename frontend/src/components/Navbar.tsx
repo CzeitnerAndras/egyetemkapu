@@ -13,19 +13,36 @@ export default function Navbar() {
   const [crtClass, setCrtClass] = useState('');
   const clickCountRef = useRef<number | null>(0);
   const timeoutRef = useRef<number | null>(null);
+  const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (document.documentElement.classList.contains('dark')) {
-      setIsDarkMode(true);
-    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+        setIsProfileMenuOpen(false);
+      }
+    };
 
-    if (document.documentElement.classList.contains('secret')) {
+    document.addEventListener('mousedown', handleClickOutside);
+
+    const isSecretPath = window.location.pathname === '/secret';
+    const isSecretSaved = localStorage.getItem('secretMode') === 'true';
+
+    if (isSecretPath || isSecretSaved) {
+      document.documentElement.classList.add('secret', 'dark');
       setIsSecretMode(true);
+      setIsDarkMode(true);
+      localStorage.setItem('secretMode', 'true');
+      localStorage.setItem('theme', 'dark');
+    } else if (document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark') {
+      setIsDarkMode(true);
+      document.documentElement.classList.add('dark');
     }
 
     const handleSecretLogoff = () => {
       setIsSecretMode(false);
+      localStorage.removeItem('secretMode');
     };
     window.addEventListener('secretLogoff', handleSecretLogoff);
 
@@ -43,6 +60,7 @@ export default function Navbar() {
         .catch(err => console.error("Hiba a név lekérésekor:", err));
     }
     return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('secretLogoff', handleSecretLogoff);
     };
   }, []);
@@ -85,6 +103,7 @@ export default function Navbar() {
     setTimeout(() => {
       document.documentElement.classList.add('secret');
       document.documentElement.classList.add('dark');
+      localStorage.setItem('secretMode', 'true');
       setIsDarkMode(true);
       setIsSecretMode(true);
       navigate('/secret');
@@ -108,11 +127,13 @@ export default function Navbar() {
 
     setTimeout(() => {
       setIsFatalError(true);
-      setCrtClass('crt-on');
       setTimeout(() => {
-        setIsAnimating(false);
-        setCrtClass('');
-      }, 600);
+        setCrtClass('crt-on');
+        setTimeout(() => {
+          setIsAnimating(false);
+          setCrtClass('');
+        }, 600);
+      }, 1500);
     }, 600);
   };
 
@@ -140,7 +161,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] shadow-[0_4px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] relative z-40 transition-all duration-300">
+      <nav ref={navRef} className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] shadow-[0_4px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] relative z-40 transition-all duration-300">
 
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
@@ -251,6 +272,7 @@ export default function Navbar() {
           <button
             onClick={() => {
               document.documentElement.classList.remove('secret');
+              localStorage.removeItem('secretMode');
               window.location.href = '/';
             }}
             className="border-2 border-[#1cf85d] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl [text-shadow:0_0_5px_rgba(28,248,93,0.8)]"

@@ -23,6 +23,7 @@ export default function SecretPage() {
 
     const handleLogoff = () => {
         document.documentElement.classList.remove('secret');
+        localStorage.removeItem('secretMode');
         window.dispatchEvent(new Event('secretLogoff'));
         navigate('/');
     };
