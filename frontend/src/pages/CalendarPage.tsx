@@ -221,8 +221,8 @@ export default function CalendarPage() {
 
             {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
             <div className="lg:col-span-1 flex flex-col space-y-4">
-                <div className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col h-[260px]">
-                    <div className="bg-[#b91c1c] dark:bg-[#2e1065] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
+                <div className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
+                    <div className="bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {selectedDate.toLocaleDateString('hu-HU')} Teendői
                     </div>
 

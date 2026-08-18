@@ -9,7 +9,7 @@ interface Subject {
 }
 
 export default function CalculatorPage() {
-    const [subjects, setSubjects] = useState<Subject[]>([{ id: Date.now(), name: '', credit: 3, grade: 5 }]);
+    const [subjects, setSubjects] = useState<Subject[]>([{ id: Date.now(), name: '', credit: 3, grade: 5 }, { id: Date.now() + 1, name: '', credit: 3, grade: 5 }]);
     const [averageResult, setAverageResult] = useState<number | null>(null);
     const [averageLoading, setAverageLoading] = useState(false);
     const [operation, setOperation] = useState('derive');
@@ -87,7 +87,7 @@ export default function CalculatorPage() {
     };
 
     return (
-        <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-20">
+        <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-20 lg:items-start">            
             {/* --- BAL OLDAL: SÚLYOZOTT ÁTLAG / KREDITINDEX --- */}
             <div className="flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm secret:rounded-none h-fit">
 
@@ -100,7 +100,7 @@ export default function CalculatorPage() {
                 </div>
 
                 <div className="p-6 flex flex-col">
-                    <form onSubmit={handleCalculateAverage} className="space-y-4">
+                    <form onSubmit={handleCalculateAverage} className="flex flex-col">
 
                         {/* --- Tárgyak listája --- */}
                         <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
@@ -153,22 +153,24 @@ export default function CalculatorPage() {
                             ))}
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={handleAddSubject}
-                            className="w-full border-2 border-dashed border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 flex items-center justify-center hover:bg-[#800000]/10 dark:hover:bg-[#a855f7]/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer secret:font-mono uppercase"
-                        >
-                            <Plus className="w-5 h-5 mr-1" /> Új tárgy hozzáadása
-                        </button>
+                        <div className="pt-4 flex flex-col space-y-4">
+                            <button
+                                type="button"
+                                onClick={handleAddSubject}
+                                className="w-full border-2 border-dashed border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 flex items-center justify-center hover:bg-[#800000]/10 dark:hover:bg-[#a855f7]/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer secret:font-mono uppercase"
+                            >
+                                <Plus className="w-5 h-5 mr-1" /> Új tárgy hozzáadása
+                            </button>
 
-                        <button
-                            type="submit"
-                            disabled={averageLoading}
-                            className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 mt-4 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
-                        >
-                            <Calculator className="w-5 h-5 mr-2" />
-                            {averageLoading ? 'Számolás...' : 'Átlag Kiszámítása'}
-                        </button>
+                            <button
+                                type="submit"
+                                disabled={averageLoading}
+                                className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
+                            >
+                                <Calculator className="w-5 h-5 mr-2" />
+                                {averageLoading ? 'Számolás...' : 'Átlag Kiszámítása'}
+                            </button>
+                        </div>
                     </form>
 
                     {/* --- Eredmény --- */}
@@ -186,7 +188,7 @@ export default function CalculatorPage() {
             </div>
 
             {/* --- JOBB OLDAL: OKOS SZÁMOLÓGÉP --- */}
-            <div className="flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm secret:rounded-none h-fit">
+            <div className="flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm secret:rounded-none h-fit w-full">
 
                 {/* --- Fejléc --- */}
                 <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10">
@@ -196,8 +198,8 @@ export default function CalculatorPage() {
                     </h2>
                 </div>
 
-                <div className="p-6 flex flex-col space-y-6">
-                    <form onSubmit={handleCalculateMath} className="space-y-5">
+                <div className="p-6 flex flex-col">
+                    <form onSubmit={handleCalculateMath} className="flex flex-col space-y-5">
 
                         {/* --- Művelet kiválasztása --- */}
                         <div className="flex flex-col group">
@@ -233,20 +235,21 @@ export default function CalculatorPage() {
                                 className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none text-lg font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/50"
                             />
                         </div>
-
-                        <button
-                            type="submit"
-                            disabled={mathLoading}
-                            className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
-                        >
-                            <FunctionSquare className="w-5 h-5 mr-2" />
-                            {mathLoading ? 'Feldolgozás...' : 'Számítás'}
-                        </button>
+                        <div className="pt-3.5">
+                            <button
+                                type="submit"
+                                disabled={mathLoading}
+                                className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
+                            >
+                                <FunctionSquare className="w-5 h-5 mr-2" />
+                                {mathLoading ? 'Feldolgozás...' : 'Számítás'}
+                            </button>
+                        </div>
                     </form>
 
                     {/* --- Hibaüzenet --- */}
                     {mathError && (
-                        <div className="bg-red-100 dark:bg-red-900/40 secret:bg-black border-l-4 border-red-600 dark:border-red-500 secret:border-[#1cf85d] text-red-700 dark:text-red-300 secret:text-[#1cf85d] p-4 font-medium text-sm transition-colors shadow-sm secret:font-mono uppercase">
+                        <div className="mt-4 bg-red-100 dark:bg-red-900/40 secret:bg-black border-l-4 border-red-600 dark:border-red-500 secret:border-[#1cf85d] text-red-700 dark:text-red-300 secret:text-[#1cf85d] p-4 font-medium text-sm transition-colors shadow-sm secret:font-mono uppercase">
                             &gt; Hiba: {mathError}
                         </div>
                     )}
