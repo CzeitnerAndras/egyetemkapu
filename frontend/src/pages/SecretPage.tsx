@@ -1,6 +1,13 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function SecretPage() {
+    const navigate = useNavigate();
+    const handleLogoff = () => {
+        document.documentElement.classList.remove('secret');
+        window.dispatchEvent(new Event('secretLogoff'));
+        navigate('/');
+    };
+
     return (
         <main className="min-h-[calc(100vh-80px)] bg-transparent text-[#1cf85d] font-mono p-8 relative flex flex-col items-center justify-center selection:bg-[#1cf85d] selection:text-black">
 
@@ -43,9 +50,12 @@ export default function SecretPage() {
                 </div>
 
                 <div className="mt-16">
-                    <Link to="/" className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase block">
+                    <button 
+                        onClick={handleLogoff}
+                        className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase block border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]"
+                    >
                         &lt;&lt; Logoff
-                    </Link>
+                    </button>
                 </div>
             </div>
         </main>

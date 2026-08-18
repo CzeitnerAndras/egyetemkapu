@@ -23,6 +23,11 @@ export default function Navbar() {
       setIsSecretMode(true);
     }
 
+    const handleSecretLogoff = () => {
+      setIsSecretMode(false);
+    };
+    window.addEventListener('secretLogoff', handleSecretLogoff);
+
     const token = localStorage.getItem('token');
     if (token) {
       fetch('http://localhost:8080/api/users/me', {
@@ -36,6 +41,9 @@ export default function Navbar() {
         })
         .catch(err => console.error("Hiba a név lekérésekor:", err));
     }
+    return () => {
+      window.removeEventListener('secretLogoff', handleSecretLogoff);
+    };
   }, []);
 
   const handleThemeToggle = () => {
