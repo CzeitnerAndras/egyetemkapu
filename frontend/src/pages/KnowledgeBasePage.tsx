@@ -100,10 +100,10 @@ export default function KnowledgeBasePage() {
         <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 relative z-20">
 
             {/* --- Fejléc és Szűrők --- */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-white dark:bg-[#1e1e1e] secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                    <BookOpen className="w-8 h-8 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                    <h1 className="text-3xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">Tudástár</h1>
+                    <BookOpen className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                    <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">Tudástár</h1>
                 </div>
 
                 <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
@@ -121,7 +121,7 @@ export default function KnowledgeBasePage() {
 
                     <button
                         onClick={() => setIsUploadModalOpen(true)}
-                        className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 px-4 border-2 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase"
+                        className="bg-white dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-[#800000] dark:text-white secret:text-[#1cf85d] font-bold py-2 px-4 border-2 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-gray-100 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase"
                     >
                         <Upload className="w-5 h-5 mr-2" /> Anyag Beküldése
                     </button>

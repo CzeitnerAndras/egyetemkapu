@@ -218,9 +218,9 @@ export default function FocusRoomPage() {
     return (
         <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 relative z-20">
             
-            <div className="flex items-center space-x-3 mb-8 bg-white dark:bg-[#1e1e1e] secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
-                <BrainCircuit className="w-8 h-8 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                <h1 className="text-3xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">
+            <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+                <BrainCircuit className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
                     <span className="secret:hidden">Fókusz Szoba</span>
                     <span className="hidden secret:inline">Neural Link Active</span>
                 </h1>
@@ -282,7 +282,7 @@ export default function FocusRoomPage() {
                     </div>
 
                     {/* --- Notes --- */}
-                    <div className="bg-white dark:bg-[#1e1e1e] secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:rounded-none flex flex-col flex-1 min-h-0">
+                    <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:rounded-none flex flex-col flex-1 min-h-0">
                         <div className="flex items-center justify-between mb-3 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                             <div className="flex items-center">
                                 <FileText className="w-4 h-4 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -309,7 +309,7 @@ export default function FocusRoomPage() {
                 </div>
 
                 {/* --- Naptár Feladatai --- */}
-                <div className="lg:col-span-1 bg-white dark:bg-[#1e1e1e] secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none flex flex-col h-[500px]">
+                <div className="lg:col-span-1 bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                         Aktív Feladatok
                     </h2>
@@ -360,7 +360,7 @@ export default function FocusRoomPage() {
                 </div>
 
                 {/* --- Lo-Fi lejátszó --- */}
-                <div className="lg:col-span-1 bg-white dark:bg-[#1e1e1e] secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none flex flex-col h-[500px]">
+                <div className="lg:col-span-1 bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <div className="flex items-center mb-4 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Headphones className="w-5 h-5 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
