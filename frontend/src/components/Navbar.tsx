@@ -180,23 +180,23 @@ export default function Navbar() {
 
         {/* --- Profil Dropdown Menü --- */}
         {isProfileMenuOpen && (
-          <div className="absolute top-full right-[72px] mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
+          <div className="absolute top-full right-[72px] mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
-            <div className="px-4 py-3 border-b-4 border-black/20 dark:border-[#a855f7]/30 bg-black/10 dark:bg-black/20 cursor-default">
-              <span className="block text-xs text-white/70 font-medium uppercase tracking-wider mb-0.5">Bejelentkezve mint:</span>
-              <span className="font-bold text-xl text-white drop-shadow-md truncate block">{username}</span>
+            <div className="px-4 py-3 border-b-4 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-black/10 dark:bg-black/20 secret:bg-transparent cursor-default">
+              <span className="block text-xs text-white/70 secret:text-[#1cf85d]/70 font-medium uppercase tracking-wider mb-0.5 secret:font-mono">Bejelentkezve mint:</span>
+              <span className="font-bold text-xl text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-none truncate block secret:font-mono">{username}</span>
             </div>
 
             <Link
               to="/profile"
               onClick={() => setIsProfileMenuOpen(false)}
-              className="px-4 py-3 border-b-2 border-black/10 dark:border-[#a855f7]/20 text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center"
+              className="px-4 py-3 border-b-2 border-black/10 dark:border-[#a855f7]/20 secret:border-[#1cf85d] text-white secret:text-[#1cf85d] font-bold hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors flex items-center secret:font-mono uppercase"
             >
               <User className="w-4 h-4 mr-2" /> Profilom
             </Link>
             <button
               onClick={handleLogout}
-              className="px-4 py-3 text-left text-red-200 hover:text-white font-bold hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer flex items-center"
+              className="px-4 py-3 text-left text-red-200 dark:text-red-300 secret:text-[#1cf85d] hover:text-white secret:hover:text-black font-bold hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] transition-colors cursor-pointer flex items-center secret:font-mono uppercase"
             >
               Kijelentkezés
             </button>
