@@ -7,6 +7,7 @@ export default function Navbar() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [username, setUsername] = useState('Felhasználó');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isSecretMode, setIsSecretMode] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [crtClass, setCrtClass] = useState('');
   const clickCountRef = useRef<number | null>(0);
@@ -16,6 +17,10 @@ export default function Navbar() {
   useEffect(() => {
     if (document.documentElement.classList.contains('dark')) {
       setIsDarkMode(true);
+    }
+
+    if (document.documentElement.classList.contains('secret')) {
+      setIsSecretMode(true);
     }
 
     const token = localStorage.getItem('token');
@@ -68,6 +73,7 @@ export default function Navbar() {
       document.documentElement.classList.add('secret');
       document.documentElement.classList.add('dark');
       setIsDarkMode(true);
+      setIsSecretMode(true);
       navigate('/secret');
       setTimeout(() => {
         setCrtClass('crt-on');
@@ -107,7 +113,7 @@ export default function Navbar() {
 
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
-          <Link to="/" className="cursor-pointer group">
+          <Link to={isSecretMode ? "/secret" : "/"} className="cursor-pointer group">
             <span className="inline-flex items-center justify-center text-2xl font-bold border-2 border-white w-12 h-10 leading-none group-hover:bg-white group-hover:text-[#800000] dark:group-hover:text-[#a855f7] transition-all duration-300 shadow-sm">
               ƎK
             </span>

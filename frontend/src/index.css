@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant secret (&:where(.secret, .secret *));
 
 html,
 body {
@@ -25,8 +26,30 @@ html.dark .notepad-lines {
     background-image: linear-gradient(transparent, transparent 31px, #4b5563 31px, #4b5563 32px);
 }
 
+/* --- SECRET MODE GLOBÁLIS BEÁLLÍTÁSOK --- */
 html.secret body {
     background-color: #031e08 !important;
+    color: #1cf85d !important;
+    font-family: 'Courier New', Courier, monospace !important;
+}
+
+html.secret::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.4) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 30;
+}
+
+html.secret::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 50%, rgba(0,0,0,0.9) 100%);
+    pointer-events: none;
+    z-index: 31;
 }
 
 html.secret nav,

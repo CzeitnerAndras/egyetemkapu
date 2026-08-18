@@ -151,23 +151,23 @@ export default function CalendarPage() {
     };
 
     return (
-        <main className="w-full max-w-7xl mx-auto mt-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+        <main className="w-full max-w-7xl mx-auto mt-6 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20">
 
             {/* --- BAL OLDAL: NAPTÁR --- */}
-            <div className="lg:col-span-2 flex flex-col border-4 border-[#800000] dark:border-[#a855f7] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] transition-all duration-300 rounded-sm">
-                <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] shadow-md z-10 text-white">
-                    <button onClick={prevMonth} className="p-2 hover:bg-white/20 rounded-full transition-colors cursor-pointer">
+            <div className="lg:col-span-2 flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
+                <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10 text-white secret:text-[#1cf85d]">
+                    <button onClick={prevMonth} className="p-2 hover:bg-white/20 secret:hover:bg-[#1cf85d] secret:hover:text-black rounded-full secret:rounded-none transition-colors cursor-pointer">
                         <ChevronLeft className="w-6 h-6" />
                     </button>
 
                     <div className="flex items-center space-x-2">
-                        <CalendarIcon className="w-6 h-6 drop-shadow-md" />
-                        <h2 className="text-2xl font-bold drop-shadow-md uppercase tracking-wider">
+                        <CalendarIcon className="w-6 h-6 drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                        <h2 className="text-2xl font-bold drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] uppercase tracking-wider secret:font-mono">
                             {currentDate.getFullYear()}. {monthNames[currentDate.getMonth()]}
                         </h2>
                     </div>
 
-                    <button onClick={nextMonth} className="p-2 hover:bg-white/20 rounded-full transition-colors cursor-pointer">
+                    <button onClick={nextMonth} className="p-2 hover:bg-white/20 secret:hover:bg-[#1cf85d] secret:hover:text-black rounded-full secret:rounded-none transition-colors cursor-pointer">
                         <ChevronRight className="w-6 h-6" />
                     </button>
                 </div>
@@ -175,7 +175,7 @@ export default function CalendarPage() {
                 <div className="p-4 flex-1">
                     <div className="grid grid-cols-7 gap-2 mb-2">
                         {dayNames.map(day => (
-                            <div key={day} className="text-center font-bold text-[#800000] dark:text-[#a855f7] text-lg">
+                            <div key={day} className="text-center font-bold text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] text-lg uppercase secret:font-mono">
                                 {day}
                             </div>
                         ))}
@@ -183,7 +183,7 @@ export default function CalendarPage() {
 
                     <div className="grid grid-cols-7 gap-2">
                         {Array.from({ length: firstDay }).map((_, index) => (
-                            <div key={`empty-${index}`} className="h-16 lg:h-20 rounded-sm bg-black/5 dark:bg-white/5 opacity-50"></div>
+                            <div key={`empty-${index}`} className="h-16 lg:h-20 rounded-sm bg-black/5 dark:bg-white/5 secret:bg-transparent opacity-50"></div>
                         ))}
                         {Array.from({ length: daysInMonth }).map((_, index) => {
                             const day = index + 1;
@@ -195,19 +195,24 @@ export default function CalendarPage() {
                                 <div
                                     key={day}
                                     onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
-                                    className={`h-16 lg:h-20 relative cursor-pointer border-2 transition-all duration-300 flex flex-col items-center justify-center
+                                    className={`h-16 lg:h-20 relative cursor-pointer border-2 transition-all duration-300 flex flex-col items-center justify-center secret:font-mono
                                         ${isSelected
-                                            ? 'border-[#800000] dark:border-[#a855f7] bg-white dark:bg-[#121212] shadow-[0_5px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] scale-105 z-10'
-                                            : 'border-transparent bg-white/50 dark:bg-[#121212]/50 hover:border-[#800000]/50 dark:hover:border-[#a855f7]/50 hover:bg-white dark:hover:bg-[#121212] shadow-sm'
+                                            ? 'border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-[#1cf85d] shadow-[0_5px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] secret:shadow-[0_0_15px_rgba(28,248,93,0.5)] scale-105 z-10'
+                                            : 'border-transparent secret:border-[#1cf85d]/30 bg-white/50 dark:bg-[#121212]/50 secret:bg-transparent hover:border-[#800000]/50 dark:hover:border-[#a855f7]/50 secret:hover:border-[#1cf85d] hover:bg-white dark:hover:bg-[#121212] secret:hover:bg-[#1cf85d] secret:hover:text-black shadow-sm group'
                                         }
                                     `}
                                 >
-                                    <span className={`text-xl font-bold ${isToday ? 'text-red-600 dark:text-[#e879f9]' : 'text-gray-800 dark:text-gray-200'}`}>
+                                    <span className={`text-xl font-bold 
+                                        ${isToday ? 'text-red-600 dark:text-[#e879f9] secret:text-white' : 'text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]'} 
+                                        ${isSelected ? 'secret:text-black' : 'group-hover:secret:text-black'}
+                                    `}>
                                         {day}
                                     </span>
 
                                     {hasTask && (
-                                        <div className="absolute bottom-1 w-2.5 h-2.5 rounded-full bg-[#800000] dark:bg-[#a855f7] shadow-[0_0_8px_rgba(128,0,0,0.8)] dark:shadow-[0_0_8px_rgba(168,85,247,0.8)] animate-pulse"></div>
+                                        <div className={`absolute bottom-1 w-2.5 h-2.5 rounded-full secret:rounded-none animate-pulse shadow-[0_0_8px_rgba(128,0,0,0.8)] dark:shadow-[0_0_8px_rgba(168,85,247,0.8)] secret:shadow-[0_0_8px_rgba(28,248,93,1)]
+                                            ${isSelected ? 'bg-[#800000] dark:bg-[#a855f7] secret:bg-black' : 'bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] group-hover:secret:bg-black'}
+                                        `}></div>
                                     )}
                                 </div>
                             );
@@ -218,34 +223,34 @@ export default function CalendarPage() {
 
             {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
             <div className="lg:col-span-1 flex flex-col space-y-4">
-                <div className="border-4 border-[#800000] dark:border-[#a855f7] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col h-[260px]">
-                    <div className="bg-[#800000] dark:bg-[#2e1065] text-white p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7]">
+                <div className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col h-[260px]">
+                    <div className="bg-[#800000] dark:bg-[#2e1065] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {selectedDate.toLocaleDateString('hu-HU')} Teendői
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                         {loading ? (
-                            <p className="text-center text-gray-500">Töltés...</p>
+                            <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">Töltés...</p>
                         ) : getTasksForSelectedDate().length === 0 ? (
-                            <p className="text-center text-gray-500 dark:text-gray-400 font-medium mt-6 text-sm">Ezen a napon nincsenek teendőid.</p>
+                            <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; Ezen a napon nincsenek teendőid.</p>
                         ) : (
                             getTasksForSelectedDate().map(task => (
-                                <div key={task.id} className="bg-white dark:bg-[#121212] border-2 border-black dark:border-gray-600 p-2 shadow-sm hover:shadow-md transition-shadow relative group">
-                                    <h3 className="font-bold text-sm text-[#800000] dark:text-[#c084fc] pr-6 truncate">{task.title}</h3>
-                                    <div className="flex justify-between items-center mt-1 text-xs text-gray-600 dark:text-gray-300">
-                                        <span className="bg-gray-200 dark:bg-gray-800 px-2 py-0.5 rounded font-medium">{task.taskType}</span>
+                                <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-sm hover:shadow-md transition-shadow relative group">
+                                    <h3 className="font-bold text-sm text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
+                                    <div className="flex justify-between items-center mt-1 text-xs text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
+                                        <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase">{task.taskType}</span>
                                         <span>{new Date(task.deadline).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
 
                                     {(task.pingDayBefore || task.pingOnDay) && (
-                                        <div className="absolute top-2 right-8 text-indigo-500 dark:text-indigo-400" title="Discord értesítés beállítva">
+                                        <div className="absolute top-2 right-8 text-indigo-500 dark:text-indigo-400 secret:text-[#1cf85d]" title="Discord értesítés beállítva">
                                             <Bell className="w-4 h-4" />
                                         </div>
                                     )}
 
                                     <button
                                         onClick={() => task.id && handleDeleteTask(task.id)}
-                                        className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                                        className="absolute top-1 right-1 p-1 text-gray-400 hover:text-red-600 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -256,23 +261,23 @@ export default function CalendarPage() {
                 </div>
 
                 {/* --- Új teendő hozzáadása --- */}
-                <form onSubmit={handleSaveTask} className="border-4 border-[#800000] dark:border-[#a855f7] bg-white dark:bg-[#121212] shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] p-4 flex flex-col space-y-3">
-                    <h3 className="text-lg font-bold text-[#800000] dark:text-[#c084fc] border-b-2 border-[#800000] dark:border-[#a855f7] pb-1">
+                <form onSubmit={handleSaveTask} className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] p-4 flex flex-col space-y-3">
+                    <h3 className="text-lg font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] border-b-2 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-1 uppercase secret:font-mono">
                         Új bejegyzés rögzítése
                     </h3>
 
                     <div className="flex flex-col group">
-                        <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Esemény neve</label>
+                        <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">Esemény neve</label>
                         <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
-                            className="border-2 border-black dark:border-gray-600 p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] bg-transparent dark:text-white transition-colors text-sm"
+                            className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-transparent dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                         />
                     </div>
 
                     <div className="flex space-x-3">
                         <div className="flex flex-col flex-1">
-                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Típus</label>
+                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">Típus</label>
                             <select value={taskType} onChange={e => setTaskType(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] bg-white dark:bg-[#121212] dark:text-white cursor-pointer text-sm"
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] cursor-pointer text-sm secret:font-mono uppercase appearance-none"
                             >
                                 <option>Vizsga</option>
                                 <option>Beadandó</option>
@@ -280,29 +285,29 @@ export default function CalendarPage() {
                             </select>
                         </div>
                         <div className="flex flex-col w-1/3">
-                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Időpont</label>
+                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">Időpont</label>
                             <input required type="time" value={time} onChange={e => setTime(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] bg-transparent dark:text-white text-sm"
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-transparent dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono"
                             />
                         </div>
                     </div>
 
                     {/* --- Discord ping beállítások --- */}
-                    <div className="bg-gray-100 dark:bg-[#1a1a1a] p-2 border-2 border-indigo-200 dark:border-indigo-900 space-y-1 mt-1">
-                        <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center mb-1.5">
+                    <div className="bg-gray-100 dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-indigo-200 dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
+                        <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
                             <Bell className="w-3.5 h-3.5 mr-1" /> Discord Értesítések
                         </p>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7]" />
-                            <span className="text-xs dark:text-gray-300">Ping 1 nappal előtte</span>
+                        <label className="flex items-center space-x-2 cursor-pointer group">
+                            <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">Ping 1 nappal előtte</span>
                         </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7]" />
-                            <span className="text-xs dark:text-gray-300">Ping aznap reggel</span>
+                        <label className="flex items-center space-x-2 cursor-pointer group">
+                            <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">Ping aznap reggel</span>
                         </label>
                     </div>
 
-                    <button type="submit" className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] text-white font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] transition-all duration-300 border-2 border-black dark:border-transparent flex items-center justify-center cursor-pointer text-sm">
+                    <button type="submit" className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
                         <Plus className="w-4 h-4 mr-1" />
                         Mentés a naptárba
                     </button>
