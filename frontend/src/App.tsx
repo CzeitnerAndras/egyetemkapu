@@ -13,6 +13,7 @@ import ReferencePage from './pages/ReferencePage';
 import FocusRoomPage from './pages/FocusRoomPage';
 import IdeaBoxPage from './pages/IdeaBoxPage';
 import AdminPanelPage from './pages/AdminPanelPage';
+import AboutPage from './pages/AboutPage';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/fokusz" element={<FocusRoomPage />} />
           <Route path="/ideabox" element={<IdeaBoxPage />} />
           <Route path="/admin" element={<AdminPanelPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </div>
     </Router>
