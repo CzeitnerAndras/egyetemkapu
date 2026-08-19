@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Link as LinkIcon, ExternalLink, GraduationCap, Monitor, BookOpen, Cpu, Globe, Briefcase, Landmark, Stethoscope } from 'lucide-react';
+import {
+    Link as LinkIcon, ExternalLink, GraduationCap, Monitor, BookOpen,
+    Cpu, Globe, Briefcase, Landmark, Stethoscope, Heart, Smile,
+    Users, FlaskConical, Leaf, Wrench, Music
+} from 'lucide-react';
 
 interface LinkItem {
     title: string;
@@ -39,16 +43,57 @@ export default function LinksPage() {
                     { title: "E-learning (Moodle)", url: "https://elearning.unideb.hu/" },
                     { title: "DEENK - Egyetemi Könyvtár", url: "https://lib.unideb.hu/" },
                     { title: "Debreceni Egyetem Főoldal", url: "https://unideb.hu/" },
+                    { title: "DEHÖK (Hallgatói Önkormányzat)", url: "https://dehok.unideb.hu/" },
                 ]
             },
-            {
+                        {
                 category: "Informatikai Kar (IK)",
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "Informatikai Kar Főoldal", url: "https://inf.unideb.hu/" },
-                    { title: "IK Órarendek", url: "https://inf.unideb.hu/hu/orarendek" },
-                    { title: "IK HÖK", url: "https://dehok.unideb.hu/ik/" },
-                    { title: "Tantervi Hálók", url: "https://inf.unideb.hu/hu/tantervi-halok" },
+                    { title: "Záróvizsga", url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
+                    { title: "Képzések / Tantervi Háló", url: "https://inf.unideb.hu/2025-szeptembertol-meghirdetett-kepzeseink" },
+                    { title: "Syllabus", url: "https://www.ik.unideb.hu/syllabi/" },
+                ]
+            },
+            {
+                category: "Állam- és Jogtudományi Kar (ÁJK)",
+                icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "ÁJK Főoldal", url: "https://jog.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://jog.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Általános Orvostudományi Kar (ÁOK)",
+                icon: <Stethoscope className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "ÁOK Főoldal", url: "https://aok.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://aok.unideb.hu/hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Bölcsészettudományi Kar (BTK)",
+                icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "BTK Főoldal", url: "https://btk.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://btk.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Egészségtudományi Kar (ETK)",
+                icon: <Heart className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "ETK Főoldal", url: "https://etk.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://etk.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Fogorvostudományi Kar (FOK)",
+                icon: <Smile className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "FOK Főoldal", url: "https://dental.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://dental.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
@@ -56,8 +101,55 @@ export default function LinksPage() {
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "GTK Főoldal", url: "https://econ.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://econ.unideb.hu/hu/tanulmanyiosztaly" },
-                    { title: "GTK HÖK", url: "https://dehok.unideb.hu/gtk/" },
+                    { title: "Tanulmányi és Oktatási Oszt.", url: "https://econ.unideb.hu/tanulmanyi-es-oktatasi-osztaly" },
+                ]
+            },
+            {
+                category: "Gyermeknevelési és Gyógypedagógiai Kar",
+                icon: <Users className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "GYGYK Főoldal", url: "https://gygyk.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://gygyk.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Gyógyszerésztudományi Kar (GYTK)",
+                icon: <FlaskConical className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "GYTK Főoldal", url: "https://pharm.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://pharm.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Mezőgazdaság-, Élelmiszertudományi Kar",
+                icon: <Leaf className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "MÉK Főoldal", url: "https://mek.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://mek.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Műszaki Kar (MK)",
+                icon: <Wrench className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "MK Főoldal", url: "https://eng.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://eng.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Természettudományi és Technológiai Kar",
+                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "TTK Főoldal", url: "https://ttk.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://ttk.unideb.hu/tanulmanyi-osztaly" },
+                ]
+            },
+            {
+                category: "Zeneművészeti Kar (ZK)",
+                icon: <Music className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                links: [
+                    { title: "ZK Főoldal", url: "https://music.unideb.hu/" },
+                    { title: "Tanulmányi Osztály", url: "https://music.unideb.hu/tanulmanyi-osztaly" },
                 ]
             }
         ],
@@ -128,7 +220,7 @@ export default function LinksPage() {
                 icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "Neptun Hallgatói Web", url: "https://neptun.szte.hu/" },
-                    { title: "CooSpace (E-learning)", url: "https://coospace.szte.hu/" },
+                    { title: "CooSpace (E-learning)", url: "https://coospace.u-szeged.hu/" },
                     { title: "Klebelsberg Könyvtár (TIK)", url: "http://www.ek.szte.hu/" },
                     { title: "SZTE Főoldal", url: "https://u-szeged.hu/" },
                 ]
@@ -147,7 +239,7 @@ export default function LinksPage() {
                 icon: <Stethoscope className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "SZTE ÁOK Főoldal", url: "https://med.u-szeged.hu/" },
-                    { title: "ÁOK Tanulmányi Osztály", url: "https://med.u-szeged.hu/hallgatoknak/tanulmanyi-ugyek" },
+                    { title: "ÁOK Tanulmányi Osztály", url: "https://med.u-szeged.hu/hallgatoknak" },
                     { title: "Szegedi Orvostanhallgatók Egyesülete", url: "https://szoe.hu/" },
                 ]
             }
@@ -158,7 +250,7 @@ export default function LinksPage() {
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "Neptun Hallgatói Web", url: "https://neptun.pte.hu/" },
-                    { title: "PTE Moodle / Teams", url: "https://pte.hu/hu/e-learning" },
+                    { title: "PTE Moodle / Teams", url: "https://elearning.pte.hu/" },
                     { title: "PTE Egyetemi Könyvtár", url: "https://lib.pte.hu/" },
                     { title: "PTE Főoldal", url: "https://pte.hu/" },
                 ]
@@ -168,8 +260,8 @@ export default function LinksPage() {
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "MIK Főoldal", url: "https://mik.pte.hu/" },
-                    { title: "MIK HÖK", url: "https://mik.pte.hu/hallgatoi-onkormanyzat" },
-                    { title: "Tanulmányi Osztály", url: "https://mik.pte.hu/tanulmanyi-osztaly" },
+                    { title: "MIK HÖK", url: "https://mik.pte.hu/hallgatoknak" },
+                    { title: "Tanulmányi Osztály", url: "https://mik.pte.hu/oktatas" },
                 ]
             },
             {
@@ -178,7 +270,7 @@ export default function LinksPage() {
                 links: [
                     { title: "KTK Főoldal", url: "https://ktk.pte.hu/" },
                     { title: "KTK Tanulmányi Információk", url: "https://ktk.pte.hu/hu/hallgatoknak" },
-                    { title: "PTE KTK HÖK", url: "https://ktkhok.pte.hu/" },
+                    { title: "PTE KTK HÖK", url: "https://ktk.pte.hu/hu/hallgatoi-elet" },
                 ]
             }
         ],
@@ -319,8 +411,8 @@ export default function LinksPage() {
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "Neptun Hallgatói Web", url: "https://neptun.sze.hu/" },
-                    { title: "SZE-learning (Moodle)", url: "https://sze-learning.sze.hu/" },
-                    { title: "Egyetemi Könyvtár (EKL)", url: "https://lib.sze.hu/" },
+                    { title: "SZE-learning (Moodle)", url: "https://elearning.sze.hu/" },
+                    { title: "Egyetemi Könyvtár (EKL)", url: "https://ekl.sze.hu/" },
                     { title: "SZE Főoldal", url: "https://www.uni.sze.hu/" },
                 ]
             },
@@ -329,8 +421,8 @@ export default function LinksPage() {
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "GIVK Főoldal", url: "https://givk.sze.hu/" },
-                    { title: "GIVK HÖK", url: "https://givk.sze.hu/hok" },
-                    { title: "Tantervek és Tárgyak", url: "https://givk.sze.hu/tantervek" },
+                    { title: "GIVK HÖK", url: "https://ehok.sze.hu/" },
+                    { title: "Tantervek és Tárgyak", url: "https://givk.sze.hu/oktatas" },
                 ]
             },
             {
@@ -338,7 +430,7 @@ export default function LinksPage() {
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: "KGK Főoldal", url: "https://kgk.sze.hu/" },
-                    { title: "Tanulmányi Tájékoztatók", url: "https://kgk.sze.hu/hallgatoknak" },
+                    { title: "Tanulmányi Tájékoztatók", url: "https://kgk.sze.hu/oktatas" },
                 ]
             }
         ]

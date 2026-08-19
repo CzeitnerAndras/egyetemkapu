@@ -16,7 +16,7 @@ import AdminPanelPage from './pages/AdminPanelPage';
 import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
 import SettingsPage from './pages/SettingsPage';
-import LinkPage from './pages/LinksPage';
+import LinksPage from './pages/LinksPage';
 
 function App() {
   return (
@@ -41,7 +41,7 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/links" element={<LinkPage />} />
+          <Route path="/links" element={<LinksPage />} />
         </Routes>
       </div>
     </Router>
