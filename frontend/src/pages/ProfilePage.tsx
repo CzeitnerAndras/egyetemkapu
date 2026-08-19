@@ -155,11 +155,9 @@ export default function ProfilePage() {
     return (
         <main className="max-w-3xl mx-auto mt-10 p-4 space-y-8 relative z-20">
 
-            <div className="flex items-center space-x-4 border-b-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-4">
-                <div className="w-14 h-14 rounded-full secret:rounded-none bg-gradient-to-br from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-[#1cf85d] flex items-center justify-center shadow-md">
-                    <User className="w-8 h-8 text-white secret:text-black" />
-                </div>
-                <h1 className="text-4xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">
+            <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+                <User className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
                     Profil Beállítások
                 </h1>
             </div>
@@ -175,69 +173,84 @@ export default function ProfilePage() {
                 </div>
             )}
 
-            <section className="p-6 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300">
-                <h2 className="text-2xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 flex items-center secret:font-mono uppercase">
-                    <User className="w-6 h-6 mr-2" />
-                    Felhasználónév Módosítása
-                </h2>
-                <form onSubmit={handleUsernameUpdate} className="space-y-4">
-                    {currentUsername && (
-                        <p className="text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/70 font-medium secret:font-mono uppercase">Jelenlegi név: <span className="font-bold text-black dark:text-white secret:text-[#1cf85d]">{currentUsername}</span></p>
-                    )}
-                    <div className="flex flex-col group">
-                        <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Felhasználónév</label>
-                        <input type="text" required value={newUsername} onChange={(e) => setNewUsername(e.target.value)}
-                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none max-w-md secret:font-mono"
-                        />
-                    </div>
-                    <button type="submit" className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 px-6 hover:-translate-y-1 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer secret:font-mono uppercase">
-                        <Save className="w-5 h-5 mr-2" /> Mentés
-                    </button>
-                </form>
+            <section className="flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10">
+                    <User className="w-6 h-6 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                    <h2 className="text-xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
+                        Felhasználónév Módosítása
+                    </h2>
+                </div>
+                
+                <div className="p-6">
+                    <form onSubmit={handleUsernameUpdate} className="space-y-4">
+                        {currentUsername && (
+                            <p className="text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/70 font-medium secret:font-mono uppercase">Jelenlegi név: <span className="font-bold text-black dark:text-white secret:text-[#1cf85d]">{currentUsername}</span></p>
+                        )}
+                        <div className="flex flex-col group">
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Felhasználónév</label>
+                            <input type="text" required value={newUsername} onChange={(e) => setNewUsername(e.target.value)}
+                                className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none max-w-md secret:font-mono"
+                            />
+                        </div>
+                        <button type="submit" className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 px-6 hover:-translate-y-1 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer secret:font-mono uppercase">
+                            <Save className="w-5 h-5 mr-2" /> Mentés
+                        </button>
+                    </form>
+                </div>
             </section>
 
-            <section className="p-6 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300">
-                <h2 className="text-2xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 flex items-center secret:font-mono uppercase">
-                    <Key className="w-6 h-6 mr-2" />
-                    Jelszó Módosítása
-                </h2>
-                <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md">
-                    <div className="flex flex-col group">
-                        <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Jelenlegi Jelszó</label>
-                        <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
-                        />
-                    </div>
-                    <div className="flex flex-col group">
-                        <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Jelszó</label>
-                        <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
-                        />
-                    </div>
-                    <div className="flex flex-col group">
-                        <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Jelszó Megerősítése</label>
-                        <input type="password" required value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
-                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
-                        />
-                    </div>
-                    <button type="submit" className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 px-6 hover:-translate-y-1 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer secret:font-mono uppercase">
-                        <Save className="w-5 h-5 mr-2" /> Jelszó Mentése
-                    </button>
-                </form>
+            <section className="flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300 overflow-hidden">
+                <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10">
+                    <Key className="w-6 h-6 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                    <h2 className="text-xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
+                        Jelszó Módosítása
+                    </h2>
+                </div>
+
+                <div className="p-6">
+                    <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md">
+                        <div className="flex flex-col group">
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Jelenlegi Jelszó</label>
+                            <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+                                className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
+                            />
+                        </div>
+                        <div className="flex flex-col group">
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Jelszó</label>
+                            <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                                className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
+                            />
+                        </div>
+                        <div className="flex flex-col group">
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Jelszó Megerősítése</label>
+                            <input type="password" required value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
+                            />
+                        </div>
+                        <button type="submit" className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 px-6 hover:-translate-y-1 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer secret:font-mono uppercase">
+                            <Save className="w-5 h-5 mr-2" /> Jelszó Mentése
+                        </button>
+                    </form>
+                </div>
             </section>
 
-            <section className="p-6 border-4 border-red-600 dark:border-red-500 secret:border-[#1cf85d] bg-red-50 dark:bg-red-950/20 secret:bg-transparent shadow-md secret:shadow-none rounded-sm secret:rounded-none">
-                <h2 className="text-2xl font-bold text-red-700 dark:text-red-400 secret:text-[#1cf85d] mb-2 flex items-center secret:font-mono uppercase">
-                    <AlertTriangle className="w-6 h-6 mr-2" />
-                    Veszélyes Zóna
-                </h2>
-                <p className="text-red-800 dark:text-red-300 secret:text-[#1cf85d]/80 font-medium mb-4 secret:font-mono uppercase">&gt; A fiók törlése végleges és visszavonhatatlan. Minden adatod, naptárbejegyzésed és jegyzeted elveszik!</p>
-                <button
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="bg-red-600 dark:bg-red-700 secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 px-6 hover:bg-red-800 dark:hover:bg-red-600 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer shadow-md secret:shadow-none secret:font-mono uppercase"
-                >
-                    <Trash2 className="w-5 h-5 mr-2" /> Fiók Végleges Törlése
-                </button>
+            <section className="flex flex-col border-4 border-red-600 dark:border-red-500 secret:border-[#1cf85d] bg-red-50 dark:bg-red-950/20 secret:bg-transparent shadow-md secret:shadow-none rounded-sm secret:rounded-none overflow-hidden">
+                <div className="bg-gradient-to-r from-red-700 to-red-900 dark:from-red-900 dark:to-red-950 secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-red-500 secret:border-[#1cf85d] shadow-md z-10">
+                    <AlertTriangle className="w-6 h-6 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                    <h2 className="text-xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
+                        Veszélyes Zóna
+                    </h2>
+                </div>
+
+                <div className="p-6">
+                    <p className="text-red-800 dark:text-red-300 secret:text-[#1cf85d]/80 font-medium mb-4 secret:font-mono uppercase">&gt; A fiók törlése végleges és visszavonhatatlan. Minden adatod, naptárbejegyzésed és jegyzeted elveszik!</p>
+                    <button
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        className="bg-red-600 dark:bg-red-700 secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 px-6 hover:bg-red-800 dark:hover:bg-red-600 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer shadow-md secret:shadow-none secret:font-mono uppercase"
+                    >
+                        <Trash2 className="w-5 h-5 mr-2" /> Fiók Végleges Törlése
+                    </button>
+                </div>
             </section>
 
             {isDeleteModalOpen && (
