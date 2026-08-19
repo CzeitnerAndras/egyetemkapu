@@ -15,6 +15,7 @@ import IdeaBoxPage from './pages/IdeaBoxPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="/admin" element={<AdminPanelPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/faq" element={<FaqPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </div>
     </Router>
