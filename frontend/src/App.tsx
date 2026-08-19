@@ -16,7 +16,7 @@ import AdminPanelPage from './pages/AdminPanelPage';
 import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
 import SettingsPage from './pages/SettingsPage';
-import LinkPage from './pages/LinkPage';
+import LinkPage from './pages/LinksPage';
 
 function App() {
   return (
