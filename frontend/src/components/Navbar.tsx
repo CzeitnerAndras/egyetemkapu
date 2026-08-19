@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mail, User, Menu, Moon, Sun } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, ExternalLink, Info, HelpCircle, Settings, ShieldAlert } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [username, setUsername] = useState('Felhasználó');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSecretMode, setIsSecretMode] = useState(false);
   const [isFatalError, setIsFatalError] = useState(false);
@@ -55,6 +56,10 @@ export default function Navbar() {
         .then(data => {
           if (data && data.username) {
             setUsername(data.username);
+            const userRole = data.role || (data.roles && data.roles[0]) || '';
+            if (userRole.includes('ADMIN') || data.isAdmin) {
+              setIsAdmin(true);
+            }
           }
         })
         .catch(err => console.error("Hiba a név lekérésekor:", err));
@@ -183,7 +188,9 @@ export default function Navbar() {
 
         {/* --- Jobb oldal: Ikonok --- */}
         <div className="flex items-center space-x-4">
-          <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
+          <Link to="/ideabox" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
+            <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
+          </Link>
 
           <User
             onClick={handleProfileClick}
@@ -196,29 +203,67 @@ export default function Navbar() {
           />
         </div>
 
-        {/* --- Fő Dropdown Menü --- */}
+        {/* --- Fő Dropdown Menü (3 Vonalka) --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] transition-colors duration-300">
-            <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-[#a855f7]/30">
+          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-72 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+
+            <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
-                  <Moon className="w-5 h-5 text-indigo-300 drop-shadow-[0_0_5px_rgba(165,180,252,0.8)]" />
+                  <Moon className="w-5 h-5 text-indigo-300 drop-shadow-[0_0_5px_rgba(165,180,252,0.8)] secret:text-[#1cf85d] secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 ) : (
                   <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" />
                 )}
-                <span className="font-bold text-sm text-white">
+                <span className="font-bold text-sm text-white secret:text-[#1cf85d] secret:font-mono uppercase">
                   {isDarkMode ? 'Sötét' : 'Világos'}
                 </span>
               </div>
 
               <button
                 onClick={handleThemeToggle}
-                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner ${isDarkMode ? 'bg-[#a855f7] shadow-[0_0_10px_rgba(168,85,247,0.6)]' : 'bg-black/30'
+                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-black/30'
                   }`}
               >
-                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-white translate-x-6' : 'bg-white translate-x-1'
+                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-white secret:bg-black translate-x-6' : 'bg-white translate-x-1'
                   }`}></div>
               </button>
+            </div>
+
+            <div className="flex flex-col py-2">
+              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">Egyetemi Linkek</span>
+              <a href="https://neptun.unideb.hu/" target="_blank" rel="noopener noreferrer" className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <ExternalLink className="w-4 h-4 mr-3" /> Neptun
+              </a>
+              <a href="https://elearning.unideb.hu/" target="_blank" rel="noopener noreferrer" className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <ExternalLink className="w-4 h-4 mr-3" /> E-learning
+              </a>
+              <a href="https://lib.unideb.hu/" target="_blank" rel="noopener noreferrer" className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <ExternalLink className="w-4 h-4 mr-3" /> DEENK Könyvtár
+              </a>
+
+              <div className="border-t-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
+
+              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">Rendszer</span>
+              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Info className="w-4 h-4 mr-3" /> A Projektről
+              </Link>
+              <Link to="/faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <HelpCircle className="w-4 h-4 mr-3" /> Súgó / GyIK
+              </Link>
+
+              <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Settings className="w-4 h-4 mr-3" /> Beállítások
+              </Link>
+
+              {isAdmin && (
+                <>
+                  <div className="border-t-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
+                  <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono text-red-300 dark:text-red-400 secret:text-[#1cf85d]">Adminisztráció</span>
+                  <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-red-400 dark:hover:border-red-500 secret:hover:border-[#1cf85d] hover:bg-red-500/20 dark:hover:bg-red-500/20 secret:hover:bg-[#1cf85d] text-red-200 hover:text-white dark:text-red-300 dark:hover:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                    <ShieldAlert className="w-4 h-4 mr-3" /> Admin Panel
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

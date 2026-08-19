@@ -11,6 +11,8 @@ import CalculatorPage from './pages/CalculatorPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 import ReferencePage from './pages/ReferencePage';
 import FocusRoomPage from './pages/FocusRoomPage';
+import IdeaBoxPage from './pages/IdeaBoxPage';
+import AdminPanelPage from './pages/AdminPanelPage';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
           <Route path="/tudastar" element={<KnowledgeBasePage />} />
           <Route path="/hivatkozas" element={<ReferencePage />} />
           <Route path="/fokusz" element={<FocusRoomPage />} />
+          <Route path="/ideabox" element={<IdeaBoxPage />} />
+          <Route path="/admin" element={<AdminPanelPage />} />
         </Routes>
       </div>
     </Router>
