@@ -25,17 +25,25 @@ export default function HomePage() {
   useEffect(() => {
     {/* --- Hírek lekérése (GET) --- */}
     fetch('http://localhost:8080/api/events')
-      .then((res) => res.json())
-      .then((data: EventItem[]) => {
-        setEvents(data);
+      .then((res) => {
+        if (!res.ok) throw new Error('Hiba a hírek lekérésekor');
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setEvents(data);
+        } else {
+          setEvents([]);
+        }
         setLoading(false);
       })
       .catch((err) => {
         console.error('Hiba az események lekérésekor:', err);
+        setEvents([]);
         setLoading(false);
       });
 
-    {/* --- Jegyzetek lekérése (GET) --- */}
+    {/* --- Jegyzetek lekérése (GET) - Privát --- */}
     const token = localStorage.getItem('token');
     if (token) {
       fetch('http://localhost:8080/api/notes', {
@@ -45,8 +53,8 @@ export default function HomePage() {
           if (!res.ok) throw new Error('Nincs jogosultság vagy lejárt token');
           return res.json();
         })
-        .then((notes: NoteItem[]) => {
-          if (notes && notes.length > 0) {
+        .then((notes) => {
+          if (Array.isArray(notes) && notes.length > 0) {
             setNoteContent(notes[0].content);
             setNoteId(notes[0].id || null);
           }
@@ -131,9 +139,9 @@ export default function HomePage() {
           </div>
         ) : (
           events.map((item) => (
-            <div 
-              key={item.id} 
-              className="flex border-2 border-[#800000] dark:border-[#a855f7] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] h-52 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(128,0,0,0.15)] dark:hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition-all duration-300 cursor-pointer" 
+            <div
+              key={item.id}
+              className="flex border-2 border-[#800000] dark:border-[#a855f7] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] h-52 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(128,0,0,0.15)] dark:hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition-all duration-300 cursor-pointer"
               onClick={() => setSelectedNews(item)}
             >
               <div className="w-52 shrink-0 border-r-2 border-[#800000] dark:border-[#a855f7] flex items-center justify-center bg-[#06261b] dark:bg-black/60 overflow-hidden transition-colors relative">
