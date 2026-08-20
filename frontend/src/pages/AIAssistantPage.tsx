@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Message {
     id: number;
@@ -8,6 +9,7 @@ interface Message {
 }
 
 export default function AIAssistantPage() {
+    const { t } = useLanguage();
     const isCurrentlySecret = document.documentElement.classList.contains('secret');
     const [isSecretMode, setIsSecretMode] = useState(isCurrentlySecret);
     const [messages, setMessages] = useState<Message[]>([
@@ -15,8 +17,8 @@ export default function AIAssistantPage() {
             id: 1,
             role: 'ai',
             text: isCurrentlySecret
-                ? 'Üdvözöllek! Én a BandiAI vagyok. Miben segíthetek ma?'
-                : 'Üdvözöllek! Én vagyok az Egyetemkapu AI Asszisztense. Miben segíthetek ma?'
+                ? t('ai.welcomeSecret')
+                : t('ai.welcome')
         }
     ]);
     const [inputValue, setInputValue] = useState('');
@@ -33,16 +35,18 @@ export default function AIAssistantPage() {
     }, [messages, isLoading]);
 
     useEffect(() => {
+        setMessages(prev => {
+            const newMsgs = [...prev];
+            if (newMsgs.length > 0 && newMsgs[0].id === 1) {
+                newMsgs[0].text = isSecretMode ? t('ai.welcomeSecret') : t('ai.welcome');
+            }
+            return newMsgs;
+        });
+    }, [t, isSecretMode]);
+
+    useEffect(() => {
         const handleSecretLogoff = () => {
             setIsSecretMode(false);
-
-            setMessages(prev => {
-                const newMsgs = [...prev];
-                if (newMsgs.length > 0 && newMsgs[0].id === 1) {
-                    newMsgs[0].text = 'Üdvözöllek! Én vagyok az Egyetemkapu AI Asszisztense. Miben segíthetek ma?';
-                }
-                return newMsgs;
-            });
         };
 
         window.addEventListener('secretLogoff', handleSecretLogoff);
@@ -90,7 +94,7 @@ export default function AIAssistantPage() {
             const errorAiMessage: Message = {
                 id: Date.now() + 1,
                 role: 'ai',
-                text: 'Sajnos nem tudtam kapcsolódni a szerverhez. Kérlek, próbáld újra később!'
+                text: t('ai.error')
             };
             setMessages((prev) => [...prev, errorAiMessage]);
         } finally {
@@ -108,7 +112,7 @@ export default function AIAssistantPage() {
                 <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors shadow-md z-10">
                     <Bot className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h1 className="text-2xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                        {isSecretMode ? 'Bandi Industries AI Asszisztens' : 'AI Asszisztens'}
+                        {isSecretMode ? t('ai.secretTitle') : t('ai.title')}
                     </h1>
                 </div>
 
@@ -149,9 +153,9 @@ export default function AIAssistantPage() {
                                 <Bot className="w-6 h-6 text-white secret:text-black" />
                             </div>
                             <div className="max-w-[75%] p-4 border-2 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-black flex space-x-2 items-center rounded-tr-xl rounded-bl-xl rounded-br-xl secret:rounded-none shadow-md">
-                                <div className="w-2.5 h-2.5 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] rounded-full secret:rounded-none animate-bounce"></div>
-                                <div className="w-2.5 h-2.5 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] rounded-full secret:rounded-none animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                <div className="w-2.5 h-2.5 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] rounded-full secret:rounded-none animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                                <div className="w-2.5 h-2.5 bg-[#800000] dark:border-[#a855f7] secret:bg-[#1cf85d] rounded-full secret:rounded-none animate-bounce"></div>
+                                <div className="w-2.5 h-2.5 bg-[#800000] dark:border-[#a855f7] secret:bg-[#1cf85d] rounded-full secret:rounded-none animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                <div className="w-2.5 h-2.5 bg-[#800000] dark:border-[#a855f7] secret:bg-[#1cf85d] rounded-full secret:rounded-none animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                             </div>
                         </div>
                     )}
@@ -165,7 +169,7 @@ export default function AIAssistantPage() {
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="Írd ide a kérdésed..."
+                            placeholder={t('ai.placeholder')}
                             className="flex-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-[#1cf85d]/30 text-lg bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] placeholder:secret:text-[#1cf85d]/50 secret:font-mono transition-all shadow-inner"
                             disabled={isLoading}
                         />
@@ -175,7 +179,7 @@ export default function AIAssistantPage() {
                             className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] px-6 font-bold border-2 border-black dark:border-transparent secret:border-[#1cf85d] transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center cursor-pointer secret:font-mono secret:uppercase"
                         >
                             <Send className="w-6 h-6 mr-2" />
-                            Küldés
+                            {t('ai.send')}
                         </button>
                     </form>
                 </div>
