@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Trash2, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Task {
     id?: number;
@@ -12,6 +13,7 @@ interface Task {
 }
 
 export default function CalendarPage() {
+    const { t, locale } = useLanguage();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -61,8 +63,16 @@ export default function CalendarPage() {
     const daysInMonth = getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
     const firstDay = getFirstDayOfMonth(currentDate.getFullYear(), currentDate.getMonth());
 
-    const monthNames = ["Január", "Február", "Március", "Április", "Május", "Június", "Július", "Augusztus", "Szeptember", "Október", "November", "December"];
-    const dayNames = ["Hé", "Ke", "Sze", "Csü", "Pé", "Szo", "Vas"];
+    const monthNames = [
+        t('cal.month.0'), t('cal.month.1'), t('cal.month.2'), t('cal.month.3'),
+        t('cal.month.4'), t('cal.month.5'), t('cal.month.6'), t('cal.month.7'),
+        t('cal.month.8'), t('cal.month.9'), t('cal.month.10'), t('cal.month.11')
+    ];
+
+    const dayNames = [
+        t('cal.day.0'), t('cal.day.1'), t('cal.day.2'), t('cal.day.3'),
+        t('cal.day.4'), t('cal.day.5'), t('cal.day.6')
+    ];
 
     const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
@@ -99,7 +109,7 @@ export default function CalendarPage() {
 
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('A teendő mentéséhez be kell jelentkezned!');
+            alert(t('cal.needLogin'));
             return;
         }
 
@@ -223,25 +233,27 @@ export default function CalendarPage() {
             <div className="lg:col-span-1 flex flex-col space-y-4">
                 <div className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
                     <div className="bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
-                        {selectedDate.toLocaleDateString('hu-HU')} Teendői
+                        {t('cal.tasksOf', { date: selectedDate.toLocaleDateString(locale) })}
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                         {loading ? (
-                            <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">Töltés...</p>
+                            <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">{t('cal.loading')}</p>
                         ) : getTasksForSelectedDate().length === 0 ? (
-                            <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; Ezen a napon nincsenek teendőid.</p>
+                            <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; {t('cal.noTasks')}</p>
                         ) : (
                             getTasksForSelectedDate().map(task => (
                                 <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-sm hover:shadow-md transition-shadow relative group">
                                     <h3 className="font-bold text-sm text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
                                     <div className="flex justify-between items-center mt-1 text-xs text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
-                                        <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase">{task.taskType}</span>
-                                        <span>{new Date(task.deadline).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase">
+                                            {t(`cal.type.${task.taskType}`) || task.taskType}
+                                        </span>
+                                        <span>{new Date(task.deadline).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
 
                                     {(task.pingDayBefore || task.pingOnDay) && (
-                                        <div className="absolute top-2 right-8 text-indigo-500 dark:text-indigo-400 secret:text-[#1cf85d]" title="Discord értesítés beállítva">
+                                        <div className="absolute top-2 right-8 text-indigo-500 dark:text-indigo-400 secret:text-[#1cf85d]" title={t('cal.discordSet')}>
                                             <Bell className="w-4 h-4" />
                                         </div>
                                     )}
@@ -261,11 +273,11 @@ export default function CalendarPage() {
                 {/* --- Új teendő hozzáadása --- */}
                 <form onSubmit={handleSaveTask} className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] p-4 flex flex-col space-y-3">
                     <h3 className="text-lg font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] border-b-2 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-1 uppercase secret:font-mono">
-                        Új bejegyzés rögzítése
+                        {t('cal.newEntry')}
                     </h3>
 
                     <div className="flex flex-col group">
-                        <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">Esemény neve</label>
+                        <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
                         <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
                             className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-transparent dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                         />
@@ -273,17 +285,17 @@ export default function CalendarPage() {
 
                     <div className="flex space-x-3">
                         <div className="flex flex-col flex-1">
-                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">Típus</label>
+                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
                             <select value={taskType} onChange={e => setTaskType(e.target.value)}
                                 className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] cursor-pointer text-sm secret:font-mono uppercase appearance-none"
                             >
-                                <option>Vizsga</option>
-                                <option>Beadandó</option>
-                                <option>Egyéb</option>
+                                <option value="Vizsga">{t('cal.type.Vizsga')}</option>
+                                <option value="Beadandó">{t('cal.type.Beadandó')}</option>
+                                <option value="Egyéb">{t('cal.type.Egyéb')}</option>
                             </select>
                         </div>
                         <div className="flex flex-col w-1/3">
-                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">Időpont</label>
+                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.time')}</label>
                             <input required type="time" value={time} onChange={e => setTime(e.target.value)}
                                 className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-transparent dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono"
                             />
@@ -293,21 +305,21 @@ export default function CalendarPage() {
                     {/* --- Discord ping beállítások --- */}
                     <div className="bg-gray-100 dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-indigo-200 dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
                         <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
-                            <Bell className="w-3.5 h-3.5 mr-1" /> Discord Értesítések
+                            <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
                         </p>
                         <label className="flex items-center space-x-2 cursor-pointer group">
                             <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">Ping 1 nappal előtte</span>
+                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
                         </label>
                         <label className="flex items-center space-x-2 cursor-pointer group">
                             <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">Ping aznap reggel</span>
+                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
                         </label>
                     </div>
 
                     <button type="submit" className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
                         <Plus className="w-4 h-4 mr-1" />
-                        Mentés a naptárba
+                        {t('cal.save')}
                     </button>
                 </form>
             </div>
