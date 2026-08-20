@@ -1,11 +1,37 @@
 import { useState, useRef, useEffect } from 'react';
 import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Link as LinkIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
+
+function LanguageFlag({ lang }: { lang: 'hu' | 'en' }) {
+  if (lang === 'hu') {
+    return (
+      <svg viewBox="0 0 21 15" className="w-7 h-5 rounded-[2px] shadow-sm border border-white/40" aria-hidden="true">
+        <rect width="21" height="5" fill="#CD2A3E" />
+        <rect y="5" width="21" height="5" fill="#FFFFFF" />
+        <rect y="10" width="21" height="5" fill="#436F4D" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 60 30" className="w-7 h-5 rounded-[2px] shadow-sm border border-white/40" aria-hidden="true">
+      <clipPath id="uk-flag"><rect width="60" height="30" /></clipPath>
+      <g clipPath="url(#uk-flag)">
+        <rect width="60" height="30" fill="#012169" />
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
+        <path d="M30,0 V30 M0,15 H60" stroke="#fff" strokeWidth="10" />
+        <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6" />
+      </g>
+    </svg>
+  );
+}
 
 export default function Navbar() {
+  const { language, toggleLanguage, t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [username, setUsername] = useState('Felhasználó');
+  const [username, setUsername] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSecretMode, setIsSecretMode] = useState(false);
@@ -177,13 +203,13 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex space-x-6 text-lg font-medium">
-            <Link to="/naptar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Naptár</Link>
-            <Link to="/ai" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">AI Asszisztens</Link>
-            <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Kalkulátorok</Link>
-            <Link to="/tudastar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Tudástár</Link>
-            <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Hivatkozás Generátor</Link>
-            <Link to="/fokusz" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Fókusz Szoba</Link>
-            <Link to="/links" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">Linkek</Link>
+            <Link to="/naptar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.calendar')}</Link>
+            <Link to="/ai" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.ai')}</Link>
+            <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.calculators')}</Link>
+            <Link to="/tudastar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.knowledge')}</Link>
+            <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.reference')}</Link>
+            <Link to="/fokusz" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.focus')}</Link>
+            <Link to="/links" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.links')}</Link>
           </div>
         </div>
 
@@ -192,6 +218,16 @@ export default function Navbar() {
           <Link to="/ideabox" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
             <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
           </Link>
+
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            title={language === 'hu' ? t('nav.switchToEn') : t('nav.switchToHu')}
+            aria-label={language === 'hu' ? t('nav.switchToEn') : t('nav.switchToHu')}
+            className="cursor-pointer hover:scale-110 transition-transform flex items-center"
+          >
+            <LanguageFlag lang={language === 'hu' ? 'en' : 'hu'} />
+          </button>
 
           <User
             onClick={handleProfileClick}
@@ -216,7 +252,7 @@ export default function Navbar() {
                   <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" />
                 )}
                 <span className="font-bold text-sm text-white secret:text-[#1cf85d] secret:font-mono uppercase">
-                  {isDarkMode ? 'Sötét' : 'Világos'}
+                  {isDarkMode ? t('nav.dark') : t('nav.light')}
                 </span>
               </div>
 
@@ -231,31 +267,31 @@ export default function Navbar() {
             </div>
 
             <div className="flex flex-col py-2">
-              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">Menü</span>
+              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
               <Link to="/links" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <LinkIcon className="w-4 h-4 mr-3" /> Egyetemi Linkek
+                <LinkIcon className="w-4 h-4 mr-3" /> {t('nav.uniLinks')}
               </Link>
 
               <div className="border-t-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
 
-              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">Rendszer</span>
+              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.system')}</span>
               <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Info className="w-4 h-4 mr-3" /> A Projektről
+                <Info className="w-4 h-4 mr-3" /> {t('nav.about')}
               </Link>
               <Link to="/faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <HelpCircle className="w-4 h-4 mr-3" /> Súgó / GyIK
+                <HelpCircle className="w-4 h-4 mr-3" /> {t('nav.faq')}
               </Link>
 
               <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Settings className="w-4 h-4 mr-3" /> Beállítások
+                <Settings className="w-4 h-4 mr-3" /> {t('nav.settings')}
               </Link>
 
               {isAdmin && (
                 <>
                   <div className="border-t-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
-                  <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono text-red-300 dark:text-red-400 secret:text-[#1cf85d]">Adminisztráció</span>
+                  <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono text-red-300 dark:text-red-400 secret:text-[#1cf85d]">{t('nav.adminSection')}</span>
                   <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-red-400 dark:hover:border-red-500 secret:hover:border-[#1cf85d] hover:bg-red-500/20 dark:hover:bg-red-500/20 secret:hover:bg-[#1cf85d] text-red-200 hover:text-white dark:text-red-300 dark:hover:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                    <ShieldAlert className="w-4 h-4 mr-3" /> Admin Panel
+                    <ShieldAlert className="w-4 h-4 mr-3" /> {t('nav.adminPanel')}
                   </Link>
                 </>
               )}
@@ -268,8 +304,8 @@ export default function Navbar() {
           <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
             <div className="px-4 py-3 border-b-4 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-black/10 dark:bg-black/20 secret:bg-transparent cursor-default">
-              <span className="block text-xs text-white/70 secret:text-[#1cf85d]/70 font-medium uppercase tracking-wider mb-0.5 secret:font-mono">Bejelentkezve mint:</span>
-              <span className="font-bold text-xl text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-none truncate block secret:font-mono">{username}</span>
+              <span className="block text-xs text-white/70 secret:text-[#1cf85d]/70 font-medium uppercase tracking-wider mb-0.5 secret:font-mono">{t('nav.loggedInAs')}</span>
+              <span className="font-bold text-xl text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-none truncate block secret:font-mono">{username || t('nav.userFallback')}</span>
             </div>
 
             <Link
@@ -277,13 +313,13 @@ export default function Navbar() {
               onClick={() => setIsProfileMenuOpen(false)}
               className="px-4 py-3 border-b-2 border-black/10 dark:border-[#a855f7]/20 secret:border-[#1cf85d] text-white secret:text-[#1cf85d] font-bold hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors flex items-center secret:font-mono uppercase"
             >
-              <User className="w-4 h-4 mr-2" /> Profilom
+              <User className="w-4 h-4 mr-2" /> {t('nav.myProfile')}
             </Link>
             <button
               onClick={handleLogout}
               className="px-4 py-3 text-left text-red-200 dark:text-red-300 secret:text-[#1cf85d] hover:text-white secret:hover:text-black font-bold hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] transition-colors cursor-pointer flex items-center secret:font-mono uppercase"
             >
-              Kijelentkezés
+              {t('nav.logout')}
             </button>
           </div>
         )}

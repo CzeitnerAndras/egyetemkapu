@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, X } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface EventItem {
   id: number;
@@ -16,6 +17,7 @@ interface NoteItem {
 }
 
 export default function HomePage() {
+  const { t, locale } = useLanguage();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedNews, setSelectedNews] = useState<EventItem | null>(null);
@@ -67,7 +69,7 @@ export default function HomePage() {
   const handleSaveNote = () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert('A jegyzet mentéséhez be kell jelentkezned!');
+      alert(t('home.loginToSave'));
       return;
     }
 
@@ -84,7 +86,7 @@ export default function HomePage() {
         body: JSON.stringify({ content: noteContent }),
       })
         .then((res) => res.json())
-        .then(() => alert('Jegyzet sikeresen frissítve!'))
+        .then(() => alert(t('home.noteUpdated')))
         .catch((err) => console.error('Hiba a mentéskor:', err));
     } else {
       {/* --- Új létrehozása (POST) --- */}
@@ -96,7 +98,7 @@ export default function HomePage() {
         .then((res) => res.json())
         .then((newNote: NoteItem) => {
           setNoteId(newNote.id || null);
-          alert('Jegyzet sikeresen elmentve!');
+          alert(t('home.noteSaved'));
         })
         .catch((err) => console.error('Hiba a mentéskor:', err));
     }
@@ -118,7 +120,7 @@ export default function HomePage() {
         .then(() => {
           setNoteContent('');
           setNoteId(null);
-          alert('Jegyzet törölve!');
+          alert(t('home.noteDeleted'));
         })
         .catch((err) => console.error('Hiba a törléskor:', err));
     } else {
@@ -132,10 +134,10 @@ export default function HomePage() {
       {/* --- Bal oldal: Hírek --- */}
       <div className="lg:col-span-2 space-y-6 h-[550px] overflow-y-auto pt-4 pl-2 pr-4 pb-4 custom-scrollbar">
         {loading ? (
-          <div className="text-[#800000] dark:text-[#c084fc] font-bold p-4">Hírek betöltése a szerverről...</div>
+          <div className="text-[#800000] dark:text-[#c084fc] font-bold p-4">{t('home.loadingNews')}</div>
         ) : events.length === 0 ? (
           <div className="text-gray-600 dark:text-gray-400 p-4 border-2 border-dashed border-[#800000] dark:border-[#a855f7]">
-            Jelenleg nincs feltöltött hír az adatbázisban.
+            {t('home.noNews')}
           </div>
         ) : (
           events.map((item) => (
@@ -150,7 +152,7 @@ export default function HomePage() {
                 {item.imageUrl ? (
                   <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-white font-bold">KÉP</span>
+                  <span className="text-white font-bold">{t('home.image')}</span>
                 )}
               </div>
 
@@ -162,7 +164,7 @@ export default function HomePage() {
                   {item.description}
                 </p>
                 <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
-                  {item.eventDate ? new Date(item.eventDate).toLocaleDateString('hu-HU') : 'Nincs megadva dátum'}
+                  {item.eventDate ? new Date(item.eventDate).toLocaleDateString(locale) : t('home.noDate')}
                 </span>
               </div>
             </div>
@@ -174,7 +176,7 @@ export default function HomePage() {
       <div className="lg:col-span-1 border-2 border-black dark:border-[#a855f7] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] relative flex flex-col h-[550px] shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] hover:shadow-[4px_4px_25px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_0_35px_rgba(168,85,247,0.35)] transition-all duration-300">
         <textarea
           className="w-full h-full bg-transparent resize-none outline-none px-4 py-2 notepad-lines text-black dark:text-gray-100"
-          placeholder="Ide írhatod a jegyzeteket..."
+          placeholder={t('home.notePlaceholder')}
           value={noteContent}
           onChange={(e) => setNoteContent(e.target.value)}
         ></textarea>
@@ -183,14 +185,14 @@ export default function HomePage() {
           <button
             onClick={handleDeleteNote}
             className="p-2 bg-red-600 text-white rounded hover:bg-red-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-            title="Törlés"
+            title={t('home.delete')}
           >
             <Trash2 className="w-5 h-5" />
           </button>
           <button
             onClick={handleSaveNote}
             className="p-2 bg-[#800000] dark:bg-[#a855f7] text-white rounded hover:bg-red-800 dark:hover:bg-[#c084fc] hover:shadow-[0_0_15px_rgba(168,85,247,0.6)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-            title="Mentés"
+            title={t('home.save')}
           >
             <Save className="w-5 h-5" />
           </button>
@@ -211,7 +213,7 @@ export default function HomePage() {
 
             <h1 className="text-4xl font-bold text-[#800000] dark:text-[#c084fc] mb-4 mt-2">{selectedNews.title}</h1>
             <span className="text-md font-bold text-gray-500 dark:text-gray-400 mb-6 block border-b-2 border-gray-300 dark:border-gray-600 pb-2">
-              Dátum: {selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString('hu-HU') : 'Nincs dátum'}
+              {t('home.dateLabel', { date: selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString(locale) : t('home.noDateShort') })}
             </span>
 
             <p className="text-gray-800 dark:text-gray-200 text-xl leading-relaxed text-justify whitespace-pre-wrap">
