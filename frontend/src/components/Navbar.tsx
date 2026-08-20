@@ -1,31 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Link as LinkIcon } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Link as LinkIcon, Flag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
-
-function LanguageFlag({ lang }: { lang: 'hu' | 'en' }) {
-  if (lang === 'hu') {
-    return (
-      <svg viewBox="0 0 21 15" className="w-7 h-5 rounded-[2px] shadow-sm border border-white/40" aria-hidden="true">
-        <rect width="21" height="5" fill="#CD2A3E" />
-        <rect y="5" width="21" height="5" fill="#FFFFFF" />
-        <rect y="10" width="21" height="5" fill="#436F4D" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 60 30" className="w-7 h-5 rounded-[2px] shadow-sm border border-white/40" aria-hidden="true">
-      <clipPath id="uk-flag"><rect width="60" height="30" /></clipPath>
-      <g clipPath="url(#uk-flag)">
-        <rect width="60" height="30" fill="#012169" />
-        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
-        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
-        <path d="M30,0 V30 M0,15 H60" stroke="#fff" strokeWidth="10" />
-        <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" strokeWidth="6" />
-      </g>
-    </svg>
-  );
-}
 
 export default function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
@@ -215,19 +191,20 @@ export default function Navbar() {
 
         {/* --- Jobb oldal: Ikonok --- */}
         <div className="flex items-center space-x-4">
-          <Link to="/ideabox" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
-            <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
-          </Link>
 
           <button
             type="button"
             onClick={toggleLanguage}
-            title={language === 'hu' ? t('nav.switchToEn') : t('nav.switchToHu')}
             aria-label={language === 'hu' ? t('nav.switchToEn') : t('nav.switchToHu')}
-            className="cursor-pointer hover:scale-110 transition-transform flex items-center"
+            className="cursor-pointer hover:scale-110 hover:text-gray-200 transition-all flex items-center space-x-1"
           >
-            <LanguageFlag lang={language === 'hu' ? 'en' : 'hu'} />
+            <Flag className="w-6 h-6" />
+            <span className="text-xs font-bold uppercase">{language}</span>
           </button>
+
+          <Link to="/ideabox" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
+            <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
+          </Link>
 
           <User
             onClick={handleProfileClick}
