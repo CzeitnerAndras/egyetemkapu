@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Calculator, Sigma, Plus, Trash2, FunctionSquare, ArrowRight } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Subject {
     id: number;
@@ -9,6 +10,7 @@ interface Subject {
 }
 
 export default function CalculatorPage() {
+    const { t } = useLanguage();
     const [subjects, setSubjects] = useState<Subject[]>([{ id: Date.now(), name: '', credit: 3, grade: 5 }, { id: Date.now() + 1, name: '', credit: 3, grade: 5 }]);
     const [averageResult, setAverageResult] = useState<number | null>(null);
     const [averageLoading, setAverageLoading] = useState(false);
@@ -77,10 +79,10 @@ export default function CalculatorPage() {
             if (response.ok && !data.error) {
                 setMathResult(data.result);
             } else {
-                setMathError(data.error || 'A matematikai API hibát jelzett.');
+                setMathError(data.error || t('calc.apiError'));
             }
         } catch (error) {
-            setMathError('Hiba a szerverhez való kapcsolódás során.');
+            setMathError(t('calc.connError'));
         } finally {
             setMathLoading(false);
         }
@@ -95,7 +97,7 @@ export default function CalculatorPage() {
                 <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10">
                     <Sigma className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h2 className="text-xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                        Súlyozott Átlag / Kreditindex
+                        {t('calc.averageTitle')}
                     </h2>
                 </div>
 
@@ -110,14 +112,14 @@ export default function CalculatorPage() {
 
                                     <input
                                         type="text"
-                                        placeholder="Tantárgy neve (opcionális)"
+                                        placeholder={t('calc.subjectPlaceholder')}
                                         value={subject.name}
                                         onChange={(e) => handleSubjectChange(subject.id, 'name', e.target.value)}
                                         className="flex-1 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] bg-transparent outline-none px-2 py-1 text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder:secret:text-[#1cf85d]/50"
                                     />
 
                                     <div className="w-20">
-                                        <label className="text-xs font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase block text-center">Kredit</label>
+                                        <label className="text-xs font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase block text-center">{t('calc.credit')}</label>
                                         <input
                                             type="number" min="1" max="30" required
                                             value={subject.credit}
@@ -127,7 +129,7 @@ export default function CalculatorPage() {
                                     </div>
 
                                     <div className="w-20">
-                                        <label className="text-xs font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase block text-center">Érdemjegy</label>
+                                        <label className="text-xs font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase block text-center">{t('calc.grade')}</label>
                                         <select
                                             value={subject.grade}
                                             onChange={(e) => handleSubjectChange(subject.id, 'grade', Number(e.target.value))}
@@ -145,7 +147,7 @@ export default function CalculatorPage() {
                                         type="button"
                                         onClick={() => handleRemoveSubject(subject.id)}
                                         className="p-2 text-gray-500 hover:text-red-600 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] transition-colors cursor-pointer"
-                                        title="Törlés"
+                                        title={t('calc.delete')}
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
@@ -159,7 +161,7 @@ export default function CalculatorPage() {
                                 onClick={handleAddSubject}
                                 className="w-full border-2 border-dashed border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 flex items-center justify-center hover:bg-[#800000]/10 dark:hover:bg-[#a855f7]/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer secret:font-mono uppercase"
                             >
-                                <Plus className="w-5 h-5 mr-1" /> Új tárgy hozzáadása
+                                <Plus className="w-5 h-5 mr-1" /> {t('calc.addSubject')}
                             </button>
 
                             <button
@@ -168,7 +170,7 @@ export default function CalculatorPage() {
                                 className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
                             >
                                 <Calculator className="w-5 h-5 mr-2" />
-                                {averageLoading ? 'Számolás...' : 'Átlag Kiszámítása'}
+                                {averageLoading ? t('calc.calculating') : t('calc.calculateAvg')}
                             </button>
                         </div>
                     </form>
@@ -177,7 +179,7 @@ export default function CalculatorPage() {
                     {averageResult !== null && (
                         <div className="mt-6 p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-black flex flex-col items-center justify-center shadow-inner animate-[fadeIn_0.5s_ease-out]">
                             <span className="text-gray-600 dark:text-gray-400 secret:text-[#1cf85d]/70 font-bold uppercase tracking-wider text-sm secret:font-mono">
-                                Súlyozott átlag eredménye
+                                {t('calc.avgResult')}
                             </span>
                             <span className="text-5xl font-black text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mt-2 drop-shadow-md secret:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] secret:font-mono">
                                 {averageResult}
@@ -194,7 +196,7 @@ export default function CalculatorPage() {
                 <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10">
                     <FunctionSquare className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h2 className="text-xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                        Komplex API Számológép
+                        {t('calc.mathTitle')}
                     </h2>
                 </div>
 
@@ -204,27 +206,27 @@ export default function CalculatorPage() {
                         {/* --- Művelet kiválasztása --- */}
                         <div className="flex flex-col group">
                             <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
-                                Művelet
+                                {t('calc.operation')}
                             </label>
                             <select
                                 value={operation}
                                 onChange={(e) => setOperation(e.target.value)}
                                 className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] cursor-pointer appearance-none shadow-inner secret:shadow-none secret:font-mono uppercase text-lg"
                             >
-                                <option value="simplify">Egyszerűsítés (Simplify)</option>
-                                <option value="factor">Faktorizálás (Factor)</option>
-                                <option value="derive">Deriválás (Derive)</option>
-                                <option value="integrate">Integrálás (Integrate)</option>
-                                <option value="zeroes">Zérushelyek (Zeroes)</option>
-                                <option value="tangent">Érintő (Tangent 2|x^3)</option>
-                                <option value="area">Terület (Area 2:4|x^3)</option>
+                                <option value="simplify">{t('calc.op.simplify')}</option>
+                                <option value="factor">{t('calc.op.factor')}</option>
+                                <option value="derive">{t('calc.op.derive')}</option>
+                                <option value="integrate">{t('calc.op.integrate')}</option>
+                                <option value="zeroes">{t('calc.op.zeroes')}</option>
+                                <option value="tangent">{t('calc.op.tangent')}</option>
+                                <option value="area">{t('calc.op.area')}</option>
                             </select>
                         </div>
 
                         {/* --- Kifejezés megadása --- */}
                         <div className="flex flex-col group">
                             <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
-                                Kifejezés (pl. x^2+2x)
+                                {t('calc.expression')}
                             </label>
                             <input
                                 type="text"
@@ -242,7 +244,7 @@ export default function CalculatorPage() {
                                 className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
                             >
                                 <FunctionSquare className="w-5 h-5 mr-2" />
-                                {mathLoading ? 'Feldolgozás...' : 'Számítás'}
+                                {mathLoading ? t('calc.processing') : t('calc.compute')}
                             </button>
                         </div>
                     </form>
@@ -250,7 +252,7 @@ export default function CalculatorPage() {
                     {/* --- Hibaüzenet --- */}
                     {mathError && (
                         <div className="mt-4 bg-red-100 dark:bg-red-900/40 secret:bg-black border-l-4 border-red-600 dark:border-red-500 secret:border-[#1cf85d] text-red-700 dark:text-red-300 secret:text-[#1cf85d] p-4 font-medium text-sm transition-colors shadow-sm secret:font-mono uppercase">
-                            &gt; Hiba: {mathError}
+                            &gt; {t('calc.errorPrefix')}: {mathError}
                         </div>
                     )}
 
@@ -258,12 +260,12 @@ export default function CalculatorPage() {
                     {mathResult !== null && !mathError && (
                         <div className="mt-4 p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-black shadow-inner animate-[fadeIn_0.5s_ease-out]">
                             <div className="flex flex-col">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 uppercase font-bold mb-1 secret:font-mono">Megadás:</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 uppercase font-bold mb-1 secret:font-mono">{t('calc.input')}</span>
                                 <span className="text-lg font-medium text-black dark:text-white secret:text-[#1cf85d] secret:font-mono mb-3 border-b-2 border-gray-200 dark:border-gray-800 secret:border-[#1cf85d]/30 pb-2 overflow-x-auto custom-scrollbar">
                                     {expression}
                                 </span>
 
-                                <span className="text-xs text-green-700 dark:text-[#e879f9] secret:text-[#1cf85d] uppercase font-bold mb-1 secret:font-mono">Eredmény:</span>
+                                <span className="text-xs text-green-700 dark:text-[#e879f9] secret:text-[#1cf85d] uppercase font-bold mb-1 secret:font-mono">{t('calc.result')}</span>
                                 <div className="flex items-center text-2xl font-black text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono overflow-x-auto custom-scrollbar drop-shadow-sm secret:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)]">
                                     <ArrowRight className="w-6 h-6 mr-2 shrink-0" />
                                     <span>{mathResult}</span>
