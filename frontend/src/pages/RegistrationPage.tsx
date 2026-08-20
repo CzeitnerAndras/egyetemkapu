@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function RegistrationPage() {
+    const { t } = useLanguage();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,7 +19,7 @@ export default function RegistrationPage() {
         setSuccess('');
 
         if (password !== confirmPassword) {
-            setError('A két jelszó nem egyezik meg!');
+            setError(t('register.mismatch'));
             return;
         }
 
@@ -31,7 +33,7 @@ export default function RegistrationPage() {
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[?,\-+!@#$%^&*]).{8,}$/;
 
         if (!passwordRegex.test(password)) {
-            setError('A jelszónak legalább 8 karakternek kell lennie, tartalmaznia kell egy nagybetűt, egy számot és egy szimbólumot (pl. ? , - +)!');
+            setError(t('register.weakPassword'));
             return;
         }
 
@@ -45,13 +47,13 @@ export default function RegistrationPage() {
             const data = await response.json();
 
             if (response.ok) {
-                setSuccess('Sikeres regisztráció! Átirányítás a bejelentkezéshez...');
+                setSuccess(t('register.success'));
                 setTimeout(() => navigate('/login'), 2000);
             } else {
-                setError(data.error || 'Hiba történt a regisztráció során.');
+                setError(data.error || t('register.failed'));
             }
         } catch (err) {
-            setError('Nem sikerült csatlakozni a szerverhez.');
+            setError(t('register.serverError'));
         }
     };
 
@@ -68,21 +70,21 @@ export default function RegistrationPage() {
                 {/* --- Hibaüzenet megjelenítése --- */}
                 {error && (
                     <div className="bg-red-100 dark:bg-red-900/40 secret:bg-black border-l-4 border-red-600 dark:border-red-500 secret:border-[#1cf85d] text-red-700 dark:text-red-300 secret:text-[#1cf85d] p-3 mb-6 font-medium text-sm transition-colors shadow-sm secret:font-mono uppercase">
-                        &gt; Hiba: {error}
+                        &gt; {t('register.errorPrefix')}: {error}
                     </div>
                 )}
 
                 {/* --- Sikeres regisztráció üzenet --- */}
                 {success && (
                     <div className="bg-green-100 dark:bg-green-900/40 secret:bg-black border-l-4 border-green-600 dark:border-green-500 secret:border-[#1cf85d] text-green-700 dark:text-green-300 secret:text-[#1cf85d] p-3 mb-6 font-medium text-sm transition-colors shadow-sm secret:font-mono uppercase">
-                        &gt; Rendszer: {success}
+                        &gt; {t('register.systemPrefix')}: {success}
                     </div>
                 )}
 
                 <form onSubmit={handleRegister} className="space-y-4">
                     {/* --- Felhasználónév --- */}
                     <div className="flex flex-col group">
-                        <label className="text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">Felhasználónév</label>
+                        <label className="text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-red-700 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('register.username')}</label>
                         <input
                             type="text" required value={username} onChange={(e) => setUsername(e.target.value)}
                             className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none secret:font-mono"
