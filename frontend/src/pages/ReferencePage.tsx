@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { BookMarked, Copy, Check, PenTool, Sparkles } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function ReferencePage() {
+    const { t, language } = useLanguage();
     const [author, setAuthor] = useState('');
     const [title, setTitle] = useState('');
     const [year, setYear] = useState('');
@@ -53,7 +55,7 @@ export default function ReferencePage() {
             {/* --- Fejléc --- */}
             <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <BookMarked className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-                <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">Hivatkozás Generátor</h1>
+                <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">{t('ref.title')}</h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -62,27 +64,27 @@ export default function ReferencePage() {
                 <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none">
                     <div className="flex items-center mb-6 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <PenTool className="w-5 h-5 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                        <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">Forrás Adatai</h2>
+                        <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('ref.source')}</h2>
                     </div>
 
                     <form onSubmit={handleGenerate} className="space-y-4">
                         <div className="flex flex-col">
-                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">Szerző</label>
-                            <input type="text" placeholder="pl. John Doe" value={author} onChange={e => setAuthor(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.author')}</label>
+                            <input type="text" placeholder={language === 'en' ? 'e.g. John Doe' : 'pl. John Doe'} value={author} onChange={e => setAuthor(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
                         </div>
 
                         <div className="flex flex-col">
-                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">Cím</label>
-                            <input required type="text" placeholder="pl. A programozás alapjai" value={title} onChange={e => setTitle(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.fieldTitle')}</label>
+                            <input required type="text" placeholder={t('ref.titlePlaceholder')} value={title} onChange={e => setTitle(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col">
-                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">Év</label>
-                                <input type="text" placeholder="pl. 2024" value={year} onChange={e => setYear(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
+                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.year')}</label>
+                                <input type="text" placeholder={language === 'en' ? 'e.g. 2024' : 'pl. 2024'} value={year} onChange={e => setYear(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">Stílus</label>
+                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.style')}</label>
                                 <select value={style} onChange={e => setStyle(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase cursor-pointer">
                                     <option value="APA">APA</option>
                                     <option value="MLA">MLA</option>
@@ -92,12 +94,12 @@ export default function ReferencePage() {
                         </div>
 
                         <div className="flex flex-col">
-                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">Kiadó / Weboldal</label>
-                            <input type="text" placeholder="pl. Akadémiai Kiadó" value={publisher} onChange={e => setPublisher(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
+                            <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.publisher')}</label>
+                            <input type="text" placeholder={t('ref.publisherPlaceholder')} value={publisher} onChange={e => setPublisher(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white/50 dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30" />
                         </div>
 
                         <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-2 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
-                            {isLoading ? 'Generálás...' : 'Hivatkozás Generálása'}
+                            {isLoading ? t('ref.generating') : t('ref.generate')}
                         </button>
                     </form>
                 </div>
@@ -107,7 +109,7 @@ export default function ReferencePage() {
                     <div className="flex items-center justify-between mb-4 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <div className="flex items-center">
                             <Sparkles className="w-5 h-5 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                            <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">Eredmény</h2>
+                            <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('ref.result')}</h2>
                         </div>
                         {generatedRef && (
                             <span className="text-xs font-bold bg-gray-200 dark:bg-gray-700 secret:bg-[#1cf85d]/20 text-gray-800 dark:text-gray-200 secret:text-[#1cf85d] px-2 py-1 rounded-sm secret:rounded-none uppercase tracking-wider">
@@ -133,16 +135,16 @@ export default function ReferencePage() {
                                     }`}
                             >
                                 {isCopied ? (
-                                    <><Check className="w-5 h-5 mr-2" /> Másolva!</>
+                                    <><Check className="w-5 h-5 mr-2" /> {t('ref.copied')}</>
                                 ) : (
-                                    <><Copy className="w-5 h-5 mr-2" /> Vágólapra másolás</>
+                                    <><Copy className="w-5 h-5 mr-2" /> {t('ref.copy')}</>
                                 )}
                             </button>
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 secret:text-[#1cf85d]/40 min-h-[200px]">
                             <BookMarked className="w-12 h-12 mb-2 opacity-50" />
-                            <p className="text-center text-sm secret:font-mono uppercase">&gt; Töltsd ki az adatokat és nyomj a generálásra.</p>
+                            <p className="text-center text-sm secret:font-mono uppercase">&gt; {t('ref.empty')}</p>
                         </div>
                     )}
                 </div>
