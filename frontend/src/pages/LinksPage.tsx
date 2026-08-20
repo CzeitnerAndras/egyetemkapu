@@ -4,6 +4,7 @@ import {
     Cpu, Globe, Briefcase, Landmark, Stethoscope, Heart, Smile,
     Users, FlaskConical, Leaf, Wrench, Music
 } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface LinkItem {
     title: string;
@@ -17,420 +18,423 @@ interface LinkCategory {
 }
 
 export default function LinksPage() {
+    const { t, language } = useLanguage();
     const [activeTab, setActiveTab] = useState('DE');
+    const isEn = language === 'en';
+    const l = (hu: string, en: string) => isEn ? en : hu;
 
     const universities = [
-        { id: 'DE', name: 'Debreceni Egyetem (DE)' },
-        { id: 'BME', name: 'Műegyetem (BME)' },
-        { id: 'ELTE', name: 'Eötvös Loránd (ELTE)' },
-        { id: 'SZTE', name: 'Szegedi Tudományegyetem (SZTE)' },
-        { id: 'PTE', name: 'Pécsi Tudományegyetem (PTE)' },
-        { id: 'NJE', name: 'Neumann János Egyetem (NJE)' },
-        { id: 'NYE', name: 'Nyíregyházi Egyetem (NYE)' },
-        { id: 'OE', name: 'Óbudai Egyetem (ÓE)' },
-        { id: 'BCE', name: 'Budapesti Corvinus (BCE)' },
-        { id: 'ME', name: 'Miskolci Egyetem (ME)' },
-        { id: 'SZE', name: 'Széchenyi István Egyetem (SZE)' },
+        { id: 'DE', name: l('Debreceni Egyetem (DE)', 'University of Debrecen (DE)') },
+        { id: 'BME', name: l('Műegyetem (BME)', 'Budapest Univ. of Technology (BME)') },
+        { id: 'ELTE', name: l('Eötvös Loránd (ELTE)', 'Eötvös Loránd University (ELTE)') },
+        { id: 'SZTE', name: l('Szegedi Tudományegyetem (SZTE)', 'University of Szeged (SZTE)') },
+        { id: 'PTE', name: l('Pécsi Tudományegyetem (PTE)', 'University of Pécs (PTE)') },
+        { id: 'NJE', name: l('Neumann János Egyetem (NJE)', 'John von Neumann University (NJE)') },
+        { id: 'NYE', name: l('Nyíregyházi Egyetem (NYE)', 'University of Nyíregyháza (NYE)') },
+        { id: 'OE', name: l('Óbudai Egyetem (ÓE)', 'Óbuda University (ÓE)') },
+        { id: 'BCE', name: l('Budapesti Corvinus (BCE)', 'Corvinus University (BCE)') },
+        { id: 'ME', name: l('Miskolci Egyetem (ME)', 'University of Miskolc (ME)') },
+        { id: 'SZE', name: l('Széchenyi István Egyetem (SZE)', 'Széchenyi István University (SZE)') },
     ];
 
     const linkDatabase: Record<string, LinkCategory[]> = {
         'DE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.unideb.hu/" },
-                    { title: "E-learning (Moodle)", url: "https://elearning.unideb.hu/" },
-                    { title: "DEENK - Egyetemi Könyvtár", url: "https://lib.unideb.hu/" },
-                    { title: "Debreceni Egyetem Főoldal", url: "https://unideb.hu/" },
-                    { title: "DEHÖK (Hallgatói Önkormányzat)", url: "https://dehok.unideb.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.unideb.hu/" },
+                    { title: l("E-learning (Moodle)", "E-learning (Moodle)"), url: "https://elearning.unideb.hu/" },
+                    { title: l("DEENK - Egyetemi Könyvtár", "DEENK - University Library"), url: "https://lib.unideb.hu/" },
+                    { title: l("Debreceni Egyetem Főoldal", "University Main Page"), url: "https://unideb.hu/" },
+                    { title: l("DEHÖK (Hallgatói Önkormányzat)", "DEHÖK (Student Union)"), url: "https://dehok.unideb.hu/" },
                 ]
             },
-                        {
-                category: "Informatikai Kar (IK)",
+            {
+                category: l("Informatikai Kar (IK)", "Faculty of Informatics (IK)"),
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Informatikai Kar Főoldal", url: "https://inf.unideb.hu/" },
-                    { title: "Záróvizsga", url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
-                    { title: "Képzések / Tantervi Háló", url: "https://inf.unideb.hu/2025-szeptembertol-meghirdetett-kepzeseink" },
-                    { title: "Syllabus", url: "https://www.ik.unideb.hu/syllabi/" },
+                    { title: l("Informatikai Kar Főoldal", "Faculty Main Page"), url: "https://inf.unideb.hu/" },
+                    { title: l("Záróvizsga", "Final Examination"), url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
+                    { title: l("Képzések / Tantervi Háló", "Programs / Curricula"), url: "https://inf.unideb.hu/2025-szeptembertol-meghirdetett-kepzeseink" },
+                    { title: l("Syllabus", "Syllabus"), url: "https://www.ik.unideb.hu/syllabi/" },
                 ]
             },
             {
-                category: "Állam- és Jogtudományi Kar (ÁJK)",
+                category: l("Állam- és Jogtudományi Kar (ÁJK)", "Faculty of Law (ÁJK)"),
                 icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ÁJK Főoldal", url: "https://jog.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://jog.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("ÁJK Főoldal", "Faculty Main Page"), url: "https://jog.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://jog.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Általános Orvostudományi Kar (ÁOK)",
+                category: l("Általános Orvostudományi Kar (ÁOK)", "Faculty of Medicine (ÁOK)"),
                 icon: <Stethoscope className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ÁOK Főoldal", url: "https://aok.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://aok.unideb.hu/hu/tanulmanyi-osztaly" },
+                    { title: l("ÁOK Főoldal", "Faculty Main Page"), url: "https://aok.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://aok.unideb.hu/hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Bölcsészettudományi Kar (BTK)",
+                category: l("Bölcsészettudományi Kar (BTK)", "Faculty of Humanities (BTK)"),
                 icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "BTK Főoldal", url: "https://btk.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://btk.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("BTK Főoldal", "Faculty Main Page"), url: "https://btk.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://btk.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Egészségtudományi Kar (ETK)",
+                category: l("Egészségtudományi Kar (ETK)", "Faculty of Health Sciences (ETK)"),
                 icon: <Heart className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ETK Főoldal", url: "https://etk.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://etk.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("ETK Főoldal", "Faculty Main Page"), url: "https://etk.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://etk.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Fogorvostudományi Kar (FOK)",
+                category: l("Fogorvostudományi Kar (FOK)", "Faculty of Dentistry (FOK)"),
                 icon: <Smile className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "FOK Főoldal", url: "https://dental.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://dental.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("FOK Főoldal", "Faculty Main Page"), url: "https://dental.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://dental.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Gazdaságtudományi Kar (GTK)",
+                category: l("Gazdaságtudományi Kar (GTK)", "Faculty of Economics (GTK)"),
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GTK Főoldal", url: "https://econ.unideb.hu/" },
-                    { title: "Tanulmányi és Oktatási Oszt.", url: "https://econ.unideb.hu/tanulmanyi-es-oktatasi-osztaly" },
+                    { title: l("GTK Főoldal", "Faculty Main Page"), url: "https://econ.unideb.hu/" },
+                    { title: l("Tanulmányi és Oktatási Oszt.", "Dept. of Studies and Education"), url: "https://econ.unideb.hu/tanulmanyi-es-oktatasi-osztaly" },
                 ]
             },
             {
-                category: "Gyermeknevelési és Gyógypedagógiai Kar",
+                category: l("Gyermeknevelési és Gyógypedagógiai Kar", "Faculty of Child and Adult Education"),
                 icon: <Users className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GYGYK Főoldal", url: "https://gygyk.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://gygyk.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("GYGYK Főoldal", "Faculty Main Page"), url: "https://gygyk.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://gygyk.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Gyógyszerésztudományi Kar (GYTK)",
+                category: l("Gyógyszerésztudományi Kar (GYTK)", "Faculty of Pharmacy (GYTK)"),
                 icon: <FlaskConical className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GYTK Főoldal", url: "https://pharm.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://pharm.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("GYTK Főoldal", "Faculty Main Page"), url: "https://pharm.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://pharm.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Mezőgazdaság-, Élelmiszertudományi Kar",
+                category: l("Mezőgazdaság-, Élelmiszertudományi Kar", "Faculty of Agricultural and Food Sciences"),
                 icon: <Leaf className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "MÉK Főoldal", url: "https://mek.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://mek.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("MÉK Főoldal", "Faculty Main Page"), url: "https://mek.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://mek.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Műszaki Kar (MK)",
+                category: l("Műszaki Kar (MK)", "Faculty of Engineering (MK)"),
                 icon: <Wrench className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "MK Főoldal", url: "https://eng.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://eng.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("MK Főoldal", "Faculty Main Page"), url: "https://eng.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://eng.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Természettudományi és Technológiai Kar",
+                category: l("Természettudományi és Technológiai Kar", "Faculty of Science and Technology"),
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "TTK Főoldal", url: "https://ttk.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://ttk.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("TTK Főoldal", "Faculty Main Page"), url: "https://ttk.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://ttk.unideb.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Zeneművészeti Kar (ZK)",
+                category: l("Zeneművészeti Kar (ZK)", "Faculty of Music (ZK)"),
                 icon: <Music className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ZK Főoldal", url: "https://music.unideb.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://music.unideb.hu/tanulmanyi-osztaly" },
+                    { title: l("ZK Főoldal", "Faculty Main Page"), url: "https://music.unideb.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://music.unideb.hu/tanulmanyi-osztaly" },
                 ]
             }
         ],
         'BME': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.bme.hu/" },
-                    { title: "BME Címtár", url: "https://login.bme.hu/" },
-                    { title: "OMIKK Könyvtár", url: "https://www.omikk.bme.hu/" },
-                    { title: "Központi Tanulmányi Hivatal (KTH)", url: "https://kth.bme.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.bme.hu/" },
+                    { title: l("BME Címtár", "BME Directory"), url: "https://login.bme.hu/" },
+                    { title: l("OMIKK Könyvtár", "OMIKK Library"), url: "https://www.omikk.bme.hu/" },
+                    { title: l("Központi Tanulmányi Hivatal (KTH)", "Central Registrar's Office (KTH)"), url: "https://kth.bme.hu/" },
                 ]
             },
             {
-                category: "Villamosmérnöki és Info. Kar (VIK)",
+                category: l("Villamosmérnöki és Info. Kar (VIK)", "Faculty of Electrical Eng. and Informatics (VIK)"),
                 icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "VIK Főoldal", url: "https://vik.bme.hu/" },
-                    { title: "VIK Wiki (Hallgatói)", url: "https://wiki.sch.bme.hu/" },
-                    { title: "Schönherz Kollégium", url: "https://sch.bme.hu/" },
-                    { title: "Moodle (VIK)", url: "https://edu.vik.bme.hu/" },
+                    { title: l("VIK Főoldal", "Faculty Main Page"), url: "https://vik.bme.hu/" },
+                    { title: l("VIK Wiki (Hallgatói)", "VIK Wiki (Student)"), url: "https://wiki.sch.bme.hu/" },
+                    { title: l("Schönherz Kollégium", "Schönherz Dormitory"), url: "https://sch.bme.hu/" },
+                    { title: l("Moodle (VIK)", "Moodle (VIK)"), url: "https://edu.vik.bme.hu/" },
                 ]
             },
             {
-                category: "Építészmérnöki Kar (ÉPK)",
+                category: l("Építészmérnöki Kar (ÉPK)", "Faculty of Architecture (ÉPK)"),
                 icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ÉPK Főoldal", url: "https://epitesz.bme.hu/" },
-                    { title: "Építész HÖK", url: "https://epiteszhk.bme.hu/" },
-                    { title: "Kari Szabályzatok", url: "https://epitesz.bme.hu/szabalyzatok" },
+                    { title: l("ÉPK Főoldal", "Faculty Main Page"), url: "https://epitesz.bme.hu/" },
+                    { title: l("Építész HÖK", "Architecture Student Union"), url: "https://epiteszhk.bme.hu/" },
+                    { title: l("Kari Szabályzatok", "Faculty Regulations"), url: "https://epitesz.bme.hu/szabalyzatok" },
                 ]
             }
         ],
         'ELTE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.elte.hu/" },
-                    { title: "Canvas E-learning", url: "https://canvas.elte.hu/" },
-                    { title: "ELTE Egyetemi Könyvtár", url: "https://konyvtar.elte.hu/" },
-                    { title: "Questura Ügyfélszolgálat", url: "https://qter.elte.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.elte.hu/" },
+                    { title: l("Canvas E-learning", "Canvas E-learning"), url: "https://canvas.elte.hu/" },
+                    { title: l("ELTE Egyetemi Könyvtár", "ELTE University Library"), url: "https://konyvtar.elte.hu/" },
+                    { title: l("Questura Ügyfélszolgálat", "Questura Customer Service"), url: "https://qter.elte.hu/" },
                 ]
             },
             {
-                category: "Informatikai Kar (IK)",
+                category: l("Informatikai Kar (IK)", "Faculty of Informatics (IK)"),
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ELTE IK Főoldal", url: "https://www.inf.elte.hu/" },
-                    { title: "IK Tanrendek", url: "https://www.inf.elte.hu/tanrendek" },
-                    { title: "IIG (Informatikai Igazgatóság)", url: "https://iig.elte.hu/" },
+                    { title: l("ELTE IK Főoldal", "Faculty Main Page"), url: "https://www.inf.elte.hu/" },
+                    { title: l("IK Tanrendek", "IK Curricula"), url: "https://www.inf.elte.hu/tanrendek" },
+                    { title: l("IIG (Informatikai Igazgatóság)", "IIG (Directorate of Informatics)"), url: "https://iig.elte.hu/" },
                 ]
             },
             {
-                category: "Bölcsészettudományi Kar (BTK)",
+                category: l("Bölcsészettudományi Kar (BTK)", "Faculty of Humanities (BTK)"),
                 icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ELTE BTK Főoldal", url: "https://www.btk.elte.hu/" },
-                    { title: "BTK Tanulmányi Hivatal", url: "https://www.btk.elte.hu/tanulmanyi-hivatal" },
-                    { title: "BTK HÖK", url: "https://btkhok.elte.hu/" },
+                    { title: l("ELTE BTK Főoldal", "Faculty Main Page"), url: "https://www.btk.elte.hu/" },
+                    { title: l("BTK Tanulmányi Hivatal", "BTK Office of Educational Affairs"), url: "https://www.btk.elte.hu/tanulmanyi-hivatal" },
+                    { title: l("BTK HÖK", "BTK Student Union"), url: "https://btkhok.elte.hu/" },
                 ]
             }
         ],
         'SZTE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.szte.hu/" },
-                    { title: "CooSpace (E-learning)", url: "https://coospace.u-szeged.hu/" },
-                    { title: "Klebelsberg Könyvtár (TIK)", url: "http://www.ek.szte.hu/" },
-                    { title: "SZTE Főoldal", url: "https://u-szeged.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.szte.hu/" },
+                    { title: l("CooSpace (E-learning)", "CooSpace (E-learning)"), url: "https://coospace.u-szeged.hu/" },
+                    { title: l("Klebelsberg Könyvtár (TIK)", "Klebelsberg Library (TIK)"), url: "http://www.ek.szte.hu/" },
+                    { title: l("SZTE Főoldal", "University Main Page"), url: "https://u-szeged.hu/" },
                 ]
             },
             {
-                category: "Természettudományi és Info. Kar",
+                category: l("Természettudományi és Info. Kar", "Faculty of Science and Informatics"),
                 icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "TTIK Főoldal", url: "https://sci.u-szeged.hu/" },
-                    { title: "Informatikai Intézet", url: "https://www.inf.u-szeged.hu/" },
-                    { title: "Tanulmányi Osztály (TO)", url: "https://sci.u-szeged.hu/hallgatoknak/tanulmanyi-ugyek" },
+                    { title: l("TTIK Főoldal", "Faculty Main Page"), url: "https://sci.u-szeged.hu/" },
+                    { title: l("Informatikai Intézet", "Institute of Informatics"), url: "https://www.inf.u-szeged.hu/" },
+                    { title: l("Tanulmányi Osztály (TO)", "Registrar's Office (TO)"), url: "https://sci.u-szeged.hu/hallgatoknak/tanulmanyi-ugyek" },
                 ]
             },
             {
-                category: "Általános Orvostudományi Kar (ÁOK)",
+                category: l("Általános Orvostudományi Kar (ÁOK)", "Faculty of Medicine (ÁOK)"),
                 icon: <Stethoscope className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "SZTE ÁOK Főoldal", url: "https://med.u-szeged.hu/" },
-                    { title: "ÁOK Tanulmányi Osztály", url: "https://med.u-szeged.hu/hallgatoknak" },
-                    { title: "Szegedi Orvostanhallgatók Egyesülete", url: "https://szoe.hu/" },
+                    { title: l("SZTE ÁOK Főoldal", "Faculty Main Page"), url: "https://med.u-szeged.hu/" },
+                    { title: l("ÁOK Tanulmányi Osztály", "Registrar's Office"), url: "https://med.u-szeged.hu/hallgatoknak" },
+                    { title: l("Szegedi Orvostanhallgatók Egyesülete", "Szeged Medical Students' Assoc."), url: "https://szoe.hu/" },
                 ]
             }
         ],
         'PTE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.pte.hu/" },
-                    { title: "PTE Moodle / Teams", url: "https://elearning.pte.hu/" },
-                    { title: "PTE Egyetemi Könyvtár", url: "https://lib.pte.hu/" },
-                    { title: "PTE Főoldal", url: "https://pte.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.pte.hu/" },
+                    { title: l("PTE Moodle / Teams", "PTE Moodle / Teams"), url: "https://elearning.pte.hu/" },
+                    { title: l("PTE Egyetemi Könyvtár", "PTE University Library"), url: "https://lib.pte.hu/" },
+                    { title: l("PTE Főoldal", "University Main Page"), url: "https://pte.hu/" },
                 ]
             },
             {
-                category: "Műszaki és Informatikai Kar (MIK)",
+                category: l("Műszaki és Informatikai Kar (MIK)", "Faculty of Engineering and IT (MIK)"),
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "MIK Főoldal", url: "https://mik.pte.hu/" },
-                    { title: "MIK HÖK", url: "https://mik.pte.hu/hallgatoknak" },
-                    { title: "Tanulmányi Osztály", url: "https://mik.pte.hu/oktatas" },
+                    { title: l("MIK Főoldal", "Faculty Main Page"), url: "https://mik.pte.hu/" },
+                    { title: l("MIK HÖK", "MIK Student Union"), url: "https://mik.pte.hu/hallgatoknak" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://mik.pte.hu/oktatas" },
                 ]
             },
             {
-                category: "Közgazdaságtudományi Kar (KTK)",
+                category: l("Közgazdaságtudományi Kar (KTK)", "Faculty of Business and Economics (KTK)"),
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "KTK Főoldal", url: "https://ktk.pte.hu/" },
-                    { title: "KTK Tanulmányi Információk", url: "https://ktk.pte.hu/hu/hallgatoknak" },
-                    { title: "PTE KTK HÖK", url: "https://ktk.pte.hu/hu/hallgatoi-elet" },
+                    { title: l("KTK Főoldal", "Faculty Main Page"), url: "https://ktk.pte.hu/" },
+                    { title: l("KTK Tanulmányi Információk", "KTK Study Information"), url: "https://ktk.pte.hu/hu/hallgatoknak" },
+                    { title: l("PTE KTK HÖK", "PTE KTK Student Union"), url: "https://ktk.pte.hu/hu/hallgatoi-elet" },
                 ]
             }
         ],
         'NJE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.nje.hu/" },
-                    { title: "NJE E-learning (Moodle)", url: "https://elearning.nje.hu/" },
-                    { title: "NJE Könyvtár", url: "https://konyvtar.nje.hu/" },
-                    { title: "NJE Főoldal", url: "https://nje.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.nje.hu/" },
+                    { title: l("NJE E-learning (Moodle)", "NJE E-learning (Moodle)"), url: "https://elearning.nje.hu/" },
+                    { title: l("NJE Könyvtár", "NJE Library"), url: "https://konyvtar.nje.hu/" },
+                    { title: l("NJE Főoldal", "University Main Page"), url: "https://nje.hu/" },
                 ]
             },
             {
-                category: "GAMF Műszaki és Info. Kar",
+                category: l("GAMF Műszaki és Info. Kar", "GAMF Faculty of Engineering and IT"),
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GAMF Főoldal", url: "https://gamf.nje.hu/" },
-                    { title: "Tanulmányi Osztály", url: "https://gamf.nje.hu/tanulmanyi-osztaly" },
+                    { title: l("GAMF Főoldal", "Faculty Main Page"), url: "https://gamf.nje.hu/" },
+                    { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://gamf.nje.hu/tanulmanyi-osztaly" },
                 ]
             },
             {
-                category: "Gazdaságtudományi Kar (GTK)",
+                category: l("Gazdaságtudományi Kar (GTK)", "Faculty of Economics (GTK)"),
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GTK Főoldal", url: "https://gtk.nje.hu/" },
-                    { title: "Hallgatói Információk", url: "https://gtk.nje.hu/hallgatoknak" },
+                    { title: l("GTK Főoldal", "Faculty Main Page"), url: "https://gtk.nje.hu/" },
+                    { title: l("Hallgatói Információk", "Student Information"), url: "https://gtk.nje.hu/hallgatoknak" },
                 ]
             }
         ],
         'NYE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.nye.hu/" },
-                    { title: "NYE E-learning", url: "https://elearning.nye.hu/" },
-                    { title: "Központi Könyvtár", url: "https://konyvtar.nye.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.nye.hu/" },
+                    { title: l("NYE E-learning", "NYE E-learning"), url: "https://elearning.nye.hu/" },
+                    { title: l("Központi Könyvtár", "Central Library"), url: "https://konyvtar.nye.hu/" },
                 ]
             },
             {
-                category: "Informatika és Matematika",
+                category: l("Informatika és Matematika", "Institute of Math and Informatics"),
                 icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Intézeti Főoldal", url: "https://nye.hu/matematika_informatika" },
-                    { title: "Órarendek", url: "https://nye.hu/orarendek" },
+                    { title: l("Intézeti Főoldal", "Institute Main Page"), url: "https://nye.hu/matematika_informatika" },
+                    { title: l("Órarendek", "Timetables"), url: "https://nye.hu/orarendek" },
                 ]
             },
             {
-                category: "Gazdálkodástudományi Intézet",
+                category: l("Gazdálkodástudományi Intézet", "Institute of Business Administration"),
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Intézeti Főoldal", url: "https://nye.hu/gazdalkodastudomany" },
-                    { title: "Oktatói Elérhetőségek", url: "https://nye.hu/gazdalkodastudomany/oktatok" },
+                    { title: l("Intézeti Főoldal", "Institute Main Page"), url: "https://nye.hu/gazdalkodastudomany" },
+                    { title: l("Oktatói Elérhetőségek", "Instructors' Contacts"), url: "https://nye.hu/gazdalkodastudomany/oktatok" },
                 ]
             }
         ],
         'OE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.uni-obuda.hu/" },
-                    { title: "E-learning (Moodle)", url: "https://elearning.uni-obuda.hu/" },
-                    { title: "Óbudai Egyetem Főoldal", url: "https://uni-obuda.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.uni-obuda.hu/" },
+                    { title: l("E-learning (Moodle)", "E-learning (Moodle)"), url: "https://elearning.uni-obuda.hu/" },
+                    { title: l("Óbudai Egyetem Főoldal", "University Main Page"), url: "https://uni-obuda.hu/" },
                 ]
             },
             {
-                category: "Neumann János Info. Kar (NIK)",
+                category: l("Neumann János Info. Kar (NIK)", "John von Neumann Faculty of Informatics (NIK)"),
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "NIK Főoldal", url: "https://nik.uni-obuda.hu/" },
-                    { title: "NIK Tanulmányi Osztály", url: "https://nik.uni-obuda.hu/tanulmanyi-osztaly/" },
-                    { title: "ÓE NIK HÖK", url: "https://nikhok.hu/" },
+                    { title: l("NIK Főoldal", "Faculty Main Page"), url: "https://nik.uni-obuda.hu/" },
+                    { title: l("NIK Tanulmányi Osztály", "NIK Registrar's Office"), url: "https://nik.uni-obuda.hu/tanulmanyi-osztaly/" },
+                    { title: l("ÓE NIK HÖK", "ÓE NIK Student Union"), url: "https://nikhok.hu/" },
                 ]
             },
             {
-                category: "Kandó Kálmán Villamosmérnöki (KVK)",
+                category: l("Kandó Kálmán Villamosmérnöki (KVK)", "Kandó Kálmán Faculty of Electrical Engineering (KVK)"),
                 icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "KVK Főoldal", url: "https://kvk.uni-obuda.hu/" },
-                    { title: "KVK HÖK", url: "https://kvkhok.hu/" },
+                    { title: l("KVK Főoldal", "Faculty Main Page"), url: "https://kvk.uni-obuda.hu/" },
+                    { title: l("KVK HÖK", "KVK Student Union"), url: "https://kvkhok.hu/" },
                 ]
             }
         ],
         'BCE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.uni-corvinus.hu/" },
-                    { title: "Moodle (E-learning)", url: "https://moodle.uni-corvinus.hu/" },
-                    { title: "Egyetemi Könyvtár", url: "https://www.lib.uni-corvinus.hu/" },
-                    { title: "Corvinus Főoldal", url: "https://www.uni-corvinus.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.uni-corvinus.hu/" },
+                    { title: l("Moodle (E-learning)", "Moodle (E-learning)"), url: "https://moodle.uni-corvinus.hu/" },
+                    { title: l("Egyetemi Könyvtár", "University Library"), url: "https://www.lib.uni-corvinus.hu/" },
+                    { title: l("Corvinus Főoldal", "University Main Page"), url: "https://www.uni-corvinus.hu/" },
                 ]
             },
             {
-                category: "Hallgatói Szolgáltatások",
+                category: l("Hallgatói Szolgáltatások", "Student Services"),
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Hallgatói Támogatás (Hub)", url: "https://www.uni-corvinus.hu/fooldal/hallgatoknak/hallgatoi-ugyek/" },
-                    { title: "Corvinus HÖK", url: "https://corvinushok.hu/" },
-                    { title: "Karrier Iroda", url: "https://www.uni-corvinus.hu/fooldal/hallgatoknak/karrier/" },
+                    { title: l("Hallgatói Támogatás (Hub)", "Student Support (Hub)"), url: "https://www.uni-corvinus.hu/fooldal/hallgatoknak/hallgatoi-ugyek/" },
+                    { title: l("Corvinus HÖK", "Corvinus Student Union"), url: "https://corvinushok.hu/" },
+                    { title: l("Karrier Iroda", "Career Office"), url: "https://www.uni-corvinus.hu/fooldal/hallgatoknak/karrier/" },
                 ]
             }
         ],
         'ME': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.uni-miskolc.hu/" },
-                    { title: "E-learning (Moodle)", url: "https://elearning.uni-miskolc.hu/" },
-                    { title: "Miskolci Egyetem Főoldal", url: "https://www.uni-miskolc.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.uni-miskolc.hu/" },
+                    { title: l("E-learning (Moodle)", "E-learning (Moodle)"), url: "https://elearning.uni-miskolc.hu/" },
+                    { title: l("Miskolci Egyetem Főoldal", "University Main Page"), url: "https://www.uni-miskolc.hu/" },
                 ]
             },
             {
-                category: "Gépészmérnöki és Info. Kar (GÉIK)",
+                category: l("Gépészmérnöki és Info. Kar (GÉIK)", "Faculty of Mechanical Eng. and Informatics (GÉIK)"),
                 icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GÉIK Főoldal", url: "https://geik.uni-miskolc.hu/" },
-                    { title: "GÉIK Tanulmányi Hivatal", url: "https://geik.uni-miskolc.hu/tanulmanyi" },
+                    { title: l("GÉIK Főoldal", "Faculty Main Page"), url: "https://geik.uni-miskolc.hu/" },
+                    { title: l("GÉIK Tanulmányi Hivatal", "GÉIK Office of Educational Affairs"), url: "https://geik.uni-miskolc.hu/tanulmanyi" },
                 ]
             },
             {
-                category: "Állam- és Jogtudományi Kar (ÁJK)",
+                category: l("Állam- és Jogtudományi Kar (ÁJK)", "Faculty of Law (ÁJK)"),
                 icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "ÁJK Főoldal", url: "https://jogikari.uni-miskolc.hu/" },
-                    { title: "Hallgatói Szabályzatok", url: "https://jogikari.uni-miskolc.hu/szabalyzatok" },
+                    { title: l("ÁJK Főoldal", "Faculty Main Page"), url: "https://jogikari.uni-miskolc.hu/" },
+                    { title: l("Hallgatói Szabályzatok", "Student Regulations"), url: "https://jogikari.uni-miskolc.hu/szabalyzatok" },
                 ]
             }
         ],
         'SZE': [
             {
-                category: "Alapvető Rendszerek",
+                category: l("Alapvető Rendszerek", "Core Systems"),
                 icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "Neptun Hallgatói Web", url: "https://neptun.sze.hu/" },
-                    { title: "SZE-learning (Moodle)", url: "https://elearning.sze.hu/" },
-                    { title: "Egyetemi Könyvtár (EKL)", url: "https://ekl.sze.hu/" },
-                    { title: "SZE Főoldal", url: "https://www.uni.sze.hu/" },
+                    { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.sze.hu/" },
+                    { title: l("SZE-learning (Moodle)", "SZE-learning (Moodle)"), url: "https://elearning.sze.hu/" },
+                    { title: l("Egyetemi Könyvtár (EKL)", "University Library (EKL)"), url: "https://ekl.sze.hu/" },
+                    { title: l("SZE Főoldal", "University Main Page"), url: "https://www.uni.sze.hu/" },
                 ]
             },
             {
-                category: "Gépészmérnöki, Info. és Villamos. (GIVK)",
+                category: l("Gépészmérnöki, Info. és Villamos. (GIVK)", "Faculty of Mechanical, IT and Electrical Eng. (GIVK)"),
                 icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "GIVK Főoldal", url: "https://givk.sze.hu/" },
-                    { title: "GIVK HÖK", url: "https://ehok.sze.hu/" },
-                    { title: "Tantervek és Tárgyak", url: "https://givk.sze.hu/oktatas" },
+                    { title: l("GIVK Főoldal", "Faculty Main Page"), url: "https://givk.sze.hu/" },
+                    { title: l("GIVK HÖK", "GIVK Student Union"), url: "https://ehok.sze.hu/" },
+                    { title: l("Tantervek és Tárgyak", "Curricula and Subjects"), url: "https://givk.sze.hu/oktatas" },
                 ]
             },
             {
-                category: "Kautz Gyula Gazdaságtudományi Kar",
+                category: l("Kautz Gyula Gazdaságtudományi Kar", "Kautz Gyula Faculty of Economics"),
                 icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
-                    { title: "KGK Főoldal", url: "https://kgk.sze.hu/" },
-                    { title: "Tanulmányi Tájékoztatók", url: "https://kgk.sze.hu/oktatas" },
+                    { title: l("KGK Főoldal", "Faculty Main Page"), url: "https://kgk.sze.hu/" },
+                    { title: l("Tanulmányi Tájékoztatók", "Study Guides"), url: "https://kgk.sze.hu/oktatas" },
                 ]
             }
         ]
@@ -445,7 +449,7 @@ export default function LinksPage() {
             <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <LinkIcon className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                    Egyetemi Linkek
+                    {t('links.title')}
                 </h1>
             </div>
 
