@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Plus, Circle, Coffee, BrainCircuit, Headphones, FileText, Save } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface Task {
     id: number;
@@ -12,6 +13,7 @@ interface Task {
 }
 
 export default function FocusRoomPage() {
+    const { t } = useLanguage();
     const [timeLeft, setTimeLeft] = useState(25 * 60);
     const [isActive, setIsActive] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(true);
@@ -32,22 +34,22 @@ export default function FocusRoomPage() {
         } else if (timeLeft === 0) {
             setIsActive(false);
             if (isFocusMode) {
-                alert("A fókusz idő lejárt! Ideje tartani egy kis szünetet.");
+                alert(t('focus.focusEnded'));
                 handleSetMode(false);
             } else {
-                alert("A szünet lejárt! Indulhat a következő fókusz blokk.");
+                alert(t('focus.breakEnded'));
                 handleSetMode(true);
             }
         }
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isActive, timeLeft, isFocusMode]);
+    }, [isActive, timeLeft, isFocusMode, t]);
 
     {/* --- Feladatok és Jegyzet lekérése betöltéskor --- */}
     useEffect(() => {
         const token = localStorage.getItem('token');
-        
+
         {/* --- Feladatok lekérése --- */}
         const fetchTasks = async () => {
             try {
@@ -94,7 +96,7 @@ export default function FocusRoomPage() {
     };
 
     const toggleTimer = () => setIsActive(!isActive);
-    
+
     const resetTimer = () => {
         setIsActive(false);
         setTimeLeft(isFocusMode ? 25 * 60 : 5 * 60);
@@ -116,9 +118,9 @@ export default function FocusRoomPage() {
         todayEnd.setHours(23, 59, 59, 999);
         const localDeadline = todayEnd.toISOString().split('.')[0];
 
-        const newTaskObj = { 
-            title: newTaskTitle, 
-            taskType: 'Fókusz', 
+        const newTaskObj = {
+            title: newTaskTitle,
+            taskType: 'Fókusz',
             deadline: localDeadline,
             completed: false,
             pingDayBefore: false,
@@ -128,13 +130,13 @@ export default function FocusRoomPage() {
         try {
             const res = await fetch('http://localhost:8080/api/tasks', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(newTaskObj)
             });
-            
+
             if (res.ok) {
                 const createdTask = await res.json();
                 setTasks([...tasks, createdTask]);
@@ -164,7 +166,7 @@ export default function FocusRoomPage() {
         try {
             const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
@@ -188,7 +190,7 @@ export default function FocusRoomPage() {
             if (noteId) {
                 await fetch(`http://localhost:8080/api/notes/${noteId}`, {
                     method: 'PUT',
-                    headers: { 
+                    headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
@@ -197,7 +199,7 @@ export default function FocusRoomPage() {
             } else {
                 const res = await fetch('http://localhost:8080/api/notes', {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
@@ -217,42 +219,42 @@ export default function FocusRoomPage() {
 
     return (
         <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 relative z-20">
-            
+
             <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <BrainCircuit className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                    <span className="secret:hidden">Fókusz Szoba</span>
+                    <span className="secret:hidden">{t('focus.title')}</span>
                     <span className="hidden secret:inline">Neural Link Active</span>
                 </h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
+
                 {/* --- Pomodoro Időzítő és Notes --- */}
                 <div className="lg:col-span-1 flex flex-col space-y-6 h-[500px]">
-                    
+
                     {/* --- Pomodoro --- */}
                     <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none flex flex-col items-center justify-center shrink-0">
                         <div className="flex w-full border-2 border-black dark:border-gray-700 secret:border-[#1cf85d] rounded-full secret:rounded-none overflow-hidden mb-6">
-                            <button 
+                            <button
                                 onClick={() => handleSetMode(true)}
                                 className={`flex-1 py-2 font-bold flex items-center justify-center transition-colors secret:font-mono uppercase cursor-pointer
-                                    ${isFocusMode 
-                                        ? 'bg-[#800000] dark:bg-[#a855f7] text-white secret:bg-[#1cf85d] secret:text-black' 
+                                    ${isFocusMode
+                                        ? 'bg-[#800000] dark:bg-[#a855f7] text-white secret:bg-[#1cf85d] secret:text-black'
                                         : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'
                                     }`}
                             >
-                                <BrainCircuit className="w-4 h-4 mr-2" /> Fókusz
+                                <BrainCircuit className="w-4 h-4 mr-2" /> {t('focus.focus')}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => handleSetMode(false)}
                                 className={`flex-1 py-2 font-bold flex items-center justify-center transition-colors secret:font-mono uppercase cursor-pointer
-                                    ${!isFocusMode 
-                                        ? 'bg-blue-600 dark:bg-blue-500 text-white secret:bg-[#1cf85d] secret:text-black' 
+                                    ${!isFocusMode
+                                        ? 'bg-blue-600 dark:bg-blue-500 text-white secret:bg-[#1cf85d] secret:text-black'
                                         : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'
                                     }`}
                             >
-                                <Coffee className="w-4 h-4 mr-2" /> Szünet
+                                <Coffee className="w-4 h-4 mr-2" /> {t('focus.break')}
                             </button>
                         </div>
 
@@ -262,19 +264,19 @@ export default function FocusRoomPage() {
                         </div>
 
                         <div className="flex space-x-4 w-full">
-                            <button 
+                            <button
                                 onClick={toggleTimer}
                                 className={`flex-1 py-3 font-bold text-white secret:text-black border-2 border-black dark:border-transparent secret:border-[#1cf85d] transition-transform hover:-translate-y-1 shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] flex items-center justify-center cursor-pointer secret:font-mono uppercase
-                                    ${isActive 
-                                        ? 'bg-orange-600 dark:bg-orange-500 secret:bg-orange-500 secret:text-black secret:border-orange-500' 
+                                    ${isActive
+                                        ? 'bg-orange-600 dark:bg-orange-500 secret:bg-orange-500 secret:text-black secret:border-orange-500'
                                         : 'bg-green-600 dark:bg-green-600 secret:bg-[#1cf85d]'}`}
                             >
-                                {isActive ? <><Pause className="w-5 h-5 mr-1" /> Megállítás</> : <><Play className="w-5 h-5 mr-1" /> Indítás</>}
+                                {isActive ? <><Pause className="w-5 h-5 mr-1" /> {t('focus.pause')}</> : <><Play className="w-5 h-5 mr-1" /> {t('focus.start')}</>}
                             </button>
-                            <button 
+                            <button
                                 onClick={resetTimer}
                                 className="p-3 bg-gray-200 dark:bg-gray-700 secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-gray-300 dark:hover:bg-gray-600 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer"
-                                title="Visszaállítás"
+                                title={t('focus.reset')}
                             >
                                 <RotateCcw className="w-6 h-6" />
                             </button>
@@ -287,22 +289,22 @@ export default function FocusRoomPage() {
                             <div className="flex items-center">
                                 <FileText className="w-4 h-4 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
                                 <h2 className="text-lg font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
-                                    Gyors Jegyzet
+                                    {t('focus.quickNote')}
                                 </h2>
                             </div>
-                            <button 
+                            <button
                                 onClick={saveNote}
                                 disabled={isSavingNote}
                                 className="text-gray-500 dark:text-gray-400 secret:text-[#1cf85d] hover:text-[#800000] dark:hover:text-[#c084fc] secret:hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                                title="Mentés"
+                                title={t('focus.save')}
                             >
                                 <Save className="w-5 h-5" />
                             </button>
                         </div>
-                        <textarea 
+                        <textarea
                             value={noteContent}
                             onChange={(e) => setNoteContent(e.target.value)}
-                            placeholder="Ide írhatod a gyors gondolataidat..."
+                            placeholder={t('focus.notePlaceholder')}
                             className="flex-1 w-full resize-none outline-none bg-transparent text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-600 secret:placeholder-[#1cf85d]/30"
                         />
                     </div>
@@ -311,18 +313,18 @@ export default function FocusRoomPage() {
                 {/* --- Naptár Feladatai --- */}
                 <div className="lg:col-span-1 bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
-                        Aktív Feladatok
+                        {t('focus.activeTasks')}
                     </h2>
 
                     <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin">
                         {isLoadingTasks ? (
-                            <p className="text-center text-gray-500 secret:text-[#1cf85d]/50 secret:font-mono uppercase">Betöltés...</p>
+                            <p className="text-center text-gray-500 secret:text-[#1cf85d]/50 secret:font-mono uppercase">{t('focus.loading')}</p>
                         ) : tasks.length === 0 ? (
-                            <p className="text-center text-gray-500 secret:text-[#1cf85d]/50 secret:font-mono uppercase mt-4">Nincs ma feladatod. Pihenj!</p>
+                            <p className="text-center text-gray-500 secret:text-[#1cf85d]/50 secret:font-mono uppercase mt-4">{t('focus.noTasks')}</p>
                         ) : (
                             tasks.map(task => (
-                                <div 
-                                    key={task.id} 
+                                <div
+                                    key={task.id}
                                     onClick={() => toggleTask(task.id)}
                                     className="flex items-start p-3 border-2 cursor-pointer transition-colors secret:rounded-none bg-white dark:bg-[#2a2a2a] secret:bg-transparent border-[#800000]/30 dark:border-[#a855f7]/50 secret:border-[#1cf85d] hover:border-[#800000] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d]/10"
                                 >
@@ -334,7 +336,7 @@ export default function FocusRoomPage() {
                                             {task.title}
                                         </span>
                                         <span className="text-xs text-gray-500 secret:text-[#1cf85d]/60 font-bold uppercase">
-                                            {task.taskType}
+                                            {t(`cal.type.${task.taskType}`) || task.taskType}
                                         </span>
                                     </div>
                                 </div>
@@ -343,14 +345,14 @@ export default function FocusRoomPage() {
                     </div>
 
                     <form onSubmit={addTask} className="mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] flex">
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             value={newTaskTitle}
                             onChange={e => setNewTaskTitle(e.target.value)}
-                            placeholder="Gyors feladat hozzáadása..."
+                            placeholder={t('focus.addTask')}
                             className="flex-1 border-2 border-r-0 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30"
                         />
-                        <button 
+                        <button
                             type="submit"
                             className="bg-[#800000] dark:bg-[#a855f7] secret:bg-transparent text-white secret:text-[#1cf85d] px-4 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-[#b91c1c] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center"
                         >
@@ -364,25 +366,25 @@ export default function FocusRoomPage() {
                     <div className="flex items-center mb-4 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Headphones className="w-5 h-5 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
-                            Lo-Fi Rádió
+                            {t('focus.radio')}
                         </h2>
                     </div>
-                    
+
                     <div className="flex-1 border-2 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-black relative">
-                        <iframe 
-                            width="100%" 
-                            height="100%" 
-                            src="https://www.youtube.com/embed/53gNFOqDFcE?autoplay=0&controls=1" 
-                            title="lofi hip hop radio" 
-                            frameBorder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            src="https://www.youtube.com/embed/53gNFOqDFcE?autoplay=0&controls=1"
+                            title="lofi hip hop radio"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                             className="absolute inset-0"
                         ></iframe>
                     </div>
-                    
+
                     <p className="text-xs text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/60 mt-4 secret:font-mono uppercase">
-                        Zene: Lofi Hip Hop Mix
+                        {t('focus.music')}
                     </p>
                 </div>
 
