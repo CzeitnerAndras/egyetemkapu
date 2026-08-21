@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Settings, BellRing, MessageSquare, Send, Save, Check } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 export default function SettingsPage() {
+    const { t } = useLanguage();
     const [discordWebhook, setDiscordWebhook] = useState('');
     const [telegramChatId, setTelegramChatId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +38,7 @@ export default function SettingsPage() {
 
         const token = localStorage.getItem('token');
         if (!token) {
-            setMessage({ text: 'A mentéshez be kell jelentkezned!', type: 'error' });
+            setMessage({ text: t('settings.needLogin'), type: 'error' });
             setIsLoading(false);
             return;
         }
@@ -52,12 +54,12 @@ export default function SettingsPage() {
             });
 
             if (res.ok) {
-                setMessage({ text: 'Beállítások sikeresen mentve!', type: 'success' });
+                setMessage({ text: t('settings.saved'), type: 'success' });
             } else {
-                setMessage({ text: 'Hiba történt a mentés során.', type: 'error' });
+                setMessage({ text: t('settings.saveError'), type: 'error' });
             }
         } catch (error) {
-            setMessage({ text: 'Nem sikerült csatlakozni a szerverhez.', type: 'error' });
+            setMessage({ text: t('settings.serverError'), type: 'error' });
         } finally {
             setIsLoading(false);
             setTimeout(() => setMessage(null), 4000);
@@ -71,7 +73,7 @@ export default function SettingsPage() {
             <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <Settings className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                    Beállítások
+                    {t('settings.title')}
                 </h1>
             </div>
 
@@ -80,11 +82,11 @@ export default function SettingsPage() {
                 
                 <div className="flex items-center mb-6 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                     <BellRing className="w-6 h-6 mr-2 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                    <h2 className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">Értesítési Csatornák</h2>
+                    <h2 className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('settings.channels')}</h2>
                 </div>
 
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 mb-6 secret:font-mono uppercase">
-                    &gt; Itt állíthatod be, hogy a naptárba rögzített vizsgáidról és feladataidról hová küldjön értesítést a rendszer.
+                    &gt; {t('settings.intro')}
                 </p>
 
                 {message && (
@@ -114,7 +116,7 @@ export default function SettingsPage() {
                                 className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-gray-50 dark:bg-[#1a1a1a] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none text-base secret:font-mono placeholder:secret:text-[#1cf85d]/30"
                             />
                             <p className="text-xs text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/60 mt-2 secret:font-mono uppercase">
-                                Hozz létre egy webhookot a saját Discord szervereden és másold be ide a linket.
+                                {t('settings.discordHint')}
                             </p>
                         </div>
                     </div>
@@ -129,11 +131,11 @@ export default function SettingsPage() {
                                 type="text"
                                 value={telegramChatId}
                                 onChange={(e) => setTelegramChatId(e.target.value)}
-                                placeholder="pl. 123456789"
+                                placeholder={t('settings.telegramPlaceholder')}
                                 className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-[#800000]/10 dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-gray-50 dark:bg-[#1a1a1a] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-inner secret:shadow-none text-base secret:font-mono placeholder:secret:text-[#1cf85d]/30"
                             />
                             <p className="text-xs text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/60 mt-2 secret:font-mono uppercase">
-                                Indítsd el a botunkat Telegramon, hogy megkapd a Chat ID-dat.
+                                {t('settings.telegramHint')}
                             </p>
                         </div>
                     </div>
@@ -146,7 +148,7 @@ export default function SettingsPage() {
                             className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50"
                         >
                             <Save className="w-6 h-6 mr-2" />
-                            {isLoading ? 'Mentés folyamatban...' : 'Beállítások Mentése'}
+                            {isLoading ? t('settings.saving') : t('settings.save')}
                         </button>
                     </div>
                 </form>
