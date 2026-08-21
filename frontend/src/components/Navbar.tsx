@@ -168,24 +168,24 @@ export default function Navbar() {
 
   return (
     <>
-      <nav ref={navRef} className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] shadow-[0_4px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] relative z-40 transition-all duration-300">
+      <nav ref={navRef} className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] text-black dark:text-white flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] relative z-40 transition-all duration-300">
 
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
           <Link to={isSecretMode ? "/B4nd1" : "/"} className="cursor-pointer group">
-            <span className="inline-flex items-center justify-center text-2xl font-bold border-2 border-white w-12 h-10 leading-none group-hover:bg-white group-hover:text-[#800000] dark:group-hover:text-[#a855f7] transition-all duration-300 shadow-sm">
+            <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 w-12 h-10 leading-none group-hover:bg-black group-hover:text-cyan-400 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm">
               ƎK
             </span>
           </Link>
 
-          <div className="hidden md:flex space-x-6 text-lg font-medium">
-            <Link to="/naptar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.calendar')}</Link>
-            <Link to="/ai" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.ai')}</Link>
-            <Link to="/kalkulator" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.calculators')}</Link>
-            <Link to="/tudastar" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.knowledge')}</Link>
-            <Link to="/hivatkozas" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.reference')}</Link>
-            <Link to="/fokusz" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.focus')}</Link>
-            <Link to="/links" className="hover:text-gray-200 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.links')}</Link>
+          <div className="hidden md:flex space-x-6 text-lg font-bold uppercase tracking-wide">
+            <Link to="/naptar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.calendar')}</Link>
+            <Link to="/ai" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.ai')}</Link>
+            <Link to="/kalkulator" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.calculators')}</Link>
+            <Link to="/tudastar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.knowledge')}</Link>
+            <Link to="/hivatkozas" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.reference')}</Link>
+            <Link to="/fokusz" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.focus')}</Link>
+            <Link to="/links" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all">{t('nav.links')}</Link>
           </div>
         </div>
 
@@ -196,99 +196,102 @@ export default function Navbar() {
             type="button"
             onClick={toggleLanguage}
             aria-label={language === 'hu' ? t('nav.switchToEn') : t('nav.switchToHu')}
-            className="cursor-pointer hover:scale-110 hover:text-gray-200 transition-all flex items-center space-x-1"
+            className="cursor-pointer hover:scale-110 hover:text-white dark:hover:text-gray-200 transition-all flex items-center space-x-1"
           >
             <Flag className="w-6 h-6" />
             <span className="text-xs font-bold uppercase">{language}</span>
           </button>
 
           <Link to="/ideabox" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
-            <Mail className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform" />
+            <Mail className="w-6 h-6 cursor-pointer hover:text-white dark:hover:text-gray-200 hover:scale-110 transition-transform" />
           </Link>
 
           <User
             onClick={handleProfileClick}
-            className="w-6 h-6 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform"
+            className="w-6 h-6 cursor-pointer hover:text-white dark:hover:text-gray-200 hover:scale-110 transition-transform"
           />
 
           <Menu
             onClick={handleMenuClick}
-            className="w-7 h-7 cursor-pointer hover:text-gray-200 hover:scale-110 transition-transform"
+            className="w-7 h-7 cursor-pointer hover:text-white dark:hover:text-gray-200 hover:scale-110 transition-transform"
           />
         </div>
 
         {/* --- Fő Dropdown Menü --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-72 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          /* Árnyék balra tolva (-8px), hogy ne lógjon le a képernyő jobb széléről! */
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 shadow-[-8px_8px_0px_#d946ef] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
-            <div className="flex items-center justify-between p-4 border-b-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50">
+            {/* Felső sáv élénk ciánnal a halvány helyett */}
+            <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50 bg-cyan-400 dark:bg-transparent">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
                   <Moon className="w-5 h-5 text-indigo-300 drop-shadow-[0_0_5px_rgba(165,180,252,0.8)] secret:text-[#1cf85d] secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 ) : (
-                  <Sun className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.8)]" />
+                  <Sun className="w-5 h-5 text-fuchsia-600 drop-shadow-[1px_1px_0px_#000]" />
                 )}
-                <span className="font-bold text-sm text-white secret:text-[#1cf85d] secret:font-mono uppercase">
+                <span className="font-bold text-sm text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
                   {isDarkMode ? t('nav.dark') : t('nav.light')}
                 </span>
               </div>
 
               <button
                 onClick={handleThemeToggle}
-                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-black/30'
+                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner border-2 border-black dark:border-transparent ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-fuchsia-500 shadow-[2px_2px_0px_#000]'
                   }`}
               >
-                <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-white secret:bg-black translate-x-6' : 'bg-white translate-x-1'
+                <div className={`w-4 h-4 rounded-full border-2 border-black dark:border-transparent absolute top-0.5 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-slate-100 secret:bg-black translate-x-5' : 'bg-slate-100 translate-x-1'
                   }`}></div>
               </button>
             </div>
 
             {/* --- Fő navigáció csak mobilon (ikonokkal) --- */}
-            <div className="flex md:hidden flex-col py-2 border-b-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
-              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
+            <div className="flex md:hidden flex-col py-2 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
+              <span className="px-4 py-2 text-xs font-black text-black dark:text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
 
-              <Link to="/naptar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Calendar className="w-4 h-4 mr-3" /> {t('nav.calendar')}
+              <Link to="/naptar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Calendar className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.calendar')}
               </Link>
-              <Link to="/ai" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Bot className="w-4 h-4 mr-3" /> {t('nav.ai')}
+              <Link to="/ai" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Bot className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.ai')}
               </Link>
-              <Link to="/kalkulator" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Calculator className="w-4 h-4 mr-3" /> {t('nav.calculators')}
+              <Link to="/kalkulator" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Calculator className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.calculators')}
               </Link>
-              <Link to="/tudastar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <BookOpen className="w-4 h-4 mr-3" /> {t('nav.knowledge')}
+              <Link to="/tudastar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <BookOpen className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.knowledge')}
               </Link>
-              <Link to="/hivatkozas" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <BookMarked className="w-4 h-4 mr-3" /> {t('nav.reference')}
+              <Link to="/hivatkozas" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <BookMarked className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.reference')}
               </Link>
-              <Link to="/fokusz" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <BrainCircuit className="w-4 h-4 mr-3" /> {t('nav.focus')}
+              <Link to="/fokusz" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <BrainCircuit className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.focus')}
               </Link>
-              <Link to="/links" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <LinkIcon className="w-4 h-4 mr-3" /> {t('nav.links')}
+              <Link to="/links" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <LinkIcon className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.links')}
               </Link>
             </div>
 
             <div className="flex flex-col py-2">
-              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.system')}</span>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Info className="w-4 h-4 mr-3" /> {t('nav.about')}
+              <span className="px-4 py-2 text-xs font-black text-black dark:text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.system')}</span>
+              {/* Halvány világoskék helyett erős neon fukszia hover hatás fekete ikonokkal */}
+              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-fuchsia-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Info className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.about')}
               </Link>
-              <Link to="/faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <HelpCircle className="w-4 h-4 mr-3" /> {t('nav.faq')}
+              <Link to="/faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-fuchsia-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <HelpCircle className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.faq')}
               </Link>
 
-              <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Settings className="w-4 h-4 mr-3" /> {t('nav.settings')}
+              <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-fuchsia-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Settings className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.settings')}
               </Link>
 
               {isAdmin && (
                 <>
-                  <div className="border-t-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
-                  <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono text-red-300 dark:text-red-400 secret:text-[#1cf85d]">{t('nav.adminSection')}</span>
-                  <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-red-400 dark:hover:border-red-500 secret:hover:border-[#1cf85d] hover:bg-red-500/20 dark:hover:bg-red-500/20 secret:hover:bg-[#1cf85d] text-red-200 hover:text-white dark:text-red-300 dark:hover:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                    <ShieldAlert className="w-4 h-4 mr-3" /> {t('nav.adminPanel')}
+                  <div className="border-t-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
+                  <span className="px-4 py-2 text-xs font-black text-black dark:text-red-400 secret:text-[#1cf85d] uppercase tracking-wider secret:font-mono">{t('nav.adminSection')}</span>
+                  <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-red-400 dark:hover:border-red-500 secret:hover:border-[#1cf85d] dark:hover:bg-red-500/20 secret:hover:bg-[#1cf85d] text-red-600 hover:text-black dark:text-red-300 dark:hover:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                    <ShieldAlert className="w-4 h-4 mr-3 text-red-600 group-hover:text-black" /> {t('nav.adminPanel')}
                   </Link>
                 </>
               )}
@@ -298,23 +301,25 @@ export default function Navbar() {
 
         {/* --- Profil Dropdown Menü --- */}
         {isProfileMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-black w-56 shadow-[0_10px_25px_rgba(128,0,0,0.4)] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-x-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          /* Ugyanúgy befelé (balra) néző árnyék */
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-56 shadow-[-8px_8px_0px_#06b6d4] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
-            <div className="px-4 py-3 border-b-4 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-black/10 dark:bg-black/20 secret:bg-transparent cursor-default">
-              <span className="block text-xs text-white/70 secret:text-[#1cf85d]/70 font-medium uppercase tracking-wider mb-0.5 secret:font-mono">{t('nav.loggedInAs')}</span>
-              <span className="font-bold text-xl text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-none truncate block secret:font-mono">{username || t('nav.userFallback')}</span>
+            {/* Élénkebb felső sáv és garantáltan sötét szöveg */}
+            <div className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-black/20 secret:bg-transparent cursor-default">
+              <span className="block text-xs text-black dark:text-white/70 secret:text-[#1cf85d]/70 font-bold uppercase tracking-wider mb-0.5 secret:font-mono">{t('nav.loggedInAs')}</span>
+              <span className="font-bold text-xl text-black dark:text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-none truncate block secret:font-mono">{username || t('nav.userFallback')}</span>
             </div>
 
             <Link
               to="/profile"
               onClick={() => setIsProfileMenuOpen(false)}
-              className="px-4 py-3 border-b-2 border-black/10 dark:border-[#a855f7]/20 secret:border-[#1cf85d] text-white secret:text-[#1cf85d] font-bold hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors flex items-center secret:font-mono uppercase"
+              className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/20 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] font-bold hover:bg-cyan-400 hover:text-black dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors flex items-center secret:font-mono uppercase border-l-4 border-transparent hover:border-l-black"
             >
-              <User className="w-4 h-4 mr-2" /> {t('nav.myProfile')}
+              <User className="w-4 h-4 mr-2 text-black dark:text-white" /> {t('nav.myProfile')}
             </Link>
             <button
               onClick={handleLogout}
-              className="px-4 py-3 text-left text-red-200 dark:text-red-300 secret:text-[#1cf85d] hover:text-white secret:hover:text-black font-bold hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] transition-colors cursor-pointer flex items-center secret:font-mono uppercase"
+              className="px-4 py-3 text-left text-red-600 dark:text-red-300 secret:text-[#1cf85d] hover:text-black hover:bg-red-400 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] font-bold transition-colors cursor-pointer flex items-center secret:font-mono uppercase border-l-4 border-transparent hover:border-l-black"
             >
               {t('nav.logout')}
             </button>
@@ -346,7 +351,7 @@ export default function Navbar() {
               localStorage.removeItem('secretMode');
               window.location.href = '/';
             }}
-            className="border-2 border-[#1cf85d] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl [text-shadow:0_0_5px_rgba(28,248,93,0.8)]"
+            className="border-4 border-[#1cf85d] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl font-bold [text-shadow:0_0_5px_rgba(28,248,93,0.8)]"
           >
             [ RESET ]
           </button>

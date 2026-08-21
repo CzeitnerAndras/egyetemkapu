@@ -193,34 +193,34 @@ export default function HomePage() {
     <main className="w-full px-6 lg:px-16 mx-auto mt-8 pb-12 relative z-20">
 
       {/* --- Üdvözlő Szekció & Mini AI --- */}
-      <div className="w-full bg-gradient-to-r from-[#800000] via-[#a51a1a] to-[#800000] dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 md:p-12 mb-8 shadow-[0_20px_50px_rgba(128,0,0,0.3)] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
+      <div className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 md:p-12 mb-8 shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
 
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-20 dark:opacity-30 secret:opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-30 dark:opacity-30 secret:opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
           <Zap className="w-64 h-64 text-white secret:text-[#1cf85d]" />
         </div>
 
         <div className="relative z-10 max-w-3xl">
           <div className="mb-4">
-            <h1 className="text-4xl md:text-6xl font-black text-white secret:text-[#1cf85d] drop-shadow-lg secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)] secret:font-mono uppercase tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold text-white secret:text-[#1cf85d] drop-shadow-[2px_2px_0px_#000] dark:drop-shadow-none secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)] secret:font-mono uppercase tracking-tight">
               {t('home.welcomeTitle')}
             </h1>
           </div>
-          <p className="text-lg md:text-xl text-red-100 dark:text-purple-200 secret:text-[#1cf85d]/80 font-medium leading-relaxed secret:font-mono drop-shadow-md mb-8">
+          <p className="text-lg md:text-xl text-white dark:text-purple-200 secret:text-[#1cf85d]/80 font-bold leading-relaxed secret:font-mono drop-shadow-[2px_2px_0px_#000] dark:drop-shadow-none mb-8">
             {t('home.welcomeSubtitle')}
           </p>
 
-          <form onSubmit={handleAiSubmit} className="flex max-w-xl relative group shadow-lg">
+          <form onSubmit={handleAiSubmit} className="flex max-w-xl relative group shadow-[4px_4px_0px_#000] dark:shadow-none">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Bot className="w-6 h-6 text-gray-400 dark:text-gray-300 secret:text-[#1cf85d]" />
+              <Bot className="w-6 h-6 text-black dark:text-gray-300 secret:text-[#1cf85d]" />
             </div>
             <input
               type="text"
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
               placeholder={t('home.aiPlaceholder')}
-              className="w-full bg-white dark:bg-[#121212] secret:bg-black border-4 border-transparent secret:border-[#1cf85d] py-4 pl-14 pr-16 text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none focus:border-[#800000] dark:focus:border-[#a855f7] secret:font-mono text-lg transition-colors"
+              className="w-full bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-4 pl-14 pr-16 text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none focus:border-cyan-400 dark:focus:border-[#a855f7] secret:font-mono text-lg font-bold transition-colors"
             />
-            <button type="submit" className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] hover:text-black dark:hover:text-white transition-colors cursor-pointer group-hover:scale-110">
+            <button type="submit" className="absolute inset-y-0 right-0 pr-4 flex items-center text-fuchsia-500 dark:text-[#a855f7] secret:text-[#1cf85d] hover:text-cyan-500 dark:hover:text-white transition-colors cursor-pointer group-hover:scale-110">
               <Send className="w-6 h-6" />
             </button>
           </form>
@@ -231,23 +231,23 @@ export default function HomePage() {
       {/* --- Napi Vicc és Tipp Szekció --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
-        <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-xl">
+        <div className="w-full bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[6px_6px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-[10px_10px_0px_#06b6d4] dark:hover:shadow-[0_0_40px_rgba(168,85,247,0.3)]">
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
+            <h2 className="text-xl font-bold text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
               {t('home.jokeTitle')}
             </h2>
-            <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg italic secret:font-mono">
+            <p className="text-black dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg italic secret:font-mono">
               "{dailyJoke}"
             </p>
           </div>
         </div>
 
-        <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-xl">
+        <div className="w-full bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[6px_6px_0px_#d946ef] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-[10px_10px_0px_#d946ef] dark:hover:shadow-[0_0_40px_rgba(168,85,247,0.3)]">
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
+            <h2 className="text-xl font-bold text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
               {t('home.tipTitle')}
             </h2>
-            <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg secret:font-mono">
+            <p className="text-black dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg secret:font-mono">
               {dailyTip}
             </p>
           </div>
@@ -257,33 +257,33 @@ export default function HomePage() {
 
       {/* --- Rendszerstatisztika --- */}
       <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
-          <Users className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
+        <div className="flex items-center p-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_#06b6d4] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
+          <Users className="w-10 h-10 text-fuchsia-500 dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
           <div>
-            <div className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedUsers}</div>
+            <div className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedUsers}</div>
             <div className="text-xs font-bold text-gray-500 secret:text-[#1cf85d]/70 uppercase secret:font-mono leading-tight">{t('home.statsUsers')}</div>
           </div>
         </div>
-        <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
-          <Calculator className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
+        <div className="flex items-center p-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_#d946ef] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
+          <Calculator className="w-10 h-10 text-cyan-500 dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
           <div>
-            <div className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedMath}+</div>
+            <div className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedMath}+</div>
             <div className="text-xs font-bold text-gray-500 secret:text-[#1cf85d]/70 uppercase secret:font-mono leading-tight">{t('home.statsMath')}</div>
           </div>
         </div>
-        <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
-          <FileText className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
+        <div className="flex items-center p-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_#8b5cf6] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
+          <FileText className="w-10 h-10 text-blue-500 dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
           <div>
-            <div className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedDocs}</div>
+            <div className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedDocs}</div>
             <div className="text-xs font-bold text-gray-500 secret:text-[#1cf85d]/70 uppercase secret:font-mono leading-tight">{t('home.statsDocs')}</div>
           </div>
         </div>
       </div>
 
       {/* --- Hírek Szekció Cím --- */}
-      <div className="flex items-center space-x-3 mb-8 border-b-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-4">
-        <Megaphone className="w-8 h-8 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] drop-shadow-sm secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-        <h2 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
+      <div className="flex items-center space-x-3 mb-8 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-4">
+        <Megaphone className="w-8 h-8 text-cyan-500 dark:text-[#c084fc] secret:text-[#1cf85d] drop-shadow-[2px_2px_0px_#000] dark:drop-shadow-none secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+        <h2 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase tracking-wide">
           {t('home.latestNews')}
         </h2>
       </div>
@@ -292,12 +292,12 @@ export default function HomePage() {
       <div className="w-full">
         {loading ? (
           <div className="flex justify-center items-center h-40">
-            <div className="text-2xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] animate-pulse secret:font-mono uppercase">
+            <div className="text-2xl font-bold text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] animate-pulse secret:font-mono uppercase">
               {t('home.loadingNews')}
             </div>
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center text-gray-600 dark:text-gray-400 secret:text-[#1cf85d]/70 p-12 border-4 border-dashed border-[#800000]/50 dark:border-[#a855f7]/50 secret:border-[#1cf85d]/50 font-bold text-xl secret:font-mono uppercase">
+          <div className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 p-12 border-4 border-dashed border-black/50 dark:border-[#a855f7]/50 secret:border-[#1cf85d]/50 font-bold text-xl secret:font-mono uppercase">
             &gt; {t('home.noNews')}
           </div>
         ) : (
@@ -305,13 +305,13 @@ export default function HomePage() {
             {events.map((item) => (
               <div
                 key={item.id}
-                className="relative flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] overflow-hidden h-[400px] group cursor-pointer shadow-md hover:shadow-[0_20px_40px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] secret:hover:shadow-[0_0_20px_rgba(28,248,93,0.4)] transition-all duration-300"
+                className="relative flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] overflow-hidden h-[400px] group cursor-pointer shadow-[6px_6px_0px_#000] hover:shadow-[10px_10px_0px_#d946ef] dark:shadow-md dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] secret:hover:shadow-[0_0_20px_rgba(28,248,93,0.4)] transition-all duration-300"
                 onClick={() => setSelectedNews(item)}
               >
                 {isAdmin && (
                   <button
                     onClick={(e) => handleDeleteNews(item.id, e)}
-                    className="absolute top-4 right-4 z-20 p-2 bg-red-600 text-white rounded-full hover:bg-red-800 transition-colors shadow-md border-2 border-transparent secret:border-[#1cf85d] secret:bg-black secret:text-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                    className="absolute top-4 right-4 z-20 p-2 bg-slate-100 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition-colors border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:bg-black secret:text-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black shadow-[2px_2px_0px_#000] dark:shadow-none"
                     title="Hír törlése"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -323,7 +323,7 @@ export default function HomePage() {
                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
                   ) : (
                     <div className="flex items-center justify-center w-full h-full">
-                      <span className="text-white/30 font-bold tracking-widest text-3xl secret:font-mono uppercase">{t('home.image')}</span>
+                      <span className="text-slate-100/30 font-bold tracking-widest text-3xl secret:font-mono uppercase">{t('home.image')}</span>
                     </div>
                   )}
                 </div>
@@ -332,17 +332,17 @@ export default function HomePage() {
 
                 <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end z-10">
 
-                  <h3 className="text-2xl font-bold text-white secret:text-[#1cf85d] leading-tight secret:font-mono uppercase drop-shadow-md">
+                  <h3 className="text-2xl font-bold text-cyan-300 secret:text-[#1cf85d] leading-tight secret:font-mono uppercase drop-shadow-[2px_2px_0px_#000]">
                     {item.title}
                   </h3>
 
                   <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-in-out">
                     <div className="overflow-hidden">
-                      <div className="pt-4 mt-4 border-t-2 border-white/20 secret:border-[#1cf85d]/30">
-                        <p className="text-gray-300 secret:text-[#1cf85d]/80 text-sm line-clamp-3 mb-4 secret:font-mono">
+                      <div className="pt-4 mt-4 border-t-4 border-fuchsia-500 secret:border-[#1cf85d]/30">
+                        <p className="text-gray-100 secret:text-[#1cf85d]/80 text-sm line-clamp-3 mb-4 font-bold secret:font-mono">
                           {item.description}
                         </p>
-                        <div className="flex items-center text-xs text-gray-400 secret:text-[#1cf85d]/60 font-bold uppercase secret:font-mono">
+                        <div className="flex items-center text-xs text-cyan-300 secret:text-[#1cf85d]/60 font-bold uppercase secret:font-mono">
                           <Calendar className="w-4 h-4 mr-2 shrink-0" />
                           {item.eventDate ? new Date(item.eventDate).toLocaleDateString(locale) : t('home.noDate')}
                         </div>
@@ -360,17 +360,17 @@ export default function HomePage() {
       {/* --- Felugró Modal --- */}
       {selectedNews && (
         <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 md:p-10 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl p-0 relative shadow-[0_20px_50px_rgba(128,0,0,0.4)] dark:shadow-[0_0_50px_rgba(168,85,247,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.4)] flex flex-col md:flex-row max-h-full md:max-h-[85vh] overflow-hidden transition-colors">
+          <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl p-0 relative shadow-[10px_10px_0px_#d946ef] dark:shadow-[0_0_50px_rgba(168,85,247,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.4)] flex flex-col md:flex-row max-h-full md:max-h-[85vh] overflow-hidden transition-colors">
 
             <button
               onClick={() => setSelectedNews(null)}
-              className="absolute top-4 right-4 z-20 cursor-pointer p-2 rounded-full border-2 transition-all bg-white dark:bg-[#121212] border-[#800000] dark:border-[#a855f7] text-[#800000] dark:text-[#a855f7] secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 shadow-md"
+              className="absolute top-4 right-4 z-20 cursor-pointer p-2 rounded-full border-4 transition-all bg-slate-100 dark:bg-[#121212] border-black dark:border-[#a855f7] text-black dark:text-[#a855f7] secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d] hover:bg-cyan-400 hover:text-black dark:hover:bg-gray-800 shadow-[4px_4px_0px_#d946ef] dark:shadow-md"
             >
               <X className="w-6 h-6" />
             </button>
 
             {selectedNews.imageUrl && (
-              <div className="w-full md:w-2/5 h-64 md:h-auto border-b-4 md:border-b-0 md:border-r-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] relative shrink-0 bg-[#06261b] dark:bg-black/80 flex items-center justify-center overflow-hidden">
+              <div className="w-full md:w-2/5 h-64 md:h-auto border-b-4 md:border-b-0 md:border-r-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] relative shrink-0 bg-black flex items-center justify-center overflow-hidden">
                 <img src={selectedNews.imageUrl} alt={selectedNews.title} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] pointer-events-none"></div>
               </div>
@@ -378,16 +378,16 @@ export default function HomePage() {
 
             {/* --- Modal Tartalom --- */}
             <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar flex-1 relative">
-              <h1 className="text-3xl md:text-5xl font-black text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 secret:font-mono uppercase leading-tight pr-10">
+              <h1 className="text-3xl md:text-5xl font-bold text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 secret:font-mono uppercase leading-tight pr-10">
                 {selectedNews.title}
               </h1>
 
-              <div className="flex items-center text-md font-bold text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 mb-8 border-b-2 border-gray-300 dark:border-gray-600 secret:border-[#1cf85d]/50 pb-4 secret:font-mono uppercase">
+              <div className="flex items-center text-md font-bold text-cyan-600 dark:text-gray-400 secret:text-[#1cf85d]/70 mb-8 border-b-4 border-black dark:border-gray-600 secret:border-[#1cf85d]/50 pb-4 secret:font-mono uppercase">
                 <Calendar className="w-5 h-5 mr-2" />
                 {t('home.dateLabel', { date: selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString(locale) : t('home.noDateShort') })}
               </div>
 
-              <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 text-lg md:text-xl leading-relaxed text-justify whitespace-pre-wrap secret:font-mono">
+              <p className="text-black dark:text-slate-100 secret:text-[#1cf85d]/90 text-lg md:text-xl font-bold leading-relaxed text-justify whitespace-pre-wrap secret:font-mono">
                 {selectedNews.description}
               </p>
             </div>
