@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Megaphone, Zap, Calendar} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Megaphone, Zap, Calendar, Smile, Lightbulb, Bot, Send, Users, Calculator, FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface EventItem {
@@ -26,11 +27,52 @@ const jokes = [
   { hu: "Miért nem játszanak bújócskát a dinoszauruszok? Mert senki sem akarja megtalálni őket.", en: "Why don't dinosaurs play hide and seek? Because nobody wants to find them." }
 ];
 
+const tips = [
+  { hu: "A Pomodoro módszerrel 25 perc fókusz után 5 perc szünet javasolt az optimális teljesítményhez.", en: "With the Pomodoro technique, a 5-minute break is recommended after 25 minutes of focus for optimal performance." },
+  { hu: "A DEENK-ben (Egyetemi Könyvtár) ingyenesen foglalhatsz tanulószobát csoportos munkához.", en: "You can book study rooms for free at the DEENK (University Library) for group work." },
+  { hu: "A hivatkozás generátort használva pillanatok alatt elkészítheted a szakdolgozatod irodalomjegyzékét.", en: "Using the citation generator, you can create your thesis bibliography in seconds." },
+  { hu: "A 'Titkos mód' bekapcsolásához kattints 10-szer a sötét/világos mód váltó gombra a menüben!", en: "Click the dark/light mode toggle in the menu 10 times to activate 'Secret Mode'!" },
+  { hu: "Ha a Naptárban beállítod a Discord értesítést, a rendszer vizsga előtt emlékeztetőt küld a szerveredre.", en: "If you set up Discord notifications in the Calendar, the system will send a reminder to your server before exams." }
+];
+
+{/* --- Számláló animáció Hook --- */ }
+function useCountUp(endValue: number, duration: number = 2000) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTime: number | null = null;
+    let animationFrame: number;
+
+    const animate = (currentTime: number) => {
+      if (!startTime) startTime = currentTime;
+      const progress = currentTime - startTime;
+      const percentage = Math.min(progress / duration, 1);
+
+      const easeOut = 1 - Math.pow(1 - percentage, 3);
+
+      setCount(Math.floor(endValue * easeOut));
+
+      if (progress < duration) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        setCount(endValue);
+      }
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [endValue, duration]);
+
+  return count;
+}
+
 export default function HomePage() {
   const { t, locale, language } = useLanguage();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedNews, setSelectedNews] = useState<EventItem | null>(null);
+  const [aiInput, setAiInput] = useState('');
 
   useEffect(() => {
     {/* --- Hírek lekérése (GET) --- */ }
@@ -65,15 +107,29 @@ export default function HomePage() {
     };
   }, [selectedNews]);
 
-  {/* --- Napi vicc kiválasztása --- */ }
+  const handleAiSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (aiInput.trim()) {
+      localStorage.setItem('pendingAiPrompt', aiInput);
+      navigate('/ai');
+    }
+  };
+
+  {/* --- Napi vicc és tipp kiválasztása --- */ }
   const dayOfYear = Math.floor(Date.now() / 86400000);
   const dailyJoke = language === 'en' ? jokes[dayOfYear % jokes.length].en : jokes[dayOfYear % jokes.length].hu;
+  const dailyTip = language === 'en' ? tips[dayOfYear % tips.length].en : tips[dayOfYear % tips.length].hu;
+
+  {/* --- Animált Statisztika Adatok --- */ }
+  const animatedUsers = useCountUp(42);
+  const animatedMath = useCountUp(153);
+  const animatedDocs = useCountUp(28);
 
   return (
     <main className="w-full px-6 lg:px-16 mx-auto mt-8 pb-12 relative z-20">
 
-      {/* --- Üdvözlő Szekció --- */}
-      <div className="w-full bg-gradient-to-r from-[#800000] via-[#a51a1a] to-[#800000] dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 md:p-12 mb-12 shadow-[0_20px_50px_rgba(128,0,0,0.3)] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
+      {/* --- Üdvözlő Szekció & Mini AI --- */}
+      <div className="w-full bg-gradient-to-r from-[#800000] via-[#a51a1a] to-[#800000] dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 md:p-12 mb-8 shadow-[0_20px_50px_rgba(128,0,0,0.3)] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
 
         <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-20 dark:opacity-30 secret:opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
           <Zap className="w-64 h-64 text-white secret:text-[#1cf85d]" />
@@ -85,21 +141,86 @@ export default function HomePage() {
               {t('home.welcomeTitle')}
             </h1>
           </div>
-          <p className="text-lg md:text-xl text-red-100 dark:text-purple-200 secret:text-[#1cf85d]/80 font-medium leading-relaxed secret:font-mono drop-shadow-md">
+          <p className="text-lg md:text-xl text-red-100 dark:text-purple-200 secret:text-[#1cf85d]/80 font-medium leading-relaxed secret:font-mono drop-shadow-md mb-8">
             {t('home.welcomeSubtitle')}
           </p>
+
+          <form onSubmit={handleAiSubmit} className="flex max-w-xl relative group shadow-lg">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Bot className="w-6 h-6 text-gray-400 dark:text-gray-300 secret:text-[#1cf85d]" />
+            </div>
+            <input
+              type="text"
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder={t('home.aiPlaceholder')}
+              className="w-full bg-white dark:bg-[#121212] secret:bg-black border-4 border-transparent secret:border-[#1cf85d] py-4 pl-14 pr-16 text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none focus:border-[#800000] dark:focus:border-[#a855f7] secret:font-mono text-lg transition-colors"
+            />
+            <button type="submit" className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] hover:text-black dark:hover:text-white transition-colors cursor-pointer group-hover:scale-110">
+              <Send className="w-6 h-6" />
+            </button>
+          </form>
+
         </div>
       </div>
 
-      {/* --- Napi Vicc Szekció --- */}
-      <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 mb-12 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none">
-        <div className="flex-1">
-          <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
-            {t('home.jokeTitle')}
-          </h2>
-          <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg italic secret:font-mono">
-            "{dailyJoke}"
-          </p>
+      {/* --- Napi Vicc és Tipp Szekció --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+
+        <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-xl">
+          <div className="hidden md:flex p-4 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] border-2 border-black dark:border-transparent secret:border-[#1cf85d] mr-6 shrink-0 transition-transform group-hover:scale-110">
+            <Smile className="w-8 h-8 text-white secret:text-black" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
+              <Smile className="w-5 h-5 mr-2 md:hidden" />
+              {t('home.jokeTitle')}
+            </h2>
+            <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg italic secret:font-mono">
+              "{dailyJoke}"
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-xl">
+          <div className="hidden md:flex p-4 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] border-2 border-black dark:border-transparent secret:border-[#1cf85d] mr-6 shrink-0 transition-transform group-hover:scale-110">
+            <Lightbulb className="w-8 h-8 text-white secret:text-black" />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
+              <Lightbulb className="w-5 h-5 mr-2 md:hidden" />
+              {t('home.tipTitle')}
+            </h2>
+            <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg secret:font-mono">
+              {dailyTip}
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      {/* --- Rendszerstatisztika --- */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
+          <Users className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
+          <div>
+            <div className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedUsers}</div>
+            <div className="text-xs font-bold text-gray-500 secret:text-[#1cf85d]/70 uppercase secret:font-mono leading-tight">{t('home.statsUsers')}</div>
+          </div>
+        </div>
+        <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
+          <Calculator className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
+          <div>
+            <div className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedMath}+</div>
+            <div className="text-xs font-bold text-gray-500 secret:text-[#1cf85d]/70 uppercase secret:font-mono leading-tight">{t('home.statsMath')}</div>
+          </div>
+        </div>
+        <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
+          <FileText className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
+          <div>
+            <div className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{animatedDocs}</div>
+            <div className="text-xs font-bold text-gray-500 secret:text-[#1cf85d]/70 uppercase secret:font-mono leading-tight">{t('home.statsDocs')}</div>
+          </div>
         </div>
       </div>
 

@@ -43,6 +43,11 @@ export const translations: Record<Lang, Record<string, string>> = {
     'home.welcomeSubtitle': 'A te digitális egyetemi központod. Minden fontos eszköz, naptár és segédlet egy helyen, hogy a tanulás hatékonyabb és stresszmentesebb legyen.',
     'home.latestNews': 'Legfrissebb Hírek',
     'home.jokeTitle': 'Napi Vicc',
+    'home.aiPlaceholder': 'Kérdezz valamit az EgyetemkapuAI-tól...',
+    'home.tipTitle': 'Tudtad-e?',
+    'home.statsUsers': 'Diák tanul a Fókusz Szobában',
+    'home.statsMath': 'Megoldott egyenlet',
+    'home.statsDocs': 'Feltöltött jegyzet a Tudástárban',
 
     'login.title': 'Bejelentkezés',
     'login.email': 'E-mail cím',
@@ -352,6 +357,11 @@ export const translations: Record<Lang, Record<string, string>> = {
     'home.welcomeSubtitle': 'Your digital university hub. All essential tools, calendars, and aids in one place to make studying more efficient and stress-free.',
     'home.latestNews': 'Latest News',
     'home.jokeTitle': 'Joke of the Day',
+    'home.aiPlaceholder': 'Ask EgyetemkapuAI something...',
+    'home.tipTitle': 'Did you know?',
+    'home.statsUsers': 'Students in Focus Room',
+    'home.statsMath': 'Equations solved',
+    'home.statsDocs': 'Notes in Knowledge Base',
 
     'login.title': 'Log in',
     'login.email': 'Email address',
