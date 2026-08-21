@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Megaphone, Zap, Calendar, Lightbulb, Bot, Send, Users, Calculator, FileText } from 'lucide-react';
+import { X, Megaphone, Zap, Calendar, Bot, Send, Users, Calculator, FileText, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface EventItem {
@@ -77,8 +77,27 @@ export default function HomePage() {
   const [aiInput, setAiInput] = useState('');
   const statsRef = useRef<HTMLDivElement>(null);
   const [statsVisible, setStatsVisible] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    {/* --- Admin jog ellenőrzése --- */ }
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch('http://localhost:8080/api/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            const userRole = data.role || (data.roles && data.roles[0]) || '';
+            if (userRole.includes('ADMIN') || data.isAdmin) {
+              setIsAdmin(true);
+            }
+          }
+        })
+        .catch(err => console.error("Hiba a felhasználó lekérésekor:", err));
+    }
+
     {/* --- Hírek lekérése (GET) --- */ }
     fetch('http://localhost:8080/api/events')
       .then((res) => {
@@ -135,6 +154,28 @@ export default function HomePage() {
     if (aiInput.trim()) {
       localStorage.setItem('pendingAiPrompt', aiInput);
       navigate('/ai');
+    }
+  };
+
+  const handleDeleteNews = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("Biztosan törölni szeretnéd ezt a hírt? / Are you sure you want to delete this news?")) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`http://localhost:8080/api/events/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setEvents(prevEvents => prevEvents.filter(event => event.id !== id));
+      } else {
+        console.error('Hiba a hír törlésekor');
+      }
+    } catch (error) {
+      console.error('Hálózati hiba a hír törlésekor:', error);
     }
   };
 
@@ -267,6 +308,16 @@ export default function HomePage() {
                 className="relative flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] overflow-hidden h-[400px] group cursor-pointer shadow-md hover:shadow-[0_20px_40px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] secret:hover:shadow-[0_0_20px_rgba(28,248,93,0.4)] transition-all duration-300"
                 onClick={() => setSelectedNews(item)}
               >
+                {isAdmin && (
+                  <button
+                    onClick={(e) => handleDeleteNews(item.id, e)}
+                    className="absolute top-4 right-4 z-20 p-2 bg-red-600 text-white rounded-full hover:bg-red-800 transition-colors shadow-md border-2 border-transparent secret:border-[#1cf85d] secret:bg-black secret:text-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                    title="Hír törlése"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+
                 <div className="absolute inset-0 bg-[#06261b] dark:bg-black/80">
                   {item.imageUrl ? (
                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
