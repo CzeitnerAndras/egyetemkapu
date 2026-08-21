@@ -42,6 +42,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'home.welcomeTitle': 'Üdvözöl az Egyetemkapu!',
     'home.welcomeSubtitle': 'A te digitális egyetemi központod. Minden fontos eszköz, naptár és segédlet egy helyen, hogy a tanulás hatékonyabb és stresszmentesebb legyen.',
     'home.latestNews': 'Legfrissebb Hírek',
+    'home.jokeTitle': 'Napi Vicc',
 
     'login.title': 'Bejelentkezés',
     'login.email': 'E-mail cím',
@@ -350,6 +351,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'home.welcomeTitle': 'Welcome to Egyetemkapu!',
     'home.welcomeSubtitle': 'Your digital university hub. All essential tools, calendars, and aids in one place to make studying more efficient and stress-free.',
     'home.latestNews': 'Latest News',
+    'home.jokeTitle': 'Joke of the Day',
 
     'login.title': 'Log in',
     'login.email': 'Email address',
