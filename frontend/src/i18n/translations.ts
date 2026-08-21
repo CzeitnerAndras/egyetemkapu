@@ -296,6 +296,15 @@ export const translations: Record<Lang, Record<string, string>> = {
     'admin.deleteProcessed': 'Feldolgozva / Törlés',
 
     'links.title': 'Egyetemi Linkek',
+
+    'admin.uploadNews': 'Új Hír Feltöltése',
+    'admin.newsTitle': 'Hír címe',
+    'admin.newsDesc': 'Hír tartalma / leírása',
+    'admin.newsDate': 'Esemény dátuma (opcionális)',
+    'admin.newsImage': 'Kép URL (opcionális)',
+    'admin.newsSubmit': 'Hír Közzététele',
+    'admin.newsSuccess': 'Hír sikeresen közzétéve!',
+    'admin.newsError': 'Hiba történt a hír feltöltésekor.',
   },
   en: {
     'nav.calendar': 'Calendar',
@@ -592,6 +601,15 @@ export const translations: Record<Lang, Record<string, string>> = {
     'admin.deleteProcessed': 'Processed / Delete',
 
     'links.title': 'University Links',
+
+    'admin.uploadNews': 'Upload New News',
+    'admin.newsTitle': 'News Title',
+    'admin.newsDesc': 'News Content / Description',
+    'admin.newsDate': 'Event Date (optional)',
+    'admin.newsImage': 'Image URL (optional)',
+    'admin.newsSubmit': 'Publish News',
+    'admin.newsSuccess': 'News published successfully!',
+    'admin.newsError': 'An error occurred while uploading the news.',
   },
 };
 
