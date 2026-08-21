@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Link as LinkIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -241,6 +241,33 @@ export default function Navbar() {
                 <div className={`w-4 h-4 rounded-full absolute top-1 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-white secret:bg-black translate-x-6' : 'bg-white translate-x-1'
                   }`}></div>
               </button>
+            </div>
+
+            {/* --- Fő navigáció csak mobilon (ikonokkal) --- */}
+            <div className="flex md:hidden flex-col py-2 border-b-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
+              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
+
+              <Link to="/naptar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Calendar className="w-4 h-4 mr-3" /> {t('nav.calendar')}
+              </Link>
+              <Link to="/ai" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Bot className="w-4 h-4 mr-3" /> {t('nav.ai')}
+              </Link>
+              <Link to="/kalkulator" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <Calculator className="w-4 h-4 mr-3" /> {t('nav.calculators')}
+              </Link>
+              <Link to="/tudastar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <BookOpen className="w-4 h-4 mr-3" /> {t('nav.knowledge')}
+              </Link>
+              <Link to="/hivatkozas" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <BookMarked className="w-4 h-4 mr-3" /> {t('nav.reference')}
+              </Link>
+              <Link to="/fokusz" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <BrainCircuit className="w-4 h-4 mr-3" /> {t('nav.focus')}
+              </Link>
+              <Link to="/links" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+                <LinkIcon className="w-4 h-4 mr-3" /> {t('nav.links')}
+              </Link>
             </div>
 
             <div className="flex flex-col py-2">
