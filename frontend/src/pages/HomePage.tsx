@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Megaphone, Zap, Calendar, Smile, Lightbulb, Bot, Send, Users, Calculator, FileText } from 'lucide-react';
+import { X, Megaphone, Zap, Calendar, Lightbulb, Bot, Send, Users, Calculator, FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface EventItem {
@@ -36,10 +36,12 @@ const tips = [
 ];
 
 {/* --- Számláló animáció Hook --- */ }
-function useCountUp(endValue: number, duration: number = 2000) {
+function useCountUp(endValue: number, startAnim: boolean, duration: number = 2000) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    if (!startAnim) return;
+
     let startTime: number | null = null;
     let animationFrame: number;
 
@@ -61,7 +63,7 @@ function useCountUp(endValue: number, duration: number = 2000) {
 
     animationFrame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrame);
-  }, [endValue, duration]);
+  }, [endValue, duration, startAnim]);
 
   return count;
 }
@@ -73,6 +75,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedNews, setSelectedNews] = useState<EventItem | null>(null);
   const [aiInput, setAiInput] = useState('');
+  const statsRef = useRef<HTMLDivElement>(null);
+  const [statsVisible, setStatsVisible] = useState(false);
 
   useEffect(() => {
     {/* --- Hírek lekérése (GET) --- */ }
@@ -107,6 +111,25 @@ export default function HomePage() {
     };
   }, [selectedNews]);
 
+  {/* --- Intersection Observer a statisztikához --- */ }
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStatsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (statsRef.current) {
+      observer.observe(statsRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   const handleAiSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (aiInput.trim()) {
@@ -121,9 +144,9 @@ export default function HomePage() {
   const dailyTip = language === 'en' ? tips[dayOfYear % tips.length].en : tips[dayOfYear % tips.length].hu;
 
   {/* --- Animált Statisztika Adatok --- */ }
-  const animatedUsers = useCountUp(42);
-  const animatedMath = useCountUp(153);
-  const animatedDocs = useCountUp(28);
+  const animatedUsers = useCountUp(42, statsVisible);
+  const animatedMath = useCountUp(153, statsVisible);
+  const animatedDocs = useCountUp(28, statsVisible);
 
   return (
     <main className="w-full px-6 lg:px-16 mx-auto mt-8 pb-12 relative z-20">
@@ -168,12 +191,8 @@ export default function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
         <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-xl">
-          <div className="hidden md:flex p-4 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] border-2 border-black dark:border-transparent secret:border-[#1cf85d] mr-6 shrink-0 transition-transform group-hover:scale-110">
-            <Smile className="w-8 h-8 text-white secret:text-black" />
-          </div>
           <div className="flex-1">
             <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
-              <Smile className="w-5 h-5 mr-2 md:hidden" />
               {t('home.jokeTitle')}
             </h2>
             <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg italic secret:font-mono">
@@ -200,7 +219,7 @@ export default function HomePage() {
       </div>
 
       {/* --- Rendszerstatisztika --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="flex items-center p-4 border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
           <Users className="w-10 h-10 text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
           <div>
