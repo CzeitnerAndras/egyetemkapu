@@ -202,12 +202,8 @@ export default function HomePage() {
         </div>
 
         <div className="w-full bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-xl">
-          <div className="hidden md:flex p-4 bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] border-2 border-black dark:border-transparent secret:border-[#1cf85d] mr-6 shrink-0 transition-transform group-hover:scale-110">
-            <Lightbulb className="w-8 h-8 text-white secret:text-black" />
-          </div>
           <div className="flex-1">
             <h2 className="text-xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 secret:font-mono uppercase flex items-center">
-              <Lightbulb className="w-5 h-5 mr-2 md:hidden" />
               {t('home.tipTitle')}
             </h2>
             <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 font-medium text-lg secret:font-mono">
