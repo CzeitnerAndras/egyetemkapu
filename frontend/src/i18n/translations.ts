@@ -39,6 +39,9 @@ export const translations: Record<Lang, Record<string, string>> = {
     'home.noteUpdated': 'Jegyzet sikeresen frissítve!',
     'home.noteSaved': 'Jegyzet sikeresen elmentve!',
     'home.noteDeleted': 'Jegyzet törölve!',
+    'home.welcomeTitle': 'Üdvözöl az Egyetemkapu!',
+    'home.welcomeSubtitle': 'A te digitális egyetemi központod. Minden fontos eszköz, naptár és segédlet egy helyen, hogy a tanulás hatékonyabb és stresszmentesebb legyen.',
+    'home.latestNews': 'Legfrissebb Hírek',
 
     'login.title': 'Bejelentkezés',
     'login.email': 'E-mail cím',
@@ -344,6 +347,9 @@ export const translations: Record<Lang, Record<string, string>> = {
     'home.noteUpdated': 'Note updated successfully!',
     'home.noteSaved': 'Note saved successfully!',
     'home.noteDeleted': 'Note deleted!',
+    'home.welcomeTitle': 'Welcome to Egyetemkapu!',
+    'home.welcomeSubtitle': 'Your digital university hub. All essential tools, calendars, and aids in one place to make studying more efficient and stress-free.',
+    'home.latestNews': 'Latest News',
 
     'login.title': 'Log in',
     'login.email': 'Email address',

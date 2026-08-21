@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Trash2, X } from 'lucide-react';
+import { X, Megaphone, Zap, Calendar } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface EventItem {
@@ -11,18 +11,11 @@ interface EventItem {
   imageUrl?: string;
 }
 
-interface NoteItem {
-  id?: number;
-  content: string;
-}
-
 export default function HomePage() {
   const { t, locale } = useLanguage();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedNews, setSelectedNews] = useState<EventItem | null>(null);
-  const [noteContent, setNoteContent] = useState<string>('');
-  const [noteId, setNoteId] = useState<number | null>(null);
 
   useEffect(() => {
     {/* --- Hírek lekérése (GET) --- */}
@@ -44,181 +37,142 @@ export default function HomePage() {
         setEvents([]);
         setLoading(false);
       });
-
-    {/* --- Jegyzetek lekérése (GET) - Privát --- */}
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch('http://localhost:8080/api/notes', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error('Nincs jogosultság vagy lejárt token');
-          return res.json();
-        })
-        .then((notes) => {
-          if (Array.isArray(notes) && notes.length > 0) {
-            setNoteContent(notes[0].content);
-            setNoteId(notes[0].id || null);
-          }
-        })
-        .catch((err) => console.error('Hiba a jegyzetek lekérésekor:', err));
-    }
   }, []);
 
-  {/* --- Jegyzet mentése (POST/PUT) --- */}
-  const handleSaveNote = () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      alert(t('home.loginToSave'));
-      return;
+  useEffect(() => {
+    if (selectedNews) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+    return () => {
+      document.body.style.overflow = '';
     };
-
-    if (noteId) {
-      {/* --- Frissítés (PUT) --- */}
-      fetch(`http://localhost:8080/api/notes/${noteId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({ content: noteContent }),
-      })
-        .then((res) => res.json())
-        .then(() => alert(t('home.noteUpdated')))
-        .catch((err) => console.error('Hiba a mentéskor:', err));
-    } else {
-      {/* --- Új létrehozása (POST) --- */}
-      fetch('http://localhost:8080/api/notes', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ content: noteContent }),
-      })
-        .then((res) => res.json())
-        .then((newNote: NoteItem) => {
-          setNoteId(newNote.id || null);
-          alert(t('home.noteSaved'));
-        })
-        .catch((err) => console.error('Hiba a mentéskor:', err));
-    }
-  };
-
-  {/* --- Jegyzet törlése (DELETE) --- */}
-  const handleDeleteNote = () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setNoteContent('');
-      return;
-    }
-
-    if (noteId) {
-      fetch(`http://localhost:8080/api/notes/${noteId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(() => {
-          setNoteContent('');
-          setNoteId(null);
-          alert(t('home.noteDeleted'));
-        })
-        .catch((err) => console.error('Hiba a törléskor:', err));
-    } else {
-      setNoteContent('');
-    }
-  };
+  }, [selectedNews]);
 
   return (
-    <main className="w-full px-6 lg:px-16 mx-auto mt-8 grid grid-cols-1 lg:grid-cols-3 gap-10 relative">
+    <main className="w-full px-6 lg:px-16 mx-auto mt-8 pb-12 relative z-20">
 
-      {/* --- Bal oldal: Hírek --- */}
-      <div className="lg:col-span-2 space-y-6 h-[550px] overflow-y-auto pt-4 pl-2 pr-4 pb-4 custom-scrollbar">
-        {loading ? (
-          <div className="text-[#800000] dark:text-[#c084fc] font-bold p-4">{t('home.loadingNews')}</div>
-        ) : events.length === 0 ? (
-          <div className="text-gray-600 dark:text-gray-400 p-4 border-2 border-dashed border-[#800000] dark:border-[#a855f7]">
-            {t('home.noNews')}
+      {/* --- Üdvözlő Szekció --- */}
+      <div className="w-full bg-gradient-to-r from-[#800000] via-[#a51a1a] to-[#800000] dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 md:p-12 mb-12 shadow-[0_20px_50px_rgba(128,0,0,0.3)] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
+
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-20 dark:opacity-30 secret:opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+          <Zap className="w-64 h-64 text-white secret:text-[#1cf85d]" />
+        </div>
+
+        <div className="relative z-10 max-w-3xl">
+          <div className="mb-4">
+            <h1 className="text-4xl md:text-6xl font-black text-white secret:text-[#1cf85d] drop-shadow-lg secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)] secret:font-mono uppercase tracking-tight">
+              {t('home.welcomeTitle')}
+            </h1>
           </div>
-        ) : (
-          events.map((item) => (
-            <div
-              key={item.id}
-              className="flex border-2 border-[#800000] dark:border-[#a855f7] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] h-52 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(128,0,0,0.15)] dark:hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] transition-all duration-300 cursor-pointer"
-              onClick={() => setSelectedNews(item)}
-            >
-              <div className="w-52 shrink-0 border-r-2 border-[#800000] dark:border-[#a855f7] flex items-center justify-center bg-[#06261b] dark:bg-black/60 overflow-hidden transition-colors relative">
-                <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] pointer-events-none"></div>
-                
-                {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.title} className="w-full h-full object-contain" />
-                ) : (
-                  <span className="text-white font-bold">{t('home.image')}</span>
-                )}
-              </div>
-
-              <div className="flex-1 p-6 flex flex-col overflow-hidden relative">
-                <h2 className="text-2xl font-bold border-b-2 border-[#800000] dark:border-[#a855f7] text-[#800000] dark:text-[#c084fc] pb-2 mb-3 hover:text-red-600 dark:hover:text-[#e879f9] transition-colors truncate">
-                  {item.title}
-                </h2>
-                <p className="text-[#800000] dark:text-gray-300 text-md flex-grow line-clamp-3">
-                  {item.description}
-                </p>
-                <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
-                  {item.eventDate ? new Date(item.eventDate).toLocaleDateString(locale) : t('home.noDate')}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* --- Jobb oldal: Jegyzetfüzet --- */}
-      <div className="lg:col-span-1 border-2 border-black dark:border-[#a855f7] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] relative flex flex-col h-[550px] shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] hover:shadow-[4px_4px_25px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_0_35px_rgba(168,85,247,0.35)] transition-all duration-300">
-        <textarea
-          className="w-full h-full bg-transparent resize-none outline-none px-4 py-2 notepad-lines text-black dark:text-gray-100"
-          placeholder={t('home.notePlaceholder')}
-          value={noteContent}
-          onChange={(e) => setNoteContent(e.target.value)}
-        ></textarea>
-
-        <div className="absolute bottom-2 right-2 flex space-x-2">
-          <button
-            onClick={handleDeleteNote}
-            className="p-2 bg-red-600 text-white rounded hover:bg-red-700 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-            title={t('home.delete')}
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
-          <button
-            onClick={handleSaveNote}
-            className="p-2 bg-[#800000] dark:bg-[#a855f7] text-white rounded hover:bg-red-800 dark:hover:bg-[#c084fc] hover:shadow-[0_0_15px_rgba(168,85,247,0.6)] hover:-translate-y-1 transition-all duration-300 cursor-pointer"
-            title={t('home.save')}
-          >
-            <Save className="w-5 h-5" />
-          </button>
+          <p className="text-lg md:text-xl text-red-100 dark:text-purple-200 secret:text-[#1cf85d]/80 font-medium leading-relaxed secret:font-mono drop-shadow-md">
+            {t('home.welcomeSubtitle')}
+          </p>
         </div>
       </div>
 
-      {/* --- Felugró ablak (Modal) --- */}
+      {/* --- Hírek Szekció Cím --- */}
+      <div className="flex items-center space-x-3 mb-8 border-b-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-4">
+        <Megaphone className="w-8 h-8 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] drop-shadow-sm secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+        <h2 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
+          {t('home.latestNews')}
+        </h2>
+      </div>
+
+      {/* --- Hírek Grid--- */}
+      <div className="w-full">
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="text-2xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] animate-pulse secret:font-mono uppercase">
+              {t('home.loadingNews')}
+            </div>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-center text-gray-600 dark:text-gray-400 secret:text-[#1cf85d]/70 p-12 border-4 border-dashed border-[#800000]/50 dark:border-[#a855f7]/50 secret:border-[#1cf85d]/50 font-bold text-xl secret:font-mono uppercase">
+            &gt; {t('home.noNews')}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+            {events.map((item) => (
+              <div
+                key={item.id}
+                className="relative flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] overflow-hidden h-[400px] group cursor-pointer shadow-md hover:shadow-[0_20px_40px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] secret:hover:shadow-[0_0_20px_rgba(28,248,93,0.4)] transition-all duration-300"
+                onClick={() => setSelectedNews(item)}
+              >
+                <div className="absolute inset-0 bg-[#06261b] dark:bg-black/80">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full">
+                      <span className="text-white/30 font-bold tracking-widest text-3xl secret:font-mono uppercase">{t('home.image')}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end z-10">
+
+                  <h3 className="text-2xl font-bold text-white secret:text-[#1cf85d] leading-tight secret:font-mono uppercase drop-shadow-md">
+                    {item.title}
+                  </h3>
+
+                  <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-in-out">
+                    <div className="overflow-hidden">
+                      <div className="pt-4 mt-4 border-t-2 border-white/20 secret:border-[#1cf85d]/30">
+                        <p className="text-gray-300 secret:text-[#1cf85d]/80 text-sm line-clamp-3 mb-4 secret:font-mono">
+                          {item.description}
+                        </p>
+                        <div className="flex items-center text-xs text-gray-400 secret:text-[#1cf85d]/60 font-bold uppercase secret:font-mono">
+                          <Calendar className="w-4 h-4 mr-2 shrink-0" />
+                          {item.eventDate ? new Date(item.eventDate).toLocaleDateString(locale) : t('home.noDate')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* --- Felugró Modal --- */}
       {selectedNews && (
-        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] border-4 border-[#800000] dark:border-[#a855f7] w-full max-w-4xl rounded-sm p-8 relative shadow-[0_20px_50px_rgba(128,0,0,0.2)] dark:shadow-[0_0_50px_rgba(168,85,247,0.5)] flex flex-col max-h-[90vh] overflow-y-auto transition-colors">
-            
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 md:p-10 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl p-0 relative shadow-[0_20px_50px_rgba(128,0,0,0.4)] dark:shadow-[0_0_50px_rgba(168,85,247,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.4)] flex flex-col md:flex-row max-h-full md:max-h-[85vh] overflow-hidden transition-colors">
+
             <button
               onClick={() => setSelectedNews(null)}
-              className="absolute top-4 right-4 text-[#800000] dark:text-[#a855f7] hover:text-red-600 dark:hover:text-[#c084fc] transition-colors bg-transparent rounded-full z-10 cursor-pointer"
+              className="absolute top-4 right-4 z-20 cursor-pointer p-2 rounded-full border-2 transition-all bg-white dark:bg-[#121212] border-[#800000] dark:border-[#a855f7] text-[#800000] dark:text-[#a855f7] secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 shadow-md"
             >
-              <X className="w-8 h-8" />
+              <X className="w-6 h-6" />
             </button>
 
-            <h1 className="text-4xl font-bold text-[#800000] dark:text-[#c084fc] mb-4 mt-2">{selectedNews.title}</h1>
-            <span className="text-md font-bold text-gray-500 dark:text-gray-400 mb-6 block border-b-2 border-gray-300 dark:border-gray-600 pb-2">
-              {t('home.dateLabel', { date: selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString(locale) : t('home.noDateShort') })}
-            </span>
+            {selectedNews.imageUrl && (
+              <div className="w-full md:w-2/5 h-64 md:h-auto border-b-4 md:border-b-0 md:border-r-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] relative shrink-0 bg-[#06261b] dark:bg-black/80 flex items-center justify-center overflow-hidden">
+                <img src={selectedNews.imageUrl} alt={selectedNews.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] pointer-events-none"></div>
+              </div>
+            )}
 
-            <p className="text-gray-800 dark:text-gray-200 text-xl leading-relaxed text-justify whitespace-pre-wrap">
-              {selectedNews.description}
-            </p>
+            {/* --- Modal Tartalom --- */}
+            <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar flex-1 relative">
+              <h1 className="text-3xl md:text-5xl font-black text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 secret:font-mono uppercase leading-tight pr-10">
+                {selectedNews.title}
+              </h1>
+
+              <div className="flex items-center text-md font-bold text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 mb-8 border-b-2 border-gray-300 dark:border-gray-600 secret:border-[#1cf85d]/50 pb-4 secret:font-mono uppercase">
+                <Calendar className="w-5 h-5 mr-2" />
+                {t('home.dateLabel', { date: selectedNews.eventDate ? new Date(selectedNews.eventDate).toLocaleDateString(locale) : t('home.noDateShort') })}
+              </div>
+
+              <p className="text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]/90 text-lg md:text-xl leading-relaxed text-justify whitespace-pre-wrap secret:font-mono">
+                {selectedNews.description}
+              </p>
+            </div>
 
           </div>
         </div>
