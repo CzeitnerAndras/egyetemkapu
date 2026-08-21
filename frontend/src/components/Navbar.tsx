@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Link as LinkIcon, Flag } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 
@@ -29,7 +29,7 @@ export default function Navbar() {
 
     document.addEventListener('mousedown', handleClickOutside);
 
-    const isSecretPath = window.location.pathname === '/secret';
+    const isSecretPath = window.location.pathname === '/B4nd1';
     const isSecretSaved = localStorage.getItem('secretMode') === 'true';
 
     if (isSecretPath || isSecretSaved) {
@@ -113,7 +113,7 @@ export default function Navbar() {
       localStorage.setItem('secretMode', 'true');
       setIsDarkMode(true);
       setIsSecretMode(true);
-      navigate('/secret');
+      navigate('/B4nd1');
       setTimeout(() => {
         setCrtClass('crt-on');
         setTimeout(() => {
@@ -172,7 +172,7 @@ export default function Navbar() {
 
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
-          <Link to={isSecretMode ? "/secret" : "/"} className="cursor-pointer group">
+          <Link to={isSecretMode ? "/B4nd1" : "/"} className="cursor-pointer group">
             <span className="inline-flex items-center justify-center text-2xl font-bold border-2 border-white w-12 h-10 leading-none group-hover:bg-white group-hover:text-[#800000] dark:group-hover:text-[#a855f7] transition-all duration-300 shadow-sm">
               ƎK
             </span>
@@ -244,13 +244,6 @@ export default function Navbar() {
             </div>
 
             <div className="flex flex-col py-2">
-              <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
-              <Link to="/links" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <LinkIcon className="w-4 h-4 mr-3" /> {t('nav.uniLinks')}
-              </Link>
-
-              <div className="border-t-2 border-black/20 dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30 my-1 mx-2"></div>
-
               <span className="px-4 py-2 text-xs font-bold text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.system')}</span>
               <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-white dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] hover:bg-black/10 dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
                 <Info className="w-4 h-4 mr-3" /> {t('nav.about')}
