@@ -112,17 +112,17 @@ export default function KnowledgeBasePage() {
         <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 relative z-20">
 
             {/* --- Fejléc és Szűrők --- */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 bg-cyan-400 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <div className="flex items-center space-x-3 mb-4 md:mb-0">
-                    <BookOpen className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-                    <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">{t('kb.title')}</h1>
+                    <BookOpen className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                    <h1 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">{t('kb.title')}</h1>
                 </div>
 
                 <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
                     <select
                         value={categoryFilter}
                         onChange={e => setCategoryFilter(e.target.value)}
-                        className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase cursor-pointer"
+                        className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none"
                     >
                         <option value="">{t('kb.allCats')}</option>
                         <option value="Informatika">{t('kb.cat.it')}</option>
@@ -133,9 +133,9 @@ export default function KnowledgeBasePage() {
 
                     <button
                         onClick={() => setIsUploadModalOpen(true)}
-                        className="bg-white dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-[#800000] dark:text-white secret:text-[#1cf85d] font-bold py-2 px-4 border-2 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-gray-100 hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase"
+                        className="bg-white dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 px-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-fuchsia-400 shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] dark:shadow-none dark:hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase"
                     >
-                        <Upload className="w-5 h-5 mr-2" /> {t('kb.submit')}
+                        <Upload className="w-5 h-5 mr-2 font-bold" /> {t('kb.submit')}
                     </button>
                 </div>
             </div>
@@ -148,29 +148,29 @@ export default function KnowledgeBasePage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {documents.map(doc => (
-                        <div key={doc.id} className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black p-5 flex flex-col shadow-md hover:shadow-lg transition-shadow secret:rounded-none group">
-                            <div className="flex justify-between items-start border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-3 mb-3">
+                        <div key={doc.id} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black p-5 flex flex-col shadow-[6px_6px_0px_#000] hover:shadow-[10px_10px_0px_#d946ef] dark:shadow-md dark:hover:shadow-lg transition-shadow secret:rounded-none group">
+                            <div className="flex justify-between items-start border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-3 mb-3">
                                 <div>
-                                    <span className="text-xs font-bold bg-[#800000] dark:bg-[#c084fc] secret:bg-[#1cf85d] text-white secret:text-black px-2 py-1 rounded-sm secret:rounded-none uppercase tracking-wider">{translateCategory(doc.category)}</span>
-                                    <h3 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] mt-2 secret:font-mono line-clamp-1" title={doc.title}>{doc.title}</h3>
+                                    <span className="text-xs font-bold bg-cyan-400 dark:bg-[#c084fc] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black px-2 py-1 border-2 border-black dark:border-transparent rounded-sm secret:rounded-none uppercase tracking-wider">{translateCategory(doc.category)}</span>
+                                    <h3 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] mt-3 secret:font-mono line-clamp-1" title={doc.title}>{doc.title}</h3>
                                 </div>
-                                <FileText className="w-8 h-8 text-gray-400 dark:text-gray-500 secret:text-[#1cf85d]/50" />
+                                <FileText className="w-8 h-8 text-black dark:text-gray-500 secret:text-[#1cf85d]/50" />
                             </div>
 
-                            <p className="text-sm text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 flex-1 mb-4 secret:font-mono line-clamp-3">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 secret:text-[#1cf85d]/80 flex-1 mb-4 secret:font-mono line-clamp-3">
                                 {doc.description}
                             </p>
 
-                            <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/60 mb-4 secret:font-mono">
-                                <span>{t('kb.uploadedBy')} <span className="font-bold">{doc.uploader.username}</span></span>
+                            <div className="flex justify-between items-center text-xs font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/60 mb-4 secret:font-mono">
+                                <span>{t('kb.uploadedBy')} <span className="font-black text-fuchsia-600 dark:text-white">{doc.uploader.username}</span></span>
                                 <span>{new Date(doc.createdAt).toLocaleDateString(locale)}</span>
                             </div>
 
                             <button
                                 onClick={() => handleDownload(doc.id, doc.fileName)}
-                                className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 border-2 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-[#800000] dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-white secret:hover:text-black transition-colors flex items-center justify-center cursor-pointer secret:font-mono uppercase"
+                                className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black dark:hover:text-white secret:hover:text-black transition-all flex items-center justify-center cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] hover:-translate-y-1 dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0"
                             >
-                                <Download className="w-4 h-4 mr-2" /> {t('kb.download')}
+                                <Download className="w-5 h-5 mr-2 font-bold" /> {t('kb.download')}
                             </button>
                         </div>
                     ))}
@@ -179,28 +179,28 @@ export default function KnowledgeBasePage() {
 
             {/* --- Feltöltés Modal --- */}
             {isUploadModalOpen && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-[#1e1e1e] secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg p-6 relative shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] secret:rounded-none">
-                        <button onClick={() => setIsUploadModalOpen(false)} className="absolute top-2 right-2 text-gray-500 hover:text-red-500 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] cursor-pointer">
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg p-6 relative shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] secret:rounded-none">
+                        <button onClick={() => setIsUploadModalOpen(false)} className="absolute top-4 right-4 p-1 text-black hover:text-white dark:text-gray-500 dark:hover:text-red-500 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] cursor-pointer hover:bg-red-500 border-4 border-transparent hover:border-black rounded-full dark:border-transparent dark:hover:border-transparent transition-colors">
                             <X className="w-6 h-6" />
                         </button>
 
-                        <h2 className="text-2xl font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 border-b-2 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-2 secret:font-mono uppercase">{t('kb.uploadTitle')}</h2>
+                        <h2 className="text-2xl font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-2 secret:font-mono uppercase">{t('kb.uploadTitle')}</h2>
 
-                        {uploadMsg && <p className="mb-4 font-bold text-center text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {uploadMsg}</p>}
+                        {uploadMsg && <p className="mb-4 font-bold text-center text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {uploadMsg}</p>}
 
                         <form onSubmit={handleUpload} className="space-y-4">
                             <div className="flex flex-col">
-                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldTitle')}</label>
-                                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono" />
+                                <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldTitle')}</label>
+                                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono shadow-[4px_4px_0px_#000] dark:shadow-none" />
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldDesc')}</label>
-                                <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono resize-none"></textarea>
+                                <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldDesc')}</label>
+                                <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono resize-none shadow-[4px_4px_0px_#000] dark:shadow-none"></textarea>
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldCat')}</label>
-                                <select value={category} onChange={e => setCategory(e.target.value)} className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
+                                <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldCat')}</label>
+                                <select value={category} onChange={e => setCategory(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold shadow-[4px_4px_0px_#000] dark:shadow-none">
                                     <option value="Informatika">{t('kb.cat.it')}</option>
                                     <option value="Gazdaság">{t('kb.cat.econ')}</option>
                                     <option value="Matematika">{t('kb.cat.math')}</option>
@@ -208,11 +208,11 @@ export default function KnowledgeBasePage() {
                                 </select>
                             </div>
                             <div className="flex flex-col">
-                                <label className="text-sm font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldFile')}</label>
-                                <input required type="file" onChange={e => setFile(e.target.files ? e.target.files[0] : null)} className="border-2 border-dashed border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono cursor-pointer" />
+                                <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldFile')}</label>
+                                <input required type="file" onChange={e => setFile(e.target.files ? e.target.files[0] : null)} className="border-4 border-dashed border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none" />
                             </div>
 
-                            <button type="submit" className="w-full bg-[#800000] dark:bg-[#a855f7] secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-2 border-black dark:border-transparent secret:border-[#1cf85d] hover:bg-[#b91c1c] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer secret:font-mono uppercase">
+                            <button type="submit" className="w-full bg-fuchsia-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#b91c1c] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0">
                                 {t('kb.uploadBtn')}
                             </button>
                         </form>
