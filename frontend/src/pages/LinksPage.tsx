@@ -41,7 +41,7 @@ export default function LinksPage() {
         'DE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <GraduationCap className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.unideb.hu/" },
                     { title: l("E-learning (Moodle)", "E-learning (Moodle)"), url: "https://elearning.unideb.hu/" },
@@ -52,7 +52,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Informatikai Kar (IK)", "Faculty of Informatics (IK)"),
-                icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Monitor className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Informatikai Kar Főoldal", "Faculty Main Page"), url: "https://inf.unideb.hu/" },
                     { title: l("Záróvizsga", "Final Examination"), url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
@@ -62,7 +62,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Állam- és Jogtudományi Kar (ÁJK)", "Faculty of Law (ÁJK)"),
-                icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Landmark className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ÁJK Főoldal", "Faculty Main Page"), url: "https://jog.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://jog.unideb.hu/tanulmanyi-osztaly" },
@@ -70,7 +70,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Általános Orvostudományi Kar (ÁOK)", "Faculty of Medicine (ÁOK)"),
-                icon: <Stethoscope className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Stethoscope className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ÁOK Főoldal", "Faculty Main Page"), url: "https://aok.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://aok.unideb.hu/hu/tanulmanyi-osztaly" },
@@ -78,7 +78,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Bölcsészettudományi Kar (BTK)", "Faculty of Humanities (BTK)"),
-                icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <BookOpen className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("BTK Főoldal", "Faculty Main Page"), url: "https://btk.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://btk.unideb.hu/tanulmanyi-osztaly" },
@@ -86,7 +86,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Egészségtudományi Kar (ETK)", "Faculty of Health Sciences (ETK)"),
-                icon: <Heart className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Heart className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ETK Főoldal", "Faculty Main Page"), url: "https://etk.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://etk.unideb.hu/tanulmanyi-osztaly" },
@@ -94,7 +94,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Fogorvostudományi Kar (FOK)", "Faculty of Dentistry (FOK)"),
-                icon: <Smile className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Smile className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("FOK Főoldal", "Faculty Main Page"), url: "https://dental.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://dental.unideb.hu/tanulmanyi-osztaly" },
@@ -102,7 +102,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gazdaságtudományi Kar (GTK)", "Faculty of Economics (GTK)"),
-                icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Briefcase className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GTK Főoldal", "Faculty Main Page"), url: "https://econ.unideb.hu/" },
                     { title: l("Tanulmányi és Oktatási Oszt.", "Dept. of Studies and Education"), url: "https://econ.unideb.hu/tanulmanyi-es-oktatasi-osztaly" },
@@ -110,7 +110,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gyermeknevelési és Gyógypedagógiai Kar", "Faculty of Child and Adult Education"),
-                icon: <Users className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Users className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GYGYK Főoldal", "Faculty Main Page"), url: "https://gygyk.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://gygyk.unideb.hu/tanulmanyi-osztaly" },
@@ -118,7 +118,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gyógyszerésztudományi Kar (GYTK)", "Faculty of Pharmacy (GYTK)"),
-                icon: <FlaskConical className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <FlaskConical className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GYTK Főoldal", "Faculty Main Page"), url: "https://pharm.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://pharm.unideb.hu/tanulmanyi-osztaly" },
@@ -126,7 +126,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Mezőgazdaság-, Élelmiszertudományi Kar", "Faculty of Agricultural and Food Sciences"),
-                icon: <Leaf className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Leaf className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("MÉK Főoldal", "Faculty Main Page"), url: "https://mek.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://mek.unideb.hu/tanulmanyi-osztaly" },
@@ -134,7 +134,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Műszaki Kar (MK)", "Faculty of Engineering (MK)"),
-                icon: <Wrench className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Wrench className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("MK Főoldal", "Faculty Main Page"), url: "https://eng.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://eng.unideb.hu/tanulmanyi-osztaly" },
@@ -142,7 +142,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Természettudományi és Technológiai Kar", "Faculty of Science and Technology"),
-                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Globe className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("TTK Főoldal", "Faculty Main Page"), url: "https://ttk.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://ttk.unideb.hu/tanulmanyi-osztaly" },
@@ -150,7 +150,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Zeneművészeti Kar (ZK)", "Faculty of Music (ZK)"),
-                icon: <Music className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Music className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ZK Főoldal", "Faculty Main Page"), url: "https://music.unideb.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://music.unideb.hu/tanulmanyi-osztaly" },
@@ -160,7 +160,7 @@ export default function LinksPage() {
         'BME': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Globe className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.bme.hu/" },
                     { title: l("BME Címtár", "BME Directory"), url: "https://login.bme.hu/" },
@@ -170,7 +170,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Villamosmérnöki és Info. Kar (VIK)", "Faculty of Electrical Eng. and Informatics (VIK)"),
-                icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Cpu className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("VIK Főoldal", "Faculty Main Page"), url: "https://vik.bme.hu/" },
                     { title: l("VIK Wiki (Hallgatói)", "VIK Wiki (Student)"), url: "https://wiki.sch.bme.hu/" },
@@ -180,7 +180,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Építészmérnöki Kar (ÉPK)", "Faculty of Architecture (ÉPK)"),
-                icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Landmark className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ÉPK Főoldal", "Faculty Main Page"), url: "https://epitesz.bme.hu/" },
                     { title: l("Építész HÖK", "Architecture Student Union"), url: "https://epiteszhk.bme.hu/" },
@@ -191,7 +191,7 @@ export default function LinksPage() {
         'ELTE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <BookOpen className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.elte.hu/" },
                     { title: l("Canvas E-learning", "Canvas E-learning"), url: "https://canvas.elte.hu/" },
@@ -201,7 +201,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Informatikai Kar (IK)", "Faculty of Informatics (IK)"),
-                icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Monitor className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ELTE IK Főoldal", "Faculty Main Page"), url: "https://www.inf.elte.hu/" },
                     { title: l("IK Tanrendek", "IK Curricula"), url: "https://www.inf.elte.hu/tanrendek" },
@@ -210,7 +210,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Bölcsészettudományi Kar (BTK)", "Faculty of Humanities (BTK)"),
-                icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <BookOpen className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ELTE BTK Főoldal", "Faculty Main Page"), url: "https://www.btk.elte.hu/" },
                     { title: l("BTK Tanulmányi Hivatal", "BTK Office of Educational Affairs"), url: "https://www.btk.elte.hu/tanulmanyi-hivatal" },
@@ -221,7 +221,7 @@ export default function LinksPage() {
         'SZTE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <GraduationCap className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.szte.hu/" },
                     { title: l("CooSpace (E-learning)", "CooSpace (E-learning)"), url: "https://coospace.u-szeged.hu/" },
@@ -231,7 +231,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Természettudományi és Info. Kar", "Faculty of Science and Informatics"),
-                icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Cpu className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("TTIK Főoldal", "Faculty Main Page"), url: "https://sci.u-szeged.hu/" },
                     { title: l("Informatikai Intézet", "Institute of Informatics"), url: "https://www.inf.u-szeged.hu/" },
@@ -240,7 +240,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Általános Orvostudományi Kar (ÁOK)", "Faculty of Medicine (ÁOK)"),
-                icon: <Stethoscope className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Stethoscope className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("SZTE ÁOK Főoldal", "Faculty Main Page"), url: "https://med.u-szeged.hu/" },
                     { title: l("ÁOK Tanulmányi Osztály", "Registrar's Office"), url: "https://med.u-szeged.hu/hallgatoknak" },
@@ -251,7 +251,7 @@ export default function LinksPage() {
         'PTE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Globe className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.pte.hu/" },
                     { title: l("PTE Moodle / Teams", "PTE Moodle / Teams"), url: "https://elearning.pte.hu/" },
@@ -261,7 +261,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Műszaki és Informatikai Kar (MIK)", "Faculty of Engineering and IT (MIK)"),
-                icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Monitor className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("MIK Főoldal", "Faculty Main Page"), url: "https://mik.pte.hu/" },
                     { title: l("MIK HÖK", "MIK Student Union"), url: "https://mik.pte.hu/hallgatoknak" },
@@ -270,7 +270,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Közgazdaságtudományi Kar (KTK)", "Faculty of Business and Economics (KTK)"),
-                icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Briefcase className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("KTK Főoldal", "Faculty Main Page"), url: "https://ktk.pte.hu/" },
                     { title: l("KTK Tanulmányi Információk", "KTK Study Information"), url: "https://ktk.pte.hu/hu/hallgatoknak" },
@@ -281,7 +281,7 @@ export default function LinksPage() {
         'NJE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Globe className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.nje.hu/" },
                     { title: l("NJE E-learning (Moodle)", "NJE E-learning (Moodle)"), url: "https://elearning.nje.hu/" },
@@ -291,7 +291,7 @@ export default function LinksPage() {
             },
             {
                 category: l("GAMF Műszaki és Info. Kar", "GAMF Faculty of Engineering and IT"),
-                icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Monitor className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GAMF Főoldal", "Faculty Main Page"), url: "https://gamf.nje.hu/" },
                     { title: l("Tanulmányi Osztály", "Registrar's Office"), url: "https://gamf.nje.hu/tanulmanyi-osztaly" },
@@ -299,7 +299,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gazdaságtudományi Kar (GTK)", "Faculty of Economics (GTK)"),
-                icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Briefcase className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GTK Főoldal", "Faculty Main Page"), url: "https://gtk.nje.hu/" },
                     { title: l("Hallgatói Információk", "Student Information"), url: "https://gtk.nje.hu/hallgatoknak" },
@@ -309,7 +309,7 @@ export default function LinksPage() {
         'NYE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <GraduationCap className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.nye.hu/" },
                     { title: l("NYE E-learning", "NYE E-learning"), url: "https://elearning.nye.hu/" },
@@ -318,7 +318,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Informatika és Matematika", "Institute of Math and Informatics"),
-                icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Cpu className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Intézeti Főoldal", "Institute Main Page"), url: "https://nye.hu/matematika_informatika" },
                     { title: l("Órarendek", "Timetables"), url: "https://nye.hu/orarendek" },
@@ -326,7 +326,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gazdálkodástudományi Intézet", "Institute of Business Administration"),
-                icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Briefcase className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Intézeti Főoldal", "Institute Main Page"), url: "https://nye.hu/gazdalkodastudomany" },
                     { title: l("Oktatói Elérhetőségek", "Instructors' Contacts"), url: "https://nye.hu/gazdalkodastudomany/oktatok" },
@@ -336,7 +336,7 @@ export default function LinksPage() {
         'OE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Globe className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.uni-obuda.hu/" },
                     { title: l("E-learning (Moodle)", "E-learning (Moodle)"), url: "https://elearning.uni-obuda.hu/" },
@@ -345,7 +345,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Neumann János Info. Kar (NIK)", "John von Neumann Faculty of Informatics (NIK)"),
-                icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Monitor className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("NIK Főoldal", "Faculty Main Page"), url: "https://nik.uni-obuda.hu/" },
                     { title: l("NIK Tanulmányi Osztály", "NIK Registrar's Office"), url: "https://nik.uni-obuda.hu/tanulmanyi-osztaly/" },
@@ -354,7 +354,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Kandó Kálmán Villamosmérnöki (KVK)", "Kandó Kálmán Faculty of Electrical Engineering (KVK)"),
-                icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Cpu className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("KVK Főoldal", "Faculty Main Page"), url: "https://kvk.uni-obuda.hu/" },
                     { title: l("KVK HÖK", "KVK Student Union"), url: "https://kvkhok.hu/" },
@@ -364,7 +364,7 @@ export default function LinksPage() {
         'BCE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <Landmark className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Landmark className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.uni-corvinus.hu/" },
                     { title: l("Moodle (E-learning)", "Moodle (E-learning)"), url: "https://moodle.uni-corvinus.hu/" },
@@ -374,7 +374,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Hallgatói Szolgáltatások", "Student Services"),
-                icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Briefcase className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Hallgatói Támogatás (Hub)", "Student Support (Hub)"), url: "https://www.uni-corvinus.hu/fooldal/hallgatoknak/hallgatoi-ugyek/" },
                     { title: l("Corvinus HÖK", "Corvinus Student Union"), url: "https://corvinushok.hu/" },
@@ -385,7 +385,7 @@ export default function LinksPage() {
         'ME': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <GraduationCap className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <GraduationCap className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.uni-miskolc.hu/" },
                     { title: l("E-learning (Moodle)", "E-learning (Moodle)"), url: "https://elearning.uni-miskolc.hu/" },
@@ -394,7 +394,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gépészmérnöki és Info. Kar (GÉIK)", "Faculty of Mechanical Eng. and Informatics (GÉIK)"),
-                icon: <Cpu className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Cpu className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GÉIK Főoldal", "Faculty Main Page"), url: "https://geik.uni-miskolc.hu/" },
                     { title: l("GÉIK Tanulmányi Hivatal", "GÉIK Office of Educational Affairs"), url: "https://geik.uni-miskolc.hu/tanulmanyi" },
@@ -402,7 +402,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Állam- és Jogtudományi Kar (ÁJK)", "Faculty of Law (ÁJK)"),
-                icon: <BookOpen className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <BookOpen className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("ÁJK Főoldal", "Faculty Main Page"), url: "https://jogikari.uni-miskolc.hu/" },
                     { title: l("Hallgatói Szabályzatok", "Student Regulations"), url: "https://jogikari.uni-miskolc.hu/szabalyzatok" },
@@ -412,7 +412,7 @@ export default function LinksPage() {
         'SZE': [
             {
                 category: l("Alapvető Rendszerek", "Core Systems"),
-                icon: <Globe className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Globe className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("Neptun Hallgatói Web", "Neptun Student Web"), url: "https://neptun.sze.hu/" },
                     { title: l("SZE-learning (Moodle)", "SZE-learning (Moodle)"), url: "https://elearning.sze.hu/" },
@@ -422,7 +422,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Gépészmérnöki, Info. és Villamos. (GIVK)", "Faculty of Mechanical, IT and Electrical Eng. (GIVK)"),
-                icon: <Monitor className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Monitor className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("GIVK Főoldal", "Faculty Main Page"), url: "https://givk.sze.hu/" },
                     { title: l("GIVK HÖK", "GIVK Student Union"), url: "https://ehok.sze.hu/" },
@@ -431,7 +431,7 @@ export default function LinksPage() {
             },
             {
                 category: l("Kautz Gyula Gazdaságtudományi Kar", "Kautz Gyula Faculty of Economics"),
-                icon: <Briefcase className="w-5 h-5 text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d]" />,
+                icon: <Briefcase className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />,
                 links: [
                     { title: l("KGK Főoldal", "Faculty Main Page"), url: "https://kgk.sze.hu/" },
                     { title: l("Tanulmányi Tájékoztatók", "Study Guides"), url: "https://kgk.sze.hu/oktatas" },
@@ -446,9 +446,9 @@ export default function LinksPage() {
         <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 relative z-20">
 
             {/* --- Fejléc --- */}
-            <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
-                <LinkIcon className="w-8 h-8 text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-                <h1 className="text-3xl font-bold text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
+            <div className="flex items-center space-x-3 mb-8 bg-fuchsia-400 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+                <LinkIcon className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                <h1 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
                     {t('links.title')}
                 </h1>
             </div>
@@ -461,10 +461,10 @@ export default function LinksPage() {
                         <button
                             key={uni.id}
                             onClick={() => setActiveTab(uni.id)}
-                            className={`p-4 font-bold text-left border-2 transition-all duration-300 shadow-sm secret:font-mono uppercase cursor-pointer shrink-0
+                            className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer shrink-0
                                 ${activeTab === uni.id
-                                    ? 'bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-gray-50 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/10'
+                                    ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2 shadow-[6px_6px_0px_#000] dark:shadow-md'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/10'
                                 }`}
                         >
                             {uni.name}
@@ -475,8 +475,8 @@ export default function LinksPage() {
                 {/* --- Jobb Oldal: Linkek Kategóriánként --- */}
                 <div className="w-full lg:w-3/4 flex flex-col space-y-6">
                     {activeLinks.map((section, idx) => (
-                        <div key={idx} className="bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-md secret:rounded-none">
-                            <div className="flex items-center mb-4 border-b-2 border-gray-300 dark:border-gray-700 secret:border-[#1cf85d] pb-2">
+                        <div key={idx} className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md secret:rounded-none">
+                            <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                                 {section.icon}
                                 <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase ml-2">
                                     {section.category}
@@ -489,9 +489,9 @@ export default function LinksPage() {
                                         href={link.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center p-3 bg-white dark:bg-[#121212] secret:bg-transparent border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:border-[#800000] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors group shadow-sm secret:font-mono font-medium"
+                                        className="flex items-center p-3 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:border-black hover:bg-cyan-400 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all group shadow-[2px_2px_0px_#000] dark:shadow-sm secret:font-mono font-bold"
                                     >
-                                        <ExternalLink className="w-4 h-4 mr-3 text-gray-400 group-hover:text-[#800000] dark:group-hover:text-[#a855f7] secret:group-hover:text-black transition-colors shrink-0" />
+                                        <ExternalLink className="w-5 h-5 mr-3 text-black dark:text-gray-400 group-hover:text-black dark:group-hover:text-[#a855f7] secret:group-hover:text-black transition-colors shrink-0" />
                                         <span className="truncate">{link.title}</span>
                                     </a>
                                 ))}
