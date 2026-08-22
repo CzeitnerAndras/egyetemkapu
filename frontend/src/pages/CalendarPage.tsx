@@ -162,15 +162,15 @@ export default function CalendarPage() {
         <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20">
 
             {/* --- BAL OLDAL: NAPTÁR --- */}
-            <div className="lg:col-span-2 flex flex-col border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fdfbf7] to-[#f4ebe1] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[0_20px_50px_rgba(128,0,0,0.15)] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
-                <div className="bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-md z-10 text-white secret:text-[#1cf85d]">
+            <div className="lg:col-span-2 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
+                <div className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10 text-black dark:text-white secret:text-[#1cf85d]">
                     <button onClick={prevMonth} className="p-2 hover:bg-white/20 secret:hover:bg-[#1cf85d] secret:hover:text-black rounded-full secret:rounded-none transition-colors cursor-pointer">
                         <ChevronLeft className="w-6 h-6" />
                     </button>
 
                     <div className="flex items-center space-x-2">
-                        <CalendarIcon className="w-6 h-6 drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-                        <h2 className="text-2xl font-bold drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] uppercase tracking-wider secret:font-mono">
+                        <CalendarIcon className="w-6 h-6 dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                        <h2 className="text-2xl font-bold dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] uppercase tracking-wider secret:font-mono">
                             {currentDate.getFullYear()}. {monthNames[currentDate.getMonth()]}
                         </h2>
                     </div>
@@ -183,7 +183,7 @@ export default function CalendarPage() {
                 <div className="p-4 flex-1">
                     <div className="grid grid-cols-7 gap-2 mb-2">
                         {dayNames.map(day => (
-                            <div key={day} className="text-center font-bold text-[#800000] dark:text-[#a855f7] secret:text-[#1cf85d] text-lg uppercase secret:font-mono">
+                            <div key={day} className="text-center font-bold text-black dark:text-[#a855f7] secret:text-[#1cf85d] text-lg uppercase secret:font-mono">
                                 {day}
                             </div>
                         ))}
@@ -205,21 +205,21 @@ export default function CalendarPage() {
                                     onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
                                     className={`h-16 lg:h-20 relative cursor-pointer border-2 transition-all duration-300 flex flex-col items-center justify-center secret:font-mono
                                         ${isSelected
-                                            ? 'border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-[#1cf85d] shadow-[0_5px_15px_rgba(128,0,0,0.3)] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] secret:shadow-[0_0_15px_rgba(28,248,93,0.5)] scale-105 z-10'
-                                            : 'border-transparent secret:border-[#1cf85d]/30 bg-white/50 dark:bg-[#121212]/50 secret:bg-transparent hover:border-[#800000]/50 dark:hover:border-[#a855f7]/50 secret:hover:border-[#1cf85d] hover:bg-white dark:hover:bg-[#121212] secret:hover:bg-[#1cf85d] secret:hover:text-black shadow-sm group'
+                                            ? 'border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-cyan-400 dark:bg-[#121212] secret:bg-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] secret:shadow-[0_0_15px_rgba(28,248,93,0.5)] scale-105 z-10'
+                                            : 'border-transparent secret:border-[#1cf85d]/30 bg-white/50 dark:bg-[#121212]/50 secret:bg-transparent hover:border-black dark:hover:border-[#a855f7]/50 secret:hover:border-[#1cf85d] hover:bg-white dark:hover:bg-[#121212] secret:hover:bg-[#1cf85d] secret:hover:text-black shadow-sm group'
                                         }
                                     `}
                                 >
                                     <span className={`text-xl font-bold 
-                                        ${isToday ? 'text-red-600 dark:text-[#e879f9] secret:text-white' : 'text-gray-800 dark:text-gray-200 secret:text-[#1cf85d]'} 
+                                        ${isToday ? 'text-fuchsia-600 dark:text-[#e879f9] secret:text-white' : 'text-black dark:text-gray-200 secret:text-[#1cf85d]'} 
                                         ${isSelected ? 'secret:text-black' : 'group-hover:secret:text-black'}
                                     `}>
                                         {day}
                                     </span>
 
                                     {hasTask && (
-                                        <div className={`absolute bottom-1 w-2.5 h-2.5 rounded-full secret:rounded-none animate-pulse shadow-[0_0_8px_rgba(128,0,0,0.8)] dark:shadow-[0_0_8px_rgba(168,85,247,0.8)] secret:shadow-[0_0_8px_rgba(28,248,93,1)]
-                                            ${isSelected ? 'bg-[#800000] dark:bg-[#a855f7] secret:bg-black' : 'bg-[#800000] dark:bg-[#a855f7] secret:bg-[#1cf85d] group-hover:secret:bg-black'}
+                                        <div className={`absolute bottom-1 w-2.5 h-2.5 rounded-full secret:rounded-none animate-pulse shadow-[2px_2px_0px_#000] dark:shadow-[0_0_8px_rgba(168,85,247,0.8)] secret:shadow-[0_0_8px_rgba(28,248,93,1)]
+                                            ${isSelected ? 'bg-fuchsia-600 dark:bg-[#a855f7] secret:bg-black' : 'bg-fuchsia-600 dark:bg-[#a855f7] secret:bg-[#1cf85d] group-hover:secret:bg-black'}
                                         `}></div>
                                     )}
                                 </div>
@@ -231,8 +231,8 @@ export default function CalendarPage() {
 
             {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
             <div className="lg:col-span-1 flex flex-col space-y-4">
-                <div className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-gradient-to-br from-[#fefce8] to-[#fef3c7] dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[4px_4px_15px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
-                    <div className="bg-[#b91c1c] dark:bg-[#3b0764] secret:bg-[#1cf85d] text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
+                <div className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[6px_6px_0px_#d946ef] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
+                    <div className="bg-cyan-400 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {t('cal.tasksOf', { date: selectedDate.toLocaleDateString(locale) })}
                     </div>
 
@@ -243,10 +243,10 @@ export default function CalendarPage() {
                             <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; {t('cal.noTasks')}</p>
                         ) : (
                             getTasksForSelectedDate().map(task => (
-                                <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-sm hover:shadow-md transition-shadow relative group">
-                                    <h3 className="font-bold text-sm text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
+                                <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow relative group">
+                                    <h3 className="font-bold text-sm text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
                                     <div className="flex justify-between items-center mt-1 text-xs text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
-                                        <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase">
+                                        <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase border-black dark:border-transparent border-2">
                                             {t(`cal.type.${task.taskType}`) || task.taskType}
                                         </span>
                                         <span>{new Date(task.deadline).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
@@ -271,23 +271,23 @@ export default function CalendarPage() {
                 </div>
 
                 {/* --- Új teendő hozzáadása --- */}
-                <form onSubmit={handleSaveTask} className="border-4 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-transparent shadow-[0_10px_30px_rgba(128,0,0,0.1)] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] p-4 flex flex-col space-y-3">
-                    <h3 className="text-lg font-bold text-[#800000] dark:text-[#c084fc] secret:text-[#1cf85d] border-b-2 border-[#800000] dark:border-[#a855f7] secret:border-[#1cf85d] pb-1 uppercase secret:font-mono">
+                <form onSubmit={handleSaveTask} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[6px_6px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] p-4 flex flex-col space-y-3">
+                    <h3 className="text-lg font-bold text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-1 uppercase secret:font-mono">
                         {t('cal.newEntry')}
                     </h3>
 
                     <div className="flex flex-col group">
-                        <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
+                        <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
                         <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
-                            className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-transparent dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
+                            className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                         />
                     </div>
 
                     <div className="flex space-x-3">
                         <div className="flex flex-col flex-1">
-                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
+                            <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
                             <select value={taskType} onChange={e => setTaskType(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] cursor-pointer text-sm secret:font-mono uppercase appearance-none"
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] cursor-pointer text-sm secret:font-mono uppercase appearance-none"
                             >
                                 <option value="Vizsga">{t('cal.type.Vizsga')}</option>
                                 <option value="Beadandó">{t('cal.type.Beadandó')}</option>
@@ -295,30 +295,30 @@ export default function CalendarPage() {
                             </select>
                         </div>
                         <div className="flex flex-col w-1/3">
-                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.time')}</label>
+                            <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.time')}</label>
                             <input required type="time" value={time} onChange={e => setTime(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-[#800000] dark:focus:border-[#e879f9] secret:focus:border-white bg-transparent dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono"
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono"
                             />
                         </div>
                     </div>
 
                     {/* --- Discord ping beállítások --- */}
-                    <div className="bg-gray-100 dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-indigo-200 dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
+                    <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
                         <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
                             <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
                         </p>
                         <label className="flex items-center space-x-2 cursor-pointer group">
-                            <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
+                            <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                            <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
                         </label>
                         <label className="flex items-center space-x-2 cursor-pointer group">
-                            <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-[#800000] dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                            <span className="text-xs dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
+                            <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                            <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
                         </label>
                     </div>
 
-                    <button type="submit" className="w-full bg-gradient-to-r from-[#800000] to-[#b91c1c] dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(128,0,0,0.3)] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-2 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
-                        <Plus className="w-4 h-4 mr-1" />
+                    <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
+                        <Plus className="w-5 h-5 mr-1 font-bold" />
                         {t('cal.save')}
                     </button>
                 </form>
