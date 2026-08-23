@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Trash2, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Trash2, Calendar as CalendarIcon, Plus, Clock } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface Task {
@@ -18,11 +18,12 @@ export default function CalendarPage() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [title, setTitle] = useState('');
-    const [taskType, setTaskType] = useState('Vizsga');
+    const [taskType, setTaskType] = useState('');
     const [time, setTime] = useState('08:00');
     const [pingDayBefore, setPingDayBefore] = useState(false);
     const [pingOnDay, setPingOnDay] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isTimeOpen, setIsTimeOpen] = useState(false);
 
     {/* --- Adatok lekérése JWT tokennel --- */ }
     useEffect(() => {
@@ -115,7 +116,7 @@ export default function CalendarPage() {
 
         const newTask = {
             title,
-            taskType,
+            taskType: taskType || 'Egyéb',
             deadline: formatDateForApi(selectedDate, time),
             completed: false,
             pingDayBefore,
@@ -137,6 +138,7 @@ export default function CalendarPage() {
             .then(savedTask => {
                 setTasks([...tasks, savedTask]);
                 setTitle('');
+                setTaskType('');
             })
             .catch(err => console.error('Mentési hiba:', err));
     };
@@ -247,7 +249,7 @@ export default function CalendarPage() {
                                     <h3 className="font-bold text-sm text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
                                     <div className="flex justify-between items-center mt-1 text-xs text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
                                         <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase border-black dark:border-transparent border-2">
-                                            {t(`cal.type.${task.taskType}`) || task.taskType}
+                                            {task.taskType}
                                         </span>
                                         <span>{new Date(task.deadline).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
@@ -271,56 +273,113 @@ export default function CalendarPage() {
                 </div>
 
                 {/* --- Új teendő hozzáadása --- */}
-                <form onSubmit={handleSaveTask} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[6px_6px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] p-4 flex flex-col space-y-3">
-                    <h3 className="text-lg font-bold text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-1 uppercase secret:font-mono">
+                <form onSubmit={handleSaveTask} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[6px_6px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] flex flex-col">
+                    <div className="bg-fuchsia-400 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {t('cal.newEntry')}
-                    </h3>
-
-                    <div className="flex flex-col group">
-                        <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
-                        <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
-                            className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
-                        />
                     </div>
 
-                    <div className="flex space-x-3">
-                        <div className="flex flex-col flex-1">
-                            <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
-                            <select value={taskType} onChange={e => setTaskType(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] cursor-pointer text-sm secret:font-mono uppercase appearance-none"
-                            >
-                                <option value="Vizsga">{t('cal.type.Vizsga')}</option>
-                                <option value="Beadandó">{t('cal.type.Beadandó')}</option>
-                                <option value="Egyéb">{t('cal.type.Egyéb')}</option>
-                            </select>
-                        </div>
-                        <div className="flex flex-col w-1/3">
-                            <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.time')}</label>
-                            <input required type="time" value={time} onChange={e => setTime(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono"
+                    <div className="p-4 flex flex-col space-y-3">
+                        <div className="flex flex-col group">
+                            <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
+                            <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                             />
                         </div>
-                    </div>
 
-                    {/* --- Discord ping beállítások --- */}
-                    <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
-                        <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
-                            <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
-                        </p>
-                        <label className="flex items-center space-x-2 cursor-pointer group">
-                            <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                            <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer group">
-                            <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                            <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
-                        </label>
-                    </div>
+                        <div className="flex space-x-3">
+                            <div className="flex flex-col flex-1">
+                                <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
+                                <input required type="text" value={taskType} onChange={e => setTaskType(e.target.value)}
+                                    placeholder="pl. ZH, Projekt"
+                                    className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
+                                />
+                            </div>
 
-                    <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
-                        <Plus className="w-5 h-5 mr-1 font-bold" />
-                        {t('cal.save')}
-                    </button>
+                            {/* --- Időválasztó --- */}
+                            <div className={`flex flex-col w-1/3 relative ${isTimeOpen ? 'z-50' : 'z-10'}`}>
+                                <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.time')}</label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsTimeOpen(!isTimeOpen)}
+                                    className="flex items-center justify-between w-full border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none bg-white dark:bg-[#121212] text-black dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono cursor-pointer transition-colors hover:border-fuchsia-500 focus:border-fuchsia-500"
+                                >
+                                    <span>{time}</span>
+                                    <Clock className="w-4 h-4 ml-1" />
+                                </button>
+
+                                {isTimeOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsTimeOpen(false)}></div>
+                                        <div className="absolute top-full mt-1 right-0 w-48 bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-lg z-50 flex flex-col">
+                                            <div className="flex h-40 border-b-4 border-black dark:border-gray-600 secret:border-[#1cf85d]">
+                                                {/* --- Óra --- */}
+                                                <div className="flex-1 overflow-y-auto custom-scrollbar border-r-4 border-black dark:border-gray-600 secret:border-[#1cf85d]">
+                                                    {Array.from({ length: 24 }).map((_, i) => {
+                                                        const h = i.toString().padStart(2, '0');
+                                                        const currentHour = time.split(':')[0] || '08';
+                                                        return (
+                                                            <button
+                                                                key={`h-${h}`}
+                                                                type="button"
+                                                                onClick={() => setTime(`${h}:${time.split(':')[1] || '00'}`)}
+                                                                className={`w-full p-2 text-center font-bold text-sm cursor-pointer transition-colors secret:font-mono ${currentHour === h ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                                            >
+                                                                {h}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {/* --- Perc --- */}
+                                                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                                                    {Array.from({ length: 60 }).map((_, i) => {
+                                                        const m = i.toString().padStart(2, '0');
+                                                        const currentMinute = time.split(':')[1] || '00';
+                                                        return (
+                                                            <button
+                                                                key={`m-${m}`}
+                                                                type="button"
+                                                                onClick={() => setTime(`${time.split(':')[0] || '08'}:${m}`)}
+                                                                className={`w-full p-2 text-center font-bold text-sm cursor-pointer transition-colors secret:font-mono ${currentMinute === m ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                                            >
+                                                                {m}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsTimeOpen(false)}
+                                                className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold p-2 hover:bg-cyan-400 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black transition-colors uppercase text-sm secret:font-mono cursor-pointer"
+                                            >
+                                                OK
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* --- Discord ping beállítások --- */}
+                        <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
+                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
+                                <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
+                            </p>
+                            <label className="flex items-center space-x-2 cursor-pointer group">
+                                <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer group">
+                                <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
+                            <Plus className="w-5 h-5 mr-1 font-bold" />
+                            {t('cal.save')}
+                        </button>
+                    </div>
                 </form>
             </div>
         </main>
