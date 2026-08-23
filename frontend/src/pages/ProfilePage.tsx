@@ -154,7 +154,7 @@ export default function ProfilePage() {
 
     return (
         <main className="max-w-3xl mx-auto mt-10 p-4 space-y-8 relative z-20">
-            <div className="flex items-center space-x-3 mb-8 bg-fuchsia-400 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+            <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
                 <User className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 <h1 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
                     Profil Beállítások
@@ -233,19 +233,19 @@ export default function ProfilePage() {
                 </div>
             </section>
 
-            <section className="flex flex-col border-4 border-black dark:border-red-500 secret:border-[#1cf85d] bg-red-400 dark:bg-red-950/20 secret:bg-transparent shadow-[8px_8px_0px_#000] dark:shadow-md secret:shadow-none rounded-sm secret:rounded-none overflow-hidden">
-                <div className="bg-red-500 dark:bg-gradient-to-r dark:from-red-900 dark:to-red-950 secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-red-500 secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
+            <section className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300 overflow-hidden">
+                <div className="bg-cyan-400 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <AlertTriangle className="w-6 h-6 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                        Veszélyes Zóna
+                        Fiók Kezelése
                     </h2>
                 </div>
 
                 <div className="p-6">
-                    <p className="text-black dark:text-red-300 secret:text-[#1cf85d]/80 font-bold mb-4 secret:font-mono uppercase">&gt; A fiók törlése végleges és visszavonhatatlan. Minden adatod, naptárbejegyzésed és jegyzeted elveszik!</p>
+                    <p className="text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-bold mb-4 secret:font-mono uppercase">&gt; A fiók törlése végleges és visszavonhatatlan. Minden adatod, naptárbejegyzésed és jegyzeted elveszik!</p>
                     <button
                         onClick={() => setIsDeleteModalOpen(true)}
-                        className="bg-black dark:bg-red-700 secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 px-6 hover:bg-red-600 dark:hover:bg-red-600 hover:text-black secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-none secret:font-mono uppercase w-fit"
+                        className="bg-black dark:bg-[#121212] secret:bg-transparent text-white dark:text-gray-300 secret:text-[#1cf85d] font-bold py-3 px-6 hover:bg-red-500 dark:hover:bg-red-600 hover:text-black dark:hover:text-white secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center cursor-pointer shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] hover:-translate-y-1 dark:shadow-md secret:shadow-none secret:font-mono uppercase w-fit"
                     >
                         <Trash2 className="w-5 h-5 mr-2 font-bold" /> Fiók Végleges Törlése
                     </button>
