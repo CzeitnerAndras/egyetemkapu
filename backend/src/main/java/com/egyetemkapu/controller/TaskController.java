@@ -1,9 +1,15 @@
 package com.egyetemkapu.controller;
 
 import com.egyetemkapu.model.Task;
+import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.TaskRepository;
+import com.egyetemkapu.repository.UserRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -11,29 +17,48 @@ import java.util.List;
 public class TaskController {
 
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
-    public TaskController(TaskRepository taskRepository) {
+    public TaskController(TaskRepository taskRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
     @PostMapping
-    public Task createTask(@RequestBody Task task) {
+    public ResponseEntity<?> createTask(@RequestBody Task task, Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
+
+        Optional<User> userOpt = userRepository.findByUsername(principal.getName());
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        task.setUser(userOpt.get());
+        
         if (task.getTaskType() == null) task.setTaskType("Naptár");
-        return taskRepository.save(task);
+        
+        return ResponseEntity.ok(taskRepository.save(task));
     }
 
     @DeleteMapping("/{id}")
-    public void deleteTask(@PathVariable Long id) {
+    public ResponseEntity<?> deleteTask(@PathVariable Long id, Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
         taskRepository.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public List<Task> getAllTasks() {
-        return taskRepository.findAllByCompletedFalse();
+    public ResponseEntity<List<Task>> getAllTasks(Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
+
+        Optional<User> userOpt = userRepository.findByUsername(principal.getName());
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+
+        // Csak a bejelentkezett felhasználó saját feladatait adjuk vissza!
+        return ResponseEntity.ok(taskRepository.findAllByUserAndCompletedFalse(userOpt.get()));
     }
 
     @PutMapping("/{id}")
-    public Task updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
+    public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody Task updatedTask, Principal principal) {
+        if (principal == null) return ResponseEntity.status(401).build();
+
         return taskRepository.findById(id)
                 .map(task -> {
                     task.setTitle(updatedTask.getTitle());
@@ -42,7 +67,10 @@ public class TaskController {
                     task.setCompleted(updatedTask.isCompleted());
                     task.setPingDayBefore(updatedTask.isPingDayBefore());
                     task.setPingOnDay(updatedTask.isPingOnDay());
-                    return taskRepository.save(task);
+                    task.setPingTelegramDayBefore(updatedTask.isPingTelegramDayBefore());
+                    task.setPingTelegramOnDay(updatedTask.isPingTelegramOnDay());
+                    
+                    return ResponseEntity.ok(taskRepository.save(task));
                 })
                 .orElseThrow(() -> new RuntimeException("A feladat nem található ezzel az ID-val: " + id));
     }
