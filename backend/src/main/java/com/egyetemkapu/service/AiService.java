@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,20 +27,18 @@ public class AiService {
         this.promptLogRepository = promptLogRepository;
     }
 
+    @SuppressWarnings("unchecked")
     public String askAi(String userPrompt) {
-        //Biztonsági ellenőrzés
         if ("nincs_megadva".equals(aiApiKey)) {
             System.out.println("AI API kulcs nincs beállítva!");
             return "Hiányzik az API kulcs.";
         }
 
         try {
-            //HTTP Fejlécek beállítása a hitelesítéshez
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(aiApiKey);
 
-            //Kérés összeállítása
             Map<String, Object> requestBody = Map.of(
                     "model", "openai/gpt-oss-120b",
                     "messages", List.of(
@@ -52,22 +49,21 @@ public class AiService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            //Hálózati hívás indítása
-            ResponseEntity<Map> response = restTemplate.postForEntity(aiApiUrl, entity, Map.class);
+            Map<String, Object> responseBody = (Map<String, Object>) restTemplate.postForEntity(aiApiUrl, entity, Map.class).getBody();
 
-            //Kibontás a JSON-ből
-            Map<String, Object> responseBody = response.getBody();
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-            String aiAnswer = (String) message.get("content");
+            if (responseBody != null) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
+                Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                String aiAnswer = (String) message.get("content");
 
-            //Naplózás
-            PromptLog log = new PromptLog();
-            log.setPrompt(userPrompt);
-            log.setResponse(aiAnswer);
-            promptLogRepository.save(log);
+                PromptLog log = new PromptLog();
+                log.setPrompt(userPrompt);
+                log.setResponse(aiAnswer);
+                promptLogRepository.save(log);
 
-            return aiAnswer;
+                return aiAnswer;
+            }
+            return "Üres válasz érkezett az AI-tól.";
 
         } catch (Exception e) {
             System.out.println("Hiba történt az AI hívás során: " + e.getMessage());
