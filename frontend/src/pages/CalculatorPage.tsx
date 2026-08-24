@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calculator, Sigma, Plus, Trash2, FunctionSquare, ArrowRight } from 'lucide-react';
+import { Calculator, Sigma, Plus, Trash2, FunctionSquare, ArrowRight, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface Subject {
@@ -19,6 +19,17 @@ export default function CalculatorPage() {
     const [mathResult, setMathResult] = useState<string | null>(null);
     const [mathError, setMathError] = useState<string | null>(null);
     const [mathLoading, setMathLoading] = useState(false);
+    const [isOpOpen, setIsOpOpen] = useState(false);
+
+    const operationsList = [
+        { id: 'simplify', label: t('calc.op.simplify') },
+        { id: 'factor', label: t('calc.op.factor') },
+        { id: 'derive', label: t('calc.op.derive') },
+        { id: 'integrate', label: t('calc.op.integrate') },
+        { id: 'zeroes', label: t('calc.op.zeroes') },
+        { id: 'tangent', label: t('calc.op.tangent') },
+        { id: 'area', label: t('calc.op.area') }
+    ];
 
     const handleAddSubject = () => {
         setSubjects([...subjects, { id: Date.now(), name: '', credit: 3, grade: 5 }]);
@@ -204,23 +215,40 @@ export default function CalculatorPage() {
                     <form onSubmit={handleCalculateMath} className="flex flex-col space-y-5">
 
                         {/* --- Művelet kiválasztása --- */}
-                        <div className="flex flex-col group">
+                        <div className={`flex flex-col group relative ${isOpOpen ? 'z-50' : 'z-10'}`}>
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
                                 {t('calc.operation')}
                             </label>
-                            <select
-                                value={operation}
-                                onChange={(e) => setOperation(e.target.value)}
-                                className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] cursor-pointer appearance-none shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none secret:font-mono uppercase text-lg font-bold"
+
+                            <button
+                                type="button"
+                                onClick={() => setIsOpOpen(!isOpOpen)}
+                                className="flex items-center justify-between w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none secret:font-mono uppercase text-lg font-bold transition-colors hover:border-fuchsia-500 focus:border-fuchsia-500"
                             >
-                                <option value="simplify">{t('calc.op.simplify')}</option>
-                                <option value="factor">{t('calc.op.factor')}</option>
-                                <option value="derive">{t('calc.op.derive')}</option>
-                                <option value="integrate">{t('calc.op.integrate')}</option>
-                                <option value="zeroes">{t('calc.op.zeroes')}</option>
-                                <option value="tangent">{t('calc.op.tangent')}</option>
-                                <option value="area">{t('calc.op.area')}</option>
-                            </select>
+                                <span>{operationsList.find(op => op.id === operation)?.label}</span>
+                                <ChevronDown className={`w-6 h-6 transition-transform ${isOpOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isOpOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsOpOpen(false)}></div>
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-lg z-50 max-h-60 overflow-y-auto custom-scrollbar flex flex-col">
+                                        {operationsList.map(op => (
+                                            <button
+                                                key={op.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setOperation(op.id);
+                                                    setIsOpOpen(false);
+                                                }}
+                                                className={`text-left p-3 font-bold text-lg cursor-pointer transition-colors secret:font-mono uppercase ${operation === op.id ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                            >
+                                                {op.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {/* --- Kifejezés megadása --- */}
