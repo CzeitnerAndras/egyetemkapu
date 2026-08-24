@@ -86,6 +86,10 @@ export default function AIAssistantPage() {
                 body: JSON.stringify({ prompt: userText })
             });
 
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('unauthorized');
+            }
+
             const data = await response.json();
 
             if (response.ok) {
@@ -98,11 +102,11 @@ export default function AIAssistantPage() {
             } else {
                 throw new Error('Hiba a válasz feldolgozásakor');
             }
-        } catch (err) {
+        } catch (err: any) {
             const errorAiMessage: Message = {
                 id: Date.now() + 1,
                 role: 'ai',
-                text: t('ai.error')
+                text: err.message === 'unauthorized' ? "Kérlek, jelentkezz be a funkció használatához!" : t('ai.error')
             };
             setMessages((prev) => [...prev, errorAiMessage]);
         } finally {
