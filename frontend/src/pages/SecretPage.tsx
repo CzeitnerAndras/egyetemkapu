@@ -5,7 +5,7 @@ import TerminalHack from '../components/TerminalGame';
 export default function SecretPage() {
     const navigate = useNavigate();
     const [username, setUsername] = useState('UNKNOWN');
-    const [isHacked, setIsHacked] = useState(false);
+    const [isHacked, setIsHacked] = useState(localStorage.getItem('terminalHacked') === 'true');
     const [charCount, setCharCount] = useState(0);
     const [bootStart, setBootStart] = useState(false);
 
@@ -28,6 +28,7 @@ export default function SecretPage() {
     const handleLogoff = () => {
         document.documentElement.classList.remove('secret');
         localStorage.removeItem('secretMode');
+        localStorage.removeItem('terminalHacked');
         window.dispatchEvent(new Event('secretLogoff'));
         navigate('/');
     };
@@ -40,9 +41,9 @@ export default function SecretPage() {
     const text6 = "=========================================";
     const text7 = "| User Log:";
     const text8 = `| >> Administrator: ${username.toUpperCase()}`;
-    const text9 = "| >> Helpdesk";
+    const text9 = "| >> Frontdesk";
     const text10 = "|========";
-    const text11 = "run:// search valami";
+    const text11 = "run:// games";
     const text12 = "run:// search valami más";
     const text13 = "<< Logoff";
 
@@ -65,7 +66,10 @@ export default function SecretPage() {
 
     if (!isHacked) {
         return (
-            <TerminalHack onSuccess={() => setIsHacked(true)} />
+            <TerminalHack onSuccess={() => {
+                localStorage.setItem('terminalHacked', 'true');
+                setIsHacked(true);
+            }} />
         );
     }
 

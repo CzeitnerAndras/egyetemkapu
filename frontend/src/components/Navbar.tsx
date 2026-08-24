@@ -46,6 +46,7 @@ export default function Navbar() {
     const handleSecretLogoff = () => {
       setIsSecretMode(false);
       localStorage.removeItem('secretMode');
+      localStorage.removeItem('terminalHacked');
     };
     window.addEventListener('secretLogoff', handleSecretLogoff);
 
@@ -353,6 +354,7 @@ export default function Navbar() {
               onClick={() => {
                 document.documentElement.classList.remove('secret');
                 localStorage.removeItem('secretMode');
+                localStorage.removeItem('terminalHacked');
                 window.location.href = '/';
               }}
               className="border-4 border-[#1cf85d] bg-[#0a1a0f] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl font-bold [text-shadow:0_0_5px_rgba(28,248,93,0.8)] hover:[text-shadow:none]"
