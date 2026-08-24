@@ -6,6 +6,8 @@ export default function SecretPage() {
     const navigate = useNavigate();
     const [username, setUsername] = useState('UNKNOWN');
     const [isHacked, setIsHacked] = useState(false);
+    const [charCount, setCharCount] = useState(0);
+    const [bootStart, setBootStart] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -30,11 +32,60 @@ export default function SecretPage() {
         navigate('/');
     };
 
+    const text1 = "BANDI INDUSTRIES UNIFIED OPERATING SYSTEM";
+    const text2 = "COPYRIGHT 2075-2077 BANDI INDUSTRIES";
+    const text3 = "-Server 76-";
+    const text4 = "-BANDI Industries Management System-";
+    const text5 = "=========================================";
+    const text6 = "=========================================";
+    const text7 = "| User Log:";
+    const text8 = `| >> Administrator: ${username.toUpperCase()}`;
+    const text9 = "| >> Helpdesk";
+    const text10 = "|========";
+    const text11 = "run:// search valami";
+    const text12 = "run:// search valami más";
+    const text13 = "<< Logoff";
+
+    const allTexts = [text1, text2, text3, text4, text5, text6, text7, text8, text9, text10, text11, text12, text13];
+    const totalChars = allTexts.reduce((acc, t) => acc + t.length, 0);
+
+    useEffect(() => {
+        if (isHacked && !bootStart) {
+            const t = setTimeout(() => setBootStart(true), 300);
+            return () => clearTimeout(t);
+        }
+    }, [isHacked, bootStart]);
+
+    useEffect(() => {
+        if (bootStart && charCount < totalChars) {
+            const t = setTimeout(() => setCharCount(c => c + 1), 10);
+            return () => clearTimeout(t);
+        }
+    }, [charCount, totalChars, bootStart]);
+
     if (!isHacked) {
         return (
             <TerminalHack onSuccess={() => setIsHacked(true)} />
         );
     }
+
+    let currentCount = 0;
+    const renderText = (text: string) => {
+        const startIdx = currentCount;
+        currentCount += text.length;
+
+        if (charCount <= startIdx) return <span className="invisible">{text}</span>;
+        if (charCount >= startIdx + text.length) return text;
+
+        const revealed = charCount - startIdx;
+        return (
+            <>
+                {text.substring(0, revealed)}
+                <span className="animate-pulse">█</span>
+                <span className="invisible">{text.substring(revealed + 1)}</span>
+            </>
+        );
+    };
 
     return (
         <main className="min-h-[calc(100vh-80px)] bg-transparent text-[#1cf85d] font-mono p-8 relative flex flex-col items-center justify-center selection:bg-[#1cf85d] selection:text-black z-20">
@@ -44,45 +95,45 @@ export default function SecretPage() {
 
                 {/* --- Fejléc --- */}
                 <div className="text-center mb-8">
-                    <p>BANDI INDUSTRIES UNIFIED OPERATING SYSTEM</p>
-                    <p>COPYRIGHT 2075-2077 BANDI INDUSTRIES</p>
-                    <p>-Server 76-</p>
+                    <p className="w-full">{renderText(text1)}</p>
+                    <p className="w-full">{renderText(text2)}</p>
+                    <p className="w-full">{renderText(text3)}</p>
                 </div>
 
                 {/* --- Alfejléc --- */}
                 <div className="mb-6">
-                    <p>-BANDI Trespasser Management System-</p>
-                    <p>=========================================</p>
+                    <p className="w-full">{renderText(text4)}</p>
+                    <p className="w-full">{renderText(text5)}</p>
                     <p className="invisible">Ures sor</p>
-                    <p>=========================================</p>
+                    <p className="w-full">{renderText(text6)}</p>
                 </div>
 
                 {/* --- Log adatok --- */}
                 <div className="mb-6 space-y-1">
-                    <p>| User Log:</p>
-                    <p>| &gt;&gt; Administrator: {username.toUpperCase()}</p>
-                    <p>| &gt;&gt; Helpdesk</p>
-                    <p>|========</p>
+                    <p className="w-full">{renderText(text7)}</p>
+                    <p className="w-full">{renderText(text8)}</p>
+                    <p className="w-full">{renderText(text9)}</p>
+                    <p className="w-full">{renderText(text10)}</p>
                 </div>
 
                 {/* --- Interaktív rész --- */}
                 <div className="mt-8 space-y-2">
                     <div className="pt-6 flex flex-col space-y-2">
                         <button className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
-                            run:// search valami
+                            {renderText(text11)}
                         </button>
                         <button className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
-                            run:// search valami más
+                            {renderText(text12)}
                         </button>
                     </div>
                 </div>
 
                 <div className="mt-16">
-                    <button 
+                    <button
                         onClick={handleLogoff}
                         className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase block border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]"
                     >
-                        &lt;&lt; Logoff
+                        {renderText(text13)}
                     </button>
                 </div>
             </div>

@@ -17,13 +17,21 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
     const [locked, setLocked] = useState(false);
     const [granted, setGranted] = useState(false);
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+    const [bootStep, setBootStep] = useState(0);
+    const [bootStart, setBootStart] = useState(false);
 
     useEffect(() => {
         const style = document.createElement('style');
         style.innerHTML = `nav { display: none !important; }`;
         document.head.appendChild(style);
+
+        const t = setTimeout(() => {
+            setBootStart(true);
+        }, 3200);
+
         return () => {
             document.head.removeChild(style);
+            clearTimeout(t);
         };
     }, []);
 
@@ -61,8 +69,27 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
         return { lines: generatedLines, password: pass };
     }, []);
 
+    const header1 = "BANDI INDUSTRIES (TM) TERMLINK PROTOCOL";
+    const header2 = "ENTER PASSWORD NOW";
+    const attemptsText = `${attempts} ATTEMPT(S) LEFT: ${Array(attempts).fill('█').join(' ')}`;
+
+    const totalHeaderChars = useMemo(() => {
+        const initAttempts = `4 ATTEMPT(S) LEFT: █ █ █ █`;
+        return header1.length + header2.length + initAttempts.length;
+    }, [header1.length, header2.length]);
+
+    const totalSteps = totalHeaderChars + 32;
+
+    useEffect(() => {
+        if (bootStart && bootStep < totalSteps) {
+            const isLineRender = bootStep >= totalHeaderChars;
+            const t = setTimeout(() => setBootStep(s => s + 1), isLineRender ? 15 : 15);
+            return () => clearTimeout(t);
+        }
+    }, [bootStart, bootStep, totalSteps, totalHeaderChars]);
+
     const handleWordClick = (word: string) => {
-        if (locked || granted) return;
+        if (locked || granted || bootStep < totalSteps) return;
 
         if (word === password) {
             setHistory(prev => [...prev, `> ${word}`, `> Exact match!`, `> Access granted.`]);
@@ -89,39 +116,72 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
         }
     };
 
-    const renderLine = (line: { hex: string, content: any[] }) => (
-        <div key={line.hex} className="flex space-x-4 mb-0.5 whitespace-pre">
-            <span className="opacity-60">{line.hex}</span>
-            <span className="flex tracking-[0.25em]">
-                {line.content.map(token => {
-                    if (token.type === 'word') {
-                        return (
-                            <span
-                                key={token.id}
-                                className="cursor-pointer hover:bg-[#1cf85d] hover:text-black transition-none font-bold"
-                                onClick={() => handleWordClick(token.value)}
-                                onMouseEnter={() => setHoveredItem(token.value)}
-                                onMouseLeave={() => setHoveredItem(null)}
-                            >
-                                {token.value}
-                            </span>
-                        );
-                    } else {
-                        return (
-                            <span
-                                key={token.id}
-                                className="cursor-default hover:bg-[#1cf85d] hover:text-black transition-none"
-                                onMouseEnter={() => setHoveredItem(token.value)}
-                                onMouseLeave={() => setHoveredItem(null)}
-                            >
-                                {token.value}
-                            </span>
-                        );
-                    }
-                })}
-            </span>
-        </div>
-    );
+    let currentHeaderCount = 0;
+    const renderHeaderText = (text: string) => {
+        const startIdx = currentHeaderCount;
+        currentHeaderCount += text.length;
+
+        if (bootStep <= startIdx) return <span className="invisible">{text}</span>;
+        if (bootStep >= startIdx + text.length) return text;
+
+        const revealed = bootStep - startIdx;
+        return (
+            <>
+                {text.substring(0, revealed)}
+                <span className="animate-pulse">█</span>
+                <span className="invisible">{text.substring(revealed + 1)}</span>
+            </>
+        );
+    };
+
+    const linesVisible = Math.max(0, bootStep - totalHeaderChars);
+
+    const renderLine = (line: { hex: string, content: any[] }, index: number) => {
+        if (index >= linesVisible) {
+            return (
+                <div key={line.hex} className="flex space-x-4 mb-0.5 whitespace-pre invisible">
+                    <span className="opacity-60">{line.hex}</span>
+                    <span className="flex tracking-[0.25em]">
+                        {line.content.map(token => <span key={token.id}>{token.value}</span>)}
+                    </span>
+                </div>
+            );
+        }
+
+        return (
+            <div key={line.hex} className="flex space-x-4 mb-0.5 whitespace-pre">
+                <span className="opacity-60">{line.hex}</span>
+                <span className="flex tracking-[0.25em]">
+                    {line.content.map(token => {
+                        if (token.type === 'word') {
+                            return (
+                                <span
+                                    key={token.id}
+                                    className="cursor-pointer hover:bg-[#1cf85d] hover:text-black transition-none font-bold"
+                                    onClick={() => handleWordClick(token.value)}
+                                    onMouseEnter={() => setHoveredItem(token.value)}
+                                    onMouseLeave={() => setHoveredItem(null)}
+                                >
+                                    {token.value}
+                                </span>
+                            );
+                        } else {
+                            return (
+                                <span
+                                    key={token.id}
+                                    className="cursor-default hover:bg-[#1cf85d] hover:text-black transition-none"
+                                    onMouseEnter={() => setHoveredItem(token.value)}
+                                    onMouseLeave={() => setHoveredItem(null)}
+                                >
+                                    {token.value}
+                                </span>
+                            );
+                        }
+                    })}
+                </span>
+            </div>
+        );
+    };
 
     return (
         <main className="min-h-screen bg-transparent text-[#1cf85d] font-mono p-4 md:p-12 relative flex flex-col items-center justify-center selection:bg-[#1cf85d] selection:text-black uppercase z-20">
@@ -129,24 +189,24 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
 
             <div className="w-full max-w-5xl h-full flex flex-col justify-center [text-shadow:0_0_5px_rgba(28,248,93,0.8)] relative z-10">
 
-                <div className="mb-8">
-                    <p className="text-xl md:text-2xl font-bold mb-2">BANDI INDUSTRIES (TM) TERMLINK PROTOCOL</p>
-                    <p className="text-lg md:text-xl mb-4">ENTER PASSWORD NOW</p>
+                <div className="mb-8 flex flex-col items-start w-full">
+                    <p className="text-xl md:text-2xl font-bold mb-2 w-full">{renderHeaderText(header1)}</p>
+                    <p className="text-lg md:text-xl mb-4 w-full">{renderHeaderText(header2)}</p>
 
-                    <p className="text-lg md:text-xl flex items-center">
-                        {attempts} ATTEMPT(S) LEFT: <span className="ml-2 tracking-widest">{Array(attempts).fill('█').join(' ')}</span>
+                    <p className="text-lg md:text-xl flex items-center w-full">
+                        {renderHeaderText(attemptsText)}
                     </p>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
                     {/* --- Bal --- */}
                     <div className="flex flex-col text-sm md:text-lg">
-                        {lines.slice(0, 16).map(renderLine)}
+                        {lines.slice(0, 16).map((line, i) => renderLine(line, i))}
                     </div>
 
                     {/* --- Jobb --- */}
                     <div className="flex flex-col text-sm md:text-lg">
-                        {lines.slice(16, 32).map(renderLine)}
+                        {lines.slice(16, 32).map((line, i) => renderLine(line, i + 16))}
                     </div>
 
                     {/* --- Előzmények és Terminál kimenet --- */}
@@ -154,10 +214,10 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
                         {history.map((h, i) => (
                             <p key={i} className="mb-1">{h}</p>
                         ))}
-                        {hoveredItem && !locked && !granted && (
+                        {hoveredItem && !locked && !granted && bootStep >= totalSteps && (
                             <p className="animate-pulse">&gt; {hoveredItem}█</p>
                         )}
-                        {!hoveredItem && !locked && !granted && (
+                        {!hoveredItem && !locked && !granted && bootStep >= totalSteps && (
                             <p className="animate-pulse">&gt; █</p>
                         )}
                     </div>
