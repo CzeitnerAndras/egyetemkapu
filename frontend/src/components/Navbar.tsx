@@ -144,6 +144,11 @@ export default function Navbar() {
     }, 600);
   };
 
+  useEffect(() => {
+    window.addEventListener('triggerFatalError', triggerFatalErrorEffect);
+    return () => window.removeEventListener('triggerFatalError', triggerFatalErrorEffect);
+  }, []);
+
   const handleProfileClick = () => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -329,26 +334,32 @@ export default function Navbar() {
 
       {/* --- Végleges Fatal Error Képernyő --- */}
       {isFatalError && (
-        <div className="fixed inset-0 bg-black z-[99990] flex flex-col items-center justify-center text-[#1cf85d] font-mono p-6 text-center selection:bg-[#1cf85d] selection:text-black">
-          <p className="text-3xl md:text-5xl font-bold mb-4 [text-shadow:0_0_10px_rgba(28,248,93,0.8)] animate-pulse">
-            FATAL ERROR: SYSTEM CORRUPT
-          </p>
-          <p className="text-lg md:text-xl mb-2 opacity-80 uppercase">
-            Bandi_OS.sys has encountered an unrecoverable fault.
-          </p>
-          <p className="text-lg md:text-xl mb-12 opacity-80 uppercase">
-            Stop Code: 0x000000F4 MEMORY_MANAGEMENT
-          </p>
-          <button
-            onClick={() => {
-              document.documentElement.classList.remove('secret');
-              localStorage.removeItem('secretMode');
-              window.location.href = '/';
-            }}
-            className="border-4 border-[#1cf85d] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl font-bold [text-shadow:0_0_5px_rgba(28,248,93,0.8)]"
-          >
-            [ RESET ]
-          </button>
+        <div className="fixed inset-0 bg-[#0a1a0f] z-[99990] flex flex-col items-center justify-center text-[#1cf85d] font-mono p-6 text-center selection:bg-[#1cf85d] selection:text-black">
+
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ backgroundImage: 'repeating-linear-gradient(transparent, transparent 2px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 4px)' }}></div>
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ backgroundImage: 'radial-gradient(circle, transparent 50%, rgba(0,0,0,0.9) 120%)' }}></div>
+
+          <div className="relative z-10 flex flex-col items-center justify-center">
+            <p className="text-3xl md:text-5xl font-bold mb-4 [text-shadow:0_0_10px_rgba(28,248,93,0.8)] animate-pulse">
+              FATAL ERROR: SYSTEM CORRUPT
+            </p>
+            <p className="text-lg md:text-xl mb-2 opacity-80 uppercase">
+              Bandi_OS.sys has encountered an unrecoverable fault.
+            </p>
+            <p className="text-lg md:text-xl mb-12 opacity-80 uppercase">
+              Stop Code: 0x000000F4 MEMORY_MANAGEMENT
+            </p>
+            <button
+              onClick={() => {
+                document.documentElement.classList.remove('secret');
+                localStorage.removeItem('secretMode');
+                window.location.href = '/';
+              }}
+              className="border-4 border-[#1cf85d] bg-[#0a1a0f] px-6 py-2 hover:bg-[#1cf85d] hover:text-black transition-none uppercase cursor-pointer text-xl font-bold [text-shadow:0_0_5px_rgba(28,248,93,0.8)] hover:[text-shadow:none]"
+            >
+              [ RESET ]
+            </button>
+          </div>
         </div>
       )}
     </>

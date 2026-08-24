@@ -1,11 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
 const WORDS = [
     "LINKS", "FRONT", "IDEAS", "REACT", "ADMIN", "TOKEN",
     "GAMES", "DEBUG", "ERROR", "PANEL", "CLICK", "ENTER",
-    "BOARD", "LOGIC", "VIEWS", "PAGES", "EGYET", "KAPUK"
+    "BOARD", "LOGIC", "VIEWS", "PAGES", "ABOUT", "KAPUK"
 ];
 
 interface TerminalHackProps {
@@ -13,7 +12,6 @@ interface TerminalHackProps {
 }
 
 export default function TerminalHack({ onSuccess }: TerminalHackProps) {
-    const navigate = useNavigate();
     const [attempts, setAttempts] = useState(4);
     const [history, setHistory] = useState<string[]>([]);
     const [locked, setLocked] = useState(false);
@@ -85,10 +83,8 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
                 setLocked(true);
                 setHistory(prev => [...prev, `> TERMINAL LOCKED`, `> PLEASE CONTACT ADMINISTRATOR`]);
                 setTimeout(() => {
-                    document.documentElement.classList.remove('secret');
-                    localStorage.removeItem('secretMode');
-                    navigate('/');
-                }, 3000);
+                    window.dispatchEvent(new Event('triggerFatalError'));
+                }, 1500);
             }
         }
     };
@@ -134,7 +130,7 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
             <div className="w-full max-w-5xl h-full flex flex-col justify-center [text-shadow:0_0_5px_rgba(28,248,93,0.8)] relative z-10">
 
                 <div className="mb-8">
-                    <p className="text-xl md:text-2xl font-bold mb-2">ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</p>
+                    <p className="text-xl md:text-2xl font-bold mb-2">BANDI INDUSTRIES (TM) TERMLINK PROTOCOL</p>
                     <p className="text-lg md:text-xl mb-4">ENTER PASSWORD NOW</p>
 
                     <p className="text-lg md:text-xl flex items-center">
