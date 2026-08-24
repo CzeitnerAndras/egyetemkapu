@@ -82,9 +82,22 @@ export default function CalculatorPage() {
         setMathResult(null);
         setMathError(null);
 
+        const token = localStorage.getItem('token');
+
         try {
             const safeExpression = encodeURIComponent(expression);
-            const response = await fetch(`http://localhost:8080/api/tools/calculator/${operation}/${safeExpression}`);
+            const response = await fetch(`http://localhost:8080/api/tools/calculator/${operation}/${safeExpression}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                setMathError("Kérlek, jelentkezz be a funkció használatához!");
+                setMathLoading(false);
+                return;
+            }
+
             const data = await response.json();
 
             if (response.ok && !data.error) {
@@ -280,7 +293,7 @@ export default function CalculatorPage() {
                     {/* --- Hibaüzenet --- */}
                     {mathError && (
                         <div className="mt-4 bg-fuchsia-400 dark:bg-red-900/40 secret:bg-black border-4 border-black dark:border-red-500 secret:border-[#1cf85d] text-black dark:text-red-300 secret:text-[#1cf85d] p-4 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase">
-                            &gt; {t('calc.errorPrefix')}: {mathError}
+                            &gt; {mathError}
                         </div>
                     )}
 
