@@ -37,7 +37,7 @@ public class DocumentController {
         
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            Document savedDoc = documentService.uploadDocument(file, title, description, category, username);
+            documentService.uploadDocument(file, title, description, category, username);
             return ResponseEntity.ok(Map.of("message", "Sikeres feltöltés! Az admin jóváhagyása után lesz látható."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
