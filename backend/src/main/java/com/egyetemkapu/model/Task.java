@@ -35,6 +35,16 @@ public class Task {
     @Column(name = "ping_on_day")
     private boolean pingOnDay;
 
+    @Column(name = "ping_telegram_day_before")
+    private boolean pingTelegramDayBefore = false;
+
+    @Column(name = "ping_telegram_on_day")
+    private boolean pingTelegramOnDay = false;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
