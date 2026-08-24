@@ -23,8 +23,8 @@ export default function AIAssistantPage() {
     ]);
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const hasCheckedPending = useRef(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -55,11 +55,11 @@ export default function AIAssistantPage() {
         };
     }, []);
 
-    const handleSendMessage = async (e?: React.FormEvent) => {
+    const handleSendMessage = async (e?: React.FormEvent, overrideText?: string) => {
         if (e) e.preventDefault();
-        if (!inputValue.trim()) return;
 
-        const userText = inputValue;
+        const userText = overrideText || inputValue;
+        if (!userText.trim()) return;
 
         const newUserMessage: Message = {
             id: Date.now(),
@@ -68,13 +68,21 @@ export default function AIAssistantPage() {
         };
 
         setMessages((prev) => [...prev, newUserMessage]);
-        setInputValue('');
+
+        if (!overrideText) {
+            setInputValue('');
+        }
+
         setIsLoading(true);
+        const token = localStorage.getItem('token');
 
         try {
             const response = await fetch('http://localhost:8080/api/ai/ask', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ prompt: userText })
             });
 
@@ -102,13 +110,24 @@ export default function AIAssistantPage() {
         }
     };
 
+    useEffect(() => {
+        if (!hasCheckedPending.current) {
+            hasCheckedPending.current = true;
+            const pendingPrompt = localStorage.getItem('pendingAiPrompt');
+            if (pendingPrompt) {
+                localStorage.removeItem('pendingAiPrompt');
+                handleSendMessage(undefined, pendingPrompt);
+            }
+        }
+    }, []);
+
     return (
         <main className="w-full max-w-5xl mx-auto mt-8 px-4 h-[calc(100vh-120px)] flex flex-col relative z-20">
 
-            {/* --- Fő Konténer: 3D Árnyék és Gradiens --- */}
+            {/* --- Fő Konténer --- */}
             <div className="flex-1 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 overflow-hidden relative rounded-sm secret:rounded-none">
 
-                {/* --- Fejléc: Egyezik a Navbar stílusával --- */}
+                {/* --- Fejléc --- */}
                 <div className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <Bot className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h1 className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
@@ -121,14 +140,12 @@ export default function AIAssistantPage() {
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
 
-                            {/* --- Ikon az AI üzenetek mellett --- */}
                             {msg.role === 'ai' && (
                                 <div className="w-10 h-10 rounded-full secret:rounded-none bg-fuchsia-500 dark:bg-gradient-to-br dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-[#1cf85d] flex items-center justify-center mr-3 shrink-0 border-2 border-black dark:border-transparent secret:border-[#1cf85d] transition-transform group-hover:scale-110 shadow-[4px_4px_0px_#000] dark:shadow-sm">
                                     <Bot className="w-6 h-6 text-black dark:text-white secret:text-black" />
                                 </div>
                             )}
 
-                            {/* --- Üzenet buborék --- */}
                             <div className={`max-w-[75%] p-4 border-2 text-lg leading-relaxed transition-all duration-300 secret:font-mono ${msg.role === 'user'
                                 ? 'bg-cyan-400 dark:bg-gradient-to-br dark:from-[#2d2d2d] dark:to-[#3d3d3d] secret:bg-none secret:bg-transparent border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed text-black dark:text-gray-100 secret:text-[#1cf85d] rounded-tl-xl rounded-tr-xl rounded-bl-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg'
                                 : 'bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-gray-200 secret:text-[#1cf85d] rounded-tr-xl rounded-bl-xl rounded-br-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg'
@@ -136,7 +153,6 @@ export default function AIAssistantPage() {
                                 {msg.role === 'user' ? `> ${msg.text}` : msg.text}
                             </div>
 
-                            {/* --- Ikon a User üzenetek mellett --- */}
                             {msg.role === 'user' && (
                                 <div className="w-10 h-10 rounded-full secret:rounded-none bg-cyan-400 dark:bg-gradient-to-br dark:from-gray-700 dark:to-gray-800 secret:bg-none secret:bg-transparent flex items-center justify-center ml-3 shrink-0 border-2 border-black dark:border-transparent secret:border-[#1cf85d] secret:border-dashed transition-transform group-hover:scale-110 shadow-[4px_4px_0px_#000] dark:shadow-sm">
                                     <User className="w-6 h-6 text-black dark:text-gray-200 secret:text-[#1cf85d]" />
@@ -146,7 +162,7 @@ export default function AIAssistantPage() {
                         </div>
                     ))}
 
-                    {/* --- Gondolkodás (Typing indicator) --- */}
+                    {/* --- Typing indicator --- */}
                     {isLoading && (
                         <div className="flex justify-start">
                             <div className="w-10 h-10 rounded-full secret:rounded-none bg-fuchsia-500 dark:bg-gradient-to-br dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-[#1cf85d] flex items-center justify-center mr-3 shrink-0 border-2 border-black dark:border-transparent secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-sm">
@@ -162,7 +178,7 @@ export default function AIAssistantPage() {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* --- Bemeneti (Input) Szekció --- */}
+                {/* --- Input Szekció --- */}
                 <div className="p-4 bg-slate-100 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-transparent border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors z-10 shadow-none dark:shadow-none">
                     <form onSubmit={handleSendMessage} className="flex space-x-4">
                         <input
