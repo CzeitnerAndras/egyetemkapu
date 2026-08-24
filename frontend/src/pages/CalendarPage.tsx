@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Bell, Trash2, Calendar as CalendarIcon, Plus, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Bell, Trash2, Calendar as CalendarIcon, Plus, Clock, Send } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface Task {
@@ -10,6 +10,8 @@ interface Task {
     completed: boolean;
     pingDayBefore: boolean;
     pingOnDay: boolean;
+    pingTelegramDayBefore?: boolean;
+    pingTelegramOnDay?: boolean;
 }
 
 export default function CalendarPage() {
@@ -22,8 +24,11 @@ export default function CalendarPage() {
     const [time, setTime] = useState('08:00');
     const [pingDayBefore, setPingDayBefore] = useState(false);
     const [pingOnDay, setPingOnDay] = useState(false);
+    const [pingTelegramDayBefore, setPingTelegramDayBefore] = useState(false);
+    const [pingTelegramOnDay, setPingTelegramOnDay] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isTimeOpen, setIsTimeOpen] = useState(false);
+    const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
     {/* --- Adatok lekérése JWT tokennel --- */ }
     useEffect(() => {
@@ -107,10 +112,11 @@ export default function CalendarPage() {
     {/* --- Mentés JWT tokennel --- */ }
     const handleSaveTask = (e: React.FormEvent) => {
         e.preventDefault();
+        setMessage(null);
 
         const token = localStorage.getItem('token');
         if (!token) {
-            alert(t('cal.needLogin'));
+            setMessage({ text: t('cal.needLogin') || 'A teendő mentéséhez be kell jelentkezned!', type: 'error' });
             return;
         }
 
@@ -120,7 +126,9 @@ export default function CalendarPage() {
             deadline: formatDateForApi(selectedDate, time),
             completed: false,
             pingDayBefore,
-            pingOnDay
+            pingOnDay,
+            pingTelegramDayBefore,
+            pingTelegramOnDay
         };
 
         fetch('http://localhost:8080/api/tasks', {
@@ -139,14 +147,22 @@ export default function CalendarPage() {
                 setTasks([...tasks, savedTask]);
                 setTitle('');
                 setTaskType('');
+                setMessage({ text: 'Sikeresen mentve!', type: 'success' });
+                setTimeout(() => setMessage(null), 3000);
             })
-            .catch(err => console.error('Mentési hiba:', err));
+            .catch(err => {
+                console.error('Mentési hiba:', err);
+                setMessage({ text: 'Hiba történt a mentés során.', type: 'error' });
+            });
     };
 
     {/* --- Törlés JWT tokennel --- */ }
     const handleDeleteTask = (id: number) => {
         const token = localStorage.getItem('token');
-        if (!token) return;
+        if (!token) {
+            setMessage({ text: t('cal.needLogin') || 'A törléshez be kell jelentkezned!', type: 'error' });
+            return;
+        }
 
         fetch(`http://localhost:8080/api/tasks/${id}`, {
             method: 'DELETE',
@@ -155,9 +171,14 @@ export default function CalendarPage() {
             .then(res => {
                 if (res.ok) {
                     setTasks(tasks.filter(t => t.id !== id));
+                    setMessage({ text: 'Sikeresen törölve!', type: 'success' });
+                    setTimeout(() => setMessage(null), 3000);
                 }
             })
-            .catch(err => console.error('Törlési hiba:', err));
+            .catch(err => {
+                console.error('Törlési hiba:', err);
+                setMessage({ text: 'Hiba történt a törlés során.', type: 'error' });
+            });
     };
 
     return (
@@ -255,8 +276,14 @@ export default function CalendarPage() {
                                     </div>
 
                                     {(task.pingDayBefore || task.pingOnDay) && (
-                                        <div className="absolute top-2 right-8 text-indigo-500 dark:text-indigo-400 secret:text-[#1cf85d]" title={t('cal.discordSet')}>
+                                        <div className="absolute top-2 right-12 text-indigo-500 dark:text-indigo-400 secret:text-[#1cf85d]" title={t('cal.discordSet')}>
                                             <Bell className="w-4 h-4" />
+                                        </div>
+                                    )}
+
+                                    {(task.pingTelegramDayBefore || task.pingTelegramOnDay) && (
+                                        <div className="absolute top-2 right-8 text-cyan-500 dark:text-cyan-400 secret:text-[#1cf85d]" title="Telegram értesítés beállítva">
+                                            <Send className="w-4 h-4" />
                                         </div>
                                     )}
 
@@ -279,6 +306,16 @@ export default function CalendarPage() {
                     </div>
 
                     <div className="p-4 flex flex-col space-y-3">
+
+                        {message && (
+                            <div className={`p-2 font-bold text-xs border-2 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase ${message.type === 'success'
+                                ? 'bg-green-400 dark:bg-green-900/40 border-black dark:border-green-600 text-black dark:text-green-300 secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d]'
+                                : 'bg-red-400 dark:bg-red-900/40 border-black dark:border-red-600 text-black dark:text-red-300 secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d]'
+                                }`}>
+                                &gt; {message.text}
+                            </div>
+                        )}
+
                         <div className="flex flex-col group">
                             <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
                             <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
@@ -371,6 +408,21 @@ export default function CalendarPage() {
                             </label>
                             <label className="flex items-center space-x-2 cursor-pointer group">
                                 <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
+                            </label>
+                        </div>
+
+                        {/* --- Telegram ping beállítások --- */}
+                        <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-cyan-900 secret:border-[#1cf85d] space-y-1 mt-1">
+                            <p className="text-xs font-bold text-cyan-700 dark:text-cyan-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
+                                <Send className="w-3.5 h-3.5 mr-1" /> Telegram
+                            </p>
+                            <label className="flex items-center space-x-2 cursor-pointer group">
+                                <input type="checkbox" checked={pingTelegramDayBefore} onChange={e => setPingTelegramDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
+                            </label>
+                            <label className="flex items-center space-x-2 cursor-pointer group">
+                                <input type="checkbox" checked={pingTelegramOnDay} onChange={e => setPingTelegramOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
                                 <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
                             </label>
                         </div>
