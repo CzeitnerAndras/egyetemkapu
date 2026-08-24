@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TerminalHack from '../components/TerminalGame';
 
 export default function SecretPage() {
     const navigate = useNavigate();
     const [username, setUsername] = useState('UNKNOWN');
+    const [isHacked, setIsHacked] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -28,10 +30,16 @@ export default function SecretPage() {
         navigate('/');
     };
 
+    if (!isHacked) {
+        return (
+            <TerminalHack onSuccess={() => setIsHacked(true)} />
+        );
+    }
+
     return (
         <main className="min-h-[calc(100vh-80px)] bg-transparent text-[#1cf85d] font-mono p-8 relative flex flex-col items-center justify-center selection:bg-[#1cf85d] selection:text-black z-20">
 
-            {/* --- Terminál tartalom (Foszfor ragyogás text-shadow-val) --- */}
+            {/* --- Terminál tartalom --- */}
             <div className="w-full max-w-4xl z-20 relative text-lg md:text-xl leading-relaxed [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
 
                 {/* --- Fejléc --- */}
