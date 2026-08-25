@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Event;
 import com.egyetemkapu.repository.EventRepository;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +24,13 @@ public class EventController {
     }
 
     @PostMapping
+    @LogAction("Új Hírek/Esemény létrehozása")
     public Event createEvent(@RequestBody Event event) {
         return eventRepository.save(event);
     }
 
     @DeleteMapping("/{id}")
+    @LogAction("Hírek/Esemény törlése")
     public void deleteEvent(@PathVariable Long id) {
         eventRepository.deleteById(id);
     }
