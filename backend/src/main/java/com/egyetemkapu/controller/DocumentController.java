@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Document;
 import com.egyetemkapu.service.DocumentService;
 import org.springframework.core.io.Resource;
@@ -29,6 +30,7 @@ public class DocumentController {
     // --- FELHASZNÁLÓI VÉGPONTOK ---
 
     @PostMapping("/upload")
+    @LogAction("Új dokumentum feltöltése jóváhagyásra")
     public ResponseEntity<?> uploadDocument(
             @RequestParam("file") MultipartFile file,
             @RequestParam("title") String title,
@@ -50,6 +52,7 @@ public class DocumentController {
     }
 
     @GetMapping("/download/{id}")
+    @LogAction("Dokumentum letöltése")
     public ResponseEntity<Resource> downloadDocument(@PathVariable Long id) {
         try {
             Path filePath = documentService.getDocumentPath(id);
@@ -76,12 +79,14 @@ public class DocumentController {
     }
 
     @PutMapping("/admin/{id}/approve")
+    @LogAction("Admin: Dokumentum elfogadva")
     public ResponseEntity<?> approveDocument(@PathVariable Long id) {
         documentService.approveDocument(id);
         return ResponseEntity.ok(Map.of("message", "Dokumentum elfogadva!"));
     }
 
     @DeleteMapping("/admin/{id}/reject")
+    @LogAction("Admin: Dokumentum elutasítva és törölve")
     public ResponseEntity<?> rejectDocument(@PathVariable Long id) {
         documentService.rejectDocument(id);
         return ResponseEntity.ok(Map.of("message", "Dokumentum elutasítva és törölve!"));
