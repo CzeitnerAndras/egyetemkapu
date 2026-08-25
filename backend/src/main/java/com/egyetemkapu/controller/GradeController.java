@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Grade;
 import com.egyetemkapu.model.Subject;
 import com.egyetemkapu.repository.GradeRepository;
@@ -24,6 +25,7 @@ public class GradeController {
     }
 
     @PostMapping("/{subjectId}")
+    @LogAction("Új érdemjegy rögzítése")
     public ResponseEntity<Grade> addGrade(@PathVariable Long subjectId, @RequestBody Grade gradeRequest) {
         Optional<Subject> subjectOpt = subjectRepository.findById(subjectId);
 
