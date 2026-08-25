@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.service.CalculatorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ public class CalculatorController {
     }
 
     @GetMapping("/{operation}/{expression}")
+    @LogAction("Komplex számológép hívás")
     public ResponseEntity<Map<String, Object>> calculateExternal(
             @PathVariable String operation,
             @PathVariable String expression,
