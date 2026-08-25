@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Suggestion;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.SuggestionRepository;
@@ -29,6 +30,7 @@ public class SuggestionController {
     }
 
     @PostMapping
+    @LogAction("Új ötlet/javaslat beküldése az ötletládába")
     public Suggestion createSuggestion(@RequestBody Suggestion suggestion) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentPrincipalName = authentication.getName();
@@ -40,6 +42,7 @@ public class SuggestionController {
     }
 
     @DeleteMapping("/{id}")
+    @LogAction("Ötlet/javaslat törlése")
     public void deleteSuggestion(@PathVariable Long id) {
         suggestionRepository.deleteById(id);
     }
