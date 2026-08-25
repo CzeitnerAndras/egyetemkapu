@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
@@ -30,6 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @LogAction("Új felhasználó regisztrációja")
     public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
         String username = request.get("username");
         String email = request.get("email");
@@ -53,6 +55,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @LogAction("Felhasználó bejelentkezés (Sikeres)")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String password = request.get("password");
