@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
@@ -45,6 +46,7 @@ public class UserController {
     }
 
     @PutMapping("/username")
+    @LogAction("Felhasználónév módosítása")
     public ResponseEntity<?> updateUsername(@RequestBody Map<String, String> request) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
@@ -64,6 +66,7 @@ public class UserController {
     }
 
     @PutMapping("/password")
+    @LogAction("Jelszó módosítása")
     public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> request) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
@@ -83,6 +86,7 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
+    @LogAction("Felhasználói fiók törlése")
     public ResponseEntity<?> deleteAccount() {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
