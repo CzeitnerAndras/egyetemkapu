@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Subject;
 import com.egyetemkapu.repository.SubjectRepository;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ public class SubjectController {
     }
 
     @PostMapping
+    @LogAction("Új tantárgy rögzítése")
     public Subject createSubject(@RequestBody Subject subject) {
         return subjectRepository.save(subject);
     }
