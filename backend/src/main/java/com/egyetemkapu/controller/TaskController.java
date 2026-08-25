@@ -51,7 +51,6 @@ public class TaskController {
         Optional<User> userOpt = userRepository.findByUsername(principal.getName());
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
 
-        // Csak a bejelentkezett felhasználó saját feladatait adjuk vissza!
         return ResponseEntity.ok(taskRepository.findAllByUserAndCompletedFalse(userOpt.get()));
     }
 
