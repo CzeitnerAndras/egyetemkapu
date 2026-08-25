@@ -1,5 +1,6 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Task;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.TaskRepository;
@@ -25,6 +26,7 @@ public class TaskController {
     }
 
     @PostMapping
+    @LogAction("Új naptár bejegyzés létrehozása")
     public ResponseEntity<?> createTask(@RequestBody Task task, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
@@ -38,6 +40,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/{id}")
+    @LogAction("Naptár bejegyzés törlése")
     public ResponseEntity<?> deleteTask(@PathVariable Long id, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         taskRepository.deleteById(id);
@@ -55,6 +58,7 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
+    @LogAction("Naptár bejegyzés frissítése")
     public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody Task updatedTask, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
