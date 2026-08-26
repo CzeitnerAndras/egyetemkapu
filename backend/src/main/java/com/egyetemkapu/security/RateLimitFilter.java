@@ -44,6 +44,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     response.getWriter().write("{\"error\": \"Túl sok kérés! Kérlek várj egy percet a következő AI vagy kalkulátor hívásig.\"}");
                     return;
                 }
+            } else {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write("{\"error\": \"Bejelentkezés szükséges a funkció használatához!\"}");
+                return;
             }
         }
         
