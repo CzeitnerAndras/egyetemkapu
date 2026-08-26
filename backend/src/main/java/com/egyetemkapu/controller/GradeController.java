@@ -6,6 +6,7 @@ import com.egyetemkapu.model.Subject;
 import com.egyetemkapu.repository.GradeRepository;
 import com.egyetemkapu.repository.SubjectRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class GradeController {
 
     @PostMapping("/{subjectId}")
     @LogAction("Új érdemjegy rögzítése")
+    @Transactional
     public ResponseEntity<Grade> addGrade(@PathVariable Long subjectId, @RequestBody Grade gradeRequest) {
         Optional<Subject> subjectOpt = subjectRepository.findById(subjectId);
 
@@ -41,6 +43,7 @@ public class GradeController {
     }
 
     @GetMapping("/subject/{subjectId}")
+    @Transactional(readOnly = true)
     public List<Grade> getGradesForSubject(@PathVariable Long subjectId) {
         return gradeRepository.findAllBySubjectId(subjectId);
     }

@@ -3,6 +3,7 @@ package com.egyetemkapu.controller;
 import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Subject;
 import com.egyetemkapu.repository.SubjectRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class SubjectController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public List<Subject> getAllSubjects() {
         return subjectRepository.findAll();
     }

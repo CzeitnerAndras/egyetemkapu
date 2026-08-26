@@ -6,6 +6,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.TaskRepository;
 import com.egyetemkapu.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -27,6 +28,7 @@ public class TaskController {
 
     @PostMapping
     @LogAction("Új naptár bejegyzés létrehozása")
+    @Transactional
     public ResponseEntity<?> createTask(@RequestBody Task task, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
@@ -41,6 +43,7 @@ public class TaskController {
 
     @DeleteMapping("/{id}")
     @LogAction("Naptár bejegyzés törlése")
+    @Transactional
     public ResponseEntity<?> deleteTask(@PathVariable Long id, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         taskRepository.deleteById(id);
@@ -48,6 +51,7 @@ public class TaskController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Task>> getAllTasks(Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
@@ -59,6 +63,7 @@ public class TaskController {
 
     @PutMapping("/{id}")
     @LogAction("Naptár bejegyzés frissítése")
+    @Transactional
     public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody Task updatedTask, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 

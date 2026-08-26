@@ -7,6 +7,7 @@ import com.egyetemkapu.security.JwtUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -33,6 +34,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getUserInfo() {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
@@ -47,6 +49,7 @@ public class UserController {
 
     @PutMapping("/username")
     @LogAction("Felhasználónév módosítása")
+    @Transactional
     public ResponseEntity<?> updateUsername(@RequestBody Map<String, String> request) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
@@ -67,6 +70,7 @@ public class UserController {
 
     @PutMapping("/password")
     @LogAction("Jelszó módosítása")
+    @Transactional
     public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> request) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
@@ -87,6 +91,7 @@ public class UserController {
 
     @DeleteMapping("/me")
     @LogAction("Felhasználói fiók törlése")
+    @Transactional
     public ResponseEntity<?> deleteAccount() {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));

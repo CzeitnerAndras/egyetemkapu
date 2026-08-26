@@ -8,6 +8,7 @@ import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.service.RefreshTokenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -34,8 +35,34 @@ public class AuthController {
         this.refreshTokenService = refreshTokenService;
     }
 
+    @PostMapping("/register")
+    @LogAction("Új felhasználó regisztrációja")
+    @Transactional
+    public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        String email = request.get("email");
+        String password = request.get("password");
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Ez a felhasználónév már foglalt!"));
+        }
+        
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Ez az e-mail cím már regisztrálva van!"));
+        }
+
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setEmail(email);
+        newUser.setPassword(passwordEncoder.encode(password));
+        userRepository.save(newUser);
+
+        return ResponseEntity.ok(Map.of("message", "Sikeres regisztráció!"));
+    }
+
     @PostMapping("/login")
     @LogAction("Felhasználó bejelentkezés (Sikeres)")
+    @Transactional
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         String password = request.get("password");

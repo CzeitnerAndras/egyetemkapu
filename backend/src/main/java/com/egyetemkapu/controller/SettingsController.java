@@ -6,6 +6,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.SettingsRepository;
 import com.egyetemkapu.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -26,6 +27,7 @@ public class SettingsController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getSettings(Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
         
@@ -42,6 +44,7 @@ public class SettingsController {
 
     @PutMapping
     @LogAction("Értesítési beállítások módosítása")
+    @Transactional
     public ResponseEntity<?> saveSettings(@RequestBody Map<String, String> payload, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 

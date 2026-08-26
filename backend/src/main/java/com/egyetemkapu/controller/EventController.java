@@ -3,6 +3,7 @@ package com.egyetemkapu.controller;
 import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.Event;
 import com.egyetemkapu.repository.EventRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class EventController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public List<Event> getAllEvents() {
         return eventRepository.findAll();
     }

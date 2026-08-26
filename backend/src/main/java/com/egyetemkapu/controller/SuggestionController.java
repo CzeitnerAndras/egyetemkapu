@@ -7,6 +7,7 @@ import com.egyetemkapu.repository.SuggestionRepository;
 import com.egyetemkapu.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,12 +26,14 @@ public class SuggestionController {
     }
 
     @GetMapping
+    @Transactional(readOnly = true)
     public List<Suggestion> getAllSuggestions() {
         return suggestionRepository.findAll();
     }
 
     @PostMapping
     @LogAction("Új ötlet/javaslat beküldése az ötletládába")
+    @Transactional
     public Suggestion createSuggestion(@RequestBody Suggestion suggestion) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentPrincipalName = authentication.getName();
