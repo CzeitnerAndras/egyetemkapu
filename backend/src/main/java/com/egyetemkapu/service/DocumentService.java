@@ -6,6 +6,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.DocumentRepository;
 import com.egyetemkapu.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public class DocumentService {
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public Document uploadDocument(MultipartFile file, String title, String description, String category, String username) throws IOException {
         User uploader = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Felhasználó nem található"));
@@ -57,6 +59,7 @@ public class DocumentService {
         return documentRepository.save(document);
     }
 
+    @Transactional(readOnly = true)
     public List<Document> getApprovedDocuments(String category) {
         if (category != null && !category.isEmpty()) {
             return documentRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, DocumentStatus.APPROVED);
@@ -64,10 +67,12 @@ public class DocumentService {
         return documentRepository.findByStatusOrderByCreatedAtDesc(DocumentStatus.APPROVED);
     }
 
+    @Transactional(readOnly = true)
     public List<Document> getPendingDocuments() {
         return documentRepository.findByStatusOrderByCreatedAtDesc(DocumentStatus.PENDING);
     }
 
+    @Transactional
     public Document approveDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));
@@ -75,6 +80,7 @@ public class DocumentService {
         return documentRepository.save(document);
     }
 
+    @Transactional
     public void rejectDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));
@@ -85,6 +91,7 @@ public class DocumentService {
         documentRepository.delete(document);
     }
 
+    @Transactional(readOnly = true)
     public Path getDocumentPath(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));
