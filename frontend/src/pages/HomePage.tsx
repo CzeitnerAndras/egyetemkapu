@@ -13,9 +13,6 @@ interface EventItem {
 }
 
 const jokes = [
-  { hu: "Miért keveri a programozó a Halloweent a Karácsonnyal? Mert Oct 31 == Dec 25.", en: "Why do programmers confuse Halloween and Christmas? Because Oct 31 == Dec 25." },
-  { hu: "Hány programozó kell egy villanykörte kicseréléséhez? Egy sem, ez hardveres probléma.", en: "How many programmers does it take to change a light bulb? None, that's a hardware problem." },
-  { hu: "A kódolás az a folyamat, amikor egy hibát kicserélsz két újra.", en: "Coding is the process of replacing one bug with two new ones." },
   { hu: "Egyetemista: - Tanár úr, kaphatok egy haladékot a beadandóhoz? Tanár: - Persze, a Neptun pont úgyis összeomlott.", en: "Student: - Professor, can I get an extension on my assignment? Professor: - Sure, Neptun just crashed anyway." },
   { hu: "A hallgatók 90%-a az utolsó napon írja meg a beadandót. A maradék 10% a határidő után.", en: "90% of students write their assignment on the last day. The remaining 10% write it after the deadline." },
   { hu: "Mit csinál a matematikus, ha fázik? Beáll a sarokba, mert ott 90 fok van.", en: "What does a mathematician do when they are cold? They stand in the corner, because it's 90 degrees there." },
@@ -24,15 +21,28 @@ const jokes = [
   { hu: "Miért vitt a diák létrát az egyetemre? Mert a felsőoktatásba jelentkezett.", en: "Why did the student bring a ladder to the university? Because he wanted to go to higher education." },
   { hu: "Mit mond a hóember a kocsmában? Kérek egy italt, teljesen le vagyok fagyva!", en: "What does the snowman say at the bar? I need a drink, I'm freezing!" },
   { hu: "Pincér, van békacomb? - Nincs uram. - Akkor ugorjon egy sörért!", en: "Waiter, do you have frog legs? - No, sir. - Then hop to it and get me a beer!" },
-  { hu: "Miért nem játszanak bújócskát a dinoszauruszok? Mert senki sem akarja megtalálni őket.", en: "Why don't dinosaurs play hide and seek? Because nobody wants to find them." }
+  { hu: "Miért nem játszanak bújócskát a dinoszauruszok? Mert senki sem akarja megtalálni őket.", en: "Why don't dinosaurs play hide and seek? Because nobody wants to find them." },
+  { hu: "Ön most egy 'bosnyák vírust' kapott. Mivel nem rendelkezünk programozói tapasztalattal, ez a vírus a bizalom elvén működik. Kérjük, törölje le minden fájlját, és küldje tovább ezt az üzenetet ismerőseinek. Köszönjük az együttműködést!", en: "You have just received an 'Amish virus'. Since we have no programming experience, this virus works on the honor system. Please delete all your files and forward this message to your friends. Thank you for your cooperation!" },
+  { hu: "Két tehén beszélget: - Te nem félsz ettől a kergemarha-kórtól? - Én nem, én pingvin vagyok!", en: "Two cows are talking: - Aren't you afraid of this mad cow disease? - Not me, I'm a penguin!" },
+  { hu: "Két rendőr sétál az utcán. Az egyik talál egy tükröt, belenéz és felkiált: – Jé, egy rendőr! A másik elveszi tőle, belenéz és így szól: – Te idióta, ez én vagyok!", en: "Two policemen are walking down the street. One finds a mirror, looks in it and shouts: 'Wow, a policeman!' The other takes it, looks in it and says: 'You idiot, that's me!'" },
+  { hu: "A férj hazamegy a munkából, és azt mondja a feleségének: - Drágám, ma előléptettek! A feleség: - Nagyszerű! És mi lettél? - Mostantól én vagyok a főnökhelyettes helyettese.", en: "The husband comes home from work and says to his wife: 'Honey, I got promoted today!' Wife: 'Great! What are you now?' 'From now on, I'm the deputy to the deputy boss.'" },
+  { hu: "Pistike kérdezi az apját: - Apu, mi az a vákuum? - A fejemben van valami ilyesmi, de most hirtelen nem tudom megmondani.", en: "Little Pete asks his dad: 'Dad, what is a vacuum?' 'I have something like that in my head, but I can't explain it right now.'" },
+  { hu: "Képzeld, a kutyám tud olvasni! – Ugyan már, honnan tudod? – Onnan, hogy amikor a táblára az volt írva, hogy 'Vigyázz, harapós kutya!', ő is elolvasta, és egész nap a házban maradt.", en: "Imagine, my dog can read! - Come on, how do you know? - Well, when the sign said 'Beware of the dog!', he read it too and stayed in the house all day." },
+  { hu: "Miért repülnek a madarak délre? Mert gyalog túl messze van.", en: "Why do birds fly south? Because it's too far to walk." }
 ];
 
 const tips = [
   { hu: "A Pomodoro módszerrel 25 perc fókusz után 5 perc szünet javasolt az optimális teljesítményhez.", en: "With the Pomodoro technique, a 5-minute break is recommended after 25 minutes of focus for optimal performance." },
   { hu: "A DEENK-ben (Egyetemi Könyvtár) ingyenesen foglalhatsz tanulószobát csoportos munkához.", en: "You can book study rooms for free at the DEENK (University Library) for group work." },
   { hu: "A hivatkozás generátort használva pillanatok alatt elkészítheted a szakdolgozatod irodalomjegyzékét.", en: "Using the citation generator, you can create your thesis bibliography in seconds." },
-  { hu: "A 'Titkos mód' bekapcsolásához kattints 10-szer a sötét/világos mód váltó gombra a menüben!", en: "Click the dark/light mode toggle in the menu 10 times to activate 'Secret Mode'!" },
-  { hu: "Ha a Naptárban beállítod a Discord értesítést, a rendszer vizsga előtt emlékeztetőt küld a szerveredre.", en: "If you set up Discord notifications in the Calendar, the system will send a reminder to your server before exams." }
+  { hu: "Ha a Naptárban beállítod a Discord értesítést, a rendszer vizsga előtt emlékeztetőt küld a szerveredre.", en: "If you set up Discord notifications in the Calendar, the system will send a reminder to your server before exams." },
+  { hu: "Tanulás közben használd az 'aktív felidézés' (active recall) módszert: olvasás után csukd be a könyvet, és próbáld meg saját szavaiddal összefoglalni a lényeget.", en: "Use the 'active recall' method while studying: close the book after reading and try to summarize the main points in your own words." },
+  { hu: "Az ismétlés a tudás anyja, de az elosztott ismétlés (spaced repetition) a mestere. Használj flashcardokat, és ismételj növekvő időközönként!", en: "Repetition is the mother of learning, but spaced repetition is its master. Use flashcards and review at increasing intervals!" },
+  { hu: "Ne tanulj az ágyban! Az agyad a pihenéssel köti össze az ágyat, így sokkal hamarabb leszel álmos. Keress egy dedikált tanulósarkot.", en: "Don't study in bed! Your brain associates the bed with rest, so you'll get sleepy much faster. Find a dedicated study corner." },
+  { hu: "Ha elakadsz egy bonyolult anyagnál, próbáld meg elmagyarázni egy képzeletbeli ötévesnek (Feynman-technika). Ha nem megy egyszerűen, még nem érted eléggé.", en: "If you get stuck on complex material, try explaining it to an imaginary five-year-old (Feynman technique). If you can't do it simply, you don't understand it well enough yet." },
+  { hu: "Mielőtt elkezded a tanulást, írj egy pontos, kis lépésekből álló tervet. A 'Tanulok 3 órát' helyett legyen 'Elolvasom és kijyzetelem a 4. fejezetet'.", en: "Before you start studying, write a precise plan with small steps. Instead of 'I'll study for 3 hours', make it 'I will read and outline chapter 4'." },
+  { hu: "Igyál elég vizet! Még az enyhe dehidratáció is jelentősen rontja a koncentrációs képességet és a rövidtávú memóriát.", en: "Drink enough water! Even mild dehydration significantly impairs concentration and short-term memory." },
+  { hu: "A mozgás javítja az agy vérellátását. Egy 15 perces séta tanulás előtt vagy a szünetekben csodákat tehet a memóriáddal.", en: "Exercise improves blood flow to the brain. A 15-minute walk before studying or during breaks can do wonders for your memory." }
 ];
 
 {/* --- Számláló animáció Hook --- */ }
