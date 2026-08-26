@@ -25,6 +25,7 @@ export default function LoginPage() {
 
             if (response.ok) {
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('refreshToken', data.refreshToken);
                 navigate('/');
             } else {
                 setError(data.error || t('login.badCredentials'));
