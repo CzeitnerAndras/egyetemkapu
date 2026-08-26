@@ -1,9 +1,11 @@
 package com.egyetemkapu.controller;
 
 import com.egyetemkapu.annotation.LogAction;
+import com.egyetemkapu.model.RefreshToken;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
+import com.egyetemkapu.service.RefreshTokenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -21,37 +23,15 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCKOUT_DURATION_MINUTES = 15;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-    }
-
-    @PostMapping("/register")
-    @LogAction("Új felhasználó regisztrációja")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
-        String email = request.get("email");
-        String password = request.get("password");
-
-        if (userRepository.findByUsername(username).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ez a felhasználónév már foglalt!"));
-        }
-        
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ez az e-mail cím már regisztrálva van!"));
-        }
-
-        User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setEmail(email);
-        newUser.setPassword(passwordEncoder.encode(password));
-        userRepository.save(newUser);
-
-        return ResponseEntity.ok(Map.of("message", "Sikeres regisztráció!"));
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -84,20 +64,50 @@ public class AuthController {
                 user.setLockoutEndTime(null);
                 userRepository.save(user);
             }
-            String token = jwtUtil.generateToken(user.getUsername());
-            return ResponseEntity.ok(Map.of("token", token));
+            String accessToken = jwtUtil.generateToken(user.getUsername());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+            
+            return ResponseEntity.ok(Map.of(
+                    "token", accessToken,
+                    "refreshToken", refreshToken.getToken()
+            ));
         } else {
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-            
             if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
                 user.setLockoutEndTime(LocalDateTime.now().plusMinutes(LOCKOUT_DURATION_MINUTES));
                 userRepository.save(user);
                 return ResponseEntity.status(403).body(Map.of("error", "Túl sok hibás próbálkozás! Fiókod " + LOCKOUT_DURATION_MINUTES + " percre zárolásra került."));
             }
-            
             userRepository.save(user);
             int remainingAttempts = MAX_FAILED_ATTEMPTS - user.getFailedLoginAttempts();
             return ResponseEntity.status(401).body(Map.of("error", "Hibás e-mail cím vagy jelszó! Hátralévő próbálkozások: " + remainingAttempts));
         }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        String requestRefreshToken = request.get("refreshToken");
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    String accessToken = jwtUtil.generateToken(user.getUsername());
+                    return ResponseEntity.ok(Map.of(
+                            "token", accessToken,
+                            "refreshToken", requestRefreshToken
+                    ));
+                })
+                .orElseThrow(() -> new RuntimeException("A Refresh Token érvénytelen az adatbázisban!"));
+    }
+
+    @PostMapping("/logout")
+    @LogAction("Kijelentkezés")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
+        String refreshToken = request.get("refreshToken");
+        refreshTokenService.findByToken(refreshToken).ifPresent(token -> 
+            refreshTokenService.deleteByUserId(token.getUser().getId())
+        );
+        return ResponseEntity.ok(Map.of("message", "Sikeres kijelentkezés!"));
     }
 }
