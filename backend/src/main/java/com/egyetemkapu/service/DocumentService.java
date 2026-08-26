@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ public class DocumentService {
         String uniqueFileName = UUID.randomUUID() + "_" + originalFileName;
         Path filePath = Paths.get(UPLOAD_DIR + uniqueFileName);
         
-        Files.write(filePath, file.getBytes());
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         Document document = new Document();
         document.setTitle(title);
