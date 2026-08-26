@@ -160,8 +160,21 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      try {
+        await fetch('http://localhost:8080/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken })
+        });
+      } catch (error) {
+        console.error('Hiba a kijelentkezéskor', error);
+      }
+    }
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     setIsProfileMenuOpen(false);
     navigate('/');
     window.location.reload();
