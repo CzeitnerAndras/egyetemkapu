@@ -14,7 +14,7 @@ public class JwtUtil {
     //supertitkos kulcs
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
-    private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
+    private final long EXPIRATION_TIME = 1000 * 60 * 15;
 
     public String generateToken(String username) {
         return Jwts.builder()
