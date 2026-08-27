@@ -10,7 +10,10 @@ import java.util.Map;
 @Service
 public class NotificationSenderService {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    public NotificationSenderService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @Value("${TELEGRAM_BOT_TOKEN:nincs_megadva}")
     private String telegramBotToken;
