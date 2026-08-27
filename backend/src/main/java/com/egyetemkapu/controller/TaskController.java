@@ -53,9 +53,15 @@ public class TaskController {
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<Task>> getAllTasks(Principal principal) {
-        if (principal == null) return ResponseEntity.status(401).build();
+        System.out.println("DEBUG principal = " + principal);
+        if (principal == null) {
+            System.out.println("DEBUG principal is NULL");
+            return ResponseEntity.status(401).build();
+        }
+        System.out.println("DEBUG principal.getName() = " + principal.getName());
 
         Optional<User> userOpt = userRepository.findByUsername(principal.getName());
+        System.out.println("DEBUG userOpt = " + userOpt);
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
 
         return ResponseEntity.ok(taskRepository.findAllByUserAndCompletedFalse(userOpt.get()));
