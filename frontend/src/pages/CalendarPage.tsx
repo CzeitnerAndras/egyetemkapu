@@ -263,7 +263,7 @@ export default function CalendarPage() {
                         {loading ? (
                             <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">{t('cal.loading')}</p>
                         ) : getTasksForSelectedDate().length === 0 ? (
-                            <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; {t('cal.noTasks')}</p>
+                            <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; <span>{t('cal.noTasks')}</span></p>
                         ) : (
                             getTasksForSelectedDate().map(task => (
                                 <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow relative group">
@@ -312,7 +312,7 @@ export default function CalendarPage() {
                                 ? 'bg-green-400 dark:bg-green-900/40 border-black dark:border-green-600 text-black dark:text-green-300 secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d]'
                                 : 'bg-red-400 dark:bg-red-900/40 border-black dark:border-red-600 text-black dark:text-red-300 secret:bg-black secret:border-[#1cf85d] secret:text-[#1cf85d]'
                                 }`}>
-                                &gt; {message.text}
+                                &gt; <span>{message.text}</span>
                             </div>
                         )}
 
