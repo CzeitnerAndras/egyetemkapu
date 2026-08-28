@@ -277,7 +277,6 @@ export default function KnowledgeBasePage() {
                                     <label className="shrink-0 bg-cyan-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-2 px-4 font-bold uppercase cursor-pointer hover:-translate-y-1 hover:bg-fuchsia-400 dark:hover:bg-[#c084fc] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-none transition-all shadow-[2px_2px_0px_#000] dark:shadow-none text-sm secret:font-mono">
                                         {language === 'en' ? 'Browse' : 'Tallózás'}
                                         <input
-                                            required
                                             type="file"
                                             onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
                                             className="hidden"
