@@ -90,6 +90,7 @@ export default function HomePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [usersCount, setUsersCount] = useState(0);
   const [docsCount, setDocsCount] = useState(0);
+  const [calcCount, setCalcCount] = useState(0);
 
   useEffect(() => {
     {/* --- Admin jog ellenőrzése --- */ }
@@ -149,6 +150,16 @@ export default function HomePage() {
         }
       })
       .catch((err) => console.error('Hiba a dokumentumszám lekérésekor:', err));
+
+    {/* --- Megoldott egyenletek száma --- */ }
+    fetch('http://localhost:8080/api/tools/calculator/count')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && typeof data.count === 'number') {
+          setCalcCount(data.count);
+        }
+      })
+      .catch((err) => console.error('Hiba a megoldott egyenletek számának lekérésekor:', err));
   }, []);
 
   useEffect(() => {
@@ -218,7 +229,7 @@ export default function HomePage() {
 
   {/* --- Animált Statisztika Adatok --- */ }
   const animatedUsers = useCountUp(usersCount, statsVisible);
-  const animatedMath = useCountUp(153, statsVisible);
+  const animatedMath = useCountUp(calcCount, statsVisible);
   const animatedDocs = useCountUp(docsCount, statsVisible);
 
   return (

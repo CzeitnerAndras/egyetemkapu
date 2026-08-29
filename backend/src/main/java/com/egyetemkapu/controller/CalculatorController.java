@@ -1,6 +1,7 @@
 package com.egyetemkapu.controller;
 
 import com.egyetemkapu.annotation.LogAction;
+import com.egyetemkapu.repository.SystemAuditLogRepository;
 import com.egyetemkapu.service.CalculatorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,14 +14,24 @@ import java.util.Map;
 @CrossOrigin
 public class CalculatorController {
 
-    private final CalculatorService calculatorService;
+    private static final String CALCULATOR_ACTION = "Komplex számológép hívás";
 
-    public CalculatorController(CalculatorService calculatorService) {
+    private final CalculatorService calculatorService;
+    private final SystemAuditLogRepository auditLogRepository;
+
+    public CalculatorController(CalculatorService calculatorService, SystemAuditLogRepository auditLogRepository) {
         this.calculatorService = calculatorService;
+        this.auditLogRepository = auditLogRepository;
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Map<String, Object>> getSolvedCount() {
+        long count = auditLogRepository.countByAction(CALCULATOR_ACTION);
+        return ResponseEntity.ok(Map.of("count", count));
     }
 
     @GetMapping("/{operation}/{expression}")
-    @LogAction("Komplex számológép hívás")
+    @LogAction(CALCULATOR_ACTION)
     public ResponseEntity<Map<String, Object>> calculateExternal(
             @PathVariable String operation,
             @PathVariable String expression,

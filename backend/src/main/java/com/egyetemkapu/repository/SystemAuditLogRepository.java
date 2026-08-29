@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SystemAuditLogRepository extends JpaRepository<SystemAuditLog, Long> {
+    long countByAction(String action);
 }
