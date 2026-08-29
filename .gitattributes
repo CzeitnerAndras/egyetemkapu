@@ -1,0 +1,2 @@
+# A shell szkriptek Linuxon futnak, ezért LF sorvéggel kell verziózni őket.
+*.sh text eol=lf
