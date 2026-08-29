@@ -52,6 +52,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/documents").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/count").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tools/calculator/count").permitAll()
+                        .requestMatchers("/api/documents/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/events").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/suggestions").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/suggestions/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
