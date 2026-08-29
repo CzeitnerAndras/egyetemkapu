@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Link as LinkIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -20,6 +20,40 @@ export default function Navbar() {
   const timeoutRef = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
+
+  const loadCurrentUser = useCallback(async () => {
+    if (!localStorage.getItem('token')) {
+      setIsLoggedIn(false);
+      setUsername('');
+      setIsAdmin(false);
+      return;
+    }
+
+    setIsLoggedIn(true);
+
+    try {
+      const res = await fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false });
+
+      if (res.status === 401 || res.status === 403) {
+        clearSession();
+        setIsLoggedIn(false);
+        setUsername('');
+        setIsAdmin(false);
+        return;
+      }
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data && data.username) {
+        setUsername(data.username);
+        const userRole = data.role || (data.roles && data.roles[0]) || '';
+        setIsAdmin(userRole.includes('ADMIN') || !!data.isAdmin);
+      }
+    } catch (err) {
+      console.error("Hiba a név lekérésekor:", err);
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,33 +86,18 @@ export default function Navbar() {
     };
     window.addEventListener('secretLogoff', handleSecretLogoff);
 
-    if (localStorage.getItem('token')) {
-      fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false })
-        .then(async res => {
-          if (!res.ok) {
-            clearSession();
-            setIsLoggedIn(false);
-            setUsername('');
-            setIsAdmin(false);
-            return;
-          }
+    loadCurrentUser();
 
-          const data = await res.json();
-          if (data && data.username) {
-            setUsername(data.username);
-            const userRole = data.role || (data.roles && data.roles[0]) || '';
-            if (userRole.includes('ADMIN') || data.isAdmin) {
-              setIsAdmin(true);
-            }
-          }
-        })
-        .catch(err => console.error("Hiba a név lekérésekor:", err));
-    }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       window.removeEventListener('secretLogoff', handleSecretLogoff);
     };
-  }, []);
+  }, [loadCurrentUser]);
+
+  useEffect(() => {
+    window.addEventListener('authChanged', loadCurrentUser);
+    return () => window.removeEventListener('authChanged', loadCurrentUser);
+  }, [loadCurrentUser]);
 
   const handleThemeToggle = () => {
     const newTheme = !isDarkMode;

@@ -56,7 +56,7 @@ describe('LoginPage Komponens', () => {
         await user.click(screen.getByRole('button', { name: 'login.submit' }));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/auth/login', expect.objectContaining({
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
                 method: 'POST',
                 body: JSON.stringify({ email: 'teszt_elek@egyetemkapu.hu', password: 'Titkos123!' })
             }));

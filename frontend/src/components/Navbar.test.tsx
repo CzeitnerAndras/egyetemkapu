@@ -147,6 +147,43 @@ describe('Navbar Komponens', () => {
         expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
 
+    it('bejelentkezés után oldalújratöltés nélkül is megnyitja a profil menüt', async () => {
+        const { container } = renderWithRouter();
+        const user = setup();
+
+        localStorage.setItem('token', 'fresh-token');
+        localStorage.setItem('refreshToken', 'fresh-refresh-token');
+        (globalThis.fetch as jest.Mock).mockResolvedValue({
+            status: 200,
+            ok: true,
+            json: async () => ({ username: 'friss_elek' }),
+        });
+
+        await act(async () => {
+            window.dispatchEvent(new Event('authChanged'));
+        });
+
+        await user.click(container.querySelector('.lucide-user')!);
+
+        expect(mockNavigate).not.toHaveBeenCalledWith('/login');
+        expect(await screen.findByText(/friss_elek/)).toBeInTheDocument();
+    });
+
+    it('átmeneti szerverhiba (500) esetén nem dobja el a munkamenetet', async () => {
+        localStorage.setItem('token', 'test-token');
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ status: 500, ok: false });
+
+        const { container } = renderWithRouter();
+        await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+        expect(localStorage.getItem('token')).toBe('test-token');
+
+        const user = setup();
+        await user.click(container.querySelector('.lucide-user')!);
+
+        expect(mockNavigate).not.toHaveBeenCalledWith('/login');
+    });
+
     it('kijelentkezéskor törli a tokeneket, meghívja a logout végpontot, és a kezdőlapra navigál', async () => {
         localStorage.setItem('token', 'test-token');
         localStorage.setItem('refreshToken', 'test-refresh-token');
