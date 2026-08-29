@@ -1,6 +1,7 @@
 package com.egyetemkapu.controller;
 
 import com.egyetemkapu.annotation.LogAction;
+import com.egyetemkapu.exception.TokenRefreshException;
 import com.egyetemkapu.model.RefreshToken;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
@@ -125,7 +126,7 @@ public class AuthController {
                             "refreshToken", requestRefreshToken
                     ));
                 })
-                .orElseThrow(() -> new RuntimeException("A Refresh Token érvénytelen az adatbázisban!"));
+                .orElseThrow(() -> new TokenRefreshException("A Refresh Token érvénytelen az adatbázisban!"));
     }
 
     @PostMapping("/logout")

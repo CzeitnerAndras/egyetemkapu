@@ -1,6 +1,8 @@
 package com.egyetemkapu.service;
 
+import com.egyetemkapu.exception.TokenRefreshException;
 import com.egyetemkapu.model.RefreshToken;
+import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.RefreshTokenRepository;
 import com.egyetemkapu.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -23,12 +25,19 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(Long userId) {
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Felhasználó nem található")));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Felhasználó nem található"));
+
+        RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
+                .orElseGet(() -> {
+                    RefreshToken newToken = new RefreshToken();
+                    newToken.setUser(user);
+                    return newToken;
+                });
+
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
-        refreshTokenRepository.deleteByUser(refreshToken.getUser());
-        
+
         return refreshTokenRepository.save(refreshToken);
     }
 
@@ -39,7 +48,7 @@ public class RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().isBefore(LocalDateTime.now())) {
             refreshTokenRepository.delete(token);
-            throw new RuntimeException("A Refresh Token lejárt! Kérlek, jelentkezz be újra.");
+            throw new TokenRefreshException("A Refresh Token lejárt! Kérlek, jelentkezz be újra.");
         }
         return token;
     }
