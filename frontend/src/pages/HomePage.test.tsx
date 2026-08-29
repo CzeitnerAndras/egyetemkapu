@@ -127,6 +127,38 @@ describe('HomePage Komponens', () => {
         });
     });
 
+    it('lekéri a statisztikai adatokat (regisztrált felhasználók, dokumentumok, megoldott egyenletek) hitelesítés nélkül', async () => {
+        mockFetchByUrl({
+            '/api/events': { ok: true, json: async () => [] },
+            '/api/users/count': { ok: true, json: async () => ({ count: 42 }) },
+            '/api/documents': { ok: true, json: async () => [{ id: 1 }, { id: 2 }] },
+            '/api/tools/calculator/count': { ok: true, json: async () => ({ count: 153 }) },
+        });
+
+        render(<HomePage />);
+
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/users/count');
+            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/documents');
+            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/tools/calculator/count');
+        });
+    });
+
+    it('a statisztikai végpontok hibája esetén sem omlik össze az oldal', async () => {
+        (globalThis.fetch as jest.Mock).mockImplementation((url: string) => {
+            if (url.includes('/api/events')) {
+                return Promise.resolve({ ok: true, json: async () => [] });
+            }
+            return Promise.reject(new Error('stats service down'));
+        });
+
+        render(<HomePage />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/home\.noNews/)).toBeInTheDocument();
+        });
+    });
+
     it('kattintásra megnyitja a hír részleteit tartalmazó modalt, majd bezárja', async () => {
         mockFetchByUrl({
             '/api/events': {
