@@ -56,8 +56,9 @@ export default function LinksPage() {
                 links: [
                     { title: l("Informatikai Kar Főoldal", "Faculty Main Page"), url: "https://inf.unideb.hu/" },
                     { title: l("Záróvizsga", "Final Examination"), url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
-                    { title: l("Képzések / Tantervi Háló", "Programs / Curricula"), url: "https://inf.unideb.hu/2025-szeptembertol-meghirdetett-kepzeseink" },
+                    { title: l("Képzések / Tantervi Háló", "Programs / Curricula"), url: "https://inf.unideb.hu/2026-szeptembertol-meghirdetett-kepzesek" },
                     { title: l("Syllabus", "Syllabus"), url: "https://www.ik.unideb.hu/syllabi/" },
+                    { title: l("Órarend", "timetable"), url: "https://levelezo.inf.unideb.hu/orarend/#/?order=date,program,instructor,subject,room&program=PTI-MSC-21-1" },
                 ]
             },
             {
