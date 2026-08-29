@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 
 const SYMBOLS = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
 const WORDS = [
@@ -30,7 +30,7 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
         }, 3200);
 
         return () => {
-            document.head.removeChild(style);
+            style.remove();
             clearTimeout(t);
         };
     }, []);
@@ -79,14 +79,25 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
     }, [header1.length, header2.length]);
 
     const totalSteps = totalHeaderChars + 32;
+    const bootStartTimeRef = useRef<number | null>(null);
+    const STEP_MS = 15;
 
     useEffect(() => {
-        if (bootStart && bootStep < totalSteps) {
-            const isLineRender = bootStep >= totalHeaderChars;
-            const t = setTimeout(() => setBootStep(s => s + 1), isLineRender ? 15 : 15);
-            return () => clearTimeout(t);
+        if (!bootStart || bootStep >= totalSteps) return;
+
+        if (bootStartTimeRef.current === null) {
+            bootStartTimeRef.current = performance.now();
         }
-    }, [bootStart, bootStep, totalSteps, totalHeaderChars]);
+        const startTime = bootStartTimeRef.current;
+
+        const t = setTimeout(() => {
+            const elapsed = performance.now() - startTime;
+            const targetStep = Math.min(totalSteps, Math.floor(elapsed / STEP_MS));
+            setBootStep(s => Math.max(s + 1, targetStep));
+        }, STEP_MS);
+
+        return () => clearTimeout(t);
+    }, [bootStart, bootStep, totalSteps]);
 
     const handleWordClick = (word: string) => {
         if (locked || granted || bootStep < totalSteps) return;
