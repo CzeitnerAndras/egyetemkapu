@@ -84,7 +84,7 @@ describe('RegistrationPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/auth/register',
+                '/api/auth/register',
                 expect.objectContaining({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

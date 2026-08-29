@@ -94,7 +94,7 @@ describe('CalendarPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/tasks',
+                '/api/tasks',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
             expect(screen.getByText(/Teszt feladat/)).toBeInTheDocument();
@@ -150,7 +150,7 @@ describe('CalendarPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/tasks',
+                '/api/tasks',
                 expect.objectContaining({
                     method: 'POST',
                     headers: {
@@ -202,7 +202,7 @@ describe('CalendarPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/tasks/5',
+                '/api/tasks/5',
                 expect.objectContaining({
                     method: 'DELETE',
                     headers: { Authorization: 'Bearer test-token' },

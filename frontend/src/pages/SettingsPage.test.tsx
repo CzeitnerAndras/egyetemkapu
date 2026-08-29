@@ -35,7 +35,7 @@ describe('SettingsPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/settings',
+                '/api/settings',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });
@@ -98,7 +98,7 @@ describe('SettingsPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/settings',
+                '/api/settings',
                 expect.objectContaining({
                     method: 'PUT',
                     headers: {

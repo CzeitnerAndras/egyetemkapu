@@ -60,7 +60,7 @@ describe('HomePage Komponens', () => {
         render(<HomePage />);
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/events');
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/events');
         });
         expect(globalThis.fetch).not.toHaveBeenCalledWith(
             expect.stringContaining('/api/users/me'),
@@ -79,7 +79,7 @@ describe('HomePage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/me',
+                '/api/users/me',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });
@@ -138,9 +138,9 @@ describe('HomePage Komponens', () => {
         render(<HomePage />);
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/users/count');
-            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/documents');
-            expect(globalThis.fetch).toHaveBeenCalledWith('http://localhost:8080/api/tools/calculator/count');
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/users/count');
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/documents');
+            expect(globalThis.fetch).toHaveBeenCalledWith('/api/tools/calculator/count');
         });
     });
 
@@ -245,7 +245,7 @@ describe('HomePage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/events/1',
+                '/api/events/1',
                 expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
             );
             expect(screen.queryByText('Törlendő hír')).not.toBeInTheDocument();

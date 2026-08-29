@@ -72,7 +72,7 @@ describe('KnowledgeBasePage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents',
+                '/api/documents',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
             expect(screen.getByText('Fizika jegyzet')).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe('KnowledgeBasePage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents',
+                '/api/documents',
                 expect.anything()
             );
         });
@@ -108,7 +108,7 @@ describe('KnowledgeBasePage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents?category=Matematika',
+                '/api/documents?category=Matematika',
                 expect.anything()
             );
         });
@@ -131,7 +131,7 @@ describe('KnowledgeBasePage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents/download/1',
+                '/api/documents/download/1',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });

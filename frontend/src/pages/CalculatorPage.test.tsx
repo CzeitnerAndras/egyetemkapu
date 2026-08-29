@@ -47,7 +47,7 @@ describe('CalculatorPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/calculator/weighted-average',
+                '/api/calculator/weighted-average',
                 expect.objectContaining({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -82,7 +82,7 @@ describe('CalculatorPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                `http://localhost:8080/api/tools/calculator/integrate/${encodeURIComponent('x^2')}`,
+                `/api/tools/calculator/integrate/${encodeURIComponent('x^2')}`,
                 expect.objectContaining({
                     headers: { Authorization: 'Bearer test-token' },
                 })

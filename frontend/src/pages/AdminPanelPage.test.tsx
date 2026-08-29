@@ -48,11 +48,11 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents/admin/pending',
+                '/api/documents/admin/pending',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/suggestions',
+                '/api/suggestions',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });
@@ -114,7 +114,7 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents/admin/1/approve',
+                '/api/documents/admin/1/approve',
                 expect.objectContaining({ method: 'PUT', headers: { Authorization: 'Bearer test-token' } })
             );
             expect(screen.queryByText('Tanterv 2026')).not.toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents/admin/2/reject',
+                '/api/documents/admin/2/reject',
                 expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
             );
             expect(screen.queryByText('Rossz dokumentum')).not.toBeInTheDocument();
@@ -163,7 +163,7 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/documents/download/3',
+                '/api/documents/download/3',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });
@@ -185,7 +185,7 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/suggestions/9',
+                '/api/suggestions/9',
                 expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
             );
             expect(screen.queryByText(/Törlendő ötlet/)).not.toBeInTheDocument();
@@ -210,7 +210,7 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/events',
+                '/api/events',
                 expect.objectContaining({
                     method: 'POST',
                     headers: {

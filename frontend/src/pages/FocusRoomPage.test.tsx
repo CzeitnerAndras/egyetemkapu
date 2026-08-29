@@ -110,7 +110,7 @@ describe('FocusRoomPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/tasks/9',
+                '/api/tasks/9',
                 expect.objectContaining({
                     method: 'PUT',
                     headers: {
@@ -192,7 +192,7 @@ describe('FocusRoomPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/notes',
+                '/api/notes',
                 expect.objectContaining({
                     method: 'POST',
                     headers: {
@@ -222,7 +222,7 @@ describe('FocusRoomPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/notes/7',
+                '/api/notes/7',
                 expect.objectContaining({
                     method: 'PUT',
                     headers: {

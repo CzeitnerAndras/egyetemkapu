@@ -58,7 +58,7 @@ describe('IdeaBoxPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/suggestions',
+                '/api/suggestions',
                 expect.objectContaining({
                     method: 'POST',
                     headers: {

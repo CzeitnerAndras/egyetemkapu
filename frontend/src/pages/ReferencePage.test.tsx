@@ -65,7 +65,7 @@ describe('ReferencePage Komponens', () => {
         await user.click(screen.getByRole('button', { name: /ref.generate/i }));
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
-            'http://localhost:8080/api/tools/reference/generate',
+            '/api/tools/reference/generate',
             expect.objectContaining({
                 method: 'POST',
                 headers: {

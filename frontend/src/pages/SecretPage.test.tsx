@@ -55,7 +55,7 @@ describe('SecretPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/me',
+                '/api/users/me',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });
@@ -85,7 +85,7 @@ describe('SecretPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/notes',
+                '/api/notes',
                 expect.objectContaining({ headers: { Authorization: 'Bearer null' } })
             );
             expect(screen.getByDisplayValue('Régi jegyzet')).toBeInTheDocument();
@@ -128,7 +128,7 @@ describe('SecretPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/notes/3',
+                '/api/notes/3',
                 expect.objectContaining({
                     method: 'PUT',
                     headers: {
@@ -160,7 +160,7 @@ describe('SecretPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/notes',
+                '/api/notes',
                 expect.objectContaining({
                     method: 'POST',
                     headers: {

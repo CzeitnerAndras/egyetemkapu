@@ -54,7 +54,7 @@ describe('AIAssistantPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/ai/ask',
+                '/api/ai/ask',
                 expect.objectContaining({
                     method: 'POST',
                     headers: {
@@ -85,7 +85,7 @@ describe('AIAssistantPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/ai/ask',
+                '/api/ai/ask',
                 expect.objectContaining({
                     headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
                 })
@@ -171,7 +171,7 @@ describe('AIAssistantPage Komponens', () => {
         await waitFor(() => {
             expect(screen.getByText('> Automatikus kérdés')).toBeInTheDocument();
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/ai/ask',
+                '/api/ai/ask',
                 expect.objectContaining({
                     body: JSON.stringify({ prompt: 'Automatikus kérdés' }),
                 })
