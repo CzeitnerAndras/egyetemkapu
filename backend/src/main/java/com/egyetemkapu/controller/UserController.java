@@ -33,6 +33,13 @@ public class UserController {
         return userRepository.findByUsername(username);
     }
 
+    @GetMapping("/count")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getUserCount() {
+        long count = userRepository.count();
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
     @GetMapping("/me")
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUserInfo() {

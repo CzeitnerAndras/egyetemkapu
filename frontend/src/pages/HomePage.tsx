@@ -88,6 +88,8 @@ export default function HomePage() {
   const statsRef = useRef<HTMLDivElement>(null);
   const [statsVisible, setStatsVisible] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [usersCount, setUsersCount] = useState(0);
+  const [docsCount, setDocsCount] = useState(0);
 
   useEffect(() => {
     {/* --- Admin jog ellenőrzése --- */ }
@@ -127,6 +129,26 @@ export default function HomePage() {
         setEvents([]);
         setLoading(false);
       });
+
+    {/* --- Regisztrált felhasználók száma --- */ }
+    fetch('http://localhost:8080/api/users/count')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data && typeof data.count === 'number') {
+          setUsersCount(data.count);
+        }
+      })
+      .catch((err) => console.error('Hiba a felhasználószám lekérésekor:', err));
+
+    {/* --- Feltöltött dokumentumok száma --- */ }
+    fetch('http://localhost:8080/api/documents')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setDocsCount(data.length);
+        }
+      })
+      .catch((err) => console.error('Hiba a dokumentumszám lekérésekor:', err));
   }, []);
 
   useEffect(() => {
@@ -195,9 +217,9 @@ export default function HomePage() {
   const dailyTip = language === 'en' ? tips[dayOfYear % tips.length].en : tips[dayOfYear % tips.length].hu;
 
   {/* --- Animált Statisztika Adatok --- */ }
-  const animatedUsers = useCountUp(42, statsVisible);
+  const animatedUsers = useCountUp(usersCount, statsVisible);
   const animatedMath = useCountUp(153, statsVisible);
-  const animatedDocs = useCountUp(28, statsVisible);
+  const animatedDocs = useCountUp(docsCount, statsVisible);
 
   return (
     <main className="w-full px-6 lg:px-16 mx-auto mt-8 pb-12 relative z-20">
