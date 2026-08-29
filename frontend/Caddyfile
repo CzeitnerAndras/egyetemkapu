@@ -1,4 +1,4 @@
-egyetemkapu.hu, www.egyetemkapu.hu {
+:80 {
     handle /api/* {
         reverse_proxy backend:8080
     }
