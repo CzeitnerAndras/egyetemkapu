@@ -6,12 +6,10 @@ services:
     container_name: egyetemkapu-db
     environment:
       POSTGRES_DB: egyetemkapu
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: securepassword123
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     restart: unless-stopped
 
   backend:
@@ -19,11 +17,13 @@ services:
     container_name: egyetemkapu-backend
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/egyetemkapu
-      - SPRING_DATASOURCE_USERNAME=admin
-      - SPRING_DATASOURCE_PASSWORD=securepassword123
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=prod
     ports:
       - "8080:8080"
+    volumes:
+      - ./uploads:/app/uploads
     depends_on:
       - db
     restart: unless-stopped
