@@ -52,7 +52,7 @@ export default function Navbar() {
 
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('http://localhost:8080/api/users/me', {
+      fetch('/api/users/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.ok ? res.json() : null)
@@ -193,7 +193,7 @@ export default function Navbar() {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
-        await fetch('http://localhost:8080/api/auth/logout', {
+        await fetch('/api/auth/logout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken })

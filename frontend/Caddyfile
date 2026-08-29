@@ -1,0 +1,11 @@
+egyetemkapu.hu, www.egyetemkapu.hu {
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+    
+    handle {
+        root * /usr/share/caddy
+        try_files {path} {path}/ /index.html
+        file_server
+    }
+}
