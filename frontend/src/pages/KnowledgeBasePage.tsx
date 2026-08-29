@@ -33,7 +33,7 @@ export default function KnowledgeBasePage() {
     const fetchDocuments = async () => {
         setLoading(true);
         const token = localStorage.getItem('token');
-        let url = 'http://localhost:8080/api/documents';
+        let url = '/api/documents';
         if (categoryFilter) url += `?category=${categoryFilter}`;
 
         try {
@@ -61,7 +61,7 @@ export default function KnowledgeBasePage() {
         formData.append('category', category);
 
         try {
-            const res = await fetch('http://localhost:8080/api/documents/upload', {
+            const res = await fetch('/api/documents/upload', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -85,7 +85,7 @@ export default function KnowledgeBasePage() {
 
     const handleDownload = (id: number, fileName: string) => {
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:8080/api/documents/download/${id}`, {
+        fetch(`/api/documents/download/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.blob())

@@ -15,7 +15,7 @@ export default function SettingsPage() {
             if (!token) return;
 
             try {
-                const res = await fetch('http://localhost:8080/api/settings', {
+                const res = await fetch('/api/settings', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -44,7 +44,7 @@ export default function SettingsPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:8080/api/settings', {
+            const res = await fetch('/api/settings', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

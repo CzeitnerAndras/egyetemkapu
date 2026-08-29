@@ -39,7 +39,7 @@ export default function AdminPanelPage() {
     const fetchPending = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://localhost:8080/api/documents/admin/pending', {
+            const res = await fetch('/api/documents/admin/pending', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) setPendingDocs(await res.json());
@@ -53,7 +53,7 @@ export default function AdminPanelPage() {
     const fetchSuggestions = async () => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://localhost:8080/api/suggestions', {
+            const res = await fetch('/api/suggestions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) setSuggestions(await res.json());
@@ -67,7 +67,7 @@ export default function AdminPanelPage() {
     const handleAction = async (id: number, action: 'approve' | 'reject') => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://localhost:8080/api/documents/admin/${id}/${action}`, {
+            const res = await fetch(`/api/documents/admin/${id}/${action}`, {
                 method: action === 'approve' ? 'PUT' : 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -81,7 +81,7 @@ export default function AdminPanelPage() {
 
     const handleDownload = (id: number, fileName: string) => {
         const token = localStorage.getItem('token');
-        fetch(`http://localhost:8080/api/documents/download/${id}`, {
+        fetch(`/api/documents/download/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.blob())
@@ -99,7 +99,7 @@ export default function AdminPanelPage() {
     const handleDeleteSuggestion = async (id: number) => {
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`http://localhost:8080/api/suggestions/${id}`, {
+            const res = await fetch(`/api/suggestions/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -127,7 +127,7 @@ export default function AdminPanelPage() {
         };
 
         try {
-            const res = await fetch('http://localhost:8080/api/events', {
+            const res = await fetch('/api/events', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

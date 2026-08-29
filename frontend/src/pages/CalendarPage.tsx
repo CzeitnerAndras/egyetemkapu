@@ -38,7 +38,7 @@ export default function CalendarPage() {
             return;
         }
 
-        fetch('http://localhost:8080/api/tasks', {
+        fetch('/api/tasks', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {
@@ -131,7 +131,7 @@ export default function CalendarPage() {
             pingTelegramOnDay
         };
 
-        fetch('http://localhost:8080/api/tasks', {
+        fetch('/api/tasks', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ export default function CalendarPage() {
             return;
         }
 
-        fetch(`http://localhost:8080/api/tasks/${id}`, {
+        fetch(`/api/tasks/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         })

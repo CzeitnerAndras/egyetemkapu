@@ -96,7 +96,7 @@ export default function HomePage() {
     {/* --- Admin jog ellenőrzése --- */ }
     const token = localStorage.getItem('token');
     if (token) {
-      fetch('http://localhost:8080/api/users/me', {
+      fetch('/api/users/me', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.ok ? res.json() : null)
@@ -112,7 +112,7 @@ export default function HomePage() {
     }
 
     {/* --- Hírek lekérése (GET) --- */ }
-    fetch('http://localhost:8080/api/events')
+    fetch('/api/events')
       .then((res) => {
         if (!res.ok) throw new Error('Hiba a hírek lekérésekor');
         return res.json();
@@ -132,7 +132,7 @@ export default function HomePage() {
       });
 
     {/* --- Regisztrált felhasználók száma --- */ }
-    fetch('http://localhost:8080/api/users/count')
+    fetch('/api/users/count')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && typeof data.count === 'number') {
@@ -142,7 +142,7 @@ export default function HomePage() {
       .catch((err) => console.error('Hiba a felhasználószám lekérésekor:', err));
 
     {/* --- Feltöltött dokumentumok száma --- */ }
-    fetch('http://localhost:8080/api/documents')
+    fetch('/api/documents')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (Array.isArray(data)) {
@@ -152,7 +152,7 @@ export default function HomePage() {
       .catch((err) => console.error('Hiba a dokumentumszám lekérésekor:', err));
 
     {/* --- Megoldott egyenletek száma --- */ }
-    fetch('http://localhost:8080/api/tools/calculator/count')
+    fetch('/api/tools/calculator/count')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && typeof data.count === 'number') {
@@ -208,7 +208,7 @@ export default function HomePage() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`http://localhost:8080/api/events/${id}`, {
+      const res = await fetch(`/api/events/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

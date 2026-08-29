@@ -22,7 +22,7 @@ export default function IdeaBoxPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:8080/api/suggestions', {
+            const res = await fetch('/api/suggestions', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

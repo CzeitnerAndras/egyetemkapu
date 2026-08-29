@@ -17,7 +17,7 @@ export default function SecretPage() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            fetch('http://localhost:8080/api/users/me', {
+            fetch('/api/users/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.ok ? res.json() : null)
@@ -39,7 +39,7 @@ export default function SecretPage() {
         setIsLoadingNote(true);
         const token = localStorage.getItem('token');
         try {
-            const res = await fetch('http://localhost:8080/api/notes', {
+            const res = await fetch('/api/notes', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -63,7 +63,7 @@ export default function SecretPage() {
         const token = localStorage.getItem('token');
         try {
             if (noteId) {
-                await fetch(`http://localhost:8080/api/notes/${noteId}`, {
+                await fetch(`/api/notes/${noteId}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -72,7 +72,7 @@ export default function SecretPage() {
                     body: JSON.stringify({ content: noteContent })
                 });
             } else {
-                const res = await fetch('http://localhost:8080/api/notes', {
+                const res = await fetch('/api/notes', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,

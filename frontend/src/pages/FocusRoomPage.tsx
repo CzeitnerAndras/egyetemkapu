@@ -53,7 +53,7 @@ export default function FocusRoomPage() {
         {/* --- Feladatok lekérése --- */ }
         const fetchTasks = async () => {
             try {
-                const res = await fetch('http://localhost:8080/api/tasks', {
+                const res = await fetch('/api/tasks', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -70,7 +70,7 @@ export default function FocusRoomPage() {
         {/* --- Jegyzet lekérése --- */ }
         const fetchNote = async () => {
             try {
-                const res = await fetch('http://localhost:8080/api/notes', {
+                const res = await fetch('/api/notes', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -128,7 +128,7 @@ export default function FocusRoomPage() {
         };
 
         try {
-            const res = await fetch('http://localhost:8080/api/tasks', {
+            const res = await fetch('/api/tasks', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -164,7 +164,7 @@ export default function FocusRoomPage() {
         setTasks(tasks.filter(t => t.id !== id));
 
         try {
-            const res = await fetch(`http://localhost:8080/api/tasks/${id}`, {
+            const res = await fetch(`/api/tasks/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -188,7 +188,7 @@ export default function FocusRoomPage() {
         const token = localStorage.getItem('token');
         try {
             if (noteId) {
-                await fetch(`http://localhost:8080/api/notes/${noteId}`, {
+                await fetch(`/api/notes/${noteId}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -197,7 +197,7 @@ export default function FocusRoomPage() {
                     body: JSON.stringify({ content: noteContent })
                 });
             } else {
-                const res = await fetch('http://localhost:8080/api/notes', {
+                const res = await fetch('/api/notes', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,

@@ -20,7 +20,7 @@ export default function ProfilePage() {
             return;
         }
 
-        fetch('http://localhost:8080/api/users/me', {
+        fetch('/api/users/me', {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {

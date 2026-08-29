@@ -55,7 +55,7 @@ export default function CalculatorPage() {
                 grade: s.grade
             }));
 
-            const response = await fetch('http://localhost:8080/api/calculator/weighted-average', {
+            const response = await fetch('/api/calculator/weighted-average', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -86,7 +86,7 @@ export default function CalculatorPage() {
 
         try {
             const safeExpression = encodeURIComponent(expression);
-            const response = await fetch(`http://localhost:8080/api/tools/calculator/${operation}/${safeExpression}`, {
+            const response = await fetch(`/api/tools/calculator/${operation}/${safeExpression}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

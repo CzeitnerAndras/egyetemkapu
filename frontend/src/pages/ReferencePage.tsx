@@ -23,7 +23,7 @@ export default function ReferencePage() {
         const requestBody = { author, title, year, publisher, style };
 
         try {
-            const res = await fetch('http://localhost:8080/api/tools/reference/generate', {
+            const res = await fetch('/api/tools/reference/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
