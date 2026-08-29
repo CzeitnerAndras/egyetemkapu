@@ -64,11 +64,12 @@ describe('Navbar Komponens', () => {
         const { container } = renderWithRouter();
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/me',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
-            );
+            expect(globalThis.fetch).toHaveBeenCalledTimes(1);
         });
+
+        const [requestedUrl, requestInit] = (globalThis.fetch as jest.Mock).mock.calls[0];
+        expect(requestedUrl).toBe('/api/users/me');
+        expect((requestInit.headers as Headers).get('Authorization')).toBe('Bearer test-token');
 
         const user = setup();
         await openMenu(user, container);
@@ -107,6 +108,45 @@ describe('Navbar Komponens', () => {
         expect(mockNavigate).not.toHaveBeenCalledWith('/login');
     });
 
+    it('lejárt hozzáférési token esetén frissít, és a valódi felhasználónevet mutatja a tartalék név helyett', async () => {
+        localStorage.setItem('token', 'expired-token');
+        localStorage.setItem('refreshToken', 'test-refresh-token');
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce({ status: 401, ok: false })
+            .mockResolvedValueOnce({ status: 200, ok: true, json: async () => ({ token: 'new-token' }) })
+            .mockResolvedValueOnce({ status: 200, ok: true, json: async () => ({ username: 'teszt_elek' }) });
+
+        const { container } = renderWithRouter();
+        await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(3));
+
+        expect((globalThis.fetch as jest.Mock).mock.calls[1][0]).toBe('/api/auth/refresh');
+        expect(localStorage.getItem('token')).toBe('new-token');
+
+        const user = setup();
+        await user.click(container.querySelector('.lucide-user')!);
+
+        expect(await screen.findByText(/teszt_elek/)).toBeInTheDocument();
+        expect(screen.queryByText('nav.userFallback')).not.toBeInTheDocument();
+    });
+
+    it('sikertelen token frissítés esetén törli a munkamenetet, és a bejelentkezés oldalra irányít', async () => {
+        localStorage.setItem('token', 'expired-token');
+        localStorage.setItem('refreshToken', 'dead-refresh-token');
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce({ status: 401, ok: false })
+            .mockResolvedValueOnce({ status: 401, ok: false, json: async () => ({}) });
+
+        const { container } = renderWithRouter();
+
+        await waitFor(() => expect(localStorage.getItem('token')).toBeNull());
+        expect(localStorage.getItem('refreshToken')).toBeNull();
+
+        const user = setup();
+        await user.click(container.querySelector('.lucide-user')!);
+
+        expect(mockNavigate).toHaveBeenCalledWith('/login');
+    });
+
     it('kijelentkezéskor törli a tokeneket, meghívja a logout végpontot, és a kezdőlapra navigál', async () => {
         localStorage.setItem('token', 'test-token');
         localStorage.setItem('refreshToken', 'test-refresh-token');
@@ -123,7 +163,7 @@ describe('Navbar Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/auth/logout',
+                '/api/auth/logout',
                 expect.objectContaining({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

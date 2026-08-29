@@ -1,42 +1,73 @@
-export const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
-    let token = localStorage.getItem('token');
-    
-    const headers = new Headers(options.headers || {});
-    if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-    }
+type AuthFetchOptions = {
+    redirectOnAuthFailure?: boolean;
+};
 
-    let response = await fetch(url, { ...options, headers });
+export const clearSession = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+};
 
-    if (response.status === 401) {
-        const refreshToken = localStorage.getItem('refreshToken');
-        
-        if (refreshToken) {
-            try {
-                const refreshResponse = await fetch('http://localhost:8080/api/auth/refresh', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refreshToken })
-                });
+let refreshPromise: Promise<string | null> | null = null;
 
-                if (refreshResponse.ok) {
-                    const data = await refreshResponse.json();
-                    localStorage.setItem('token', data.token);
-                    headers.set('Authorization', `Bearer ${data.token}`);
-                    response = await fetch(url, { ...options, headers });
-                } else {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('refreshToken');
-                    window.location.href = '/login';
-                }
-            } catch (error) {
-                console.error("Hiba a token frissítésekor", error);
+const refreshAccessToken = (): Promise<string | null> => {
+    if (refreshPromise) return refreshPromise;
+
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) return Promise.resolve(null);
+
+    const pending = fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+    })
+        .then(async response => {
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            if (!data || !data.token) return null;
+
+            localStorage.setItem('token', data.token);
+            if (data.refreshToken) {
+                localStorage.setItem('refreshToken', data.refreshToken);
             }
-        } else {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            return data.token as string;
+        })
+        .catch(err => {
+            console.error("Hiba a token frissítésekor", err);
+            return null;
+        })
+        .finally(() => {
+            refreshPromise = null;
+        });
+
+    refreshPromise = pending;
+    return pending;
+};
+
+export const fetchWithAuth = async (
+    url: string,
+    options: RequestInit = {},
+    { redirectOnAuthFailure = true }: AuthFetchOptions = {}
+): Promise<Response> => {
+    const send = (accessToken: string | null) => {
+        const headers = new Headers(options.headers || {});
+        if (accessToken) {
+            headers.set('Authorization', `Bearer ${accessToken}`);
         }
+        return fetch(url, { ...options, headers });
+    };
+
+    const response = await send(localStorage.getItem('token'));
+    if (response.status !== 401) return response;
+
+    const newAccessToken = await refreshAccessToken();
+    if (newAccessToken) {
+        return send(newAccessToken);
     }
 
+    clearSession();
+    if (redirectOnAuthFailure) {
+        window.location.href = '/login';
+    }
     return response;
 };

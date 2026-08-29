@@ -2,12 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Link as LinkIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { fetchWithAuth, clearSession } from '../utils/authApi';
 
 export default function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('token'));
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSecretMode, setIsSecretMode] = useState(false);
@@ -50,13 +52,18 @@ export default function Navbar() {
     };
     window.addEventListener('secretLogoff', handleSecretLogoff);
 
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
+    if (localStorage.getItem('token')) {
+      fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false })
+        .then(async res => {
+          if (!res.ok) {
+            clearSession();
+            setIsLoggedIn(false);
+            setUsername('');
+            setIsAdmin(false);
+            return;
+          }
+
+          const data = await res.json();
           if (data && data.username) {
             setUsername(data.username);
             const userRole = data.role || (data.roles && data.roles[0]) || '';
@@ -180,8 +187,7 @@ export default function Navbar() {
   }, []);
 
   const handleProfileClick = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    if (isLoggedIn) {
       setIsProfileMenuOpen(!isProfileMenuOpen);
       setIsMenuOpen(false);
     } else {
@@ -202,8 +208,8 @@ export default function Navbar() {
         console.error('Hiba a kijelentkezéskor', error);
       }
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    clearSession();
+    setIsLoggedIn(false);
     setIsProfileMenuOpen(false);
     navigate('/');
     window.location.reload();

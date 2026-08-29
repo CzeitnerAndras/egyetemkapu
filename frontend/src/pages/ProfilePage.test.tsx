@@ -16,6 +16,21 @@ const mockProfileFetch = (overrides: { status?: number; ok?: boolean; username?:
     });
 };
 
+const expectAuthCall = (
+    url: string,
+    { method, body, contentType }: { method?: string; body?: string; contentType?: string } = {}
+) => {
+    const call = (globalThis.fetch as jest.Mock).mock.calls.find(
+        ([calledUrl, init]) => calledUrl === url && (init?.method ?? undefined) === method
+    );
+    expect(call).toBeDefined();
+
+    const init = call![1] as RequestInit;
+    expect(init.body).toBe(body);
+    expect((init.headers as Headers).get('Authorization')).toBe('Bearer test-token');
+    expect((init.headers as Headers).get('Content-Type')).toBe(contentType ?? null);
+};
+
 const fillUsernameForm = async (user: ReturnType<typeof userEvent.setup>, container: HTMLElement, value: string) => {
     const input = container.querySelector('input[type="text"]') as HTMLInputElement;
     await user.type(input, value);
@@ -54,10 +69,7 @@ describe('ProfilePage Komponens', () => {
         render(<ProfilePage />);
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/me',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
-            );
+            expectAuthCall('/api/users/me');
             expect(screen.getByText(/kovacs\.anna/)).toBeInTheDocument();
         });
     });
@@ -119,14 +131,11 @@ describe('ProfilePage Komponens', () => {
         await user.click(screen.getByRole('button', { name: 'Mentés' }));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/username',
-                expect.objectContaining({
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test-token' },
-                    body: JSON.stringify({ newUsername: 'uj.nev' }),
-                })
-            );
+            expectAuthCall('/api/users/username', {
+                method: 'PUT',
+                body: JSON.stringify({ newUsername: 'uj.nev' }),
+                contentType: 'application/json',
+            });
             expect(screen.getByText(/Felhasználónév sikeresen frissítve!/)).toBeInTheDocument();
             expect(screen.getByText(/uj\.nev/)).toBeInTheDocument();
             expect(localStorage.getItem('token')).toBe('new-token');
@@ -251,14 +260,11 @@ describe('ProfilePage Komponens', () => {
         await user.click(screen.getByRole('button', { name: 'Jelszó Mentése' }));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/password',
-                expect.objectContaining({
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test-token' },
-                    body: JSON.stringify({ currentPassword: 'RegiJelszo1!', newPassword: 'UjJelszo1!' }),
-                })
-            );
+            expectAuthCall('/api/users/password', {
+                method: 'PUT',
+                body: JSON.stringify({ currentPassword: 'RegiJelszo1!', newPassword: 'UjJelszo1!' }),
+                contentType: 'application/json',
+            });
             expect(screen.getByText(/Jelszó sikeresen frissítve!/)).toBeInTheDocument();
         });
 
@@ -317,10 +323,7 @@ describe('ProfilePage Komponens', () => {
         await user.click(screen.getByRole('button', { name: 'Igen, Törlöm!' }));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                'http://localhost:8080/api/users/me',
-                expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
-            );
+            expectAuthCall('/api/users/me', { method: 'DELETE' });
             expect(localStorage.getItem('token')).toBeNull();
             expect(mockNavigate).toHaveBeenCalledWith('/');
         });

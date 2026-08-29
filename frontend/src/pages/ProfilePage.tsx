@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Key, Trash2, AlertTriangle, Save } from 'lucide-react';
+import { fetchWithAuth, clearSession } from '../utils/authApi';
 
 export default function ProfilePage() {
     const [currentUsername, setCurrentUsername] = useState('');
@@ -20,12 +21,10 @@ export default function ProfilePage() {
             return;
         }
 
-        fetch('/api/users/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false })
             .then(res => {
                 if (res.status === 401 || res.status === 403) {
-                    localStorage.removeItem('token');
+                    clearSession();
                     navigate('/login');
                     throw new Error('Lejárt vagy érvénytelen token');
                 }
@@ -58,16 +57,12 @@ export default function ProfilePage() {
 
     const handleUsernameUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
         if (!newUsername.trim()) return;
 
         try {
-            const response = await fetch('http://localhost:8080/api/users/username', {
+            const response = await fetchWithAuth('/api/users/username', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newUsername })
             });
 
@@ -92,7 +87,6 @@ export default function ProfilePage() {
 
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem('token');
 
         if (newPassword !== confirmNewPassword) {
             showMessage('Az új jelszavak nem egyeznek!', 'error');
@@ -106,12 +100,9 @@ export default function ProfilePage() {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/users/password', {
+            const response = await fetchWithAuth('/api/users/password', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ currentPassword, newPassword })
             });
 
@@ -130,15 +121,13 @@ export default function ProfilePage() {
     };
 
     const handleDeleteAccount = async () => {
-        const token = localStorage.getItem('token');
         try {
-            const response = await fetch('http://localhost:8080/api/users/me', {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const response = await fetchWithAuth('/api/users/me', {
+                method: 'DELETE'
             });
 
             if (response.ok) {
-                localStorage.removeItem('token');
+                clearSession();
                 setIsDeleteModalOpen(false);
                 navigate('/');
                 window.location.reload();
