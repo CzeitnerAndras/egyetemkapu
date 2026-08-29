@@ -29,7 +29,7 @@ export default function Navbar() {
 
     document.addEventListener('mousedown', handleClickOutside);
 
-    const isSecretPath = window.location.pathname === '/B4nd1';
+    const isSecretPath = window.location.pathname === '/S3CR3T';
     const isSecretSaved = localStorage.getItem('secretMode') === 'true';
 
     if (isSecretPath || isSecretSaved) {
@@ -114,7 +114,7 @@ export default function Navbar() {
       localStorage.setItem('secretMode', 'true');
       setIsDarkMode(true);
       setIsSecretMode(true);
-      navigate('/B4nd1');
+      navigate('/S3CR3T');
       setTimeout(() => {
         setCrtClass('crt-on');
         setTimeout(() => {
@@ -145,9 +145,38 @@ export default function Navbar() {
     }, 600);
   };
 
+  const triggerLogoffEffect = () => {
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+    setIsAnimating(true);
+    clickCountRef.current = 0;
+
+    setCrtClass('crt-off');
+
+    setTimeout(() => {
+      document.documentElement.classList.remove('secret');
+      localStorage.removeItem('secretMode');
+      localStorage.removeItem('terminalHacked');
+      setIsSecretMode(false);
+      navigate('/');
+      setTimeout(() => {
+        setCrtClass('crt-on');
+        setTimeout(() => {
+          setIsAnimating(false);
+          setCrtClass('');
+        }, 600);
+      }, 600);
+    }, 600);
+  };
+
   useEffect(() => {
     window.addEventListener('triggerFatalError', triggerFatalErrorEffect);
     return () => window.removeEventListener('triggerFatalError', triggerFatalErrorEffect);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('triggerLogoffEffect', triggerLogoffEffect);
+    return () => window.removeEventListener('triggerLogoffEffect', triggerLogoffEffect);
   }, []);
 
   const handleProfileClick = () => {
@@ -191,7 +220,7 @@ export default function Navbar() {
 
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
-          <Link to={isSecretMode ? "/B4nd1" : "/"} className="cursor-pointer group">
+          <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group">
             <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-cyan-400 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
               ƎK
             </span>
