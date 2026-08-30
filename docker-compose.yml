@@ -36,9 +36,14 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - backend
     restart: unless-stopped
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
