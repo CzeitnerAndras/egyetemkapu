@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -55,13 +56,14 @@ public class DocumentController {
     @LogAction("Dokumentum letöltése")
     public ResponseEntity<Resource> downloadDocument(@PathVariable Long id) {
         try {
-            Path filePath = documentService.getDocumentPath(id);
+            Document document = documentService.getApprovedDocument(id);
+            Path filePath = Paths.get(document.getFilePath());
             Resource resource = new UrlResource(filePath.toUri());
 
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
                         .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename().substring(37) + "\"") // Levágjuk a UUID-t
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"")
                         .body(resource);
             } else {
                 throw new RuntimeException("Fájl nem olvasható");
