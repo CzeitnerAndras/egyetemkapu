@@ -9,6 +9,19 @@ interface Subject {
     grade: number;
 }
 
+function computeWeightedAverage(subjects: Pick<Subject, 'credit' | 'grade'>[]): number {
+    const totalCredits = subjects.reduce((sum, subject) => sum + (Number(subject.credit) || 0), 0);
+    if (totalCredits === 0) {
+        return 0;
+    }
+
+    const weightedScore = subjects.reduce(
+        (sum, subject) => sum + (Number(subject.credit) || 0) * (Number(subject.grade) || 0),
+        0
+    );
+    return Math.round((weightedScore / totalCredits) * 100) / 100;
+}
+
 export default function CalculatorPage() {
     const { t } = useLanguage();
     const [subjects, setSubjects] = useState<Subject[]>([{ id: Date.now(), name: '', credit: 3, grade: 5 }, { id: Date.now() + 1, name: '', credit: 3, grade: 5 }]);
@@ -47,6 +60,9 @@ export default function CalculatorPage() {
 
     const handleCalculateAverage = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const localAverage = computeWeightedAverage(subjects);
+        setAverageResult(localAverage);
         setAverageLoading(true);
 
         try {
@@ -54,21 +70,27 @@ export default function CalculatorPage() {
                 credit: s.credit,
                 grade: s.grade
             }));
+            const token = localStorage.getItem('token');
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
 
             const response = await fetch('/api/calculator/weighted-average', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(payload)
             });
 
-            const data = await response.json();
-            if (response.ok) {
-                setAverageResult(data.average);
-            } else {
-                console.error("Hiba az átlag számolásakor", data);
+            if (!response.ok) {
+                return;
             }
-        } catch (error) {
-            console.error("Hálózati hiba:", error);
+
+            const data = await response.json();
+            if (typeof data.average === 'number') {
+                setAverageResult(data.average);
+            }
+        } catch {
         } finally {
             setAverageLoading(false);
         }

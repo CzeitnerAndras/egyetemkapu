@@ -37,11 +37,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
         
         String path = request.getRequestURI();
         
-        if (path.startsWith("/api/ai") || path.startsWith("/api/tools") || path.startsWith("/api/calculator")) {
-            
+        boolean isProtectedTool = path.startsWith("/api/ai") || path.startsWith("/api/tools");
+        boolean isCreditCalculator = path.startsWith("/api/calculator");
+
+        if (isProtectedTool || isCreditCalculator) {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            
-            if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
+            boolean isAuthenticated = authentication != null
+                    && authentication.isAuthenticated()
+                    && !"anonymousUser".equals(authentication.getName());
+
+            if (isAuthenticated) {
                 String username = authentication.getName();
                 Bucket tokenBucket = rateLimitingService.resolveBucket(username);
 
@@ -52,7 +57,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     response.getWriter().write("{\"error\": \"Túl sok kérés! Kérlek várj egy percet a következő AI vagy kalkulátor hívásig.\"}");
                     return;
                 }
-            } else {
+            } else if (isProtectedTool) {
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");

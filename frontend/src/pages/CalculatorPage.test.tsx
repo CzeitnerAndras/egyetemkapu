@@ -62,6 +62,20 @@ describe('CalculatorPage Komponens', () => {
         });
     });
 
+    it('helyben számolja az átlagot, ha a szerver nem válaszol', async () => {
+        (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error('network down'));
+
+        const user = userEvent.setup();
+        render(<CalculatorPage />);
+
+        await user.click(screen.getByRole('button', { name: 'calc.calculateAvg' }));
+
+        await waitFor(() => {
+            expect(screen.getByText('calc.avgResult')).toBeInTheDocument();
+            expect(screen.getByText('calc.avgResult').parentElement).toHaveTextContent('5');
+        });
+    });
+
     it('elvégzi a kiválasztott matematikai műveletet és megjeleníti az eredményt', async () => {
         localStorage.setItem('token', 'test-token');
 

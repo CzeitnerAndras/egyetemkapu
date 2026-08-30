@@ -59,6 +59,13 @@ class RateLimitFilterTest {
     }
 
     @Test
+    void allowsCreditCalculatorWithoutLogin() throws Exception {
+        MockHttpServletResponse response = callFilter("/api/calculator/weighted-average");
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
     void rejectsOtherToolEndpointsWithoutLogin() throws Exception {
         MockHttpServletResponse response = callFilter("/api/tools/calculator/add/1+1");
 
