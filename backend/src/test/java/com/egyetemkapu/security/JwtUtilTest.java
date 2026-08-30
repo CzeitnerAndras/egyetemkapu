@@ -11,7 +11,7 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil();
+        jwtUtil = new JwtUtil("test-secret-key-at-least-32-characters!!");
     }
 
     @Test
@@ -36,5 +36,12 @@ class JwtUtilTest {
     void validateToken_InvalidToken_ReturnsFalse() {
         String invalidToken = "ez.egy.nagyon.rossz.token";
         assertFalse(jwtUtil.validateToken(invalidToken), "A hamis tokent el kell utasítania");
+    }
+
+    @Test
+    void validateToken_DifferentSecrets_RejectsForeignToken() {
+        JwtUtil other = new JwtUtil("another-secret-key-also-32-characters!");
+        String token = other.generateToken("teszt_hallgato");
+        assertFalse(jwtUtil.validateToken(token));
     }
 }

@@ -23,17 +23,28 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
-    
-    private final String UPLOAD_DIR = "uploads/";
+
+    private final Path uploadRoot = Paths.get("uploads").toAbsolutePath().normalize();
 
     public DocumentService(DocumentRepository documentRepository, UserRepository userRepository) {
         this.documentRepository = documentRepository;
         this.userRepository = userRepository;
-        
-        File directory = new File(UPLOAD_DIR);
-        if (!directory.exists()) {
-            directory.mkdirs();
+
+        try {
+            Files.createDirectories(uploadRoot);
+        } catch (IOException e) {
+            throw new IllegalStateException("Nem sikerült létrehozni az uploads mappát", e);
         }
+    }
+
+    private String sanitizeFileName(String originalFileName) {
+        String name = originalFileName == null || originalFileName.isBlank() ? "file" : originalFileName;
+        name = Paths.get(name).getFileName().toString();
+        name = name.replaceAll("[^a-zA-Z0-9._-]", "_");
+        if (name.isBlank() || name.equals(".") || name.equals("..")) {
+            name = "file";
+        }
+        return name;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -41,10 +52,14 @@ public class DocumentService {
         User uploader = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Felhasználó nem található"));
 
-        String originalFileName = file.getOriginalFilename();
+        String originalFileName = sanitizeFileName(file.getOriginalFilename());
         String uniqueFileName = UUID.randomUUID() + "_" + originalFileName;
-        Path filePath = Paths.get(UPLOAD_DIR + uniqueFileName);
-        
+        Path filePath = uploadRoot.resolve(uniqueFileName).normalize();
+
+        if (!filePath.startsWith(uploadRoot)) {
+            throw new RuntimeException("Érvénytelen fájlnév");
+        }
+
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         Document document = new Document();
@@ -84,7 +99,7 @@ public class DocumentService {
     public void rejectDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));
-        
+
         File file = new File(document.getFilePath());
         if (file.exists()) file.delete();
 
@@ -92,9 +107,23 @@ public class DocumentService {
     }
 
     @Transactional(readOnly = true)
-    public Path getDocumentPath(Long id) {
+    public Document getApprovedDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));
-        return Paths.get(document.getFilePath());
+
+        if (document.getStatus() != DocumentStatus.APPROVED) {
+            throw new RuntimeException("A dokumentum még nem érhető el letöltésre");
+        }
+
+        Path filePath = Paths.get(document.getFilePath()).toAbsolutePath().normalize();
+        if (!filePath.startsWith(uploadRoot)) {
+            throw new RuntimeException("Érvénytelen fájlútvonal");
+        }
+        return document;
+    }
+
+    @Transactional(readOnly = true)
+    public Path getDocumentPath(Long id) {
+        return Paths.get(getApprovedDocument(id).getFilePath());
     }
 }

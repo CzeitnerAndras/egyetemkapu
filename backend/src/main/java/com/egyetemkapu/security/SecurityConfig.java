@@ -1,5 +1,6 @@
 package com.egyetemkapu.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,7 +16,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -23,10 +26,15 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final boolean swaggerEnabled;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, RateLimitFilter rateLimitFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            RateLimitFilter rateLimitFilter,
+            @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.swaggerEnabled = swaggerEnabled;
     }
 
     @Bean
@@ -36,18 +44,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        List<String> publicMatchers = new ArrayList<>(List.of(
+                "/api/auth/**",
+                "/error"
+        ));
+        if (swaggerEnabled) {
+            publicMatchers.addAll(List.of(
+                    "/v3/api-docs",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html"
+            ));
+        }
+
         http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/**",
-                                "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/error"
-                        ).permitAll()
+                        .requestMatchers(publicMatchers.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/documents").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/count").permitAll()
