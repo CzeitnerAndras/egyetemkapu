@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Plus, Circle, Coffee, BrainCircuit, Headphones, FileText, Save } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface Task {
     id: number;
@@ -60,16 +61,12 @@ export default function FocusRoomPage() {
         };
     }, [isActive, timeLeft, isFocusMode, t]);
 
-    {/* --- Feladatok és Jegyzet lekérése betöltéskor --- */ }
+        {/* --- Feladatok és Jegyzet lekérése betöltéskor --- */ }
     useEffect(() => {
-        const token = localStorage.getItem('token');
-
         {/* --- Feladatok lekérése --- */ }
         const fetchTasks = async () => {
             try {
-                const res = await fetch('/api/tasks', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetchWithAuth('/api/tasks', {}, { redirectOnAuthFailure: false });
                 if (res.ok) {
                     const data: Task[] = await res.json();
                     setTasks(data.filter(t => !t.completed));
@@ -84,9 +81,7 @@ export default function FocusRoomPage() {
         {/* --- Jegyzet lekérése --- */ }
         const fetchNote = async () => {
             try {
-                const res = await fetch('/api/notes', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetchWithAuth('/api/notes', {}, { redirectOnAuthFailure: false });
                 if (res.ok) {
                     const data = await res.json();
                     if (data && data.length > 0) {
@@ -149,14 +144,20 @@ export default function FocusRoomPage() {
         }
 
         try {
-            const res = await fetch('/api/tasks', {
+            const res = await fetchWithAuth('/api/tasks', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newTaskObj)
-            });
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...newTaskObj,
+                    pingTelegramDayBefore: false,
+                    pingTelegramOnDay: false
+                })
+            }, { redirectOnAuthFailure: false });
+
+            if (res.status === 401) {
+                setTaskError(t('focus.needLogin'));
+                return;
+            }
 
             if (!res.ok) {
                 setTaskError(t('focus.addError'));
@@ -182,19 +183,15 @@ export default function FocusRoomPage() {
         }
 
         const updatedTask = { ...taskToUpdate, deadline: safeDeadline, completed: true };
-        const token = localStorage.getItem('token');
         const previousTasks = [...tasks];
         setTasks(tasks.filter(t => t.id !== id));
 
         try {
-            const res = await fetch(`/api/tasks/${id}`, {
+            const res = await fetchWithAuth(`/api/tasks/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedTask)
-            });
+            }, { redirectOnAuthFailure: false });
 
             if (!res.ok) {
                 setTasks(previousTasks);
@@ -208,26 +205,19 @@ export default function FocusRoomPage() {
     {/* --- Backend: Jegyzet Mentése --- */ }
     const saveNote = async () => {
         setIsSavingNote(true);
-        const token = localStorage.getItem('token');
         try {
             if (noteId) {
-                await fetch(`/api/notes/${noteId}`, {
+                await fetchWithAuth(`/api/notes/${noteId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: noteContent })
-                });
+                }, { redirectOnAuthFailure: false });
             } else {
-                const res = await fetch('/api/notes', {
+                const res = await fetchWithAuth('/api/notes', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: noteContent })
-                });
+                }, { redirectOnAuthFailure: false });
                 if (res.ok) {
                     const data = await res.json();
                     setNoteId(data.id);
@@ -339,7 +329,7 @@ export default function FocusRoomPage() {
                         {t('focus.activeTasks')}
                     </h2>
 
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin">
+                    <div className="flex-1 overflow-y-auto space-y-2 px-1 pt-2 pb-1 scrollbar-thin">
                         {isLoadingTasks ? (
                             <p className="text-center text-gray-500 secret:text-[#1cf85d]/50 secret:font-mono uppercase font-bold">{t('focus.loading')}</p>
                         ) : tasks.length === 0 ? (

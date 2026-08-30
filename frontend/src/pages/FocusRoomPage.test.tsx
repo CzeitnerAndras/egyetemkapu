@@ -2,6 +2,10 @@ import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import FocusRoomPage from './FocusRoomPage';
 
+function headerValue(headers: HeadersInit | undefined, name: string): string | null {
+    return new Headers(headers).get(name);
+}
+
 jest.mock('../i18n/LanguageContext', () => ({
     useLanguage: () => ({
         t: (key: string) => key,
@@ -111,25 +115,20 @@ describe('FocusRoomPage Komponens', () => {
         fireEvent.click(screen.getByText('Fontos feladat'));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                '/api/tasks/9',
-                expect.objectContaining({
-                    method: 'PUT',
-                    headers: {
-                        Authorization: 'Bearer test-token',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        id: 9,
-                        title: 'Fontos feladat',
-                        taskType: 'ZH',
-                        deadline: '2026-08-28T10:00:00',
-                        completed: true,
-                        pingDayBefore: false,
-                        pingOnDay: false,
-                    }),
-                })
+            const putCall = (globalThis.fetch as jest.Mock).mock.calls.find(
+                ([url, options]) => url === '/api/tasks/9' && options?.method === 'PUT'
             );
+            expect(putCall).toBeDefined();
+            expect(headerValue(putCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+            expect(JSON.parse(putCall[1].body)).toEqual({
+                id: 9,
+                title: 'Fontos feladat',
+                taskType: 'ZH',
+                deadline: '2026-08-28T10:00:00',
+                completed: true,
+                pingDayBefore: false,
+                pingOnDay: false,
+            });
             expect(screen.queryByText('Fontos feladat')).not.toBeInTheDocument();
         });
     });
@@ -165,9 +164,12 @@ describe('FocusRoomPage Komponens', () => {
             expect(globalThis.fetch).toHaveBeenCalledTimes(3);
         });
 
-        const [, options] = (globalThis.fetch as jest.Mock).mock.calls[2];
-        const sentBody = JSON.parse(options.body);
-        expect(sentBody).toEqual(
+        const postCall = (globalThis.fetch as jest.Mock).mock.calls.find(
+            ([url, options]) => url === '/api/tasks' && options?.method === 'POST'
+        );
+        expect(postCall).toBeDefined();
+        expect(headerValue(postCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+        expect(JSON.parse(postCall[1].body)).toEqual(
             expect.objectContaining({
                 title: 'Új fókusz feladat',
                 taskType: 'Fókusz',
@@ -219,17 +221,12 @@ describe('FocusRoomPage Komponens', () => {
         await user.click(screen.getByTitle('focus.save'));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                '/api/notes',
-                expect.objectContaining({
-                    method: 'POST',
-                    headers: {
-                        Authorization: 'Bearer test-token',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ content: 'Gyors jegyzet' }),
-                })
+            const postCall = (globalThis.fetch as jest.Mock).mock.calls.find(
+                ([url, options]) => url === '/api/notes' && options?.method === 'POST'
             );
+            expect(postCall).toBeDefined();
+            expect(headerValue(postCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+            expect(JSON.parse(postCall[1].body)).toEqual({ content: 'Gyors jegyzet' });
         });
     });
 
@@ -249,17 +246,12 @@ describe('FocusRoomPage Komponens', () => {
         await user.click(screen.getByTitle('focus.save'));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                '/api/notes/7',
-                expect.objectContaining({
-                    method: 'PUT',
-                    headers: {
-                        Authorization: 'Bearer test-token',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ content: 'Régi jegyzet - frissítve' }),
-                })
+            const putCall = (globalThis.fetch as jest.Mock).mock.calls.find(
+                ([url, options]) => url === '/api/notes/7' && options?.method === 'PUT'
             );
+            expect(putCall).toBeDefined();
+            expect(headerValue(putCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+            expect(JSON.parse(putCall[1].body)).toEqual({ content: 'Régi jegyzet - frissítve' });
         });
     });
 });
