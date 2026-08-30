@@ -21,16 +21,21 @@ export default function LoginPage() {
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
-                window.dispatchEvent(new Event('authChanged'));
-                navigate('/');
-            } else {
-                setError(data.error || t('login.badCredentials'));
+            if (!response.ok) {
+                try {
+                    const data = await response.json();
+                    setError(data.error || t('login.badCredentials'));
+                } catch {
+                    setError(`${t('login.serverError')} (${response.status})`);
+                }
+                return;
             }
+
+            const data = await response.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            window.dispatchEvent(new Event('authChanged'));
+            navigate('/');
         } catch (err) {
             setError(t('login.serverError'));
         }
