@@ -1,5 +1,6 @@
 package com.egyetemkapu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,6 +30,7 @@ public class Document {
     @Column(name = "file_name", nullable = false)
     private String fileName;
 
+    @JsonIgnore
     @Column(name = "file_path", nullable = false)
     private String filePath;
 

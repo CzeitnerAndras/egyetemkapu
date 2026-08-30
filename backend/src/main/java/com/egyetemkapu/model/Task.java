@@ -1,5 +1,6 @@
 package com.egyetemkapu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -41,6 +42,7 @@ public class Task {
     @Column(name = "ping_telegram_on_day")
     private boolean pingTelegramOnDay = false;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
