@@ -12,6 +12,19 @@ interface Task {
     pingOnDay: boolean;
 }
 
+function formatLocalDeadline(date = new Date()): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}T23:59:59`;
+}
+
+function formatTaskType(taskType: string, t: (key: string) => string): string {
+    const key = `cal.type.${taskType}`;
+    const translated = t(key);
+    return translated === key ? taskType : translated;
+}
+
 export default function FocusRoomPage() {
     const { t } = useLanguage();
     const [timeLeft, setTimeLeft] = useState(25 * 60);
@@ -23,6 +36,7 @@ export default function FocusRoomPage() {
     const [noteContent, setNoteContent] = useState('');
     const [noteId, setNoteId] = useState<number | null>(null);
     const [isSavingNote, setIsSavingNote] = useState(false);
+    const [taskError, setTaskError] = useState('');
 
     {/* --- Időzítő logikája --- */ }
     useEffect(() => {
@@ -111,21 +125,28 @@ export default function FocusRoomPage() {
     {/* --- Backend: Feladat Hozzáadása --- */ }
     const addTask = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTaskTitle.trim()) return;
+        const title = newTaskTitle.trim();
+        if (!title) return;
 
+        setTaskError('');
         const token = localStorage.getItem('token');
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-        const localDeadline = todayEnd.toISOString().split('.')[0];
-
         const newTaskObj = {
-            title: newTaskTitle,
+            title,
             taskType: 'Fókusz',
-            deadline: localDeadline,
+            deadline: formatLocalDeadline(),
             completed: false,
             pingDayBefore: false,
             pingOnDay: false
         };
+        const optimisticTask: Task = { id: Date.now(), ...newTaskObj };
+
+        setTasks(current => [...current, optimisticTask]);
+        setNewTaskTitle('');
+
+        if (!token) {
+            setTaskError(t('focus.needLogin'));
+            return;
+        }
 
         try {
             const res = await fetch('/api/tasks', {
@@ -137,13 +158,15 @@ export default function FocusRoomPage() {
                 body: JSON.stringify(newTaskObj)
             });
 
-            if (res.ok) {
-                const createdTask = await res.json();
-                setTasks([...tasks, createdTask]);
-                setNewTaskTitle('');
+            if (!res.ok) {
+                setTaskError(t('focus.addError'));
+                return;
             }
-        } catch (error) {
-            console.error("Hiba a feladat létrehozásakor:", error);
+
+            const createdTask = await res.json();
+            setTasks(current => current.map(task => task.id === optimisticTask.id ? createdTask : task));
+        } catch {
+            setTaskError(t('focus.addError'));
         }
     };
 
@@ -336,7 +359,7 @@ export default function FocusRoomPage() {
                                             {task.title}
                                         </span>
                                         <span className="text-xs text-black dark:text-gray-500 secret:text-[#1cf85d]/60 font-black uppercase">
-                                            {t(`cal.type.${task.taskType}`) || task.taskType}
+                                            {formatTaskType(task.taskType, t)}
                                         </span>
                                     </div>
                                 </div>
@@ -344,20 +367,28 @@ export default function FocusRoomPage() {
                         )}
                     </div>
 
-                    <form onSubmit={addTask} className="mt-4 pt-4 border-t-4 border-black dark:border-gray-700 secret:border-[#1cf85d] flex">
-                        <input
-                            type="text"
-                            value={newTaskTitle}
-                            onChange={e => setNewTaskTitle(e.target.value)}
-                            placeholder={t('focus.addTask')}
-                            className="flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] mr-2 p-2 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
-                        />
-                        <button
-                            type="submit"
-                            className="bg-cyan-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center shadow-[4px_4px_0px_#000] dark:shadow-none"
-                        >
-                            <Plus className="w-6 h-6 font-bold" />
-                        </button>
+                    <form onSubmit={addTask} className="mt-4 pt-4 border-t-4 border-black dark:border-gray-700 secret:border-[#1cf85d] flex flex-col">
+                        <div className="flex">
+                            <input
+                                type="text"
+                                value={newTaskTitle}
+                                onChange={e => setNewTaskTitle(e.target.value)}
+                                placeholder={t('focus.addTask')}
+                                className="flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] mr-2 p-2 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
+                            />
+                            <button
+                                type="submit"
+                                aria-label={t('focus.addTask')}
+                                className="bg-cyan-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center shadow-[4px_4px_0px_#000] dark:shadow-none"
+                            >
+                                <Plus className="w-6 h-6 font-bold" />
+                            </button>
+                        </div>
+                        {taskError && (
+                            <p className="mt-2 text-xs font-bold text-red-600 dark:text-red-400 secret:text-[#1cf85d] secret:font-mono uppercase">
+                                {taskError}
+                            </p>
+                        )}
                     </form>
                 </div>
 

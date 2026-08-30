@@ -289,6 +289,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'focus.music': 'Zene: Lofi Hip Hop Mix',
     'focus.focusEnded': 'A fókusz idő lejárt! Ideje tartani egy kis szünetet.',
     'focus.breakEnded': 'A szünet lejárt! Indulhat a következő fókusz blokk.',
+    'focus.needLogin': 'A feladat mentéséhez be kell jelentkezned!',
+    'focus.addError': 'Nem sikerült elmenteni a feladatot. A listában ideiglenesen megmarad.',
 
     'admin.title': 'Adminisztrátori Panel',
     'admin.pending': 'Várakozó Fájlok',
@@ -603,6 +605,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'focus.music': 'Music: Lofi Hip Hop Mix',
     'focus.focusEnded': 'Focus time is over! Time for a short break.',
     'focus.breakEnded': 'Break is over! Ready for the next focus block.',
+    'focus.needLogin': 'You need to log in to save the task!',
+    'focus.addError': 'Could not save the task. It will stay in the list for now.',
 
     'admin.title': 'Administrator Panel',
     'admin.pending': 'Pending Files',

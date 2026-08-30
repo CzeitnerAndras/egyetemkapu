@@ -104,6 +104,8 @@ describe('FocusRoomPage Komponens', () => {
 
         await waitFor(() => {
             expect(screen.getByText('Fontos feladat')).toBeInTheDocument();
+            expect(screen.getByText('ZH')).toBeInTheDocument();
+            expect(screen.queryByText('cal.type.ZH')).not.toBeInTheDocument();
         });
 
         fireEvent.click(screen.getByText('Fontos feladat'));
@@ -175,6 +177,32 @@ describe('FocusRoomPage Komponens', () => {
             })
         );
         expect(input).toHaveValue('');
+        expect(screen.getByText('Új fókusz feladat')).toBeInTheDocument();
+    });
+
+    it('egyedi feladat típust jelenít meg a fordítási kulcs helyett', async () => {
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => [{
+                    id: 3,
+                    title: 'Beiratkozás',
+                    taskType: 'Egyetem',
+                    deadline: '2026-08-30T10:00:00',
+                    completed: false,
+                    pingDayBefore: false,
+                    pingOnDay: false,
+                }],
+            })
+            .mockResolvedValueOnce({ ok: true, json: async () => [] });
+
+        render(<FocusRoomPage />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Beiratkozás')).toBeInTheDocument();
+            expect(screen.getByText('Egyetem')).toBeInTheDocument();
+            expect(screen.queryByText('cal.type.Egyetem')).not.toBeInTheDocument();
+        });
     });
 
     it('új jegyzet mentése POST kérést küld a tartalommal', async () => {
