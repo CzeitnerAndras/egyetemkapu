@@ -13,10 +13,13 @@ echo "==> Konténerek újraépítése"
 docker compose up -d --build
 
 echo "==> Várakozás az API-ra"
-# A /api/users/count nyilvános, és a Caddy proxyn keresztül megy,
-# tehát egyszerre ellenőrzi a frontendet, a backendet és az adatbázist.
+# A --resolve a saját gépre irányítja a kérést, de megtartja a domain nevet,
+# így a Caddy site block, a TLS tanúsítvány, a backend és az adatbázis is
+# egyszerre ellenőrződik. Az első deploynál a Let's Encrypt igénylés
+# néhány másodpercig tarthat, ezért próbálkozunk újra.
 for _ in $(seq 1 30); do
-    if curl -fsS http://localhost/api/users/count > /dev/null; then
+    if curl -fsS --resolve egyetemkapu.hu:443:127.0.0.1 \
+            https://egyetemkapu.hu/api/users/count > /dev/null; then
         echo "==> Sikeres telepítés"
         docker image prune -f
         exit 0
@@ -24,7 +27,8 @@ for _ in $(seq 1 30); do
     sleep 5
 done
 
-echo "HIBA: az API 150 másodperc alatt sem válaszolt" >&2
+echo "HIBA: az oldal 150 másodperc alatt sem válaszolt HTTPS-en" >&2
 docker compose ps >&2
+docker compose logs --tail 50 frontend >&2
 docker compose logs --tail 50 backend >&2
 exit 1

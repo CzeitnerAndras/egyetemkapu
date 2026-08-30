@@ -36,6 +36,9 @@ services:
     container_name: egyetemkapu-frontend
     ports:
       - "80:80"
+      # A 443 kell a HTTPS-hez, a 80 pedig marad: azon megy a Let's Encrypt
+      # tanúsítvány-igénylés és a HTTP -> HTTPS átirányítás.
+      - "443:443"
     depends_on:
       - backend
     restart: unless-stopped
