@@ -46,22 +46,25 @@ public class TaskController {
     @Transactional
     public ResponseEntity<?> deleteTask(@PathVariable Long id, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
-        taskRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+
+        Optional<User> userOpt = userRepository.findByUsername(principal.getName());
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+
+        return taskRepository.findById(id)
+                .filter(task -> ownsTask(task, userOpt.get()))
+                .map(task -> {
+                    taskRepository.delete(task);
+                    return ResponseEntity.ok().build();
+                })
+                .orElse(ResponseEntity.status(404).build());
     }
 
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<Task>> getAllTasks(Principal principal) {
-        System.out.println("DEBUG principal = " + principal);
-        if (principal == null) {
-            System.out.println("DEBUG principal is NULL");
-            return ResponseEntity.status(401).build();
-        }
-        System.out.println("DEBUG principal.getName() = " + principal.getName());
+        if (principal == null) return ResponseEntity.status(401).build();
 
         Optional<User> userOpt = userRepository.findByUsername(principal.getName());
-        System.out.println("DEBUG userOpt = " + userOpt);
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
 
         return ResponseEntity.ok(taskRepository.findAllByUserAndCompletedFalse(userOpt.get()));
@@ -73,7 +76,11 @@ public class TaskController {
     public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody Task updatedTask, Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();
 
+        Optional<User> userOpt = userRepository.findByUsername(principal.getName());
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+
         return taskRepository.findById(id)
+                .filter(task -> ownsTask(task, userOpt.get()))
                 .map(task -> {
                     task.setTitle(updatedTask.getTitle());
                     if (updatedTask.getTaskType() != null) task.setTaskType(updatedTask.getTaskType());
@@ -83,9 +90,13 @@ public class TaskController {
                     task.setPingOnDay(updatedTask.isPingOnDay());
                     task.setPingTelegramDayBefore(updatedTask.isPingTelegramDayBefore());
                     task.setPingTelegramOnDay(updatedTask.isPingTelegramOnDay());
-                    
+
                     return ResponseEntity.ok(taskRepository.save(task));
                 })
-                .orElseThrow(() -> new RuntimeException("A feladat nem található ezzel az ID-val: " + id));
+                .orElse(ResponseEntity.status(404).build());
+    }
+
+    private boolean ownsTask(Task task, User user) {
+        return task.getUser() != null && user.getId() != null && user.getId().equals(task.getUser().getId());
     }
 }
