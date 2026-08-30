@@ -24,17 +24,24 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    static final String DEFAULT_ALLOWED_ORIGINS =
+            "http://localhost:3000,http://localhost:5173,"
+                    + "https://egyetemkapu.hu,https://www.egyetemkapu.hu";
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
     private final boolean swaggerEnabled;
+    private final String allowedOrigins;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RateLimitFilter rateLimitFilter,
-            @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled) {
+            @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled,
+            @Value("${CORS_ALLOWED_ORIGINS:" + DEFAULT_ALLOWED_ORIGINS + "}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
         this.swaggerEnabled = swaggerEnabled;
+        this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
@@ -84,8 +91,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList());
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);

@@ -13,14 +13,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
+
+    private static final Set<String> PUBLIC_PATHS = Set.of("/api/tools/calculator/count");
 
     private final RateLimitingService rateLimitingService;
 
     public RateLimitFilter(RateLimitingService rateLimitingService) {
         this.rateLimitingService = rateLimitingService;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return PUBLIC_PATHS.contains(request.getRequestURI());
     }
 
     @Override
