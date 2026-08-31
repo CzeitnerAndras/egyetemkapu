@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Egyetemkapu E2E - Links', () => {
-  test('11 egyetem tab jelenik meg, alapértelmezetten az első aktív, és linkek listázódnak', async ({ page }) => {
+  test('a régi /links cím átirányít /linktar-ra', async ({ page }) => {
     await page.goto('/links');
+    await expect(page).toHaveURL(/\/linktar$/);
+  });
+
+  test('11 egyetem tab jelenik meg, alapértelmezetten az első aktív, és linkek listázódnak', async ({ page }) => {
+    await page.goto('/linktar');
 
     await expect(page.locator('.lucide-link').first()).toBeVisible();
 
@@ -17,7 +22,7 @@ test.describe('Egyetemkapu E2E - Links', () => {
   });
 
   test('másik egyetemre kattintva az adott tab lesz aktív, és lecserélődik a linklista', async ({ page }) => {
-    await page.goto('/links');
+    await page.goto('/linktar');
 
     const uniButtons = page.locator('main div.space-y-2 > button');
     const externalLinks = page.locator('main a[target="_blank"]');
@@ -36,7 +41,7 @@ test.describe('Egyetemkapu E2E - Links', () => {
   });
 
   test('minden megjelenített link http(s) URL-re mutat, és új lapon nyílik meg', async ({ page }) => {
-    await page.goto('/links');
+    await page.goto('/linktar');
 
     const externalLinks = page.locator('main a[target="_blank"]');
     const count = await externalLinks.count();
