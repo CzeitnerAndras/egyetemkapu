@@ -8,7 +8,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.knowledge': 'Tudástár',
     'nav.reference': 'Hivatkozás Generátor',
     'nav.focus': 'Fókusz Szoba',
-    'nav.links': 'Linkek',
+    'nav.links': 'Linktár',
     'nav.userFallback': 'Felhasználó',
     'nav.dark': 'Sötét',
     'nav.light': 'Világos',
