@@ -1,6 +1,14 @@
 import { Info, Code, Database, Layout, User, CheckCircle, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 
+const FEATURE_KEYS = [
+    'about.f1', 'about.f2', 'about.f3', 'about.f4', 'about.f5',
+    'about.f6', 'about.f7', 'about.f8', 'about.f9',
+] as const;
+
+const FRONTEND_TECH = ['React', 'TypeScript', 'Vite', 'Tailwind CSS'];
+const BACKEND_TECH = ['Java', 'Spring Boot', 'PostgreSQL', 'JWT', 'Docker', 'Caddy'];
+
 export default function AboutPage() {
     const { t } = useLanguage();
 
@@ -23,9 +31,10 @@ export default function AboutPage() {
                         <GraduationCap className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('about.what')}</h2>
                     </div>
-                    <p className="text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-medium text-lg leading-relaxed secret:font-mono flex-1">
-                        {t('about.whatText')}
-                    </p>
+                    <div className="text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-medium text-lg leading-relaxed secret:font-mono flex-1 space-y-4">
+                        <p>{t('about.whatText')}</p>
+                        <p>{t('about.whatText2')}</p>
+                    </div>
                 </section>
 
                 {/* --- JOBB FELSŐ --- */}
@@ -37,7 +46,7 @@ export default function AboutPage() {
                     <div className="text-center flex flex-col flex-1 justify-center">
                         <p className="text-xl font-black text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">Czeitner András</p>
                         <p className="text-sm font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/70 secret:font-mono uppercase">{t('about.devRole')}</p>
-                        <p className="mt-4 text-sm font-bold text-black dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
+                        <p className="mt-4 text-sm font-medium text-black dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono leading-relaxed">
                             {t('about.devText')}
                         </p>
                     </div>
@@ -50,30 +59,11 @@ export default function AboutPage() {
                         <h2 className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('about.features')}</h2>
                     </div>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-bold secret:font-mono flex-1">
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f1')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f2')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f3')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f4')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f5')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f6')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f7')}
-                        </li>
-                        <li className="flex items-start">
-                            <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t('about.f8')}
-                        </li>
+                        {FEATURE_KEYS.map((key) => (
+                            <li key={key} className="flex items-start">
+                                <span className="text-cyan-600 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t(key)}
+                            </li>
+                        ))}
                     </ul>
                 </section>
 
@@ -81,16 +71,16 @@ export default function AboutPage() {
                 <section className="lg:col-span-1 flex flex-col bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_#d946ef] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Code className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                        <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">Tech Stack</h2>
+                        <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('about.stack')}</h2>
                     </div>
 
                     <div className="space-y-4 flex-1 flex flex-col justify-center">
                         <div>
                             <h3 className="flex items-center text-sm font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/60 mb-2 secret:font-mono uppercase">
-                                <Layout className="w-4 h-4 mr-1 font-bold" /> Frontend
+                                <Layout className="w-4 h-4 mr-1 font-bold" /> {t('about.frontend')}
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                                {['React', 'TypeScript', 'TailwindCSS', 'React Router', 'Lucide Icons'].map(tech => (
+                                {FRONTEND_TECH.map(tech => (
                                     <span key={tech} className="bg-cyan-400 dark:bg-[#121212] secret:bg-transparent border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] text-xs font-bold px-2 py-1 secret:font-mono shadow-[2px_2px_0px_#000] dark:shadow-sm">
                                         {tech}
                                     </span>
@@ -103,7 +93,7 @@ export default function AboutPage() {
                                 <Database className="w-4 h-4 mr-1 font-bold" /> {t('about.backendDb')}
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                                {['Java', 'Spring Boot', 'REST API', 'PostgreSQL', 'JWT Auth'].map(tech => (
+                                {BACKEND_TECH.map(tech => (
                                     <span key={tech} className="bg-fuchsia-400 dark:bg-[#121212] secret:bg-transparent border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] text-xs font-bold px-2 py-1 secret:font-mono shadow-[2px_2px_0px_#000] dark:shadow-sm">
                                         {tech}
                                     </span>
