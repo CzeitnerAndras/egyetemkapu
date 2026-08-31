@@ -1,8 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Egyetemkapu E2E - Fókusz Szoba', () => {
-  test('induláskor 25:00-tól indul a fókusz időzítő', async ({ page }) => {
+  test('a régi /fokusz cím átirányít /tanuloszoba-ra', async ({ page }) => {
     await page.goto('/fokusz');
+    await expect(page).toHaveURL(/\/tanuloszoba$/);
+  });
+
+  test('induláskor 25:00-tól indul a fókusz időzítő', async ({ page }) => {
+    await page.goto('/tanuloszoba');
 
     await expect(page.locator('.lucide-brain-circuit').first()).toBeVisible();
     await expect(page.locator('.tabular-nums')).toHaveText('25:00');
@@ -10,7 +15,7 @@ test.describe('Egyetemkapu E2E - Fókusz Szoba', () => {
   });
 
   test('a szünet módra váltás 5:00-ra állítja az időzítőt, a fókusz mód vissza 25:00-ra', async ({ page }) => {
-    await page.goto('/fokusz');
+    await page.goto('/tanuloszoba');
 
     const modeToggle = page.locator('div.rounded-full button');
     await expect(modeToggle).toHaveCount(2);
@@ -23,7 +28,7 @@ test.describe('Egyetemkapu E2E - Fókusz Szoba', () => {
   });
 
   test('indítás gombra kattintva elindul a visszaszámlálás, majd a reset visszaállítja', async ({ page }) => {
-    await page.goto('/fokusz');
+    await page.goto('/tanuloszoba');
 
     const timeDisplay = page.locator('.tabular-nums');
     const startPauseButton = page.locator('.lucide-play, .lucide-pause').locator('..');
@@ -42,7 +47,7 @@ test.describe('Egyetemkapu E2E - Fókusz Szoba', () => {
   });
 
   test('a gyorsjegyzet mezőbe és az új feladat mezőbe be lehet gépelni', async ({ page }) => {
-    await page.goto('/fokusz');
+    await page.goto('/tanuloszoba');
 
     const noteTextarea = page.locator('textarea');
     await noteTextarea.fill('Teszt jegyzet tartalma');
