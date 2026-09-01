@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { translate, type Lang } from './translations';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface LanguageContextValue {
   language: Lang;
@@ -16,11 +17,27 @@ function readStoredLanguage(): Lang {
   return saved === 'en' ? 'en' : 'hu';
 }
 
+function persistLanguageToServer(language: Lang) {
+  if (!localStorage.getItem('token')) return;
+  fetchWithAuth('/api/users/me/language', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language }),
+  }, { redirectOnAuthFailure: false }).catch(() => {});
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Lang>(readStoredLanguage);
 
   useEffect(() => {
     document.documentElement.lang = language;
+  }, [language]);
+
+  useEffect(() => {
+    persistLanguageToServer(language);
+    const onAuthChanged = () => persistLanguageToServer(language);
+    window.addEventListener('authChanged', onAuthChanged);
+    return () => window.removeEventListener('authChanged', onAuthChanged);
   }, [language]);
 
   const setLanguage = (lang: Lang) => {
