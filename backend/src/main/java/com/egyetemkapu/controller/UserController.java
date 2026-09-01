@@ -50,8 +50,27 @@ public class UserController {
         return ResponseEntity.ok(Map.of(
                 "username", user.getUsername(),
                 "email", user.getEmail(),
-                "role", user.getRole()
+                "role", user.getRole(),
+                "preferredLanguage", user.getPreferredLanguage() == null ? "hu" : user.getPreferredLanguage()
         ));
+    }
+
+    @PutMapping("/me/language")
+    @Transactional
+    public ResponseEntity<?> updatePreferredLanguage(@RequestBody Map<String, String> request) {
+        Optional<User> userOpt = getCurrentUser();
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
+
+        String language = request.get("language");
+        if (!"hu".equals(language) && !"en".equals(language)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "A nyelv csak hu vagy en lehet."));
+        }
+
+        User user = userOpt.get();
+        user.setPreferredLanguage(language);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("preferredLanguage", language));
     }
 
     @PutMapping("/username")
