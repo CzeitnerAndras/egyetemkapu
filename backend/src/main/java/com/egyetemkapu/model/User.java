@@ -36,4 +36,7 @@ public class User {
 
     @Column(name = "lockout_end_time")
     private LocalDateTime lockoutEndTime;
+
+    @Column(name = "preferred_language", nullable = false, length = 8)
+    private String preferredLanguage = "hu";
 }
