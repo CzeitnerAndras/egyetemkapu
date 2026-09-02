@@ -10,4 +10,5 @@ import java.util.Optional;
 @Repository
 public interface SettingsRepository extends JpaRepository<Settings, Long> {
     Optional<Settings> findByUser(User user);
+    void deleteByUser(User user);
 }

@@ -327,7 +327,7 @@ export default function CalendarPage() {
                             <div className="flex flex-col flex-1">
                                 <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
                                 <input required type="text" value={taskType} onChange={e => setTaskType(e.target.value)}
-                                    placeholder="pl. ZH, Projekt"
+                                    placeholder={t('cal.typePlaceholder')}
                                     className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                                 />
                             </div>
@@ -426,6 +426,10 @@ export default function CalendarPage() {
                                 <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
                             </label>
                         </div>
+
+                        <p className="text-[10px] font-bold text-black/70 dark:text-gray-400 secret:text-[#1cf85d]/70 secret:font-mono leading-snug">
+                            {t('cal.pingLangHint')}
+                        </p>
 
                         <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
                             <Plus className="w-5 h-5 mr-1 font-bold" />

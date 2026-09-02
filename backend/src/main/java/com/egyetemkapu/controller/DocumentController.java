@@ -1,6 +1,7 @@
 package com.egyetemkapu.controller;
 
 import com.egyetemkapu.annotation.LogAction;
+import com.egyetemkapu.dto.DocumentResponseDto;
 import com.egyetemkapu.model.Document;
 import com.egyetemkapu.service.DocumentService;
 import org.springframework.core.io.Resource;
@@ -48,8 +49,10 @@ public class DocumentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Document>> getApprovedDocuments(@RequestParam(required = false) String category) {
-        return ResponseEntity.ok(documentService.getApprovedDocuments(category));
+    public ResponseEntity<List<DocumentResponseDto>> getApprovedDocuments(@RequestParam(required = false) String category) {
+        return ResponseEntity.ok(documentService.getApprovedDocuments(category).stream()
+                .map(DocumentResponseDto::from)
+                .toList());
     }
 
     @GetMapping("/download/{id}")
@@ -76,8 +79,10 @@ public class DocumentController {
     // --- ADMIN VÉGPONTOK ---
 
     @GetMapping("/admin/pending")
-    public ResponseEntity<List<Document>> getPendingDocuments() {
-        return ResponseEntity.ok(documentService.getPendingDocuments());
+    public ResponseEntity<List<DocumentResponseDto>> getPendingDocuments() {
+        return ResponseEntity.ok(documentService.getPendingDocuments().stream()
+                .map(DocumentResponseDto::from)
+                .toList());
     }
 
     @PutMapping("/admin/{id}/approve")

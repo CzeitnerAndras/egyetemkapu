@@ -21,6 +21,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - AI_API_KEY=${AI_API_KEY:-nincs_megadva}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-nincs_megadva}
+      - TZ=Europe/Budapest
     ports:
       - "8080:8080"
     volumes:

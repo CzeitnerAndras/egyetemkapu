@@ -5,6 +5,7 @@ import com.egyetemkapu.model.Settings;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.SettingsRepository;
 import com.egyetemkapu.repository.UserRepository;
+import com.egyetemkapu.security.DiscordWebhookValidator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -54,8 +55,14 @@ public class SettingsController {
         User user = userOpt.get();
         Settings settings = settingsRepository.findByUser(user).orElse(new Settings());
         
+        String webhook = payload.get("discordWebhook");
+        if (!DiscordWebhookValidator.isBlankOrAllowed(webhook)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Csak hivatalos Discord webhook URL menthető (https://discord.com/api/webhooks/...)."));
+        }
+
         settings.setUser(user);
-        settings.setDiscordWebhook(payload.get("discordWebhook"));
+        settings.setDiscordWebhook(webhook == null || webhook.isBlank() ? null : webhook.trim());
         settings.setTelegramChatId(payload.get("telegramChatId"));
         
         settingsRepository.save(settings);

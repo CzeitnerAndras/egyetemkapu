@@ -11,4 +11,5 @@ import java.util.List;
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findAllByCompletedFalse();
     List<Task> findAllByUserAndCompletedFalse(User user);
+    void deleteByUser(User user);
 }

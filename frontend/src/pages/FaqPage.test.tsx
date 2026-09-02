@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import FaqPage from './FaqPage';
 
 jest.mock('../i18n/LanguageContext', () => {
@@ -9,52 +10,60 @@ jest.mock('../i18n/LanguageContext', () => {
     };
 });
 
+function renderFaq() {
+    return render(
+        <MemoryRouter>
+            <FaqPage />
+        </MemoryRouter>
+    );
+}
+
 describe('FaqPage Komponens', () => {
-    it('megjeleníti a fejlécet és mind az öt kérdést', () => {
-        render(<FaqPage />);
+    it('megjeleníti a fejlécet és mind a tíz kérdést', () => {
+        renderFaq();
 
         expect(screen.getByText('faq.title')).toBeInTheDocument();
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 10; i++) {
             expect(screen.getByText(`faq.q${i}`)).toBeInTheDocument();
         }
     });
 
     it('alapértelmezetten az első kérdés van nyitva', () => {
-        render(<FaqPage />);
+        renderFaq();
 
-        expect(screen.getByText('faq.a1p')).toBeVisible();
+        expect(screen.getByText('faq.a1')).toBeVisible();
     });
 
     it('kattintásra kinyit egy másik kérdést, és bezárja az előzőt', async () => {
-        render(<FaqPage />);
+        renderFaq();
         const user = userEvent.setup();
 
         await user.click(screen.getByText('faq.q2'));
 
         expect(screen.getByText('faq.a2')).toBeVisible();
 
-        const firstAnswerPanel = screen.getByText('faq.a1p').closest('div.transition-all');
+        const firstAnswerPanel = screen.getByText('faq.a1').closest('div.transition-all');
         expect(firstAnswerPanel).toHaveClass('max-h-0');
         expect(firstAnswerPanel).toHaveClass('opacity-0');
     });
 
     it('ismételt kattintásra bezárja a nyitott kérdést', async () => {
-        render(<FaqPage />);
+        renderFaq();
         const user = userEvent.setup();
 
         await user.click(screen.getByText('faq.q1'));
 
-        const firstAnswerPanel = screen.getByText('faq.a1p').closest('div.transition-all');
+        const firstAnswerPanel = screen.getByText('faq.a1').closest('div.transition-all');
         expect(firstAnswerPanel).toHaveClass('max-h-0');
         expect(firstAnswerPanel).toHaveClass('opacity-0');
     });
 
-    it('az ötödik válasz kiemelt (piros) színnel jelenik meg', async () => {
-        render(<FaqPage />);
+    it('a profiltörlés válasz kiemelt (piros) színnel jelenik meg', async () => {
+        renderFaq();
         const user = userEvent.setup();
 
-        await user.click(screen.getByText('faq.q5'));
+        await user.click(screen.getByText('faq.q10'));
 
-        expect(screen.getByText('faq.a5')).toHaveClass('text-red-700');
+        expect(screen.getByText('faq.a10')).toHaveClass('text-red-700');
     });
 });

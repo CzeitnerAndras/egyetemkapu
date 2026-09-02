@@ -6,6 +6,7 @@ import com.egyetemkapu.model.RefreshToken;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
+import com.egyetemkapu.security.PasswordPolicy;
 import com.egyetemkapu.service.RefreshTokenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +44,10 @@ public class AuthController {
         String username = request.get("username");
         String email = request.get("email");
         String password = request.get("password");
+
+        if (!PasswordPolicy.isValid(password)) {
+            return ResponseEntity.badRequest().body(Map.of("error", PasswordPolicy.WEAK_PASSWORD_MESSAGE));
+        }
 
         if (userRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Ez a felhasználónév már foglalt!"));

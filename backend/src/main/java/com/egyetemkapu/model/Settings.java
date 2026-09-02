@@ -1,5 +1,6 @@
 package com.egyetemkapu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class Settings {
     @Column(name = "telegram_chat_id")
     private String telegramChatId;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;

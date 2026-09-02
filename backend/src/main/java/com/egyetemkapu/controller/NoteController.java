@@ -50,6 +50,7 @@ public class NoteController {
         Optional<User> userOpt = resolveUser(principal);
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
 
+        note.setId(null);
         note.setUser(userOpt.get());
         return ResponseEntity.ok(noteRepository.save(note));
     }

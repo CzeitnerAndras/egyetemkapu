@@ -6,7 +6,7 @@ test.describe('Egyetemkapu E2E - Ötletláda', () => {
       await route.fulfill({ status: 200, json: {} });
     });
 
-    await page.goto('/ideabox');
+    await page.goto('/otletlada');
 
     await page.evaluate(() => {
       localStorage.setItem('token', 'e2e-mock-token');

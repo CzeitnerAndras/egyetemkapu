@@ -7,12 +7,12 @@ test.describe('Egyetemkapu E2E - FAQ', () => {
     await expect(page.locator('main > div').first().locator('svg').first()).toBeVisible();
 
     const items = page.locator('main div.space-y-4 > div');
-    await expect(items).toHaveCount(5);
+    await expect(items).toHaveCount(10);
 
-    await expect(items.nth(0).locator('div.transition-all')).toHaveClass(/max-h-96/);
+    await expect(items.nth(0).locator('div.transition-all')).toHaveClass(/max-h-\[40rem\]/);
     await expect(items.nth(0).locator('.lucide-chevron-up')).toBeVisible();
 
-    for (let i = 1; i < 5; i++) {
+    for (let i = 1; i < 10; i++) {
       await expect(items.nth(i).locator('div.transition-all')).toHaveClass(/max-h-0/);
       await expect(items.nth(i).locator('.lucide-chevron-down')).toBeVisible();
     }
@@ -27,7 +27,7 @@ test.describe('Egyetemkapu E2E - FAQ', () => {
 
     await items.nth(1).locator('button').click();
 
-    await expect(secondPanel).toHaveClass(/max-h-96/);
+    await expect(secondPanel).toHaveClass(/max-h-\[40rem\]/);
     await expect(items.nth(1).locator('.lucide-chevron-up')).toBeVisible();
 
     await expect(firstPanel).toHaveClass(/max-h-0/);

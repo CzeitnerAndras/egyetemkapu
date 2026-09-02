@@ -257,8 +257,8 @@ export default function Navbar() {
             <Link to="/kalkulator" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.calculators')}</Link>
             <Link to="/tudastar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.knowledge')}</Link>
             <Link to="/hivatkozas" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.reference')}</Link>
-            <Link to="/fokusz" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.focus')}</Link>
-            <Link to="/links" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.links')}</Link>
+            <Link to="/tanuloszoba" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.focus')}</Link>
+            <Link to="/linktar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.links')}</Link>
           </div>
         </div>
 
@@ -275,7 +275,7 @@ export default function Navbar() {
             <span className="text-xs font-bold uppercase">{language}</span>
           </button>
 
-          <Link to="/ideabox" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
+          <Link to="/otletlada" onClick={() => { setIsMenuOpen(false); setIsProfileMenuOpen(false); }}>
             <Mail className="w-6 h-6 cursor-pointer hover:text-white dark:hover:text-gray-200 secret:hover:text-white hover:scale-110 transition-transform" />
           </Link>
 
@@ -334,10 +334,10 @@ export default function Navbar() {
               <Link to="/hivatkozas" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
                 <BookMarked className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.reference')}
               </Link>
-              <Link to="/fokusz" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+              <Link to="/tanuloszoba" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
                 <BrainCircuit className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.focus')}
               </Link>
-              <Link to="/links" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+              <Link to="/linktar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
                 <LinkIcon className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.links')}
               </Link>
             </div>

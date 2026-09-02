@@ -4,6 +4,8 @@ import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
+import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.service.UserAccountService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,11 +23,17 @@ public class UserController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final UserAccountService userAccountService;
 
-    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserController(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            UserAccountService userAccountService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.userAccountService = userAccountService;
     }
 
     private Optional<User> getCurrentUser() {
@@ -50,8 +58,27 @@ public class UserController {
         return ResponseEntity.ok(Map.of(
                 "username", user.getUsername(),
                 "email", user.getEmail(),
-                "role", user.getRole()
+                "role", user.getRole(),
+                "preferredLanguage", user.getPreferredLanguage() == null ? "hu" : user.getPreferredLanguage()
         ));
+    }
+
+    @PutMapping("/me/language")
+    @Transactional
+    public ResponseEntity<?> updatePreferredLanguage(@RequestBody Map<String, String> request) {
+        Optional<User> userOpt = getCurrentUser();
+        if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
+
+        String language = request.get("language");
+        if (!"hu".equals(language) && !"en".equals(language)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "A nyelv csak hu vagy en lehet."));
+        }
+
+        User user = userOpt.get();
+        user.setPreferredLanguage(language);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("preferredLanguage", language));
     }
 
     @PutMapping("/username")
@@ -90,6 +117,10 @@ public class UserController {
             return ResponseEntity.badRequest().body(Map.of("error", "A jelenlegi jelszó helytelen!"));
         }
 
+        if (!PasswordPolicy.isValid(newPassword)) {
+            return ResponseEntity.badRequest().body(Map.of("error", PasswordPolicy.WEAK_PASSWORD_MESSAGE));
+        }
+
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
@@ -103,7 +134,7 @@ public class UserController {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
 
-        userRepository.delete(userOpt.get());
+        userAccountService.deleteAccount(userOpt.get());
         return ResponseEntity.ok(Map.of("message", "Fiók törölve!"));
     }
 }

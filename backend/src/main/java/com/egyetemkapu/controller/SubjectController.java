@@ -38,6 +38,7 @@ public class SubjectController {
         Optional<User> userOpt = resolveUser(principal);
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
 
+        subject.setId(null);
         subject.setUser(userOpt.get());
         return ResponseEntity.ok(subjectRepository.save(subject));
     }

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -37,13 +37,16 @@ function App() {
           <Route path="/kalkulator" element={<CalculatorPage />} />
           <Route path="/tudastar" element={<KnowledgeBasePage />} />
           <Route path="/hivatkozas" element={<ReferencePage />} />
-          <Route path="/fokusz" element={<FocusRoomPage />} />
-          <Route path="/ideabox" element={<IdeaBoxPage />} />
+          <Route path="/tanuloszoba" element={<FocusRoomPage />} />
+          <Route path="/otletlada" element={<IdeaBoxPage />} />
           <Route path="/admin" element={<AdminPanelPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/links" element={<LinksPage />} />
+          <Route path="/linktar" element={<LinksPage />} />
+          <Route path="/fokusz" element={<Navigate to="/tanuloszoba" replace />} />
+          <Route path="/ideabox" element={<Navigate to="/otletlada" replace />} />
+          <Route path="/links" element={<Navigate to="/linktar" replace />} />
         </Routes>
       </div>
     </Router>

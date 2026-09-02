@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findAllByUserOrderByCreatedAtDesc(User user);
+    void deleteByUser(User user);
 }

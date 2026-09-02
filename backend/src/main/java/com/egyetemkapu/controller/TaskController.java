@@ -34,6 +34,7 @@ public class TaskController {
 
         Optional<User> userOpt = userRepository.findByUsername(principal.getName());
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
+        task.setId(null);
         task.setUser(userOpt.get());
         
         if (task.getTaskType() == null) task.setTaskType("Naptár");

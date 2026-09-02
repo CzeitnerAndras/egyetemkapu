@@ -8,14 +8,14 @@ test.describe('Egyetemkapu E2E - About', () => {
 
     await expect(page.getByText('Czeitner András')).toBeVisible();
 
-    await expect(page.getByText('Tech Stack')).toBeVisible();
+    await expect(page.locator('main section').nth(3)).toBeVisible();
 
-    const frontendTech = ['React', 'TypeScript', 'TailwindCSS', 'React Router', 'Lucide Icons'];
+    const frontendTech = ['React', 'TypeScript', 'Vite', 'Tailwind CSS'];
     for (const tech of frontendTech) {
       await expect(page.getByText(tech, { exact: true })).toBeVisible();
     }
 
-    const backendTech = ['Java', 'Spring Boot', 'REST API', 'PostgreSQL', 'JWT Auth'];
+    const backendTech = ['Java', 'Spring Boot', 'PostgreSQL', 'JWT', 'Docker', 'Caddy'];
     for (const tech of backendTech) {
       await expect(page.getByText(tech, { exact: true })).toBeVisible();
     }
@@ -26,6 +26,6 @@ test.describe('Egyetemkapu E2E - About', () => {
 
     await expect(page.locator('main section')).toHaveCount(4);
 
-    await expect(page.locator('main section').nth(2).locator('li')).toHaveCount(8);
+    await expect(page.locator('main section').nth(2).locator('li')).toHaveCount(9);
   });
 });
