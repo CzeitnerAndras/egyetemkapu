@@ -21,6 +21,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @JsonIgnore
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -28,15 +29,19 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @JsonIgnore
     @Column(nullable = false)
     private String role = "ROLE_USER";
 
+    @JsonIgnore
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts = 0;
 
+    @JsonIgnore
     @Column(name = "lockout_end_time")
     private LocalDateTime lockoutEndTime;
 
+    @JsonIgnore
     @Column(name = "preferred_language", nullable = false, length = 8)
     private String preferredLanguage = "hu";
 }
