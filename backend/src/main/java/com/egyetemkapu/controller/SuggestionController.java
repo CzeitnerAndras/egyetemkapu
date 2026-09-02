@@ -40,6 +40,7 @@ public class SuggestionController {
         User currentUser = userRepository.findByEmail(currentPrincipalName)
                 .orElseGet(() -> userRepository.findByUsername(currentPrincipalName)
                 .orElseThrow(() -> new RuntimeException("Felhasználó nem található!")));
+        suggestion.setId(null);
         suggestion.setUser(currentUser);
         return suggestionRepository.save(suggestion);
     }
