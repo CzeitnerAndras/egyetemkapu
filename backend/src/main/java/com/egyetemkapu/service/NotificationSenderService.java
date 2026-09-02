@@ -1,5 +1,6 @@
 package com.egyetemkapu.service;
 
+import com.egyetemkapu.security.DiscordWebhookValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,10 @@ public class NotificationSenderService {
 
     @Async
     public void sendDiscordMessage(String webhookUrl, String message) {
+        if (!DiscordWebhookValidator.isAllowed(webhookUrl)) {
+            System.out.println("Elutasított Discord webhook URL, üzenet nem lett elküldve.");
+            return;
+        }
         Map<String, String> payload = Map.of("content", message);
         try {
             restTemplate.postForEntity(webhookUrl, payload, String.class);

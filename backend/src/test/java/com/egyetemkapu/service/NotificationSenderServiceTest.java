@@ -24,24 +24,31 @@ class NotificationSenderServiceTest {
     @InjectMocks
     private NotificationSenderService notificationSenderService;
 
+    private static final String VALID_WEBHOOK =
+            "https://discord.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyzABCDEF123456";
+
     @Test
     void sendDiscordMessage_SuccessfulCall_DoesNotThrowException() {
-        String webhookUrl = "https://discord.com/api/webhooks/teszt_url";
         String message = "Közeledik a vizsga!";
-        when(restTemplate.postForEntity(eq(webhookUrl), any(Map.class), eq(String.class)))
+        when(restTemplate.postForEntity(eq(VALID_WEBHOOK), any(Map.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("OK", HttpStatus.OK));
-        notificationSenderService.sendDiscordMessage(webhookUrl, message);
-        verify(restTemplate, times(1)).postForEntity(eq(webhookUrl), any(Map.class), eq(String.class));
+        notificationSenderService.sendDiscordMessage(VALID_WEBHOOK, message);
+        verify(restTemplate, times(1)).postForEntity(eq(VALID_WEBHOOK), any(Map.class), eq(String.class));
     }
 
     @Test
     void sendDiscordMessage_ApiThrowsError_CatchesExceptionSilently() {
-        String webhookUrl = "https://discord.com/api/webhooks/hibas_url";
         String message = "Teszt üzenet";
-        when(restTemplate.postForEntity(eq(webhookUrl), any(Map.class), eq(String.class)))
+        when(restTemplate.postForEntity(eq(VALID_WEBHOOK), any(Map.class), eq(String.class)))
                 .thenThrow(new RuntimeException("Connection Timeout"));
-        notificationSenderService.sendDiscordMessage(webhookUrl, message);
+        notificationSenderService.sendDiscordMessage(VALID_WEBHOOK, message);
 
-        verify(restTemplate, times(1)).postForEntity(eq(webhookUrl), any(Map.class), eq(String.class));
+        verify(restTemplate, times(1)).postForEntity(eq(VALID_WEBHOOK), any(Map.class), eq(String.class));
+    }
+
+    @Test
+    void sendDiscordMessage_RejectsNonDiscordUrl() {
+        notificationSenderService.sendDiscordMessage("http://127.0.0.1/latest/meta-data/", "ssrf");
+        verify(restTemplate, never()).postForEntity(any(String.class), any(), eq(String.class));
     }
 }
