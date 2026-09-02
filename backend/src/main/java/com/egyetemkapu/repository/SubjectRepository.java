@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject, Long> {
     List<Subject> findAllByUser(User user);
+    void deleteByUser(User user);
 }
