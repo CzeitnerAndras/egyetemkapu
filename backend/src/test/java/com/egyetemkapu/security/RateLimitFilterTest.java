@@ -108,4 +108,45 @@ class RateLimitFilterTest {
 
         assertEquals(200, response.getStatus());
     }
+
+    @Test
+    void allowsForgotPasswordWithinLimit() throws Exception {
+        when(rateLimitingService.resolveForgotPasswordBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(true);
+
+        MockHttpServletResponse response = callFilter("POST", "/api/auth/forgot-password");
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void rejectsForgotPasswordOverLimit() throws Exception {
+        when(rateLimitingService.resolveForgotPasswordBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(false);
+
+        MockHttpServletResponse response = callFilter("POST", "/api/auth/forgot-password");
+
+        assertEquals(429, response.getStatus());
+    }
+
+    @Test
+    void rejectsResetPasswordOverLimit() throws Exception {
+        when(rateLimitingService.resolvePasswordResetBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(false);
+
+        MockHttpServletResponse response = callFilter("POST", "/api/auth/reset-password");
+
+        assertEquals(429, response.getStatus());
+    }
+
+    private MockHttpServletResponse callFilter(String method, String uri) throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
+        request.setRequestURI(uri);
+        request.setRemoteAddr("127.0.0.1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        new RateLimitFilter(rateLimitingService).doFilter(request, response, chain);
+        return response;
+    }
 }
