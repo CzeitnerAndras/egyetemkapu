@@ -18,10 +18,21 @@ public class RateLimitingService {
         return cache.computeIfAbsent(username, this::newBucket);
     }
 
+    public Bucket resolveForgotPasswordBucket(String clientKey) {
+        return cache.computeIfAbsent("forgot:" + clientKey, key -> newFixedBucket(5, Duration.ofMinutes(15)));
+    }
+
+    public Bucket resolvePasswordResetBucket(String clientKey) {
+        return cache.computeIfAbsent("reset:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+    }
+
     private Bucket newBucket(String username) {
-        Refill refill = Refill.intervally(5, Duration.ofMinutes(1));
-        Bandwidth limit = Bandwidth.classic(5, refill);
-        
+        return newFixedBucket(5, Duration.ofMinutes(1));
+    }
+
+    private Bucket newFixedBucket(int capacity, Duration period) {
+        Refill refill = Refill.intervally(capacity, period);
+        Bandwidth limit = Bandwidth.classic(capacity, refill);
         return Bucket.builder()
                 .addLimit(limit)
                 .build();
