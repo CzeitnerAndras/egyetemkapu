@@ -6,6 +6,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.DocumentRepository;
 import com.egyetemkapu.repository.GradeRepository;
 import com.egyetemkapu.repository.NoteRepository;
+import com.egyetemkapu.repository.PasswordResetTokenRepository;
 import com.egyetemkapu.repository.RefreshTokenRepository;
 import com.egyetemkapu.repository.SettingsRepository;
 import com.egyetemkapu.repository.SubjectRepository;
@@ -31,6 +32,7 @@ public class UserAccountService {
     private final SubjectRepository subjectRepository;
     private final GradeRepository gradeRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     public UserAccountService(
             UserRepository userRepository,
@@ -41,7 +43,8 @@ public class UserAccountService {
             DocumentRepository documentRepository,
             SubjectRepository subjectRepository,
             GradeRepository gradeRepository,
-            RefreshTokenRepository refreshTokenRepository) {
+            RefreshTokenRepository refreshTokenRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
         this.noteRepository = noteRepository;
@@ -51,6 +54,7 @@ public class UserAccountService {
         this.subjectRepository = subjectRepository;
         this.gradeRepository = gradeRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     @Transactional
@@ -73,6 +77,7 @@ public class UserAccountService {
         suggestionRepository.deleteByUser(user);
         documentRepository.deleteByUploader(user);
         refreshTokenRepository.deleteByUser(user);
+        passwordResetTokenRepository.deleteByUser(user);
         userRepository.delete(user);
 
         for (Path file : filesToDelete) {
