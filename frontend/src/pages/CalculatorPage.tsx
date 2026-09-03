@@ -151,9 +151,9 @@ export default function CalculatorPage() {
                     <form onSubmit={handleCalculateAverage} className="flex flex-col">
 
                         {/* --- Tárgyak listája --- */}
-                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar w-full">
                             {subjects.map((subject, index) => (
-                                <div key={subject.id} className="flex space-x-2 items-center bg-white dark:bg-[#121212] secret:bg-transparent p-2 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow">
+                                <div key={subject.id} className="flex w-full min-w-0 space-x-2 items-center bg-white dark:bg-[#121212] secret:bg-transparent p-2 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow">
                                     <div className="w-6 text-center font-bold text-black dark:text-gray-500 secret:text-[#1cf85d] secret:font-mono">{index + 1}.</div>
 
                                     <input
@@ -161,7 +161,7 @@ export default function CalculatorPage() {
                                         placeholder={t('calc.subjectPlaceholder')}
                                         value={subject.name}
                                         onChange={(e) => handleSubjectChange(subject.id, 'name', e.target.value)}
-                                        className="flex-1 border-b-2 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-transparent outline-none px-2 py-1 text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder:secret:text-[#1cf85d]/50"
+                                        className="flex-1 min-w-0 border-b-2 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-transparent outline-none px-2 py-1 text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder:secret:text-[#1cf85d]/50"
                                     />
 
                                     <div className="w-20">
