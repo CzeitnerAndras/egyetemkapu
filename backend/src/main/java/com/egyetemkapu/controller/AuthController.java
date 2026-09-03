@@ -7,6 +7,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.service.PasswordResetService;
 import com.egyetemkapu.service.RefreshTokenService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,14 +28,21 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordResetService passwordResetService;
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCKOUT_DURATION_MINUTES = 15;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
+    public AuthController(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            RefreshTokenService refreshTokenService,
+            PasswordResetService passwordResetService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -142,5 +150,22 @@ public class AuthController {
             refreshTokenService.deleteByUserId(token.getUser().getId())
         );
         return ResponseEntity.ok(Map.of("message", "Sikeres kijelentkezés!"));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        passwordResetService.requestReset(request.get("email"));
+        return ResponseEntity.ok(Map.of("message", PasswordResetService.REQUEST_ACCEPTED_MESSAGE));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        Optional<String> error = passwordResetService.resetPassword(
+                request.get("token"),
+                request.get("newPassword"));
+        if (error.isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", error.get()));
+        }
+        return ResponseEntity.ok(Map.of("message", PasswordResetService.RESET_SUCCESS_MESSAGE));
     }
 }
