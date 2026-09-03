@@ -21,6 +21,12 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - AI_API_KEY=${AI_API_KEY:-nincs_megadva}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-nincs_megadva}
+      - APP_PUBLIC_URL=${APP_PUBLIC_URL:-https://egyetemkapu.hu}
+      - MAIL_HOST=${MAIL_HOST:-}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - MAIL_FROM=${MAIL_FROM:-noreply@egyetemkapu.hu}
       - TZ=Europe/Budapest
     ports:
       - "8080:8080"
