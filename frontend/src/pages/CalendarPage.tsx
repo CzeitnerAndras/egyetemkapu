@@ -182,10 +182,10 @@ export default function CalendarPage() {
     };
 
     return (
-        <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20">
+        <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-20 lg:items-stretch">
 
             {/* --- BAL OLDAL: NAPTÁR --- */}
-            <div className="lg:col-span-2 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
+            <div className="lg:col-span-2 flex flex-col h-full border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
                 <div className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10 text-black dark:text-white secret:text-[#1cf85d]">
                     <button onClick={prevMonth} className="p-2 hover:bg-white/20 secret:hover:bg-[#1cf85d] secret:hover:text-black rounded-full secret:rounded-none transition-colors cursor-pointer">
                         <ChevronLeft className="w-6 h-6" />
@@ -203,8 +203,8 @@ export default function CalendarPage() {
                     </button>
                 </div>
 
-                <div className="p-4 flex-1">
-                    <div className="grid grid-cols-7 gap-2 mb-2">
+                <div className="p-4 flex-1 flex flex-col min-h-0">
+                    <div className="grid grid-cols-7 gap-2 mb-2 shrink-0">
                         {dayNames.map(day => (
                             <div key={day} className="text-center font-bold text-black dark:text-[#a855f7] secret:text-[#1cf85d] text-lg uppercase secret:font-mono">
                                 {day}
@@ -212,9 +212,9 @@ export default function CalendarPage() {
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-7 gap-2">
+                    <div className="grid grid-cols-7 gap-2 flex-1 auto-rows-fr min-h-0">
                         {Array.from({ length: firstDay }).map((_, index) => (
-                            <div key={`empty-${index}`} className="h-16 lg:h-20 rounded-sm bg-black/5 dark:bg-white/5 secret:bg-transparent opacity-50"></div>
+                            <div key={`empty-${index}`} className="min-h-16 lg:min-h-24 h-full rounded-sm bg-black/5 dark:bg-white/5 secret:bg-transparent opacity-50"></div>
                         ))}
                         {Array.from({ length: daysInMonth }).map((_, index) => {
                             const day = index + 1;
@@ -226,14 +226,14 @@ export default function CalendarPage() {
                                 <div
                                     key={day}
                                     onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
-                                    className={`h-16 lg:h-20 relative cursor-pointer border-2 transition-all duration-300 flex flex-col items-center justify-center secret:font-mono
+                                    className={`min-h-16 lg:min-h-24 h-full relative cursor-pointer border-2 transition-all duration-300 flex flex-col items-center justify-center secret:font-mono
                                         ${isSelected
                                             ? 'border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-cyan-400 dark:bg-[#121212] secret:bg-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] secret:shadow-[0_0_15px_rgba(28,248,93,0.5)] scale-105 z-10'
                                             : 'border-transparent secret:border-[#1cf85d]/30 bg-white/50 dark:bg-[#121212]/50 secret:bg-transparent hover:border-black dark:hover:border-[#a855f7]/50 secret:hover:border-[#1cf85d] hover:bg-white dark:hover:bg-[#121212] secret:hover:bg-[#1cf85d] secret:hover:text-black shadow-sm group'
                                         }
                                     `}
                                 >
-                                    <span className={`text-xl font-bold 
+                                    <span className={`text-2xl lg:text-3xl font-bold 
                                         ${isToday ? 'text-fuchsia-600 dark:text-[#e879f9] secret:text-white' : 'text-black dark:text-gray-200 secret:text-[#1cf85d]'} 
                                         ${isSelected ? 'secret:text-black' : 'group-hover:secret:text-black'}
                                     `}>
@@ -253,7 +253,7 @@ export default function CalendarPage() {
             </div>
 
             {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
-            <div className="lg:col-span-1 flex flex-col space-y-4">
+            <div className="lg:col-span-1 flex flex-col space-y-4 h-full">
                 <div className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[6px_6px_0px_#d946ef] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
                     <div className="bg-cyan-400 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {t('cal.tasksOf', { date: selectedDate.toLocaleDateString(locale) })}
