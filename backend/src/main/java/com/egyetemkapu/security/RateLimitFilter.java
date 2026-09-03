@@ -36,6 +36,18 @@ public class RateLimitFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         
         String path = request.getRequestURI();
+
+        if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/forgot-password".equals(path)) {
+            if (!consume(rateLimitingService.resolveForgotPasswordBucket(clientIp(request)), response,
+                    "Túl sok jelszó-visszaállítási kérés. Próbáld újra később.")) {
+                return;
+            }
+        } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/reset-password".equals(path)) {
+            if (!consume(rateLimitingService.resolvePasswordResetBucket(clientIp(request)), response,
+                    "Túl sok jelszó-visszaállítási kísérlet. Próbáld újra később.")) {
+                return;
+            }
+        }
         
         boolean isProtectedTool = path.startsWith("/api/ai") || path.startsWith("/api/tools");
         boolean isCreditCalculator = path.startsWith("/api/calculator");
@@ -67,5 +79,25 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         filterChain.doFilter(request, response);
+    }
+
+    private boolean consume(Bucket tokenBucket, HttpServletResponse response, String errorMessage) throws IOException {
+        if (tokenBucket.tryConsume(1)) {
+            return true;
+        }
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"error\": \"" + errorMessage + "\"}");
+        return false;
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        String remote = request.getRemoteAddr();
+        return remote == null || remote.isBlank() ? "unknown" : remote;
     }
 }
