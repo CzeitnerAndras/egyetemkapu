@@ -6,6 +6,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.DocumentRepository;
 import com.egyetemkapu.repository.GradeRepository;
 import com.egyetemkapu.repository.NoteRepository;
+import com.egyetemkapu.repository.PasswordResetTokenRepository;
 import com.egyetemkapu.repository.RefreshTokenRepository;
 import com.egyetemkapu.repository.SettingsRepository;
 import com.egyetemkapu.repository.SubjectRepository;
@@ -39,6 +40,7 @@ class UserAccountServiceTest {
     @Mock private SubjectRepository subjectRepository;
     @Mock private GradeRepository gradeRepository;
     @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private PasswordResetTokenRepository passwordResetTokenRepository;
 
     @InjectMocks
     private UserAccountService userAccountService;
@@ -74,6 +76,7 @@ class UserAccountServiceTest {
         verify(suggestionRepository).deleteByUser(user);
         verify(documentRepository).deleteByUploader(user);
         verify(refreshTokenRepository).deleteByUser(user);
+        verify(passwordResetTokenRepository).deleteByUser(user);
         verify(userRepository).delete(user);
         assertFalse(Files.exists(uploaded));
     }
