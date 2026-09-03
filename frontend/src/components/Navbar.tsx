@@ -241,7 +241,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav ref={navRef} className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-black dark:text-white secret:text-[#1cf85d] flex items-center justify-between px-6 py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
+      <nav ref={navRef} className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-black dark:text-white secret:text-[#1cf85d] flex items-center justify-between flex-nowrap px-6 py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
 
         {/* --- Bal oldal: Ikonok és Menüpontok --- */}
         <div className="flex items-center space-x-10">
@@ -251,7 +251,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex space-x-6 text-lg font-bold uppercase tracking-wide">
+          <div className="hidden min-[1700px]:flex flex-nowrap items-center space-x-6 text-lg font-bold uppercase tracking-wide whitespace-nowrap">
             <Link to="/naptar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.calendar')}</Link>
             <Link to="/ai" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.ai')}</Link>
             <Link to="/kalkulator" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.calculators')}</Link>
@@ -263,7 +263,7 @@ export default function Navbar() {
         </div>
 
         {/* --- Jobb oldal: Ikonok --- */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 shrink-0">
 
           <button
             type="button"
@@ -316,7 +316,7 @@ export default function Navbar() {
               </button>
             </div>
 
-            <div className="flex md:hidden flex-col py-2 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
+            <div className="flex min-[1700px]:hidden flex-col py-2 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
               <span className="px-4 py-2 text-xs font-black text-black dark:text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
 
               <Link to="/naptar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
