@@ -98,6 +98,11 @@ export default function LoginPage() {
                         {t('login.register')}
                     </Link>
                 </div>
+                <div className="mt-3 text-center">
+                    <Link to="/elfelejtett-jelszo" className="text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] font-black hover:underline hover:text-black dark:hover:text-[#e879f9] secret:hover:text-white transition-colors secret:font-mono uppercase">
+                        {t('login.forgotPassword')}
+                    </Link>
+                </div>
             </div>
         </main>
     );
