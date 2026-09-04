@@ -3,6 +3,8 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import SecretPage from './pages/SecretPage';
 import AIAssistantPage from './pages/AIAssistantPage';
 import CalendarPage from './pages/CalendarPage';
@@ -30,6 +32,10 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />
+          <Route path="/elfelejtett-jelszo" element={<ForgotPasswordPage />} />
+          <Route path="/uj-jelszo" element={<ResetPasswordPage />} />
+          <Route path="/forgot-password" element={<Navigate to="/elfelejtett-jelszo" replace />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/S3CR3T" element={<SecretPage />} />
           <Route path="/ai" element={<AIAssistantPage />} />
           <Route path="/naptar" element={<CalendarPage />} />
