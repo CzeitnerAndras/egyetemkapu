@@ -36,6 +36,8 @@ describe('LoginPage Komponens', () => {
         expect(screen.getByText('login.email')).toBeInTheDocument();
         expect(screen.getByText('login.password')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'login.submit' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'login.register' })).toHaveAttribute('href', '/register');
+        expect(screen.getByRole('link', { name: 'login.forgotPassword' })).toHaveAttribute('href', '/elfelejtett-jelszo');
     });
 
     it('sikeres bejelentkezés esetén elmenti a tokeneket és átirányít a főoldalra', async () => {
