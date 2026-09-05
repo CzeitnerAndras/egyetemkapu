@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, createEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import Navbar from './Navbar';
@@ -45,6 +45,19 @@ describe('Navbar Komponens', () => {
         document.documentElement.className = '';
     });
 
+    const getNavScroll = (container: HTMLElement) =>
+        container.querySelector('.nav-scroll') as HTMLDivElement;
+
+    const pageLinkHrefs: Record<string, string> = {
+        'nav.calendar': '/naptar',
+        'nav.ai': '/ai',
+        'nav.calculators': '/kalkulator',
+        'nav.knowledge': '/tudastar',
+        'nav.reference': '/hivatkozas',
+        'nav.focus': '/tanuloszoba',
+        'nav.links': '/linktar',
+    };
+
     it('megjeleníti a fő navigációs linkeket, admin szekció nélkül bejelentkezés nélkül', () => {
         renderWithRouter();
 
@@ -52,6 +65,70 @@ describe('Navbar Komponens', () => {
         expect(screen.getByText('nav.ai')).toBeInTheDocument();
         expect(screen.getByText('nav.calculators')).toBeInTheDocument();
         expect(screen.queryByText('nav.adminSection')).not.toBeInTheDocument();
+    });
+
+    it('a húzható sávban minden oldal linkjét a helyes útvonallal jeleníti meg', () => {
+        const { container } = renderWithRouter();
+        const strip = getNavScroll(container);
+
+        expect(strip).toBeInTheDocument();
+        Object.entries(pageLinkHrefs).forEach(([label, href]) => {
+            const link = strip.querySelector(`a[href="${href}"]`);
+            expect(link).toHaveTextContent(label);
+            expect(link).toHaveAttribute('draggable', 'false');
+        });
+    });
+
+    it('a hasznossági ikonokat jobbra igazítja', () => {
+        const { container } = renderWithRouter();
+        const icons = container.querySelector('.ml-auto') as HTMLElement;
+
+        expect(icons).toBeInTheDocument();
+        expect(icons.querySelector('.lucide-flag')).toBeInTheDocument();
+        expect(icons.querySelector('.lucide-mail')).toBeInTheDocument();
+        expect(icons.querySelector('.lucide-user')).toBeInTheDocument();
+        expect(icons.querySelector('.lucide-menu')).toBeInTheDocument();
+    });
+
+    it('bal kattintásos húzáskor a sávot görgeti, és nem navigál a fülre', () => {
+        const { container } = renderWithRouter();
+        const strip = getNavScroll(container);
+        let scrollLeft = 0;
+        Object.defineProperty(strip, 'scrollLeft', {
+            configurable: true,
+            get: () => scrollLeft,
+            set: (value: number) => { scrollLeft = value; },
+        });
+
+        const pointer = (type: string, clientX: number) =>
+            new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX });
+
+        strip.dispatchEvent(pointer('pointerdown', 220));
+        strip.dispatchEvent(pointer('pointermove', 140));
+        expect(scrollLeft).toBe(80);
+
+        strip.dispatchEvent(pointer('pointerup', 140));
+        fireEvent.click(strip.querySelector('a[href="/naptar"]')!);
+
+        expect(window.location.pathname).not.toBe('/naptar');
+    });
+
+    it('egyszerű kattintással megnyitja a naptár oldalt', async () => {
+        const { container } = renderWithRouter();
+        const user = setup();
+
+        await user.click(getNavScroll(container).querySelector('a[href="/naptar"]')!);
+
+        expect(window.location.pathname).toBe('/naptar');
+    });
+
+    it('megakadályozza a böngésző natív link-húzását a füleken', () => {
+        const { container } = renderWithRouter();
+        const calendarLink = getNavScroll(container).querySelector('a[href="/naptar"]')!;
+        const event = createEvent.dragStart(calendarLink);
+        fireEvent(calendarLink, event);
+
+        expect(event.defaultPrevented).toBe(true);
     });
 
     it('tokennel lekéri a felhasználót, és admin szerepkör esetén megjeleníti az admin panel linket', async () => {
@@ -221,6 +298,7 @@ describe('Navbar Komponens', () => {
         await openMenu(user, container);
 
         expect(screen.getByText('nav.system')).toBeInTheDocument();
+        expect(screen.getByText('nav.menu')).toBeInTheDocument();
         expect(screen.getByText('nav.about')).toBeInTheDocument();
         expect(screen.getByText('nav.faq')).toBeInTheDocument();
         expect(screen.getByText('nav.settings')).toBeInTheDocument();
