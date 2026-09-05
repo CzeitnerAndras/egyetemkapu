@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { PageShell } from '../components/PageLayout';
 
 interface Message {
     id: number;
@@ -126,7 +127,7 @@ export default function AIAssistantPage() {
     }, []);
 
     return (
-        <main className="w-full max-w-5xl mx-auto mt-8 px-4 h-[calc(100vh-120px)] flex flex-col relative z-20">
+        <PageShell variant="fill">
 
             {/* --- Fő Konténer --- */}
             <div className="flex-1 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 overflow-hidden relative rounded-sm secret:rounded-none">
@@ -150,7 +151,7 @@ export default function AIAssistantPage() {
                                 </div>
                             )}
 
-                            <div className={`max-w-[75%] p-4 border-2 text-lg leading-relaxed transition-all duration-300 secret:font-mono ${msg.role === 'user'
+                            <div className={`max-w-[85%] sm:max-w-[75%] p-3 sm:p-4 border-2 text-base sm:text-lg leading-relaxed transition-all duration-300 secret:font-mono ${msg.role === 'user'}
                                 ? 'bg-cyan-400 dark:bg-gradient-to-br dark:from-[#2d2d2d] dark:to-[#3d3d3d] secret:bg-none secret:bg-transparent border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed text-black dark:text-gray-100 secret:text-[#1cf85d] rounded-tl-xl rounded-tr-xl rounded-bl-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg'
                                 : 'bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-gray-200 secret:text-[#1cf85d] rounded-tr-xl rounded-bl-xl rounded-br-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg'
                                 }`}>
@@ -184,19 +185,19 @@ export default function AIAssistantPage() {
 
                 {/* --- Input Szekció --- */}
                 <div className="p-4 bg-slate-100 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-transparent border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors z-10 shadow-none dark:shadow-none">
-                    <form onSubmit={handleSendMessage} className="flex space-x-4">
+                    <form onSubmit={handleSendMessage} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder={t('ai.placeholder')}
-                            className="flex-1 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-[#1cf85d]/30 text-lg bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] placeholder:secret:text-[#1cf85d]/50 secret:font-mono transition-all shadow-[4px_4px_0px_#000] dark:shadow-inner"
+                            className="flex-1 min-w-0 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-[#1cf85d]/30 text-base sm:text-lg bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] placeholder:secret:text-[#1cf85d]/50 secret:font-mono transition-all shadow-[4px_4px_0px_#000] dark:shadow-inner"
                             disabled={isLoading}
                         />
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-6 font-bold border-4 border-black dark:border-transparent secret:border-[#1cf85d] transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center cursor-pointer secret:font-mono secret:uppercase"
+                            className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-6 py-3 sm:py-0 font-bold border-4 border-black dark:border-transparent secret:border-[#1cf85d] transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-md disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer secret:font-mono secret:uppercase"
                         >
                             <Send className="w-6 h-6 mr-2 font-bold" />
                             {t('ai.send')}
@@ -205,6 +206,6 @@ export default function AIAssistantPage() {
                 </div>
 
             </div>
-        </main>
+        </PageShell>
     );
 }
