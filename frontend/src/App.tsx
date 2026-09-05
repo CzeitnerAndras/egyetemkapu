@@ -25,7 +25,7 @@ function App() {
   return (
     <LanguageProvider>
     <Router>
-      <div className="min-h-screen bg-gradient-to-br from-slate-300 via-indigo-100 to-slate-200 animate-gradient dark:from-[#121212] dark:via-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-[#031e08] secret:text-[#1cf85d] transition-colors duration-500">
+      <div className="min-h-screen overflow-x-clip bg-gradient-to-br from-slate-300 via-indigo-100 to-slate-200 animate-gradient dark:from-[#121212] dark:via-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-[#031e08] secret:text-[#1cf85d] transition-colors duration-500">
         <Navbar />
 
         <Routes>
