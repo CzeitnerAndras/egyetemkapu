@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Calculator, Sigma, Plus, Trash2, FunctionSquare, ArrowRight, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { PageShell } from '../components/PageLayout';
 
 interface Subject {
     id: number;
@@ -135,7 +136,7 @@ export default function CalculatorPage() {
     };
 
     return (
-        <main className="w-full max-w-7xl mx-auto mt-6 pb-12 px-4 grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-20 lg:items-start">
+        <PageShell className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 lg:items-start">
             {/* --- BAL OLDAL: SÚLYOZOTT ÁTLAG / KREDITINDEX --- */}
             <div className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm secret:rounded-none h-fit">
 
@@ -153,8 +154,8 @@ export default function CalculatorPage() {
                         {/* --- Tárgyak listája --- */}
                         <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar w-full">
                             {subjects.map((subject, index) => (
-                                <div key={subject.id} className="flex w-full min-w-0 space-x-2 items-center bg-white dark:bg-[#121212] secret:bg-transparent p-2 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow">
-                                    <div className="w-6 text-center font-bold text-black dark:text-gray-500 secret:text-[#1cf85d] secret:font-mono">{index + 1}.</div>
+                                <div key={subject.id} className="flex flex-col sm:flex-row w-full min-w-0 gap-2 sm:space-x-2 sm:items-center bg-white dark:bg-[#121212] secret:bg-transparent p-2 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow">
+                                    <div className="hidden sm:block w-6 text-center font-bold text-black dark:text-gray-500 secret:text-[#1cf85d] secret:font-mono">{index + 1}.</div>
 
                                     <input
                                         type="text"
@@ -164,7 +165,8 @@ export default function CalculatorPage() {
                                         className="flex-1 min-w-0 border-b-2 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-transparent outline-none px-2 py-1 text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder:secret:text-[#1cf85d]/50"
                                     />
 
-                                    <div className="w-20">
+                                    <div className="flex gap-2 sm:contents">
+                                    <div className="flex-1 sm:flex-none sm:w-20">
                                         <label className="text-xs font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase block text-center">{t('calc.credit')}</label>
                                         <input
                                             type="number" min="1" max="30" required
@@ -174,7 +176,7 @@ export default function CalculatorPage() {
                                         />
                                     </div>
 
-                                    <div className="w-20">
+                                    <div className="flex-1 sm:flex-none sm:w-20">
                                         <label className="text-xs font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase block text-center">{t('calc.grade')}</label>
                                         <select
                                             value={subject.grade}
@@ -192,11 +194,12 @@ export default function CalculatorPage() {
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveSubject(subject.id)}
-                                        className="p-2 text-black hover:text-red-600 dark:text-gray-500 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] transition-colors cursor-pointer"
+                                        className="p-2 text-black hover:text-red-600 dark:text-gray-500 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] transition-colors cursor-pointer self-end sm:self-auto"
                                         title={t('calc.delete')}
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -338,6 +341,6 @@ export default function CalculatorPage() {
                     )}
                 </div>
             </div>
-        </main>
+        </PageShell>
     );
 }
