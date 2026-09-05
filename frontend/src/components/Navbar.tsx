@@ -19,7 +19,54 @@ export default function Navbar() {
   const clickCountRef = useRef<number | null>(0);
   const timeoutRef = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
+  const navScrollRef = useRef<HTMLDivElement>(null);
+  const navDragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
+  const [navOverflow, setNavOverflow] = useState({ left: false, right: false });
   const navigate = useNavigate();
+
+  const updateNavOverflow = useCallback(() => {
+    const el = navScrollRef.current;
+    if (!el) {
+      setNavOverflow({ left: false, right: false });
+      return;
+    }
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const next = {
+      left: el.scrollLeft > 4,
+      right: maxScroll - el.scrollLeft > 4,
+    };
+    setNavOverflow((prev) => (
+      prev.left === next.left && prev.right === next.right ? prev : next
+    ));
+  }, []);
+
+  useEffect(() => {
+    const el = navScrollRef.current;
+    if (!el) return;
+
+    updateNavOverflow();
+    el.addEventListener('scroll', updateNavOverflow, { passive: true });
+    window.addEventListener('resize', updateNavOverflow);
+
+    const onWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      el.scrollLeft += event.deltaY;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+
+    const onNativeDragStart = (event: DragEvent) => {
+      event.preventDefault();
+    };
+    el.addEventListener('dragstart', onNativeDragStart, true);
+
+    return () => {
+      el.removeEventListener('scroll', updateNavOverflow);
+      window.removeEventListener('resize', updateNavOverflow);
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('dragstart', onNativeDragStart, true);
+    };
+  }, [updateNavOverflow, language]);
 
   const loadCurrentUser = useCallback(async () => {
     if (!localStorage.getItem('token')) {
@@ -239,31 +286,104 @@ export default function Navbar() {
     setIsProfileMenuOpen(false);
   };
 
+  const handleNavPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const el = navScrollRef.current;
+    if (!el || event.button > 0) return;
+    navDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: el.scrollLeft,
+      moved: false,
+    };
+    el.classList.add('is-dragging');
+    el.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleNavDragStart = (event: React.DragEvent<HTMLElement>) => {
+    event.preventDefault();
+  };
+
+  const handleNavPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const el = navScrollRef.current;
+    if (!el || !navDragRef.current.active) return;
+    const delta = event.clientX - navDragRef.current.startX;
+    if (Math.abs(delta) > 6) {
+      navDragRef.current.moved = true;
+      event.preventDefault();
+    }
+    el.scrollLeft = navDragRef.current.scrollLeft - delta;
+  };
+
+  const endNavDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const el = navScrollRef.current;
+    navDragRef.current.active = false;
+    el?.classList.remove('is-dragging');
+    if (el?.hasPointerCapture?.(event.pointerId)) {
+      el.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleNavClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (navDragRef.current.moved) {
+      event.preventDefault();
+      event.stopPropagation();
+      navDragRef.current.moved = false;
+    }
+  };
+
+  const pageLinks = [
+    { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
+    { to: '/ai', label: t('nav.ai'), icon: Bot },
+    { to: '/kalkulator', label: t('nav.calculators'), icon: Calculator },
+    { to: '/tudastar', label: t('nav.knowledge'), icon: BookOpen },
+    { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
+    { to: '/tanuloszoba', label: t('nav.focus'), icon: BrainCircuit },
+    { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
+  ];
+
   return (
     <>
-      <nav ref={navRef} className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-black dark:text-white secret:text-[#1cf85d] flex items-center justify-between flex-nowrap px-6 py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
+      <nav ref={navRef} className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-black dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
 
-        {/* --- Bal oldal: Ikonok és Menüpontok --- */}
-        <div className="flex items-center space-x-10">
-          <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group">
-            <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-cyan-400 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
-              ƎK
-            </span>
-          </Link>
+        <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group shrink-0">
+          <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-cyan-400 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
+            ƎK
+          </span>
+        </Link>
 
-          <div className="hidden min-[1700px]:flex flex-nowrap items-center space-x-6 text-lg font-bold uppercase tracking-wide whitespace-nowrap">
-            <Link to="/naptar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.calendar')}</Link>
-            <Link to="/ai" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.ai')}</Link>
-            <Link to="/kalkulator" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.calculators')}</Link>
-            <Link to="/tudastar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.knowledge')}</Link>
-            <Link to="/hivatkozas" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.reference')}</Link>
-            <Link to="/tanuloszoba" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.focus')}</Link>
-            <Link to="/linktar" className="hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all">{t('nav.links')}</Link>
+        <div className="hidden md:block relative min-w-0 flex-1 md:ml-6 lg:ml-10">
+          {navOverflow.left && (
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-cyan-400 to-transparent dark:from-[#1e1e1e] secret:from-black"></div>
+          )}
+          {navOverflow.right && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-fuchsia-400 to-transparent dark:from-[#3b0764] secret:from-black"></div>
+          )}
+          <div
+            ref={navScrollRef}
+            onPointerDown={handleNavPointerDown}
+            onPointerMove={handleNavPointerMove}
+            onPointerUp={endNavDrag}
+            onPointerCancel={endNavDrag}
+            onDragStart={handleNavDragStart}
+            onClickCapture={handleNavClickCapture}
+            className="nav-scroll flex flex-nowrap items-center gap-5 lg:gap-6 text-sm lg:text-lg font-bold uppercase tracking-wide whitespace-nowrap"
+          >
+            {pageLinks.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                draggable={false}
+                onDragStart={handleNavDragStart}
+                className="shrink-0 hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all"
+              >
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
 
         {/* --- Jobb oldal: Ikonok --- */}
-        <div className="flex items-center space-x-4 shrink-0">
+        <div className="flex items-center space-x-2 sm:space-x-4 shrink-0 ml-auto">
 
           <button
             type="button"
@@ -292,7 +412,7 @@ export default function Navbar() {
 
         {/* --- Fő Dropdown Menü --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 shadow-[-8px_8px_0px_#d946ef] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#d946ef] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
             <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50 bg-cyan-400 dark:bg-transparent secret:bg-transparent">
               <div className="flex items-center space-x-2">
@@ -316,30 +436,21 @@ export default function Navbar() {
               </button>
             </div>
 
-            <div className="flex min-[1700px]:hidden flex-col py-2 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
+            <div className="flex md:hidden flex-col py-2 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
               <span className="px-4 py-2 text-xs font-black text-black dark:text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
-
-              <Link to="/naptar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Calendar className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.calendar')}
-              </Link>
-              <Link to="/ai" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Bot className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.ai')}
-              </Link>
-              <Link to="/kalkulator" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <Calculator className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.calculators')}
-              </Link>
-              <Link to="/tudastar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <BookOpen className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.knowledge')}
-              </Link>
-              <Link to="/hivatkozas" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <BookMarked className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.reference')}
-              </Link>
-              <Link to="/tanuloszoba" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <BrainCircuit className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.focus')}
-              </Link>
-              <Link to="/linktar" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
-                <LinkIcon className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.links')}
-              </Link>
+              {pageLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setIsMenuOpen(false)}
+                    className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm"
+                  >
+                    <Icon className="w-4 h-4 mr-3 text-black dark:text-white" /> {item.label}
+                  </Link>
+                );
+              })}
             </div>
 
             <div className="flex flex-col py-2">
@@ -370,7 +481,7 @@ export default function Navbar() {
 
         {/* --- Profil Dropdown Menü --- */}
         {isProfileMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-56 shadow-[-8px_8px_0px_#06b6d4] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-56 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#06b6d4] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
             <div className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-black/20 secret:bg-transparent cursor-default">
               <span className="block text-xs text-black dark:text-white/70 secret:text-[#1cf85d]/70 font-bold uppercase tracking-wider mb-0.5 secret:font-mono">{t('nav.loggedInAs')}</span>
