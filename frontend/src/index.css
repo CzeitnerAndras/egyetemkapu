@@ -5,6 +5,7 @@
 html,
 body {
     min-height: 100vh;
+    overflow-x: clip;
     background-color: #a4a3a4;
     transition: background-color 0.3s ease;
 }
@@ -12,6 +13,31 @@ body {
 html.dark,
 html.dark body {
     background-color: #121212 !important;
+}
+
+.nav-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    cursor: grab;
+    user-select: none;
+    touch-action: pan-x;
+}
+
+.nav-scroll.is-dragging {
+    cursor: grabbing;
+}
+
+.nav-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-scroll a,
+.nav-scroll a * {
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .notepad-lines {
