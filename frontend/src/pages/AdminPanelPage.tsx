@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShieldAlert, Check, X, Download, Lightbulb, Trash2, FileText, Megaphone, Plus } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { PageHeader, PageShell } from '../components/PageLayout';
 
 interface PendingDocument {
     id: number;
@@ -154,14 +155,8 @@ export default function AdminPanelPage() {
     };
 
     return (
-        <main className="w-full max-w-5xl mx-auto mt-6 pb-12 px-4 relative z-20">
-
-            <div className="flex items-center space-x-3 mb-8 bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
-                <ShieldAlert className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-                <h1 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                    {t('admin.title')}
-                </h1>
-            </div>
+        <PageShell>
+            <PageHeader icon={ShieldAlert}>{t('admin.title')}</PageHeader>
 
             {/* --- ÚJ HÍR FELTÖLTÉSE --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_30px_rgba(168,85,247,0.15)] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 mb-8 secret:rounded-none">
@@ -317,6 +312,6 @@ export default function AdminPanelPage() {
                     </div>
                 )}
             </div>
-        </main>
+        </PageShell>
     );
 }
