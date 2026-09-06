@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import ResetPasswordPage from './ResetPasswordPage';
+import ResetPasswordPage, { readPasswordResetToken } from './ResetPasswordPage';
 
 jest.mock('../i18n/LanguageContext', () => ({
     useLanguage: () => ({
@@ -32,6 +32,26 @@ describe('ResetPasswordPage Komponens', () => {
         globalThis.fetch = jest.fn();
         mockNavigate.mockClear();
         jest.clearAllMocks();
+        window.location.hash = '';
+    });
+
+    afterEach(() => {
+        window.location.hash = '';
+    });
+
+    it('a hash fragmentből olvassa a tokent, a query csak tartalék', () => {
+        expect(readPasswordResetToken(new URLSearchParams('token=query'), '#token=hash')).toBe('hash');
+        expect(readPasswordResetToken(new URLSearchParams('token=query'), '')).toBe('query');
+        expect(readPasswordResetToken(new URLSearchParams(), '#token=hash')).toBe('hash');
+        expect(readPasswordResetToken(new URLSearchParams(), '')).toBe('');
+    });
+
+    it('hash tokennel megjeleníti az űrlapot', () => {
+        window.location.hash = '#token=abc';
+        renderReset('/uj-jelszo');
+
+        expect(screen.getByRole('button', { name: 'reset.submit' })).toBeInTheDocument();
+        expect(screen.queryByText('reset.missingToken')).not.toBeInTheDocument();
     });
 
     it('token nélkül a hiányzó link üzenetet mutatja, űrlap nélkül', () => {

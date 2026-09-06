@@ -21,9 +21,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final Set<String> PUBLIC_PATHS = Set.of("/api/tools/calculator/count");
 
     private final RateLimitingService rateLimitingService;
+    private final ClientIpResolver clientIpResolver;
 
-    public RateLimitFilter(RateLimitingService rateLimitingService) {
+    public RateLimitFilter(RateLimitingService rateLimitingService, ClientIpResolver clientIpResolver) {
         this.rateLimitingService = rateLimitingService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Override
@@ -38,12 +40,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/forgot-password".equals(path)) {
-            if (!consume(rateLimitingService.resolveForgotPasswordBucket(clientIp(request)), response,
+            if (!consume(rateLimitingService.resolveForgotPasswordBucket(clientIpResolver.resolve(request)), response,
                     "Túl sok jelszó-visszaállítási kérés. Próbáld újra később.")) {
                 return;
             }
         } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/reset-password".equals(path)) {
-            if (!consume(rateLimitingService.resolvePasswordResetBucket(clientIp(request)), response,
+            if (!consume(rateLimitingService.resolvePasswordResetBucket(clientIpResolver.resolve(request)), response,
                     "Túl sok jelszó-visszaállítási kísérlet. Próbáld újra később.")) {
                 return;
             }
@@ -90,14 +92,5 @@ public class RateLimitFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write("{\"error\": \"" + errorMessage + "\"}");
         return false;
-    }
-
-    private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        String remote = request.getRemoteAddr();
-        return remote == null || remote.isBlank() ? "unknown" : remote;
     }
 }

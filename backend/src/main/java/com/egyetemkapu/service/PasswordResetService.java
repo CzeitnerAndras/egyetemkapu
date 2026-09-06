@@ -73,7 +73,7 @@ public class PasswordResetService {
         resetToken.setUsed(false);
         passwordResetTokenRepository.save(resetToken);
 
-        passwordResetNotifier.sendResetLink(user, publicAppUrl + "/uj-jelszo?token=" + rawToken);
+        passwordResetNotifier.sendResetLink(user, publicAppUrl + "/uj-jelszo#token=" + rawToken);
     }
 
     @Transactional

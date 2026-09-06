@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,8 +43,12 @@ class RateLimitFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
-        new RateLimitFilter(rateLimitingService).doFilter(request, response, chain);
+        newFilter().doFilter(request, response, chain);
         return response;
+    }
+
+    private RateLimitFilter newFilter() {
+        return new RateLimitFilter(rateLimitingService, new ClientIpResolver("127.0.0.1,::1"));
     }
 
     private void authenticateAs(String username) {
@@ -139,6 +144,40 @@ class RateLimitFilterTest {
         assertEquals(429, response.getStatus());
     }
 
+    @Test
+    void ignoresSpoofedForwardedForFromUntrustedRemote() throws Exception {
+        when(rateLimitingService.resolveForgotPasswordBucket("203.0.113.10")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/forgot-password");
+        request.setRequestURI("/api/auth/forgot-password");
+        request.setRemoteAddr("203.0.113.10");
+        request.addHeader("X-Forwarded-For", "1.2.3.4");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        newFilter().doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        verify(rateLimitingService).resolveForgotPasswordBucket("203.0.113.10");
+    }
+
+    @Test
+    void usesRightmostForwardedHopFromTrustedProxy() throws Exception {
+        when(rateLimitingService.resolveForgotPasswordBucket("198.51.100.20")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(true);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/forgot-password");
+        request.setRequestURI("/api/auth/forgot-password");
+        request.setRemoteAddr("127.0.0.1");
+        request.addHeader("X-Forwarded-For", "1.2.3.4, 198.51.100.20");
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        newFilter().doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        verify(rateLimitingService).resolveForgotPasswordBucket("198.51.100.20");
+    }
+
     private MockHttpServletResponse callFilter(String method, String uri) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
         request.setRequestURI(uri);
@@ -146,7 +185,7 @@ class RateLimitFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
-        new RateLimitFilter(rateLimitingService).doFilter(request, response, chain);
+        newFilter().doFilter(request, response, chain);
         return response;
     }
 }

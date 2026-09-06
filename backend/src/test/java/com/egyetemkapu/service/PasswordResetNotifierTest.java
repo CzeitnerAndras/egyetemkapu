@@ -49,10 +49,10 @@ class PasswordResetNotifierTest {
         when(settingsRepository.findByUser(user)).thenReturn(Optional.of(settings));
         when(environment.acceptsProfiles(any(Profiles.class))).thenReturn(false);
 
-        notifier("smtp.example.com").sendResetLink(user, "https://egyetemkapu.hu/uj-jelszo?token=abc");
+        notifier("smtp.example.com").sendResetLink(user, "https://egyetemkapu.hu/uj-jelszo#token=abc");
 
         verify(mailSender).send(any(MimeMessage.class));
-        verify(notificationSenderService).sendTelegramMessage(eq("12345"), contains("https://egyetemkapu.hu/uj-jelszo?token=abc"));
+        verify(notificationSenderService).sendTelegramMessage(eq("12345"), contains("https://egyetemkapu.hu/uj-jelszo#token=abc"));
     }
 
     @Test
@@ -65,7 +65,7 @@ class PasswordResetNotifierTest {
         when(settingsRepository.findByUser(user)).thenReturn(Optional.empty());
         when(environment.acceptsProfiles(any(Profiles.class))).thenReturn(false);
 
-        notifier("").sendResetLink(user, "https://egyetemkapu.hu/uj-jelszo?token=abc");
+        notifier("").sendResetLink(user, "https://egyetemkapu.hu/uj-jelszo#token=abc");
 
         verify(mailSender, never()).send(any(MimeMessage.class));
         verify(notificationSenderService, never()).sendTelegramMessage(anyString(), anyString());

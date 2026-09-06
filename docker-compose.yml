@@ -22,6 +22,7 @@ services:
       - AI_API_KEY=${AI_API_KEY:-nincs_megadva}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-nincs_megadva}
       - APP_PUBLIC_URL=${APP_PUBLIC_URL:-https://egyetemkapu.hu}
+      - APP_TRUSTED_PROXIES=${APP_TRUSTED_PROXIES:-127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
       - MAIL_HOST=${MAIL_HOST:-}
       - MAIL_PORT=${MAIL_PORT:-587}
       - MAIL_USERNAME=${MAIL_USERNAME:-}
@@ -29,7 +30,7 @@ services:
       - MAIL_FROM=${MAIL_FROM:-noreply@egyetemkapu.hu}
       - TZ=Europe/Budapest
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./uploads:/app/uploads
     depends_on:

@@ -93,7 +93,7 @@ class PasswordResetServiceTest {
         assertTrue(saved.getExpiryDate().isAfter(LocalDateTime.now().plusMinutes(50)));
 
         String url = sentUrl.get();
-        assertTrue(url.startsWith("https://egyetemkapu.hu/uj-jelszo?token="));
+        assertTrue(url.startsWith("https://egyetemkapu.hu/uj-jelszo#token="));
         String rawToken = url.substring(url.indexOf("token=") + 6);
         assertEquals(PasswordResetTokens.hash(rawToken), saved.getTokenHash());
         assertFalse(url.contains(saved.getTokenHash()));
