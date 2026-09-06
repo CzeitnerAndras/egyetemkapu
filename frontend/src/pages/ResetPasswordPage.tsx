@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { AuthCard, AuthHeader, PageShell } from '../components/PageLayout';
 
 export default function ResetPasswordPage() {
     const { t } = useLanguage();
@@ -59,15 +60,13 @@ export default function ResetPasswordPage() {
     };
 
     return (
-        <main className="max-w-md mx-auto mt-20 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] relative z-20 transition-all duration-300 rounded-sm secret:rounded-none hover:-translate-y-1 hover:shadow-[12px_12px_0px_#06b6d4] dark:hover:shadow-[0_0_50px_rgba(168,85,247,0.4)] secret:hover:shadow-[0_0_30px_rgba(28,248,93,0.2)] flex flex-col overflow-hidden">
+        <PageShell variant="auth">
+        <AuthCard accent="cyan">
+            <AuthHeader tone="fuchsia">
+                {t('reset.title')}
+            </AuthHeader>
 
-            <div className="bg-fuchsia-400 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
-                <h1 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
-                    {t('reset.title')}
-                </h1>
-            </div>
-
-            <div className="p-8">
+            <div className="p-6 sm:p-8">
                 {error && (
                     <div className="bg-red-400 dark:bg-red-900/40 secret:bg-black border-4 border-black dark:border-red-500 secret:border-[#1cf85d] text-black dark:text-red-300 secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
                         &gt; {t('reset.errorPrefix')}: {error}
@@ -134,6 +133,7 @@ export default function ResetPasswordPage() {
                     </Link>
                 </div>
             </div>
-        </main>
+        </AuthCard>
+        </PageShell>
     );
 }
