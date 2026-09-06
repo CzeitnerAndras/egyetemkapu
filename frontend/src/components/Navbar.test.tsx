@@ -122,6 +122,21 @@ describe('Navbar Komponens', () => {
         expect(window.location.pathname).toBe('/naptar');
     });
 
+    it('kis egérmozgás után is megnyitja a naptár oldalt', async () => {
+        const { container } = renderWithRouter();
+        const strip = getNavScroll(container);
+        const link = strip.querySelector('a[href="/naptar"]')!;
+        const pointer = (type: string, clientX: number) =>
+            new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX });
+
+        strip.dispatchEvent(pointer('pointerdown', 220));
+        strip.dispatchEvent(pointer('pointermove', 216));
+        strip.dispatchEvent(pointer('pointerup', 216));
+        fireEvent.click(link);
+
+        expect(window.location.pathname).toBe('/naptar');
+    });
+
     it('megakadályozza a böngésző natív link-húzását a füleken', () => {
         const { container } = renderWithRouter();
         const calendarLink = getNavScroll(container).querySelector('a[href="/naptar"]')!;
@@ -314,6 +329,21 @@ describe('Navbar Komponens', () => {
         fireEvent.mouseDown(document.body);
 
         expect(screen.queryByText('nav.system')).not.toBeInTheDocument();
+    });
+
+    it('mentett téma nélkül világos módban indul, a rendszer sötét preferenciájától függetlenül', () => {
+        document.documentElement.classList.add('dark');
+        renderWithRouter();
+
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+        expect(localStorage.getItem('theme')).toBeNull();
+    });
+
+    it('elmentett sötét témával sötét módban indul', () => {
+        localStorage.setItem('theme', 'dark');
+        renderWithRouter();
+
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
 
     it('a témaváltó kapcsolóra kattintva váltja a sötét módot, és menti a localStorage-ba', async () => {

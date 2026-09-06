@@ -20,7 +20,7 @@ export default function Navbar() {
   const timeoutRef = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const navScrollRef = useRef<HTMLDivElement>(null);
-  const navDragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
+  const navDragRef = useRef({ active: false, dragging: false, startX: 0, scrollLeft: 0, moved: false });
   const [navOverflow, setNavOverflow] = useState({ left: false, right: false });
   const navigate = useNavigate();
 
@@ -121,9 +121,12 @@ export default function Navbar() {
       setIsDarkMode(true);
       localStorage.setItem('secretMode', 'true');
       localStorage.setItem('theme', 'dark');
-    } else if (document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark') {
+    } else if (localStorage.getItem('theme') === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
     }
 
     const handleSecretLogoff = () => {
@@ -291,12 +294,11 @@ export default function Navbar() {
     if (!el || event.button > 0) return;
     navDragRef.current = {
       active: true,
+      dragging: false,
       startX: event.clientX,
       scrollLeft: el.scrollLeft,
       moved: false,
     };
-    el.classList.add('is-dragging');
-    el.setPointerCapture?.(event.pointerId);
   };
 
   const handleNavDragStart = (event: React.DragEvent<HTMLElement>) => {
@@ -305,21 +307,31 @@ export default function Navbar() {
 
   const handleNavPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const el = navScrollRef.current;
-    if (!el || !navDragRef.current.active) return;
-    const delta = event.clientX - navDragRef.current.startX;
-    if (Math.abs(delta) > 6) {
-      navDragRef.current.moved = true;
-      event.preventDefault();
+    const drag = navDragRef.current;
+    if (!el || !drag.active) return;
+    const delta = event.clientX - drag.startX;
+    if (!drag.dragging) {
+      if (Math.abs(delta) < 8) return;
+      drag.dragging = true;
+      drag.moved = true;
+      el.classList.add('is-dragging');
+      el.setPointerCapture?.(event.pointerId);
     }
-    el.scrollLeft = navDragRef.current.scrollLeft - delta;
+    event.preventDefault();
+    el.scrollLeft = drag.scrollLeft - delta;
   };
 
   const endNavDrag = (event: React.PointerEvent<HTMLDivElement>) => {
     const el = navScrollRef.current;
+    const wasDragging = navDragRef.current.dragging;
     navDragRef.current.active = false;
+    navDragRef.current.dragging = false;
     el?.classList.remove('is-dragging');
     if (el?.hasPointerCapture?.(event.pointerId)) {
       el.releasePointerCapture(event.pointerId);
+    }
+    if (!wasDragging) {
+      navDragRef.current.moved = false;
     }
   };
 
