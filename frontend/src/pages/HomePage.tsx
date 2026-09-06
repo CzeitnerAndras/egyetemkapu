@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Megaphone, Zap, Calendar, Bot, Send, Users, Calculator, FileText, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { PageShell } from '../components/PageLayout';
 
 interface EventItem {
   id: number;
@@ -233,10 +234,10 @@ export default function HomePage() {
   const animatedDocs = useCountUp(docsCount, statsVisible);
 
   return (
-    <main className="w-full px-6 lg:px-16 mx-auto mt-8 pb-12 relative z-20">
+    <PageShell>
 
       {/* --- Üdvözlő Szekció & Mini AI --- */}
-      <div className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 md:p-12 mb-8 shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
+      <div className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 sm:p-8 md:p-12 mb-8 shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
 
         <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-30 dark:opacity-30 secret:opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
           <Zap className="w-64 h-64 text-white secret:text-[#1cf85d]" />
@@ -244,7 +245,7 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-3xl">
           <div className="mb-4">
-            <h1 className="text-4xl md:text-6xl font-bold text-white secret:text-[#1cf85d] drop-shadow-[2px_2px_0px_#000] dark:drop-shadow-none secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)] secret:font-mono uppercase tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white secret:text-[#1cf85d] drop-shadow-[2px_2px_0px_#000] dark:drop-shadow-none secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)] secret:font-mono uppercase tracking-tight">
               {t('home.welcomeTitle')}
             </h1>
           </div>
@@ -439,6 +440,6 @@ export default function HomePage() {
         </div>
       )}
 
-    </main>
+    </PageShell>
   );
 }
