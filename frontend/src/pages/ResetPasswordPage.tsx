@@ -1,21 +1,16 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { AuthCard, AuthHeader, PageShell } from '../components/PageLayout';
 
-export function readPasswordResetToken(searchParams: URLSearchParams, hash: string): string {
+export function readPasswordResetToken(hash: string): string {
     const fragment = hash.startsWith('#') ? hash.slice(1) : hash;
-    const fromHash = new URLSearchParams(fragment).get('token');
-    if (fromHash) {
-        return fromHash;
-    }
-    return searchParams.get('token') ?? '';
+    return new URLSearchParams(fragment).get('token') ?? '';
 }
 
 export default function ResetPasswordPage() {
     const { t } = useLanguage();
-    const [searchParams] = useSearchParams();
-    const token = readPasswordResetToken(searchParams, window.location.hash);
+    const token = readPasswordResetToken(window.location.hash);
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');

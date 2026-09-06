@@ -17,7 +17,8 @@ jest.mock('react-router-dom', () => ({
 
 const VALID_PASSWORD = 'Password1!';
 
-function renderReset(path: string) {
+function renderReset(path: string, hash = '') {
+    window.location.hash = hash;
     return render(
         <MemoryRouter initialEntries={[path]}>
             <Routes>
@@ -39,19 +40,24 @@ describe('ResetPasswordPage Komponens', () => {
         window.location.hash = '';
     });
 
-    it('a hash fragmentből olvassa a tokent, a query csak tartalék', () => {
-        expect(readPasswordResetToken(new URLSearchParams('token=query'), '#token=hash')).toBe('hash');
-        expect(readPasswordResetToken(new URLSearchParams('token=query'), '')).toBe('query');
-        expect(readPasswordResetToken(new URLSearchParams(), '#token=hash')).toBe('hash');
-        expect(readPasswordResetToken(new URLSearchParams(), '')).toBe('');
+    it('csak a hash fragmentből olvassa a tokent', () => {
+        expect(readPasswordResetToken('#token=hash')).toBe('hash');
+        expect(readPasswordResetToken('token=hash')).toBe('hash');
+        expect(readPasswordResetToken('')).toBe('');
     });
 
     it('hash tokennel megjeleníti az űrlapot', () => {
-        window.location.hash = '#token=abc';
-        renderReset('/uj-jelszo');
+        renderReset('/uj-jelszo', '#token=abc');
 
         expect(screen.getByRole('button', { name: 'reset.submit' })).toBeInTheDocument();
         expect(screen.queryByText('reset.missingToken')).not.toBeInTheDocument();
+    });
+
+    it('query string tokennel nem nyit űrlapot', () => {
+        renderReset('/uj-jelszo?token=abc');
+
+        expect(screen.getByText('reset.missingToken')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'reset.submit' })).not.toBeInTheDocument();
     });
 
     it('token nélkül a hiányzó link üzenetet mutatja, űrlap nélkül', () => {
@@ -64,7 +70,7 @@ describe('ResetPasswordPage Komponens', () => {
 
     it('nem egyező jelszavaknál nem hív fetch-et', async () => {
         const user = userEvent.setup();
-        const { container } = renderReset('/uj-jelszo?token=abc');
+        const { container } = renderReset('/uj-jelszo', '#token=abc');
 
         const passwords = container.querySelectorAll('input[type="password"]');
         await user.type(passwords[0] as HTMLInputElement, VALID_PASSWORD);
@@ -77,7 +83,7 @@ describe('ResetPasswordPage Komponens', () => {
 
     it('gyenge jelszónál nem hív fetch-et', async () => {
         const user = userEvent.setup();
-        const { container } = renderReset('/uj-jelszo?token=abc');
+        const { container } = renderReset('/uj-jelszo', '#token=abc');
 
         const passwords = container.querySelectorAll('input[type="password"]');
         await user.type(passwords[0] as HTMLInputElement, 'gyenge');
@@ -97,7 +103,7 @@ describe('ResetPasswordPage Komponens', () => {
             });
 
             const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-            const { container } = renderReset('/uj-jelszo?token=abc');
+            const { container } = renderReset('/uj-jelszo', '#token=abc');
 
             const passwords = container.querySelectorAll('input[type="password"]');
             await user.type(passwords[0] as HTMLInputElement, VALID_PASSWORD);
@@ -131,7 +137,7 @@ describe('ResetPasswordPage Komponens', () => {
         });
 
         const user = userEvent.setup();
-        const { container } = renderReset('/uj-jelszo?token=abc');
+        const { container } = renderReset('/uj-jelszo', '#token=abc');
 
         const passwords = container.querySelectorAll('input[type="password"]');
         await user.type(passwords[0] as HTMLInputElement, VALID_PASSWORD);
