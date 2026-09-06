@@ -12,7 +12,8 @@ describe('AboutPage Komponens', () => {
     it('megjeleníti a fejlécet és a fejlesztő nevét', () => {
         render(<AboutPage />);
 
-        expect(screen.getByText('about.title')).toBeInTheDocument();
+        expect(screen.getByRole('main')).toHaveClass('px-4', 'sm:px-6', 'lg:px-16');
+        expect(screen.getByRole('heading', { level: 1, name: 'about.title' })).toBeInTheDocument();
         expect(screen.getByText('Czeitner András')).toBeInTheDocument();
     });
 

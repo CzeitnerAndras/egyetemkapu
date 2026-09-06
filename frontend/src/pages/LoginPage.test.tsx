@@ -33,6 +33,8 @@ describe('LoginPage Komponens', () => {
     it('helyesen rendereli a beviteli mezőket és a gombot', () => {
         renderWithRouter();
 
+        expect(screen.getByRole('main')).toHaveClass('justify-center');
+        expect(screen.getByRole('heading', { level: 1, name: 'login.title' })).toBeInTheDocument();
         expect(screen.getByText('login.email')).toBeInTheDocument();
         expect(screen.getByText('login.password')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'login.submit' })).toBeInTheDocument();
