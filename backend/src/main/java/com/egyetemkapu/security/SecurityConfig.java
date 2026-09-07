@@ -70,6 +70,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(publicMatchers.toArray(String[]::new)).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/flyers").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/flyers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/documents").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/count").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tools/calculator/count").permitAll()
