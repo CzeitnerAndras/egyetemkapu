@@ -4,7 +4,7 @@ import { PageHeader, PageShell } from '../components/PageLayout';
 
 const FEATURE_KEYS = [
     'about.f1', 'about.f2', 'about.f3', 'about.f4', 'about.f5',
-    'about.f6', 'about.f7', 'about.f8', 'about.f9',
+    'about.f6', 'about.f7', 'about.f8', 'about.f9', 'about.f10',
 ] as const;
 
 const FRONTEND_TECH = ['React', 'TypeScript', 'Vite', 'Tailwind CSS'];
