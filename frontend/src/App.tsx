@@ -19,6 +19,7 @@ import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
 import SettingsPage from './pages/SettingsPage';
 import LinksPage from './pages/LinksPage';
+import SalesPapersPage from './pages/SalesPapersPage';
 import { LanguageProvider } from './i18n/LanguageContext';
 
 function App() {
@@ -50,9 +51,11 @@ function App() {
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/linktar" element={<LinksPage />} />
+          <Route path="/akcios-ujsag" element={<SalesPapersPage />} />
           <Route path="/fokusz" element={<Navigate to="/tanuloszoba" replace />} />
           <Route path="/ideabox" element={<Navigate to="/otletlada" replace />} />
           <Route path="/links" element={<Navigate to="/linktar" replace />} />
+          <Route path="/flyers" element={<Navigate to="/akcios-ujsag" replace />} />
         </Routes>
       </div>
     </Router>
