@@ -1,0 +1,330 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
+import { PageHeader, PageShell } from '../components/PageLayout';
+
+export type StoreId = 'aldi' | 'spar' | 'penny';
+
+interface FlyerSummary {
+    id: number;
+    store: StoreId;
+    title: string;
+    officialUrl: string;
+    validFrom?: string | null;
+    validTo?: string | null;
+    pageCount: number;
+    productCount: number;
+}
+
+interface SearchHit {
+    flyerId: number;
+    store: StoreId;
+    title: string;
+    pageNumber: number;
+    productName?: string | null;
+    priceText?: string | null;
+    snippet: string;
+    kind: 'product' | 'page';
+}
+
+interface FlyerDetail {
+    id: number;
+    store: StoreId;
+    title: string;
+    officialUrl: string;
+    pages: { pageNumber: number; hasImage: boolean }[];
+}
+
+const STORES: StoreId[] = ['aldi', 'spar', 'penny'];
+
+export default function SalesPapersPage() {
+    const { t, locale } = useLanguage();
+    const [activeStore, setActiveStore] = useState<StoreId>('aldi');
+    const [flyers, setFlyers] = useState<FlyerSummary[]>([]);
+    const [query, setQuery] = useState('');
+    const [hits, setHits] = useState<SearchHit[] | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [searching, setSearching] = useState(false);
+    const [error, setError] = useState('');
+    const [viewer, setViewer] = useState<{ flyer: FlyerDetail; page: number } | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        fetch('/api/flyers')
+            .then((res) => {
+                if (!res.ok) throw new Error('load');
+                return res.json();
+            })
+            .then((data) => {
+                if (!cancelled) {
+                    setFlyers(Array.isArray(data) ? data : []);
+                    setError('');
+                }
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setFlyers([]);
+                    setError(t('sales.loadError'));
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [t]);
+
+    const storeFlyers = useMemo(
+        () => flyers.filter((flyer) => flyer.store === activeStore),
+        [flyers, activeStore],
+    );
+
+    const handleSearch = async (event: React.FormEvent) => {
+        event.preventDefault();
+        const q = query.trim();
+        if (!q) {
+            setHits(null);
+            return;
+        }
+        setSearching(true);
+        try {
+            const res = await fetch(`/api/flyers/search?q=${encodeURIComponent(q)}`);
+            if (!res.ok) throw new Error('search');
+            const data = await res.json();
+            setHits(Array.isArray(data) ? data : []);
+            setError('');
+        } catch {
+            setHits([]);
+            setError(t('sales.searchError'));
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const openFlyer = async (flyerId: number, pageNumber = 1) => {
+        try {
+            const res = await fetch(`/api/flyers/${flyerId}`);
+            if (!res.ok) throw new Error('detail');
+            const flyer: FlyerDetail = await res.json();
+            const first = flyer.pages[0]?.pageNumber ?? pageNumber;
+            const page = flyer.pages.some((item) => item.pageNumber === pageNumber) ? pageNumber : first;
+            setViewer({ flyer, page });
+        } catch {
+            setError(t('sales.viewerError'));
+        }
+    };
+
+    const formatRange = (from?: string | null, to?: string | null) => {
+        if (!from && !to) return t('sales.noDate');
+        const start = from ? new Date(from).toLocaleDateString(locale) : '?';
+        const end = to ? new Date(to).toLocaleDateString(locale) : '?';
+        return `${start} – ${end}`;
+    };
+
+    const storeLabel = (store: StoreId) => store.toUpperCase();
+
+    const currentPageIndex = viewer
+        ? viewer.flyer.pages.findIndex((page) => page.pageNumber === viewer.page)
+        : -1;
+
+    return (
+        <PageShell>
+            <PageHeader
+                icon={Newspaper}
+                extra={
+                    <form onSubmit={handleSearch} className="flex w-full md:w-[28rem] relative shadow-[3px_3px_0px_#000] dark:shadow-none">
+                        <label className="sr-only" htmlFor="flyer-search">{t('sales.searchLabel')}</label>
+                        <input
+                            id="flyer-search"
+                            type="search"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={t('sales.searchPlaceholder')}
+                            className="w-full bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-3 pl-4 pr-14 text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none font-bold secret:font-mono"
+                        />
+                        <button
+                            type="submit"
+                            className="absolute inset-y-0 right-0 px-3 flex items-center text-fuchsia-600 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
+                            aria-label={t('sales.searchSubmit')}
+                        >
+                            <Search className="w-5 h-5" />
+                        </button>
+                    </form>
+                }
+            >
+                {t('sales.title')}
+            </PageHeader>
+
+            {error && (
+                <p className="mb-6 font-bold text-red-600 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono">{error}</p>
+            )}
+
+            {searching && (
+                <p className="mb-6 font-bold uppercase secret:font-mono text-fuchsia-600 dark:text-[#c084fc]">{t('sales.searching')}</p>
+            )}
+
+            {hits && (
+                <section className="mb-8 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
+                    <h2 className="text-xl font-bold uppercase secret:font-mono mb-4 text-black dark:text-white secret:text-[#1cf85d]">
+                        {t('sales.resultsTitle', { count: hits.length })}
+                    </h2>
+                    {hits.length === 0 ? (
+                        <p className="font-medium secret:font-mono">{t('sales.noResults')}</p>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {hits.map((hit, index) => (
+                                <button
+                                    key={`${hit.flyerId}-${hit.kind}-${hit.pageNumber}-${index}`}
+                                    type="button"
+                                    onClick={() => openFlyer(hit.flyerId, hit.pageNumber)}
+                                    className="text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-cyan-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]"
+                                >
+                                    <div className="flex items-center justify-between gap-3 mb-2">
+                                        <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-[#3b0764]">
+                                            {storeLabel(hit.store)} · {t('sales.page', { page: hit.pageNumber })}
+                                        </span>
+                                        <span className="text-[11px] font-bold uppercase">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
+                                    </div>
+                                    <h3 className="font-bold uppercase leading-tight mb-1">
+                                        {hit.productName || hit.title}
+                                    </h3>
+                                    {hit.priceText && <p className="font-black mb-1">{hit.priceText}</p>}
+                                    <p className="text-sm opacity-80">{hit.snippet}</p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
+
+            <div className="flex flex-col lg:flex-row gap-8">
+                <div className="w-full lg:w-1/4 flex flex-col space-y-2">
+                    {STORES.map((store) => (
+                        <button
+                            key={store}
+                            type="button"
+                            data-store={store}
+                            aria-pressed={activeStore === store}
+                            onClick={() => setActiveStore(store)}
+                            className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer
+                                ${activeStore === store
+                                    ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400'
+                                }`}
+                        >
+                            <span className="block text-xl leading-none">{storeLabel(store)}</span>
+                            <span className="block mt-2 text-xs font-bold normal-case">
+                                {t(`sales.tagline.${store}`)}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="w-full lg:w-3/4">
+                    <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
+                        <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
+                            <Newspaper className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
+                            <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase ml-2">
+                                {storeLabel(activeStore)}
+                            </h2>
+                        </div>
+
+                        {loading ? (
+                            <p className="font-bold uppercase secret:font-mono animate-pulse">{t('sales.loading')}</p>
+                        ) : storeFlyers.length === 0 ? (
+                            <p className="font-medium secret:font-mono">{t('sales.emptyStore')}</p>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {storeFlyers.map((flyer) => (
+                                    <button
+                                        key={flyer.id}
+                                        type="button"
+                                        onClick={() => openFlyer(flyer.id)}
+                                        className="text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-cyan-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]"
+                                    >
+                                        <h3 className="text-lg font-bold uppercase leading-tight mb-2">{flyer.title}</h3>
+                                        <p className="text-sm font-medium mb-3">{formatRange(flyer.validFrom, flyer.validTo)}</p>
+                                        <p className="text-xs font-black uppercase">
+                                            {t('sales.paperMeta', { pages: flyer.pageCount, products: flyer.productCount })}
+                                        </p>
+                                        <span className="mt-4 inline-block text-sm font-black uppercase">{t('sales.openPaper')} →</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <p className="mt-4 text-sm font-bold text-gray-600 dark:text-gray-400 secret:text-[#1cf85d]/70 secret:font-mono">
+                        {t('sales.disclaimer')}
+                    </p>
+                </div>
+            </div>
+
+            {viewer && (
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-[10px_10px_0px_#d946ef]">
+                        <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
+                            <div>
+                                <p className="text-xs font-black uppercase">{storeLabel(viewer.flyer.store)}</p>
+                                <h2 className="text-lg font-bold uppercase secret:font-mono leading-tight">{viewer.flyer.title}</h2>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={viewer.flyer.officialUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 hover:bg-cyan-400"
+                                >
+                                    <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
+                                </a>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewer(null)}
+                                    className="p-2 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer hover:bg-cyan-400"
+                                    aria-label={t('sales.closeViewer')}
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-auto bg-black/80 flex items-center justify-center p-4 min-h-[50vh]">
+                            <img
+                                src={`/api/flyers/${viewer.flyer.id}/pages/${viewer.page}`}
+                                alt={t('sales.page', { page: viewer.page })}
+                                className="max-h-[70vh] max-w-full object-contain border-4 border-white/20"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
+                            <button
+                                type="button"
+                                disabled={currentPageIndex <= 0}
+                                onClick={() => setViewer((prev) => prev && currentPageIndex > 0
+                                    ? { ...prev, page: prev.flyer.pages[currentPageIndex - 1].pageNumber }
+                                    : prev)}
+                                className="inline-flex items-center gap-1 font-bold uppercase disabled:opacity-40 cursor-pointer"
+                            >
+                                <ChevronLeft className="w-5 h-5" /> {t('sales.prevPage')}
+                            </button>
+                            <span className="font-black uppercase secret:font-mono">
+                                {t('sales.pageOf', { page: viewer.page, total: viewer.flyer.pages.length })}
+                            </span>
+                            <button
+                                type="button"
+                                disabled={currentPageIndex < 0 || currentPageIndex >= viewer.flyer.pages.length - 1}
+                                onClick={() => setViewer((prev) => prev && currentPageIndex >= 0 && currentPageIndex < prev.flyer.pages.length - 1
+                                    ? { ...prev, page: prev.flyer.pages[currentPageIndex + 1].pageNumber }
+                                    : prev)}
+                                className="inline-flex items-center gap-1 font-bold uppercase disabled:opacity-40 cursor-pointer"
+                            >
+                                {t('sales.nextPage')} <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </PageShell>
+    );
+}
