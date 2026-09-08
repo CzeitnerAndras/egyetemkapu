@@ -56,6 +56,7 @@ describe('Navbar Komponens', () => {
         'nav.reference': '/hivatkozas',
         'nav.focus': '/tanuloszoba',
         'nav.links': '/linktar',
+        'nav.sales': '/akcios-ujsag',
     };
 
     it('megjeleníti a fő navigációs linkeket, admin szekció nélkül bejelentkezés nélkül', () => {
