@@ -97,9 +97,19 @@ public class FlyerSyncService {
             List<DiscoveredPaper> papers = parser.discoverSparPdfs(html, today);
             List<ParsedCatalog> catalogs = new ArrayList<>();
             for (DiscoveredPaper paper : papers) {
+                if (catalogs.size() >= 3) {
+                    break;
+                }
                 byte[] pdf = safeBytes(paper.pdfUrl());
                 List<ParsedPage> pages = pdfExtractor.extractPages(pdf);
-                catalogs.add(new ParsedCatalog(paper, pages, List.of()));
+                if (pages.isEmpty()) {
+                    continue;
+                }
+                List<ParsedProduct> products = new ArrayList<>();
+                for (ParsedPage page : pages) {
+                    products.addAll(parser.extractPricedItems(page.text(), page.pageNumber()));
+                }
+                catalogs.add(new ParsedCatalog(paper, pages, products));
             }
             flyerPersistenceService.replaceStore("spar", catalogs, LocalDateTime.now(clock));
         } catch (Exception e) {
@@ -109,21 +119,49 @@ public class FlyerSyncService {
 
     public void syncPenny(LocalDate today) {
         try {
-            String html = httpClient.getText("https://www.penny.hu/ajanlatok");
+            String html = safeText("https://www.penny.hu/ajanlatok");
             String reklam = safeText("https://www.penny.hu/reklamujsag");
             List<DiscoveredPaper> papers = parser.discoverPennyPapers(html + "\n" + reklam, today);
             List<ParsedCatalog> catalogs = new ArrayList<>();
             for (DiscoveredPaper paper : papers) {
-                if (paper.officialUrl().contains("publitas") || paper.officialUrl().contains("szorolap")) {
+                ParsedCatalog catalog;
+                if (FlyerCatalogParser.isPennyReweUrl(paper.officialUrl())) {
+                    String leafletHtml = safeText(trimUrl(paper.officialUrl()));
+                    if (!FlyerCatalogParser.looksLikePennyLeaflet(leafletHtml)) {
+                        continue;
+                    }
+                    catalog = withPennyPageTexts(parser.parsePennyLeaflet(paper, leafletHtml), leafletHtml);
+                } else if (paper.officialUrl().contains("publitas") || paper.officialUrl().contains("szorolap")) {
                     String dataJson = safeText(trimUrl(paper.officialUrl()) + "data.json");
                     String spreadsJson = safeText(trimUrl(paper.officialUrl()) + "spreads.json");
-                    catalogs.add(parser.parsePublitas(paper, dataJson, spreadsJson));
+                    catalog = parser.parsePublitas(paper, dataJson, spreadsJson);
+                } else if (paper.pdfUrl() != null) {
+                    List<ParsedPage> pages = pdfExtractor.extractPages(safeBytes(paper.pdfUrl()));
+                    catalog = new ParsedCatalog(paper, pages, List.of());
                 } else {
-                    List<ParsedProduct> products = parser.extractHtmlProducts(html + "\n" + reklam);
-                    List<ParsedPage> pages = products.isEmpty()
-                            ? List.of()
-                            : List.of(new ParsedPage(1, null, joinNames(products)));
-                    catalogs.add(new ParsedCatalog(paper, pages, products));
+                    continue;
+                }
+                if (!catalog.pages().isEmpty() || !catalog.products().isEmpty()) {
+                    catalogs.add(catalog);
+                }
+            }
+            if (catalogs.isEmpty()) {
+                List<ParsedProduct> products = parser.extractHtmlProducts(html + "\n" + reklam);
+                if (!products.isEmpty()) {
+                    DiscoveredPaper offers = new DiscoveredPaper(
+                            "penny",
+                            "PENNY aktuális ajánlatok",
+                            "https://www.penny.hu/ajanlatok",
+                            null,
+                            "penny:ajanlatok",
+                            today.minusDays(3),
+                            today.plusDays(4)
+                    );
+                    catalogs.add(new ParsedCatalog(
+                            offers,
+                            List.of(new ParsedPage(1, null, joinNames(products))),
+                            products
+                    ));
                 }
             }
             flyerPersistenceService.replaceStore("penny", catalogs, LocalDateTime.now(clock));
@@ -142,11 +180,38 @@ public class FlyerSyncService {
                 .min(LocalDateTime::compareTo)
                 .map(synced -> synced.isBefore(now.minusHours(12)))
                 .orElse(true)
+                || flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
                 || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages);
     }
 
     public List<String> stores() {
         return STORES;
+    }
+
+    private ParsedCatalog withPennyPageTexts(ParsedCatalog catalog, String indexHtml) {
+        String base = trimUrl(catalog.paper().officialUrl());
+        List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
+        for (ParsedPage page : catalog.pages()) {
+            String html = page.pageNumber() == 1
+                    ? indexHtml
+                    : safeText(base + parser.pennyPageRelPath(indexHtml, page.pageNumber()));
+            String text = parser.extractPennyPageText(html);
+            if (text.isBlank()) {
+                text = page.text() == null ? "" : page.text();
+            }
+            pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), text));
+            products.addAll(parser.extractPricedItems(text, page.pageNumber()));
+        }
+        if (products.isEmpty()) {
+            products.addAll(catalog.products());
+        }
+        return new ParsedCatalog(catalog.paper(), pages, products);
+    }
+
+    private static boolean isPennyReweFlyer(Flyer flyer) {
+        return "penny".equals(flyer.getStore()) && FlyerCatalogParser.isPennyReweUrl(flyer.getOfficialUrl());
     }
 
     private static boolean publitasPagesMissingImages(Flyer flyer) {
