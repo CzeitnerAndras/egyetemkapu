@@ -2,6 +2,7 @@ package com.egyetemkapu.security;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SecurityConfigTest {
 
@@ -67,5 +69,13 @@ class SecurityConfigTest {
 
         assertEquals("https://egy.example", configuration.checkOrigin("https://egy.example"));
         assertEquals("https://ketto.example", configuration.checkOrigin("https://ketto.example"));
+    }
+
+    @Test
+    void doesNotExposeAGeneratedDefaultUser() {
+        SecurityConfig config = new SecurityConfig(null, null, false, DEFAULTS);
+
+        assertThrows(UsernameNotFoundException.class,
+                () -> config.userDetailsService().loadUserByUsername("user"));
     }
 }
