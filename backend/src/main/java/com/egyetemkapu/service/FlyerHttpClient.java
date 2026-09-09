@@ -44,8 +44,17 @@ public class FlyerHttpClient {
     }
 
     public ResponseEntity<byte[]> getBytesWithHeaders(String url) {
-        return restTemplate.exchange(
-                URI.create(url), HttpMethod.GET, entity(MediaType.ALL), byte[].class);
+        return getBytesWithHeaders(url, null);
+    }
+
+    public ResponseEntity<byte[]> getBytesWithHeaders(String url, String referer) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, USER_AGENT);
+        headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.ALL));
+        if (referer != null && !referer.isBlank()) {
+            headers.set(HttpHeaders.REFERER, referer);
+        }
+        return restTemplate.exchange(URI.create(url), HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
     }
 
     private HttpEntity<Void> entity(MediaType... accept) {

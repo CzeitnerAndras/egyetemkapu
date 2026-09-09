@@ -141,11 +141,24 @@ public class FlyerSyncService {
                 .map(Flyer::getLastSynced)
                 .min(LocalDateTime::compareTo)
                 .map(synced -> synced.isBefore(now.minusHours(12)))
-                .orElse(true);
+                .orElse(true)
+                || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages);
     }
 
     public List<String> stores() {
         return STORES;
+    }
+
+    private static boolean publitasPagesMissingImages(Flyer flyer) {
+        String url = flyer.getOfficialUrl();
+        if (url == null || (!url.contains("szorolap") && !url.contains("publitas"))) {
+            return false;
+        }
+        if (flyer.getPages() == null || flyer.getPages().isEmpty()) {
+            return false;
+        }
+        return flyer.getPages().stream()
+                .allMatch(page -> page.getImageUrl() == null || page.getImageUrl().isBlank());
     }
 
     private ParsedCatalog withPdfPages(ParsedCatalog catalog) {
