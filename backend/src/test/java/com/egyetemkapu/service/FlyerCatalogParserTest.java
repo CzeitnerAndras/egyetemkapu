@@ -43,6 +43,60 @@ class FlyerCatalogParserTest {
     }
 
     @Test
+    void fallsBackToWeeklySparDamPathsWhenHtmlHasNoPdfs() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverSparPdfs("<html></html>", today);
+        assertFalse(papers.isEmpty());
+        assertTrue(papers.stream().anyMatch(paper -> paper.pdfUrl().contains("spar-szorolap-0903p.pdf")));
+    }
+
+    @Test
+    void fallsBackToReweWeeklyLeafletAndSkipsLandingPages() {
+        String html = "<a href=\"https://www.penny.hu/reklamujsag\">újság</a>";
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverPennyPapers(html, today);
+        assertTrue(papers.stream().noneMatch(paper -> paper.officialUrl().contains("penny.hu")));
+        FlyerCatalogParser.DiscoveredPaper week36 = papers.stream()
+                .filter(paper -> "penny:rewe:202636".equals(paper.sourceKey()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("https://files.rewe.co.at/PennyIntLeaflet/HU/202636/", week36.officialUrl());
+        assertEquals(LocalDate.of(2026, 9, 3), week36.validFrom());
+        assertEquals(LocalDate.of(2026, 9, 9), week36.validTo());
+    }
+
+    @Test
+    void parsesPennyFlippingBookPagesAndOcr() {
+        FlyerCatalogParser.DiscoveredPaper paper = parser.pennyWeeklyFallbacks(today).stream()
+                .filter(item -> "penny:rewe:202636".equals(item.sourceKey()))
+                .findFirst()
+                .orElseThrow();
+        String html = """
+                <html><head><title>PENNY 36. heti rekl&#225;m&#250;js&#225;g</title></head>
+                <body>
+                <a class="internalLink" rel="next" href="./2/" title="kedvezmeny">2</a>
+                <a class="internalLink" rel="last" href="./36-37/" title="juttatasok">36-37</a>
+                <div id="text-container" itemprop="text">
+                  <h1>PENNY 36. heti rekl&#225;m&#250;js&#225;g</h1>
+                  <p>Kakaós csiga 249 Ft Made with FlippingBook</p>
+                </div>
+                </body></html>
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parsePennyLeaflet(paper, html);
+        assertEquals("PENNY 36. heti reklámújság", catalog.paper().title());
+        assertEquals(36, catalog.pages().size());
+        assertTrue(catalog.pages().getFirst().imageUrl().endsWith("page0001_2.jpg"));
+        assertEquals("2/", parser.pennyPageRelPath(html, 2));
+        assertEquals("36-37/", parser.pennyPageRelPath(html, 36));
+        assertTrue(catalog.products().stream().anyMatch(product -> product.priceText().contains("249")));
+    }
+
+    @Test
+    void extractsPricedItemsFromPlainText() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.extractPricedItems("Kakaós csiga 249 Ft tej 199 Ft", 1);
+        assertFalse(products.isEmpty());
+        assertTrue(products.getFirst().priceText().contains("Ft"));
+    }
+
+    @Test
     void parsesPublitasProductsAndPages() {
         FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
                 "aldi", "Régi cím", "https://szorolap.aldi.hu/demo/", null, "aldi:demo", today, today);

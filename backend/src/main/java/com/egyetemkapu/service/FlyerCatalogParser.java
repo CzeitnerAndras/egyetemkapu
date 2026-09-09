@@ -3,7 +3,10 @@ package com.egyetemkapu.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,7 +46,10 @@ public class FlyerCatalogParser {
     private static final Pattern ALDI_VIEWER = Pattern.compile(
             "https?://szorolap\\.aldi\\.hu/([a-zA-Z0-9_-]+)");
     private static final Pattern SPAR_PDF = Pattern.compile(
-            "https?://(?:www\\.)?spar\\.hu(/content/dam/sparhuwebsite/_flyers/[^\"'\\s>]+\\.pdf)",
+            "https?://(?:www\\.)?spar\\.hu(/content/dam/[^\"'\\s>]+\\.pdf)",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SPAR_PATH = Pattern.compile(
+            "(/content/dam/sparhuwebsite/_flyers/[^\"'\\s>]+\\.pdf)",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern PUBLITAS = Pattern.compile(
             "https?://(?:view\\.)?publitas\\.com/[^\"'\\s>]+",
@@ -51,9 +57,22 @@ public class FlyerCatalogParser {
     private static final Pattern PENNY_PRODUCT = Pattern.compile(
             "(?is)<(?:h[1-4]|p|span|div)[^>]*>\\s*([^<]{3,120}?)\\s*</(?:h[1-4]|p|span|div)>\\s*"
                     + "[^<]{0,180}?(\\d[\\d\\s.]{0,8}\\s*Ft)");
+    private static final Pattern PLAIN_PRICE = Pattern.compile(
+            "([\\p{L}][\\p{L}0-9 .%+\\-]{2,70}?)\\s+(\\d[\\d\\s.]{1,8}\\s*Ft)");
     private static final Pattern JSON_LD = Pattern.compile(
             "(?is)<script[^>]+type=['\"]application/ld\\+json['\"][^>]*>(.*?)</script>");
     private static final Pattern ISO_DATE = Pattern.compile("20\\d{2}[-.]\\d{2}[-.]\\d{2}");
+    private static final Pattern PENNY_REWE = Pattern.compile(
+            "https?://files\\.rewe\\.co\\.at/PennyIntLeaflet/HU/(\\d{6})",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern PENNY_PAGE_LINK = Pattern.compile(
+            "class=\"internalLink\"[^>]*href=\"(?:\\./)?(\\d+)(?:-(\\d+))?/");
+    private static final Pattern PENNY_TITLE = Pattern.compile("(?is)<title>(.*?)</title>");
+    private static final Pattern PENNY_FB_TITLE = Pattern.compile("FBInit\\.TITLE\\s*=\\s*\"(.*?)\"");
+    private static final Pattern PENNY_TEXT = Pattern.compile(
+            "(?is)id=[\"']text-container[\"'][^>]*>(.*?)</div>");
+    private static final Pattern HTML_ENTITY = Pattern.compile("&#(\\d+);");
+    private static final int PENNY_MAX_PAGES = 48;
 
     private final ObjectMapper objectMapper;
 
@@ -108,37 +127,50 @@ public class FlyerCatalogParser {
 
     public List<DiscoveredPaper> discoverSparPdfs(String html, LocalDate today) {
         Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
-        if (html == null) {
-            return List.of();
-        }
-        Matcher matcher = SPAR_PDF.matcher(html);
-        while (matcher.find() && papers.size() < 6) {
-            String path = matcher.group(1);
-            String url = "https://www.spar.hu" + path;
-            String file = path.substring(path.lastIndexOf('/') + 1);
-            if (file.toLowerCase().contains("partner") || file.toLowerCase().contains("nyitas")) {
-                continue;
+        String haystack = html == null ? "" : html.replace("\\/", "/");
+        addSparMatches(papers, SPAR_PDF.matcher(haystack), today, true);
+        addSparMatches(papers, SPAR_PATH.matcher(haystack), today, true);
+        if (papers.isEmpty()) {
+            for (DiscoveredPaper fallback : sparWeeklyFallbacks(today)) {
+                papers.putIfAbsent(fallback.sourceKey(), fallback);
             }
-            papers.putIfAbsent(path, new DiscoveredPaper(
-                    "spar",
-                    humanizeSlug(file.replace(".pdf", "")),
-                    "https://www.spar.hu/ajanlatok",
-                    url,
-                    "spar:" + path,
-                    today.minusDays(3),
-                    today.plusDays(4)
-            ));
         }
         return new ArrayList<>(papers.values());
+    }
+
+    public List<DiscoveredPaper> sparWeeklyFallbacks(LocalDate today) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        LocalDate thursday = today.with(DayOfWeek.THURSDAY);
+        if (thursday.isAfter(today)) {
+            thursday = thursday.minusWeeks(1);
+        }
+        for (LocalDate start : List.of(thursday, thursday.plusWeeks(1))) {
+            String folder = start.format(DateTimeFormatter.ofPattern("yyyy/MMdd"));
+            String stamp = start.format(DateTimeFormatter.ofPattern("MMdd"));
+            addSparFallback(papers, folder, "spar-szorolap-" + stamp + "p.pdf", "SPAR szórólap", start);
+            addSparFallback(papers, folder, "interspar-szorolap-" + stamp + "p.pdf", "INTERSPAR szórólap", start);
+            addSparFallback(papers, folder, "spar-market-" + stamp + "p.pdf", "SPAR market", start);
+        }
+        return papers;
     }
 
     public List<DiscoveredPaper> discoverPennyPapers(String html, LocalDate today) {
         Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
         if (html != null) {
-            Matcher aldiLike = Pattern.compile("https?://[^\"'\\s>]+(?:publitas|szorolap|reklamujsag)[^\"'\\s>]*",
-                    Pattern.CASE_INSENSITIVE).matcher(html);
-            while (aldiLike.find() && papers.size() < 4) {
+            Matcher rewe = PENNY_REWE.matcher(html.replace("\\/", "/"));
+            while (rewe.find()) {
+                DiscoveredPaper paper = pennyRewePaper(
+                        Integer.parseInt(rewe.group(1).substring(0, 4)),
+                        Integer.parseInt(rewe.group(1).substring(4)));
+                papers.putIfAbsent(paper.sourceKey(), paper);
+            }
+            Matcher aldiLike = Pattern.compile("https?://[^\"'\\s>]+(?:publitas|szorolap)[^\"'\\s>]*",
+                    Pattern.CASE_INSENSITIVE).matcher(html.replace("\\/", "/"));
+            while (aldiLike.find() && papers.size() < 8) {
                 String url = aldiLike.group();
+                if (isPennyLandingPage(url) || isPennyReweUrl(url)) {
+                    continue;
+                }
                 papers.putIfAbsent(url, new DiscoveredPaper(
                         "penny",
                         "PENNY reklámújság",
@@ -150,7 +182,7 @@ public class FlyerCatalogParser {
                 ));
             }
             Matcher publitas = PUBLITAS.matcher(html);
-            while (publitas.find() && papers.size() < 4) {
+            while (publitas.find() && papers.size() < 8) {
                 String url = publitas.group();
                 papers.putIfAbsent(url, new DiscoveredPaper(
                         "penny",
@@ -163,16 +195,135 @@ public class FlyerCatalogParser {
                 ));
             }
         }
-        papers.putIfAbsent("penny-official", new DiscoveredPaper(
-                "penny",
-                "PENNY aktuális ajánlatok",
-                "https://www.penny.hu/ajanlatok",
-                null,
-                "penny:ajanlatok",
-                today.minusDays(3),
-                today.plusDays(4)
-        ));
+        for (DiscoveredPaper fallback : pennyWeeklyFallbacks(today)) {
+            papers.putIfAbsent(fallback.sourceKey(), fallback);
+        }
         return new ArrayList<>(papers.values());
+    }
+
+    public List<DiscoveredPaper> pennyWeeklyFallbacks(LocalDate today) {
+        WeekFields iso = WeekFields.ISO;
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        for (int offset = -1; offset <= 1; offset++) {
+            LocalDate day = today.plusWeeks(offset);
+            DiscoveredPaper paper = pennyRewePaper(
+                    day.get(iso.weekBasedYear()),
+                    day.get(iso.weekOfWeekBasedYear()));
+            papers.putIfAbsent(paper.sourceKey(), paper);
+        }
+        return new ArrayList<>(papers.values());
+    }
+
+    public ParsedCatalog parsePennyLeaflet(DiscoveredPaper paper, String html) {
+        String title = extractPennyTitle(html);
+        if (title.isBlank()) {
+            title = paper.title();
+        }
+        int pageCount = countPennyPages(html);
+        String page1Text = extractPennyPageText(html);
+        List<ParsedPage> pages = new ArrayList<>();
+        for (int page = 1; page <= pageCount; page++) {
+            String text = page == 1 ? page1Text : "";
+            pages.add(new ParsedPage(page, pennyPageImageUrl(paper.officialUrl(), page), text));
+        }
+        List<ParsedProduct> products = extractPricedItems(page1Text, 1);
+        DiscoveredPaper resolved = new DiscoveredPaper(
+                paper.store(),
+                title,
+                paper.officialUrl(),
+                paper.pdfUrl(),
+                paper.sourceKey(),
+                paper.validFrom(),
+                paper.validTo());
+        return new ParsedCatalog(resolved, pages, products);
+    }
+
+    public int countPennyPages(String html) {
+        if (html == null || html.isBlank()) {
+            return 0;
+        }
+        int max = 0;
+        Matcher matcher = PENNY_PAGE_LINK.matcher(html);
+        while (matcher.find()) {
+            max = Math.max(max, Integer.parseInt(matcher.group(1)));
+        }
+        if (max == 0 && looksLikePennyLeaflet(html)) {
+            return 1;
+        }
+        return Math.min(max, PENNY_MAX_PAGES);
+    }
+
+    public String pennyPageRelPath(String html, int pageNumber) {
+        if (pageNumber <= 1) {
+            return "";
+        }
+        if (html != null) {
+            Matcher matcher = PENNY_PAGE_LINK.matcher(html);
+            while (matcher.find()) {
+                if (Integer.parseInt(matcher.group(1)) == pageNumber && matcher.group(2) != null) {
+                    return matcher.group(1) + "-" + matcher.group(2) + "/";
+                }
+            }
+        }
+        return pageNumber + "/";
+    }
+
+    public String extractPennyTitle(String html) {
+        if (html == null) {
+            return "";
+        }
+        Matcher title = PENNY_TITLE.matcher(html);
+        if (title.find()) {
+            String value = htmlUnescape(title.group(1)).replaceAll("(?i)\\s*-\\s*page\\s+\\d+.*", "").trim();
+            if (!value.isBlank()) {
+                return value;
+            }
+        }
+        Matcher fb = PENNY_FB_TITLE.matcher(html);
+        if (fb.find()) {
+            return htmlUnescape(fb.group(1)).trim();
+        }
+        return "";
+    }
+
+    public String extractPennyPageText(String html) {
+        if (html == null || html.isBlank() || html.contains("Code injection detected")) {
+            return "";
+        }
+        Matcher matcher = PENNY_TEXT.matcher(html);
+        if (!matcher.find()) {
+            return "";
+        }
+        String inner = matcher.group(1)
+                .replaceAll("(?is)<p class=\"powered-by\".*", "")
+                .replaceAll("(?is)<script.*?</script>", " ")
+                .replaceAll("(?s)<[^>]+>", " ");
+        return htmlUnescape(inner).replaceAll("\\s+", " ").trim();
+    }
+
+    public static String pennyPageImageUrl(String leafletUrl, int pageNumber) {
+        if (leafletUrl == null || leafletUrl.isBlank()) {
+            return null;
+        }
+        String base = leafletUrl.endsWith("/") ? leafletUrl : leafletUrl + "/";
+        return base + "files/assets/common/page-html5-substrates/page"
+                + String.format("%04d", pageNumber) + "_2.jpg";
+    }
+
+    public static boolean looksLikePennyLeaflet(String html) {
+        if (html == null || html.length() < 200) {
+            return false;
+        }
+        String lower = html.toLowerCase();
+        return lower.contains("flippingbook")
+                || lower.contains("fbinit")
+                || lower.contains("page-html5-substrates")
+                || lower.contains("rekl&#225;m")
+                || lower.contains("reklámújság");
+    }
+
+    public static boolean isPennyReweUrl(String url) {
+        return url != null && url.toLowerCase().contains("files.rewe.co.at/pennyintleaflet");
     }
 
     public ParsedCatalog parsePublitas(DiscoveredPaper paper, String dataJson, String spreadsJson) {
@@ -220,6 +371,11 @@ public class FlyerCatalogParser {
         }
         DiscoveredPaper resolved = new DiscoveredPaper(
                 paper.store(), title, paper.officialUrl(), pdfUrl, paper.sourceKey(), from, to);
+        if (products.isEmpty()) {
+            for (ParsedPage page : pages) {
+                products.addAll(extractPricedItems(page.text(), page.pageNumber()));
+            }
+        }
         return new ParsedCatalog(resolved, pages, products);
     }
 
@@ -247,6 +403,23 @@ public class FlyerCatalogParser {
             products.putIfAbsent(HungarianText.normalize(name), new ParsedProduct(name, price, 1, null));
         }
         return new ArrayList<>(products.values());
+    }
+
+    public List<ParsedProduct> extractPricedItems(String text, int pageNumber) {
+        List<ParsedProduct> products = new ArrayList<>();
+        if (text == null || text.isBlank()) {
+            return products;
+        }
+        Matcher matcher = PLAIN_PRICE.matcher(text.replace('\n', ' '));
+        while (matcher.find() && products.size() < 80) {
+            String name = matcher.group(1).replaceAll("\\s+", " ").trim();
+            String price = matcher.group(2).replaceAll("\\s+", " ").trim();
+            if (name.length() < 3 || name.contains("http") || name.toLowerCase().contains("érvényes")) {
+                continue;
+            }
+            products.add(new ParsedProduct(name, price, pageNumber, null));
+        }
+        return products;
     }
 
     public LocalDate[] parseDates(String text) {
@@ -392,5 +565,78 @@ public class FlyerCatalogParser {
 
     private static String humanizeSlug(String slug) {
         return slug.replace('_', ' ').replace('-', ' ').trim();
+    }
+
+    private void addSparMatches(Map<String, DiscoveredPaper> papers, Matcher matcher, LocalDate today, boolean limit) {
+        while (matcher.find() && (!limit || papers.size() < 6)) {
+            String path = matcher.group(1);
+            addSparPaper(papers, path, today);
+        }
+    }
+
+    private void addSparFallback(List<DiscoveredPaper> papers, String folder, String file, String title, LocalDate start) {
+        String path = "/content/dam/sparhuwebsite/_flyers/" + folder + "/" + file;
+        Map<String, DiscoveredPaper> one = new LinkedHashMap<>();
+        addSparPaper(one, path, start);
+        papers.addAll(one.values());
+    }
+
+    private void addSparPaper(Map<String, DiscoveredPaper> papers, String path, LocalDate start) {
+        String file = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
+        if (file.contains("partner") || file.contains("nyitas") || file.contains("megujulas")
+                || file.contains("hatosagi") || file.contains("letenye") || file.contains("paks")) {
+            return;
+        }
+        String url = "https://www.spar.hu" + path;
+        papers.putIfAbsent(path, new DiscoveredPaper(
+                "spar",
+                humanizeSlug(file.replace(".pdf", "")),
+                "https://www.spar.hu/ajanlatok",
+                url,
+                "spar:" + path,
+                start,
+                start.plusDays(6)
+        ));
+    }
+
+    private DiscoveredPaper pennyRewePaper(int year, int week) {
+        String stamp = year + String.format("%02d", week);
+        LocalDate thursday = LocalDate.of(year, 1, 4)
+                .with(WeekFields.ISO.weekOfWeekBasedYear(), week)
+                .with(DayOfWeek.THURSDAY);
+        return new DiscoveredPaper(
+                "penny",
+                "PENNY " + week + ". heti reklámújság",
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/" + stamp + "/",
+                null,
+                "penny:rewe:" + stamp,
+                thursday,
+                thursday.plusDays(6)
+        );
+    }
+
+    static String htmlUnescape(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        Matcher matcher = HTML_ENTITY.matcher(raw);
+        StringBuilder decoded = new StringBuilder();
+        while (matcher.find()) {
+            matcher.appendReplacement(
+                    decoded,
+                    Matcher.quoteReplacement(Character.toString(Integer.parseInt(matcher.group(1)))));
+        }
+        matcher.appendTail(decoded);
+        return decoded.toString()
+                .replace("&amp;", "&")
+                .replace("&quot;", "\"")
+                .replace("&nbsp;", " ")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">");
+    }
+
+    private static boolean isPennyLandingPage(String url) {
+        String lower = url.toLowerCase();
+        return lower.contains("penny.hu") && !lower.contains(".pdf") && !lower.contains("publitas");
     }
 }
