@@ -26,6 +26,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.logout': 'Kijelentkezés',
     'nav.switchToEn': 'Switch to English',
     'nav.switchToHu': 'Váltás magyarra',
+    'notice.gotIt': 'Értem',
+    'notice.close': 'Bezárás',
 
     'home.loadingNews': 'Hírek betöltése a szerverről...',
     'home.noNews': 'Jelenleg nincs feltöltött hír az adatbázisban.',
@@ -355,6 +357,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'links.title': 'Egyetemi Linkek',
 
     'sales.title': 'Akciós Újságok',
+    'sales.devTitle': 'Fejlesztés alatt',
+    'sales.devBody': 'Ez az oldal még készül. Bizonyos elemek működhetnek, de hiányos vagy hibás lehet.',
     'sales.openPaper': 'Lapozás',
     'sales.disclaimer': 'Az ajánlatok a boltok hivatalos oldalain érvényesek, áruházanként eltérhetnek.',
     'sales.searchLabel': 'Keresés az újságokban',
@@ -416,6 +420,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.logout': 'Log out',
     'nav.switchToEn': 'Switch to English',
     'nav.switchToHu': 'Switch to Hungarian',
+    'notice.gotIt': 'Got it',
+    'notice.close': 'Close',
 
     'home.loadingNews': 'Loading news from the server...',
     'home.noNews': 'There are no news items in the database yet.',
@@ -745,6 +751,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'links.title': 'University Links',
 
     'sales.title': 'Sale Flyers',
+    'sales.devTitle': 'Still in development',
+    'sales.devBody': 'This page is still being built. Some things may work, but they can be incomplete or wrong.',
     'sales.openPaper': 'Open paper',
     'sales.disclaimer': 'Offers are valid on the stores’ official pages and may differ by shop.',
     'sales.searchLabel': 'Search the flyers',
