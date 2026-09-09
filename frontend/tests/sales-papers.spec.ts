@@ -49,6 +49,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
 
   test('három bolt tab jelenik meg, alapértelmezetten az ALDI aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
+    await page.getByRole('button', { name: /Értem|Got it/i }).click();
 
     await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
     await expect(page.locator('[data-store]')).toHaveCount(3);
@@ -58,6 +59,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
 
   test('másik boltra kattintva lecserélődik az újságlista', async ({ page }) => {
     await page.goto('/akcios-ujsag');
+    await page.getByRole('button', { name: /Értem|Got it/i }).click();
     await expect(page.getByText('ALDI heti újság')).toBeVisible();
 
     await page.locator('[data-store="penny"]').click();
@@ -69,6 +71,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
 
   test('keresés találatot ad, és megnyitja a lapozót', async ({ page }) => {
     await page.goto('/akcios-ujsag');
+    await page.getByRole('button', { name: /Értem|Got it/i }).click();
     await page.getByLabel(/Keresés az újságokban|Search the flyers/i).fill('kakaóscsiga');
     await page.getByRole('button', { name: /Keresés|Search/i }).click();
 
