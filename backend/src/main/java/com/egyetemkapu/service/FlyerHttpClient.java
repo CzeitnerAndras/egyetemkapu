@@ -23,7 +23,7 @@ public class FlyerHttpClient {
     public FlyerHttpClient() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(12_000);
-        factory.setReadTimeout(25_000);
+        factory.setReadTimeout(60_000);
         this.restTemplate = new RestTemplate(factory);
     }
 

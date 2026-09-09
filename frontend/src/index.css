@@ -15,6 +15,10 @@ html.dark body {
     background-color: #121212 !important;
 }
 
+html.flyer-open nav {
+    display: none !important;
+}
+
 .nav-scroll {
     overflow-x: auto;
     overflow-y: hidden;
