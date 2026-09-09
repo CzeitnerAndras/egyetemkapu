@@ -17,6 +17,7 @@ const flyers = [
 
 describe('SalesPapersPage Komponens', () => {
     beforeEach(() => {
+        sessionStorage.clear();
         globalThis.fetch = jest.fn().mockImplementation((url: string) => {
             if (url === '/api/flyers') {
                 return Promise.resolve({ ok: true, json: async () => flyers });
@@ -47,6 +48,7 @@ describe('SalesPapersPage Komponens', () => {
 
     it('betölti az ALDI újságokat és vált SPAR-ra', async () => {
         render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
 
         expect(await screen.findByText('ALDI heti újság')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /sales\.tagline\.aldi/ })).toBeInTheDocument();
@@ -58,6 +60,7 @@ describe('SalesPapersPage Komponens', () => {
 
     it('keresésre megjeleníti a termék találatot, majd megnyitja a lapozót', async () => {
         render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByText('ALDI heti újság');
 
         await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
