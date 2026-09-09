@@ -11,6 +11,8 @@ class FlyerPageProxyServiceTest {
     void allowsOfficialHostsOnly() {
         assertDoesNotThrow(() -> FlyerPageProxyService.assertAllowed("https://szorolap.aldi.hu/resize/page.jpg"));
         assertDoesNotThrow(() -> FlyerPageProxyService.assertAllowed("https://www.spar.hu/content/dam/x.pdf"));
+        assertDoesNotThrow(() -> FlyerPageProxyService.assertAllowed(
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/files/assets/common/page-html5-substrates/page0001_2.jpg"));
         assertThrows(IllegalArgumentException.class,
                 () -> FlyerPageProxyService.assertAllowed("https://ujsagomat.hu/stolen.pdf"));
         assertThrows(IllegalArgumentException.class,

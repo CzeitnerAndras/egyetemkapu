@@ -28,6 +28,7 @@ public class FlyerPageProxyService {
             "spar.hu",
             "www.penny.hu",
             "penny.hu",
+            "files.rewe.co.at",
             "www.aldi.hu",
             "aldi.hu"
     );
