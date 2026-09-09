@@ -205,7 +205,7 @@ public class FlyerCatalogParser {
                         if (spreadPages.isArray()) {
                             for (JsonNode page : spreadPages) {
                                 int number = page.path("number").asInt(page.path("pageNumber").asInt(fallbackPage));
-                                String image = firstImage(page);
+                                String image = firstImage(page, paper.officialUrl());
                                 String text = collectText(page);
                                 pages.add(new ParsedPage(number, image, text));
                                 collectProducts(page, number, products);
@@ -341,19 +341,45 @@ public class FlyerCatalogParser {
         }
     }
 
-    private String firstImage(JsonNode page) {
-        String direct = textOr(page.path("image"), textOr(page.path("url"), null));
+    private String firstImage(JsonNode page, String officialUrl) {
+        String direct = resolveAssetUrl(officialUrl, textOr(page.path("image"), textOr(page.path("url"), null)));
         if (direct != null) {
             return direct;
         }
         JsonNode images = page.path("images");
-        for (String key : List.of("at800", "at1000", "at600", "at1200", "at200")) {
-            String found = textOr(images.path(key), null);
+        for (String key : List.of("at800", "at600", "at1000", "at1200", "at200", "at1600")) {
+            String found = resolveAssetUrl(officialUrl, textOr(images.path(key), null));
             if (found != null) {
-                return found.startsWith("http") ? found : null;
+                return found;
             }
         }
-        return textOr(page.path("screenshot"), null);
+        return resolveAssetUrl(officialUrl, textOr(page.path("screenshot"), null));
+    }
+
+    static String resolveAssetUrl(String officialUrl, String asset) {
+        if (asset == null || asset.isBlank()) {
+            return null;
+        }
+        String trimmed = asset.trim();
+        if (trimmed.startsWith("//")) {
+            trimmed = "https:" + trimmed;
+        }
+        try {
+            java.net.URI resolved;
+            if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+                resolved = java.net.URI.create(trimmed);
+            } else if (officialUrl == null || officialUrl.isBlank()) {
+                return null;
+            } else {
+                resolved = java.net.URI.create(officialUrl).resolve(trimmed);
+            }
+            if (!"https".equalsIgnoreCase(resolved.getScheme()) || resolved.getHost() == null) {
+                return null;
+            }
+            return resolved.toString();
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
     }
 
     private static String textOr(JsonNode node, String fallback) {

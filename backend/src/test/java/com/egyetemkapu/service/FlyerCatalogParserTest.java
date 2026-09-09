@@ -7,6 +7,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FlyerCatalogParserTest {
@@ -49,15 +50,27 @@ class FlyerCatalogParserTest {
                 {"config":{"publicationTitle":"ALDI újság 2026.09.03-2026.09.09","downloadPdfUrl":"https://view.publitas.com/x.pdf"}}
                 """;
         String spreads = """
-                {"spreads":[{"pages":[{"number":2,"images":{"at800":"https://view.publitas.com/page.jpg"},"products":[{"title":"Kakaóscsiga","price":"249"}]}]}]}
+                {"spreads":[{"pages":[{"number":2,"images":{"at800":"/resize/page.jpg"},"products":[{"title":"Kakaóscsiga","price":"249"}]}]}]}
                 """;
         FlyerCatalogParser.ParsedCatalog catalog = parser.parsePublitas(paper, data, spreads);
         assertEquals("ALDI újság 2026.09.03-2026.09.09", catalog.paper().title());
         assertEquals("https://view.publitas.com/x.pdf", catalog.paper().pdfUrl());
         assertEquals(1, catalog.pages().size());
         assertEquals(2, catalog.pages().getFirst().pageNumber());
+        assertEquals("https://szorolap.aldi.hu/resize/page.jpg", catalog.pages().getFirst().imageUrl());
         assertEquals("Kakaóscsiga", catalog.products().getFirst().name());
         assertEquals(LocalDate.of(2026, 9, 3), catalog.paper().validFrom());
+    }
+
+    @Test
+    void resolvesRelativeAndProtocolRelativeAssetUrls() {
+        assertEquals(
+                "https://szorolap.aldi.hu/resize/page.jpg",
+                FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/aldi_kw36/", "/resize/page.jpg"));
+        assertEquals(
+                "https://view.publitas.com/page.jpg",
+                FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/x/", "//view.publitas.com/page.jpg"));
+        assertNull(FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/x/", "http://evil.example/x.jpg"));
     }
 
     @Test
