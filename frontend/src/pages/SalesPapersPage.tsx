@@ -39,6 +39,9 @@ interface FlyerDetail {
 
 const STORES: StoreId[] = ['aldi', 'spar', 'penny'];
 
+const PAPER_CARD =
+    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
+
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
     const notice = useNotice('sales-dev');
@@ -50,6 +53,7 @@ export default function SalesPapersPage() {
     const [searching, setSearching] = useState(false);
     const [error, setError] = useState('');
     const [viewer, setViewer] = useState<{ flyer: FlyerDetail; page: number } | null>(null);
+    const [pageStatus, setPageStatus] = useState<'loading' | 'ok' | 'error'>('loading');
 
     useEffect(() => {
         let cancelled = false;
@@ -132,12 +136,51 @@ export default function SalesPapersPage() {
         ? viewer.flyer.pages.findIndex((page) => page.pageNumber === viewer.page)
         : -1;
 
+    const pageSrc = viewer ? `/api/flyers/${viewer.flyer.id}/pages/${viewer.page}` : '';
+
+    useEffect(() => {
+        if (!pageSrc || !viewer) {
+            return;
+        }
+        let cancelled = false;
+        setPageStatus('loading');
+        const probe = new Image();
+        const succeed = () => {
+            if (!cancelled) setPageStatus('ok');
+        };
+        const fail = () => {
+            if (!cancelled) setPageStatus('error');
+        };
+        probe.onload = succeed;
+        probe.onerror = fail;
+        probe.src = pageSrc;
+        if (probe.complete) {
+            if (probe.naturalWidth > 0) {
+                succeed();
+            } else {
+                fail();
+            }
+        }
+        const pages = viewer.flyer.pages;
+        const index = pages.findIndex((page) => page.pageNumber === viewer.page);
+        [index - 1, index + 1].forEach((nearby) => {
+            if (nearby < 0 || nearby >= pages.length) {
+                return;
+            }
+            const prefetch = new Image();
+            prefetch.src = `/api/flyers/${viewer.flyer.id}/pages/${pages[nearby].pageNumber}`;
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [pageSrc, viewer]);
+
     return (
         <PageShell>
             <PageHeader
                 icon={Newspaper}
                 extra={
-                    <form onSubmit={handleSearch} className="flex w-full md:w-72 relative shadow-[3px_3px_0px_#000] dark:shadow-none">
+                    <form onSubmit={handleSearch} className="flex w-full md:w-56 h-8 relative">
                         <label className="sr-only" htmlFor="flyer-search">{t('sales.searchLabel')}</label>
                         <input
                             id="flyer-search"
@@ -145,14 +188,14 @@ export default function SalesPapersPage() {
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t('sales.searchPlaceholder')}
-                            className="w-full bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-2 pl-3 pr-12 text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none font-bold secret:font-mono"
+                            className="h-8 w-full bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-0 pl-2 pr-9 text-sm leading-none text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none font-bold secret:font-mono"
                         />
                         <button
                             type="submit"
-                            className="absolute inset-y-0 right-0 px-3 flex items-center text-fuchsia-600 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
+                            className="absolute inset-y-0 right-0 px-2 flex items-center text-fuchsia-600 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
                             aria-label={t('sales.searchSubmit')}
                         >
-                            <Search className="w-5 h-5" />
+                            <Search className="w-4 h-4" />
                         </button>
                     </form>
                 }
@@ -182,7 +225,7 @@ export default function SalesPapersPage() {
                                     key={`${hit.flyerId}-${hit.kind}-${hit.pageNumber}-${index}`}
                                     type="button"
                                     onClick={() => openFlyer(hit.flyerId, hit.pageNumber)}
-                                    className="text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-cyan-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]"
+                                    className={PAPER_CARD}
                                 >
                                     <div className="flex items-center justify-between gap-3 mb-2">
                                         <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-[#3b0764]">
@@ -214,7 +257,7 @@ export default function SalesPapersPage() {
                             className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer
                                 ${activeStore === store
                                     ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-[#3b0764]'
                                 }`}
                         >
                             <span className="block text-xl leading-none">{storeLabel(store)}</span>
@@ -245,7 +288,7 @@ export default function SalesPapersPage() {
                                         key={flyer.id}
                                         type="button"
                                         onClick={() => openFlyer(flyer.id)}
-                                        className="text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-cyan-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]"
+                                        className={PAPER_CARD}
                                     >
                                         <h3 className="text-lg font-bold uppercase leading-tight mb-2">{flyer.title}</h3>
                                         <p className="text-sm font-medium mb-3">{formatRange(flyer.validFrom, flyer.validTo)}</p>
@@ -275,26 +318,26 @@ export default function SalesPapersPage() {
             </NoticeModal>
 
             {viewer && (
-                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-[10px_10px_0px_#d946ef]">
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
                         <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
-                            <div>
+                            <div className="min-w-0 text-black dark:text-white secret:text-[#1cf85d]">
                                 <p className="text-xs font-black uppercase">{storeLabel(viewer.flyer.store)}</p>
-                                <h2 className="text-lg font-bold uppercase secret:font-mono leading-tight">{viewer.flyer.title}</h2>
+                                <h2 className="text-lg font-bold uppercase secret:font-mono leading-tight truncate">{viewer.flyer.title}</h2>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <a
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 hover:bg-cyan-400"
+                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
                                 >
                                     <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setViewer(null)}
-                                    className="p-2 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer hover:bg-cyan-400"
+                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-[#3b0764]"
                                     aria-label={t('sales.closeViewer')}
                                 >
                                     <X className="w-5 h-5" />
@@ -302,15 +345,21 @@ export default function SalesPapersPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-black/80 flex items-center justify-center p-4 min-h-[50vh]">
+                        <div className="flex-1 overflow-auto bg-slate-200 dark:bg-[#121212] secret:bg-black flex items-center justify-center p-4 min-h-[50vh] relative">
+                            {pageStatus !== 'ok' && (
+                                <p className="absolute font-bold uppercase secret:font-mono text-black dark:text-[#c084fc] secret:text-[#1cf85d] text-center px-4 z-10">
+                                    {pageStatus === 'error' ? t('sales.pageLoadError') : t('sales.pageLoading')}
+                                </p>
+                            )}
                             <img
-                                src={`/api/flyers/${viewer.flyer.id}/pages/${viewer.page}`}
+                                key={pageSrc}
+                                src={pageSrc}
                                 alt={t('sales.page', { page: viewer.page })}
-                                className="max-h-[70vh] max-w-full object-contain border-4 border-white/20"
+                                className={`max-h-[70vh] max-w-full object-contain border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
                             />
                         </div>
 
-                        <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
+                        <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d]">
                             <button
                                 type="button"
                                 disabled={currentPageIndex <= 0}

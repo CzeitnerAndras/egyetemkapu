@@ -51,6 +51,7 @@ describe('SalesPapersPage Komponens', () => {
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
 
         expect(await screen.findByText('ALDI heti újság')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /ALDI heti újság/ }).className).toContain('dark:hover:bg-[#3b0764]');
         expect(screen.getByRole('button', { name: /sales\.tagline\.aldi/ })).toBeInTheDocument();
 
         await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.spar/ }));

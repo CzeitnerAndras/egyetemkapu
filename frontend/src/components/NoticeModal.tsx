@@ -36,7 +36,7 @@ export function NoticeModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="p-1 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer hover:bg-cyan-400 secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                        className="p-1 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black"
                         aria-label={closeLabel}
                     >
                         <X className="w-5 h-5" />
