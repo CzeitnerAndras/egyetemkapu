@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { NoticeModal } from '../components/NoticeModal';
@@ -137,6 +138,14 @@ export default function SalesPapersPage() {
         : -1;
 
     const pageSrc = viewer ? `/api/flyers/${viewer.flyer.id}/pages/${viewer.page}` : '';
+
+    useEffect(() => {
+        if (!viewer) {
+            return;
+        }
+        document.documentElement.classList.add('flyer-open');
+        return () => document.documentElement.classList.remove('flyer-open');
+    }, [viewer]);
 
     useEffect(() => {
         if (!pageSrc || !viewer) {
@@ -317,8 +326,8 @@ export default function SalesPapersPage() {
                 {t('sales.devBody')}
             </NoticeModal>
 
-            {viewer && (
-                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            {viewer && createPortal(
+                <div className="fixed inset-0 bg-black/80 z-[80] flex items-center justify-center p-4">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
                         <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
                             <div className="min-w-0 text-black dark:text-white secret:text-[#1cf85d]">
@@ -385,7 +394,8 @@ export default function SalesPapersPage() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </PageShell>
     );

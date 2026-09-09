@@ -18,6 +18,7 @@ const flyers = [
 describe('SalesPapersPage Komponens', () => {
     beforeEach(() => {
         sessionStorage.clear();
+        document.documentElement.classList.remove('flyer-open');
         globalThis.fetch = jest.fn().mockImplementation((url: string) => {
             if (url === '/api/flyers') {
                 return Promise.resolve({ ok: true, json: async () => flyers });
@@ -75,5 +76,6 @@ describe('SalesPapersPage Komponens', () => {
             expect(screen.getByRole('img')).toHaveAttribute('src', '/api/flyers/1/pages/2');
         });
         expect(screen.getByRole('link', { name: /sales.openOfficial/ })).toHaveAttribute('href', 'https://szorolap.aldi.hu/x/');
+        expect(document.documentElement.classList.contains('flyer-open')).toBe(true);
     });
 });
