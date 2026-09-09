@@ -123,6 +123,21 @@ describe('Navbar Komponens', () => {
         expect(window.location.pathname).toBe('/naptar');
     });
 
+    it('kis egérmozgás után is megnyitja a naptár oldalt', async () => {
+        const { container } = renderWithRouter();
+        const strip = getNavScroll(container);
+        const link = strip.querySelector('a[href="/naptar"]')!;
+        const pointer = (type: string, clientX: number) =>
+            new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX });
+
+        strip.dispatchEvent(pointer('pointerdown', 220));
+        strip.dispatchEvent(pointer('pointermove', 216));
+        strip.dispatchEvent(pointer('pointerup', 216));
+        fireEvent.click(link);
+
+        expect(window.location.pathname).toBe('/naptar');
+    });
+
     it('megakadályozza a böngésző natív link-húzását a füleken', () => {
         const { container } = renderWithRouter();
         const calendarLink = getNavScroll(container).querySelector('a[href="/naptar"]')!;
