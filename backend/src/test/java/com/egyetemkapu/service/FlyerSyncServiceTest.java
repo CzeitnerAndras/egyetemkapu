@@ -80,6 +80,7 @@ class FlyerSyncServiceTest {
         verify(flyerPersistenceService).replaceStore(eq("spar"), captor.capture(), any());
         assertEquals(1, captor.getValue().size());
         assertEquals("Kakaós csiga", captor.getValue().getFirst().products().getFirst().name());
+        assertTrue(captor.getValue().getFirst().paper().officialUrl().contains("/ajanlatok/spar/260903-1-spar-szorolap"));
     }
 
     @Test

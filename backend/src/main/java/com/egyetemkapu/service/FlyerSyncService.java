@@ -97,7 +97,7 @@ public class FlyerSyncService {
             List<DiscoveredPaper> papers = parser.discoverSparPdfs(html, today);
             List<ParsedCatalog> catalogs = new ArrayList<>();
             for (DiscoveredPaper paper : papers) {
-                if (catalogs.size() >= 3) {
+                if (catalogs.size() >= 6) {
                     break;
                 }
                 byte[] pdf = safeBytes(paper.pdfUrl());
@@ -182,7 +182,8 @@ public class FlyerSyncService {
                 .orElse(true)
                 || flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
-                || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages);
+                || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
+                || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts);
     }
 
     public List<String> stores() {
@@ -212,6 +213,15 @@ public class FlyerSyncService {
 
     private static boolean isPennyReweFlyer(Flyer flyer) {
         return "penny".equals(flyer.getStore()) && FlyerCatalogParser.isPennyReweUrl(flyer.getOfficialUrl());
+    }
+
+    private static boolean aldiPagesMissingProducts(Flyer flyer) {
+        if (!"aldi".equals(flyer.getStore())) {
+            return false;
+        }
+        boolean hasPages = flyer.getPages() != null && !flyer.getPages().isEmpty();
+        boolean hasProducts = flyer.getProducts() != null && !flyer.getProducts().isEmpty();
+        return hasPages && !hasProducts;
     }
 
     private static boolean publitasPagesMissingImages(Flyer flyer) {
