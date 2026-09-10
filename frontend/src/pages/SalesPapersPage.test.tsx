@@ -9,9 +9,23 @@ jest.mock('../i18n/LanguageContext', () => {
     };
 });
 
+function isoDate(offsetDays = 0) {
+    const date = new Date();
+    date.setDate(date.getDate() + offsetDays);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 const flyers = [
-    { id: 1, store: 'aldi', title: 'ALDI heti újság', officialUrl: 'https://szorolap.aldi.hu/x/', pageCount: 12, productCount: 8, validFrom: '2026-09-03', validTo: '2026-09-09' },
-    { id: 2, store: 'spar', title: 'SPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok', pageCount: 20, productCount: 0, validFrom: '2026-09-03', validTo: '2026-09-09' },
+    { id: 9, store: 'aldi', title: 'ALDI 20. hét', officialUrl: 'https://szorolap.aldi.hu/old/', pageCount: 63, productCount: 1, validFrom: isoDate(-120), validTo: isoDate(-114) },
+    { id: 1, store: 'aldi', title: 'ALDI heti újság', officialUrl: 'https://szorolap.aldi.hu/x/', pageCount: 12, productCount: 8, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 11, store: 'aldi', title: 'ALDI Középső sor termékei', officialUrl: 'https://szorolap.aldi.hu/kozepso/', pageCount: 18, productCount: 45, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 12, store: 'aldi', title: 'ALDI Online akciós újság', officialUrl: 'https://szorolap.aldi.hu/online/', pageCount: 52, productCount: 211, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 2, store: 'spar', title: 'SPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok/spar/260910-1-spar-szorolap', pageCount: 20, productCount: 0, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 21, store: 'spar', title: 'INTERSPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok/interspar/260910-2-interspar-szorolap', pageCount: 22, productCount: 10, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 22, store: 'spar', title: 'SPAR Market', officialUrl: 'https://www.spar.hu/ajanlatok/spar-market/260910-3-spar-market-city-spar', pageCount: 12, productCount: 8, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 3, store: 'penny', title: 'PENNY ajánlatok', officialUrl: 'https://www.penny.hu/ajanlatok', pageCount: 1, productCount: 15 },
 ];
 
@@ -58,6 +72,31 @@ describe('SalesPapersPage Komponens', () => {
         await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.spar/ }));
         expect(screen.getByText('SPAR szórólap')).toBeInTheDocument();
         expect(screen.queryByText('ALDI heti újság')).not.toBeInTheDocument();
+        expect(screen.queryByText('ALDI 20. hét')).not.toBeInTheDocument();
+    });
+
+    it('ALDI-nál az online újságot rakja a középső sor elé', async () => {
+        render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        await screen.findByText('ALDI Online akciós újság');
+        const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
+        expect(titles[0]).toBe('ALDI Online akciós újság');
+        expect(titles[1]).toBe('ALDI Középső sor termékei');
+    });
+
+    it('SPAR-nál a heti SPAR, INTERSPAR és SPAR Market sorrendjét tartja', async () => {
+        render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.spar/ }));
+        const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
+        expect(titles).toEqual(['SPAR szórólap', 'INTERSPAR szórólap', 'SPAR Market']);
+    });
+
+    it('elrejti a lejárt újságot', async () => {
+        render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        expect(await screen.findByText('ALDI heti újság')).toBeInTheDocument();
+        expect(screen.queryByText('ALDI 20. hét')).not.toBeInTheDocument();
     });
 
     it('keresésre megjeleníti a termék találatot, majd megnyitja a lapozót', async () => {

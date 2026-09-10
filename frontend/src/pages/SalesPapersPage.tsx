@@ -85,7 +85,10 @@ export default function SalesPapersPage() {
     }, [t]);
 
     const storeFlyers = useMemo(
-        () => flyers.filter((flyer) => flyer.store === activeStore),
+        () => flyers
+            .filter((flyer) => flyer.store === activeStore)
+            .filter((flyer) => isCurrentOrUpcomingFlyer(flyer))
+            .sort(compareFlyers),
         [flyers, activeStore],
     );
 
@@ -399,4 +402,74 @@ export default function SalesPapersPage() {
             )}
         </PageShell>
     );
+}
+
+function localIsoDate(date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function addIsoDays(iso: string, days: number): string {
+    const date = new Date(`${iso}T12:00:00`);
+    date.setDate(date.getDate() + days);
+    return localIsoDate(date);
+}
+
+function isCurrentlyValidFlyer(flyer: FlyerSummary, today = localIsoDate()): boolean {
+    if (flyer.validFrom && flyer.validFrom > today) {
+        return false;
+    }
+    if (flyer.validTo && flyer.validTo < today) {
+        return false;
+    }
+    return true;
+}
+
+export function isCurrentOrUpcomingFlyer(flyer: FlyerSummary, today = localIsoDate()): boolean {
+    if (flyer.validTo && flyer.validTo < today) {
+        return false;
+    }
+    return !flyer.validFrom || flyer.validFrom <= addIsoDays(today, 8);
+}
+
+function flyerKind(flyer: FlyerSummary): number {
+    const hay = `${flyer.officialUrl ?? ''} ${flyer.title ?? ''}`.toLowerCase();
+    if (flyer.store === 'aldi') {
+        if (hay.includes('online')) {
+            return 0;
+        }
+        if (hay.includes('kozepso') || hay.includes('középső')) {
+            return 1;
+        }
+        return 2;
+    }
+    if (flyer.store === 'spar') {
+        if (hay.includes('/interspar/') || hay.includes('interspar')) {
+            return 1;
+        }
+        if (hay.includes('/spar-market/') || hay.includes('market')) {
+            return 2;
+        }
+        return 0;
+    }
+    return 0;
+}
+
+function compareFlyers(a: FlyerSummary, b: FlyerSummary, today = localIsoDate()): number {
+    const aNow = isCurrentlyValidFlyer(a, today);
+    const bNow = isCurrentlyValidFlyer(b, today);
+    if (aNow !== bNow) {
+        return aNow ? -1 : 1;
+    }
+    const kind = flyerKind(a) - flyerKind(b);
+    if (kind !== 0) {
+        return kind;
+    }
+    const from = (b.validFrom ?? '').localeCompare(a.validFrom ?? '');
+    if (from !== 0) {
+        return from;
+    }
+    return a.title.localeCompare(b.title, 'hu');
 }
