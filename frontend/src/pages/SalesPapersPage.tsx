@@ -137,7 +137,7 @@ export default function SalesPapersPage() {
         ? viewer.flyer.pages.findIndex((page) => page.pageNumber === viewer.page)
         : -1;
 
-    const pageSrc = viewer ? `/api/flyers/${viewer.flyer.id}/pages/${viewer.page}` : '';
+    const pageSrc = viewer ? `/api/flyers/${viewer.flyer.id}/pages/${viewer.page}?full=1` : '';
 
     useEffect(() => {
         if (!viewer) {
@@ -177,7 +177,7 @@ export default function SalesPapersPage() {
                 return;
             }
             const prefetch = new Image();
-            prefetch.src = `/api/flyers/${viewer.flyer.id}/pages/${pages[nearby].pageNumber}`;
+            prefetch.src = `/api/flyers/${viewer.flyer.id}/pages/${pages[nearby].pageNumber}?full=1`;
         });
         return () => {
             cancelled = true;
@@ -327,8 +327,8 @@ export default function SalesPapersPage() {
             </NoticeModal>
 
             {viewer && createPortal(
-                <div className="fixed inset-0 bg-black/80 z-[80] flex items-center justify-center p-4">
-                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
+                <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center p-2 sm:p-4">
+                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1100px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
                         <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
                             <div className="min-w-0 text-black dark:text-white secret:text-[#1cf85d]">
                                 <p className="text-xs font-black uppercase">{storeLabel(viewer.flyer.store)}</p>
@@ -354,9 +354,9 @@ export default function SalesPapersPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-slate-200 dark:bg-[#121212] secret:bg-black flex items-center justify-center p-4 min-h-[50vh] relative">
+                        <div className="flex-1 overflow-auto bg-slate-200 dark:bg-[#121212] secret:bg-black p-3 min-h-0 relative">
                             {pageStatus !== 'ok' && (
-                                <p className="absolute font-bold uppercase secret:font-mono text-black dark:text-[#c084fc] secret:text-[#1cf85d] text-center px-4 z-10">
+                                <p className="sticky top-1/3 font-bold uppercase secret:font-mono text-black dark:text-[#c084fc] secret:text-[#1cf85d] text-center px-4 z-10">
                                     {pageStatus === 'error' ? t('sales.pageLoadError') : t('sales.pageLoading')}
                                 </p>
                             )}
@@ -364,7 +364,7 @@ export default function SalesPapersPage() {
                                 key={pageSrc}
                                 src={pageSrc}
                                 alt={t('sales.page', { page: viewer.page })}
-                                className={`max-h-[70vh] max-w-full object-contain border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
+                                className={`block w-full h-auto border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
                             />
                         </div>
 

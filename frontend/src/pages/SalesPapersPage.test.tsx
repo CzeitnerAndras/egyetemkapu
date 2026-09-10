@@ -73,7 +73,8 @@ describe('SalesPapersPage Komponens', () => {
 
         await userEvent.click(screen.getByText('Kakaóscsiga'));
         await waitFor(() => {
-            expect(screen.getByRole('img')).toHaveAttribute('src', '/api/flyers/1/pages/2');
+            expect(screen.getByRole('img')).toHaveAttribute('src', '/api/flyers/1/pages/2?full=1');
+        expect(screen.getByRole('img').className).toContain('w-full');
         });
         expect(screen.getByRole('link', { name: /sales.openOfficial/ })).toHaveAttribute('href', 'https://szorolap.aldi.hu/x/');
         expect(document.documentElement.classList.contains('flyer-open')).toBe(true);
