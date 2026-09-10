@@ -12,9 +12,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -83,7 +85,9 @@ public class FlyerSyncService {
                 if (catalog.pages().isEmpty() && catalog.paper().pdfUrl() != null) {
                     catalog = withPdfPages(catalog);
                 }
-                catalogs.add(catalog);
+                if (keepCatalog(catalog, today)) {
+                    catalogs.add(catalog);
+                }
             }
             flyerPersistenceService.replaceStore("aldi", catalogs, LocalDateTime.now(clock));
         } catch (Exception e) {
@@ -100,8 +104,14 @@ public class FlyerSyncService {
                 if (catalogs.size() >= 6) {
                     break;
                 }
-                byte[] pdf = safeBytes(paper.pdfUrl());
-                List<ParsedPage> pages = pdfExtractor.extractPages(pdf);
+                if (!FlyerCatalogParser.isCurrentOrUpcoming(paper.validFrom(), paper.validTo(), today)) {
+                    continue;
+                }
+                SparPdf pdf = downloadSparPdf(paper);
+                if (pdf.bytes().length == 0) {
+                    continue;
+                }
+                List<ParsedPage> pages = pdfExtractor.extractPages(pdf.bytes());
                 if (pages.isEmpty()) {
                     continue;
                 }
@@ -109,7 +119,16 @@ public class FlyerSyncService {
                 for (ParsedPage page : pages) {
                     products.addAll(parser.extractPricedItems(page.text(), page.pageNumber()));
                 }
-                catalogs.add(new ParsedCatalog(paper, pages, products));
+                DiscoveredPaper resolved = new DiscoveredPaper(
+                        paper.store(),
+                        paper.title(),
+                        paper.officialUrl(),
+                        pdf.url(),
+                        paper.sourceKey(),
+                        paper.validFrom(),
+                        paper.validTo()
+                );
+                catalogs.add(new ParsedCatalog(resolved, pages, products));
             }
             flyerPersistenceService.replaceStore("spar", catalogs, LocalDateTime.now(clock));
         } catch (Exception e) {
@@ -141,7 +160,7 @@ public class FlyerSyncService {
                 } else {
                     continue;
                 }
-                if (!catalog.pages().isEmpty() || !catalog.products().isEmpty()) {
+                if (keepCatalog(catalog, today) && (!catalog.pages().isEmpty() || !catalog.products().isEmpty())) {
                     catalogs.add(catalog);
                 }
             }
@@ -181,6 +200,7 @@ public class FlyerSyncService {
                 .map(synced -> synced.isBefore(now.minusHours(12)))
                 .orElse(true)
                 || flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
+                || missingWeeklySpar(flyers, now.toLocalDate())
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
                 || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
                 || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts);
@@ -188,6 +208,40 @@ public class FlyerSyncService {
 
     public List<String> stores() {
         return STORES;
+    }
+
+    private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
+        LocalDate thursday = today.with(DayOfWeek.THURSDAY);
+        if (thursday.isAfter(today)) {
+            thursday = thursday.minusWeeks(1);
+        }
+        String date = thursday.toString();
+        return flyers.stream().noneMatch(flyer -> ("spar:spar:" + date).equals(flyer.getSourceKey()))
+                || flyers.stream().noneMatch(flyer -> ("spar:interspar:" + date).equals(flyer.getSourceKey()))
+                || flyers.stream().noneMatch(flyer -> ("spar:spar-market:" + date).equals(flyer.getSourceKey()));
+    }
+
+    private SparPdf downloadSparPdf(DiscoveredPaper paper) {
+        LinkedHashSet<String> urls = new LinkedHashSet<>();
+        if (paper.pdfUrl() != null && !paper.pdfUrl().isBlank()) {
+            urls.add(paper.pdfUrl());
+        }
+        urls.addAll(parser.sparPdfCandidates(FlyerCatalogParser.sparBrandOf(paper), paper.validFrom()));
+        for (String url : urls) {
+            byte[] bytes = safeBytes(url);
+            if (bytes.length > 0) {
+                return new SparPdf(url, bytes);
+            }
+        }
+        return new SparPdf(paper.pdfUrl(), new byte[0]);
+    }
+
+    private record SparPdf(String url, byte[] bytes) {
+    }
+
+    private static boolean keepCatalog(ParsedCatalog catalog, LocalDate today) {
+        return FlyerCatalogParser.isCurrentOrUpcoming(
+                catalog.paper().validFrom(), catalog.paper().validTo(), today);
     }
 
     private ParsedCatalog withPennyPageTexts(ParsedCatalog catalog, String indexHtml) {
