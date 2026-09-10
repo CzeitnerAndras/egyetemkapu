@@ -98,51 +98,32 @@ public class FlyerCatalogParser {
             while (matcher.find()) {
                 String slug = matcher.group(1);
                 String url = "https://szorolap.aldi.hu/" + slug + "/";
-                papers.putIfAbsent(slug, new DiscoveredPaper(
-                        "aldi",
-                        humanizeSlug(slug),
-                        url,
-                        null,
-                        "aldi:" + slug,
-                        today.minusDays(3),
-                        today.plusDays(4)
-                ));
+                papers.putIfAbsent(slug, aldiPaper(slug, url, today));
             }
         }
         if (papers.isEmpty()) {
-            int week = today.get(java.time.temporal.WeekFields.ISO.weekOfWeekBasedYear());
-            int year = today.get(java.time.temporal.WeekFields.ISO.weekBasedYear());
-            for (int offset = 0; offset <= 1; offset++) {
-                int candidate = week - offset;
-                if (candidate < 1) {
-                    continue;
-                }
-                String slug = "aldi_online_akcios_ujsag_" + year + "_kw" + String.format("%02d", candidate);
-                papers.putIfAbsent(slug, new DiscoveredPaper(
-                        "aldi",
-                        "ALDI online akciós újság - " + year + ". " + candidate + ". hét",
-                        "https://szorolap.aldi.hu/" + slug + "/",
-                        null,
-                        "aldi:" + slug,
-                        today.minusDays(3),
-                        today.plusDays(4)
-                ));
-            }
+            int week = today.get(WeekFields.ISO.weekOfWeekBasedYear());
+            int year = today.get(WeekFields.ISO.weekBasedYear());
+            String slug = "aldi_online_akcios_ujsag_" + year + "_kw" + String.format("%02d", week);
+            papers.putIfAbsent(slug, aldiPaper(
+                    slug,
+                    "https://szorolap.aldi.hu/" + slug + "/",
+                    today));
         }
-        return new ArrayList<>(papers.values());
+        return keepCurrentOrUpcoming(papers.values(), today);
     }
 
     public List<DiscoveredPaper> discoverSparPdfs(String html, LocalDate today) {
         Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        for (DiscoveredPaper fallback : sparWeeklyFallbacks(today)) {
+            papers.putIfAbsent(fallback.sourceKey(), fallback);
+        }
         String haystack = html == null ? "" : html.replace("\\/", "/");
         addSparCatalogMatches(papers, SPAR_CATALOG.matcher(haystack));
         addSparCatalogMatches(papers, SPAR_CATALOG_PATH.matcher(haystack));
         addSparMatches(papers, SPAR_PDF.matcher(haystack), today, true);
         addSparMatches(papers, SPAR_PATH.matcher(haystack), today, true);
-        for (DiscoveredPaper fallback : sparWeeklyFallbacks(today)) {
-            papers.putIfAbsent(fallback.sourceKey(), fallback);
-        }
-        return new ArrayList<>(papers.values());
+        return keepCurrentOrUpcoming(papers.values(), today);
     }
 
     public List<DiscoveredPaper> sparWeeklyFallbacks(LocalDate today) {
@@ -203,7 +184,7 @@ public class FlyerCatalogParser {
         for (DiscoveredPaper fallback : pennyWeeklyFallbacks(today)) {
             papers.putIfAbsent(fallback.sourceKey(), fallback);
         }
-        return new ArrayList<>(papers.values());
+        return keepCurrentOrUpcoming(papers.values(), today);
     }
 
     public List<DiscoveredPaper> pennyWeeklyFallbacks(LocalDate today) {
@@ -437,6 +418,29 @@ public class FlyerCatalogParser {
         return products;
     }
 
+    public static boolean isCurrentlyValid(LocalDate from, LocalDate to, LocalDate today) {
+        if (today == null) {
+            return true;
+        }
+        if (from != null && from.isAfter(today)) {
+            return false;
+        }
+        if (to != null && to.isBefore(today)) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean isCurrentOrUpcoming(LocalDate from, LocalDate to, LocalDate today) {
+        if (today == null) {
+            return true;
+        }
+        if (to != null && to.isBefore(today)) {
+            return false;
+        }
+        return from == null || !from.isAfter(today.plusDays(8));
+    }
+
     public LocalDate[] parseDates(String text) {
         LocalDate[] range = new LocalDate[2];
         if (text == null) {
@@ -600,7 +604,11 @@ public class FlyerCatalogParser {
                 case "spar-market" -> "SPAR Market";
                 default -> "SPAR szórólap";
             };
-            papers.putIfAbsent(sparSourceKey(brandKey, start), sparCatalogPaper(brandKey, start, slug.substring(7), title));
+            String slugTail = slug.substring(7);
+            if (!isWeeklySparSlug(brandKey, slugTail)) {
+                return;
+            }
+            papers.putIfAbsent(sparSourceKey(brandKey, start), sparCatalogPaper(brandKey, start, slugTail, title));
         } catch (Exception ignored) {
             // Ignore malformed catalogue slugs.
         }
@@ -608,15 +616,8 @@ public class FlyerCatalogParser {
 
     private DiscoveredPaper sparCatalogPaper(String brand, LocalDate start, String slugTail, String title) {
         String yyMMdd = start.format(DateTimeFormatter.ofPattern("yyMMdd"));
-        String mmdd = start.format(DateTimeFormatter.ofPattern("MMdd"));
-        String folder = start.format(DateTimeFormatter.ofPattern("yyyy/MMdd"));
-        String pdfFile = switch (brand) {
-            case "interspar" -> "interspar-szorolap-" + mmdd + "p.pdf";
-            case "spar-market" -> "spar-market-" + mmdd + "p.pdf";
-            default -> "spar-szorolap-" + mmdd + "p.pdf";
-        };
         String official = "https://www.spar.hu/ajanlatok/" + brand + "/" + yyMMdd + "-" + slugTail;
-        String pdf = "https://www.spar.hu/content/dam/sparhuwebsite/_flyers/" + folder + "/" + pdfFile;
+        String pdf = sparPdfCandidates(brand, start).getFirst();
         return new DiscoveredPaper(
                 "spar",
                 title,
@@ -626,6 +627,57 @@ public class FlyerCatalogParser {
                 start,
                 start.plusDays(6)
         );
+    }
+
+    public List<String> sparPdfCandidates(String brand, LocalDate start) {
+        String mmdd = start.format(DateTimeFormatter.ofPattern("MMdd"));
+        String folder = "https://www.spar.hu/content/dam/sparhuwebsite/_flyers/"
+                + start.format(DateTimeFormatter.ofPattern("yyyy/MMdd")) + "/";
+        return switch (brand) {
+            case "interspar" -> List.of(
+                    folder + "interspar-szorolap" + mmdd + "p.pdf",
+                    folder + "interspar-szorolap-" + mmdd + "p.pdf"
+            );
+            case "spar-market" -> List.of(
+                    folder + "spar-market-cityspar" + mmdd + ".pdf",
+                    folder + "spar-market-" + mmdd + "p.pdf"
+            );
+            default -> List.of(
+                    folder + "spar-szorolap-" + mmdd + "p.pdf",
+                    folder + "spar-szorolap" + mmdd + "p.pdf"
+            );
+        };
+    }
+
+    static String sparBrandOf(DiscoveredPaper paper) {
+        if (paper.sourceKey() != null) {
+            String[] parts = paper.sourceKey().split(":");
+            if (parts.length >= 2 && !parts[1].isBlank()) {
+                return parts[1];
+            }
+        }
+        return "spar";
+    }
+
+    private static boolean isWeeklySparSlug(String brand, String slugTail) {
+        if (brand == null || slugTail == null || isNonWeeklySpar(slugTail)) {
+            return false;
+        }
+        String tail = slugTail.toLowerCase();
+        return switch (brand.toLowerCase()) {
+            case "spar" -> tail.matches("\\d+-spar-szorolap");
+            case "interspar" -> tail.matches("\\d+-interspar-szorolap");
+            case "spar-market" -> tail.matches("\\d+-spar-market-city-spar");
+            default -> false;
+        };
+    }
+
+    private static boolean isNonWeeklySpar(String value) {
+        String lower = value.toLowerCase();
+        return lower.contains("partner") || lower.contains("nyitas") || lower.contains("megujulas")
+                || lower.contains("hatosagi") || lower.contains("letenye") || lower.contains("paks")
+                || lower.contains("allat") || lower.contains("bor-") || lower.contains("katalogus")
+                || lower.contains("torokbalint") || lower.contains("uzlet");
     }
 
     private static String sparSourceKey(String brand, LocalDate start) {
@@ -641,9 +693,7 @@ public class FlyerCatalogParser {
 
     private void addSparPaper(Map<String, DiscoveredPaper> papers, String path, LocalDate start) {
         String file = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
-        if (file.contains("partner") || file.contains("nyitas") || file.contains("megujulas")
-                || file.contains("hatosagi") || file.contains("letenye") || file.contains("paks")
-                || file.contains("allat") || file.contains("bor-") || file.contains("katalogus")) {
+        if (isNonWeeklySpar(file)) {
             return;
         }
         String brand = sparBrandFromFile(file);
@@ -691,11 +741,64 @@ public class FlyerCatalogParser {
         };
     }
 
-    private DiscoveredPaper pennyRewePaper(int year, int week) {
-        String stamp = year + String.format("%02d", week);
-        LocalDate thursday = LocalDate.of(year, 1, 4)
+    private static List<DiscoveredPaper> keepCurrentOrUpcoming(
+            java.util.Collection<DiscoveredPaper> papers, LocalDate today) {
+        List<DiscoveredPaper> kept = new ArrayList<>();
+        for (DiscoveredPaper paper : papers) {
+            if (isCurrentOrUpcoming(paper.validFrom(), paper.validTo(), today)) {
+                kept.add(paper);
+            }
+        }
+        return kept;
+    }
+
+    private DiscoveredPaper aldiPaper(String slug, String url, LocalDate today) {
+        LocalDate[] range = aldiValidity(slug, today);
+        return new DiscoveredPaper(
+                "aldi",
+                humanizeSlug(slug),
+                url,
+                null,
+                "aldi:" + slug,
+                range[0],
+                range[1]
+        );
+    }
+
+    static LocalDate[] aldiValidity(String slug, LocalDate today) {
+        if (slug != null) {
+            Matcher ymd = Pattern.compile("(20\\d{2})_(\\d{2})_(\\d{2})").matcher(slug);
+            if (ymd.find()) {
+                LocalDate from = LocalDate.of(
+                        Integer.parseInt(ymd.group(1)),
+                        Integer.parseInt(ymd.group(2)),
+                        Integer.parseInt(ymd.group(3)));
+                return new LocalDate[] { from, from.plusDays(6) };
+            }
+            Matcher kw = Pattern.compile("(20\\d{2}).*?kw(\\d{1,2})").matcher(slug);
+            if (kw.find()) {
+                LocalDate thursday = isoWeekThursday(Integer.parseInt(kw.group(1)), Integer.parseInt(kw.group(2)));
+                return new LocalDate[] { thursday, thursday.plusDays(6) };
+            }
+            Matcher het = Pattern.compile("(?:^|_)(\\d{1,2})_het(?:_|$)").matcher(slug);
+            if (het.find()) {
+                int year = today.get(WeekFields.ISO.weekBasedYear());
+                LocalDate thursday = isoWeekThursday(year, Integer.parseInt(het.group(1)));
+                return new LocalDate[] { thursday, thursday.plusDays(6) };
+            }
+        }
+        return new LocalDate[] { today.minusDays(3), today.plusDays(4) };
+    }
+
+    static LocalDate isoWeekThursday(int weekBasedYear, int week) {
+        return LocalDate.of(weekBasedYear, 1, 4)
                 .with(WeekFields.ISO.weekOfWeekBasedYear(), week)
                 .with(DayOfWeek.THURSDAY);
+    }
+
+    private DiscoveredPaper pennyRewePaper(int year, int week) {
+        String stamp = year + String.format("%02d", week);
+        LocalDate thursday = isoWeekThursday(year, week);
         return new DiscoveredPaper(
                 "penny",
                 "PENNY " + week + ". heti reklámújság",

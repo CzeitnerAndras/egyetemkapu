@@ -16,6 +16,20 @@ class FlyerCatalogParserTest {
     private final LocalDate today = LocalDate.of(2026, 9, 6);
 
     @Test
+    void skipsExpiredAldiPublications() {
+        String html = """
+                <a href="https://szorolap.aldi.hu/aldi_online_akcios_ujsag_2026_05_14_kw20_x/">old</a>
+                <a href="https://szorolap.aldi.hu/aldi_online_akcios_ujsag_2026_kw36/">last</a>
+                <a href="https://szorolap.aldi.hu/aldi_kozepso_sor_termekei_37_het/">now</a>
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverAldiPublications(html, LocalDate.of(2026, 9, 10));
+        assertEquals(1, papers.size());
+        assertTrue(papers.getFirst().sourceKey().contains("37"));
+        assertEquals(LocalDate.of(2026, 9, 10), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 9, 16), papers.getFirst().validTo());
+    }
+
+    @Test
     void discoversAldiViewerLinks() {
         String html = "<a href=\"https://szorolap.aldi.hu/aldi_online_akcios_ujsag_2026_kw36/\">újság</a>";
         List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverAldiPublications(html, today);
@@ -67,6 +81,30 @@ class FlyerCatalogParserTest {
         assertTrue(papers.stream().anyMatch(paper -> paper.pdfUrl().contains("spar-szorolap-0903p.pdf")));
         assertTrue(papers.stream().anyMatch(paper ->
                 paper.officialUrl().contains("/ajanlatok/spar/260903-1-spar-szorolap")));
+    }
+
+    @Test
+    void skipsStoreSpecificSparCataloguesAndUsesWeeklyPdfNames() {
+        LocalDate thursday = LocalDate.of(2026, 9, 10);
+        String html = """
+                <a href="https://www.spar.hu/ajanlatok/spar/260910-4-spar-paks-uzlet-megujulas">paks</a>
+                <a href="https://www.spar.hu/ajanlatok/spar-market/260910-5-spar-market-torokbalint-szorolap">tórok</a>
+                <a href="https://www.spar.hu/ajanlatok/spar/260910-1-spar-szorolap">SPAR</a>
+                <a href="https://www.spar.hu/ajanlatok/interspar/260910-2-interspar-szorolap">INTERSPAR</a>
+                <a href="https://www.spar.hu/ajanlatok/spar-market/260910-3-spar-market-city-spar">Market</a>
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverSparPdfs(html, thursday);
+        assertTrue(papers.stream().noneMatch(paper -> paper.officialUrl().contains("paks")));
+        assertTrue(papers.stream().noneMatch(paper -> paper.officialUrl().contains("torokbalint")));
+        assertTrue(papers.stream().anyMatch(paper ->
+                paper.officialUrl().contains("/ajanlatok/spar/260910-1-spar-szorolap")
+                        && paper.pdfUrl().contains("spar-szorolap-0910p.pdf")));
+        assertTrue(papers.stream().anyMatch(paper ->
+                paper.officialUrl().contains("/ajanlatok/interspar/260910-2-interspar-szorolap")
+                        && paper.pdfUrl().contains("interspar-szorolap0910p.pdf")));
+        assertTrue(papers.stream().anyMatch(paper ->
+                paper.officialUrl().contains("/ajanlatok/spar-market/260910-3-spar-market-city-spar")
+                        && paper.pdfUrl().contains("spar-market-cityspar0910.pdf")));
     }
 
     @Test
