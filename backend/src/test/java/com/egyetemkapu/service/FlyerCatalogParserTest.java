@@ -38,8 +38,26 @@ class FlyerCatalogParserTest {
                 <a href="https://www.spar.hu/content/dam/sparhuwebsite/_flyers/2026/0903/spar-partner-nyitas.pdf">nyitás</a>
                 """;
         List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverSparPdfs(html, today);
-        assertEquals(1, papers.size());
-        assertTrue(papers.getFirst().pdfUrl().contains("spar-szorolap-0903p.pdf"));
+        assertTrue(papers.stream().anyMatch(paper ->
+                paper.officialUrl().contains("/ajanlatok/spar/260903-1-spar-szorolap")
+                        && paper.pdfUrl().contains("spar-szorolap-0903p.pdf")));
+        assertTrue(papers.stream().noneMatch(paper -> paper.pdfUrl() != null && paper.pdfUrl().contains("nyitas")));
+    }
+
+    @Test
+    void discoversSparCataloguePagesFromListingHtml() {
+        String html = """
+                <a href="https://www.spar.hu/ajanlatok/spar/260903-1-spar-szorolap">SPAR</a>
+                <a href="https://www.spar.hu/ajanlatok/interspar/260903-2-interspar-szorolap">INTERSPAR</a>
+                <a href="/ajanlatok/spar-market/260903-3-spar-market-city-spar">Market</a>
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverSparPdfs(html, today);
+        assertTrue(papers.stream().anyMatch(paper ->
+                "https://www.spar.hu/ajanlatok/spar/260903-1-spar-szorolap".equals(paper.officialUrl())));
+        assertTrue(papers.stream().anyMatch(paper ->
+                "https://www.spar.hu/ajanlatok/interspar/260903-2-interspar-szorolap".equals(paper.officialUrl())));
+        assertTrue(papers.stream().anyMatch(paper ->
+                "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar".equals(paper.officialUrl())));
     }
 
     @Test
@@ -47,6 +65,8 @@ class FlyerCatalogParserTest {
         List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverSparPdfs("<html></html>", today);
         assertFalse(papers.isEmpty());
         assertTrue(papers.stream().anyMatch(paper -> paper.pdfUrl().contains("spar-szorolap-0903p.pdf")));
+        assertTrue(papers.stream().anyMatch(paper ->
+                paper.officialUrl().contains("/ajanlatok/spar/260903-1-spar-szorolap")));
     }
 
     @Test
@@ -97,6 +117,30 @@ class FlyerCatalogParserTest {
     }
 
     @Test
+    void extractsAldiStylePricesWithThousandsAndUnit() {
+        String text = """
+                GOURMET
+                TÚRÓS TÁSKA PESTO
+                95 g/darab
+                1 105,26 Ft/kg
+                HÚSMESTER FRISS DARÁLT SERTÉSHÚS
+                1 299 Ft/kg
+                """;
+        List<FlyerCatalogParser.ParsedProduct> products = parser.extractPricedItems(text, 1);
+        assertTrue(products.stream().anyMatch(product -> product.priceText().contains("1 299")));
+        assertTrue(products.stream().anyMatch(product -> product.priceText().contains("Ft/kg")));
+    }
+
+    @Test
+    void mapsPennySubstrateUrlToTextOverlay() {
+        String image = "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/files/assets/common/page-html5-substrates/page0002_2.jpg";
+        assertEquals(
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/files/assets/common/page-textlayers/page0002_1.png",
+                FlyerCatalogParser.pennyTextLayerUrl(image));
+        assertNull(FlyerCatalogParser.pennyTextLayerUrl("https://www.spar.hu/x.pdf"));
+    }
+
+    @Test
     void parsesPublitasProductsAndPages() {
         FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
                 "aldi", "Régi cím", "https://szorolap.aldi.hu/demo/", null, "aldi:demo", today, today);
@@ -114,6 +158,19 @@ class FlyerCatalogParserTest {
         assertEquals("https://szorolap.aldi.hu/resize/page.jpg", catalog.pages().getFirst().imageUrl());
         assertEquals("Kakaóscsiga", catalog.products().getFirst().name());
         assertEquals(LocalDate.of(2026, 9, 3), catalog.paper().validFrom());
+    }
+
+    @Test
+    void extractsPublitasProductsFromPageOcrWhenHotspotsAreMissing() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "aldi", "ALDI", "https://szorolap.aldi.hu/demo/", null, "aldi:demo", today, today);
+        String spreads = """
+                [{"pages":[{"number":1,"images":{"at800":"/resize/page.jpg"},"text":"TÚRÓS TÁSKA 1 299 Ft/kg"}]}]
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parsePublitas(paper, null, spreads);
+        assertEquals(1, catalog.pages().size());
+        assertFalse(catalog.products().isEmpty());
+        assertTrue(catalog.products().getFirst().priceText().contains("1 299"));
     }
 
     @Test

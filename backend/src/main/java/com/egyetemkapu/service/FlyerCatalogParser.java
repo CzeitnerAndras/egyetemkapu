@@ -51,6 +51,12 @@ public class FlyerCatalogParser {
     private static final Pattern SPAR_PATH = Pattern.compile(
             "(/content/dam/sparhuwebsite/_flyers/[^\"'\\s>]+\\.pdf)",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern SPAR_CATALOG = Pattern.compile(
+            "https?://(?:www\\.)?spar\\.hu/ajanlatok/(spar|interspar|spar-market)/(\\d{6}-\\d+-[a-z0-9-]+)",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern SPAR_CATALOG_PATH = Pattern.compile(
+            "/ajanlatok/(spar|interspar|spar-market)/(\\d{6}-\\d+-[a-z0-9-]+)",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern PUBLITAS = Pattern.compile(
             "https?://(?:view\\.)?publitas\\.com/[^\"'\\s>]+",
             Pattern.CASE_INSENSITIVE);
@@ -58,7 +64,8 @@ public class FlyerCatalogParser {
             "(?is)<(?:h[1-4]|p|span|div)[^>]*>\\s*([^<]{3,120}?)\\s*</(?:h[1-4]|p|span|div)>\\s*"
                     + "[^<]{0,180}?(\\d[\\d\\s.]{0,8}\\s*Ft)");
     private static final Pattern PLAIN_PRICE = Pattern.compile(
-            "([\\p{L}][\\p{L}0-9 .%+\\-]{2,70}?)\\s+(\\d[\\d\\s.]{1,8}\\s*Ft)");
+            "([\\p{L}][\\p{L}0-9 .%+\\-]{2,80}?)\\s+"
+                    + "(\\d{1,3}(?:[ .]\\d{3})*(?:[,]\\d{1,2})?\\s*(?:Ft(?:/\\p{L}+)?|,-))");
     private static final Pattern JSON_LD = Pattern.compile(
             "(?is)<script[^>]+type=['\"]application/ld\\+json['\"][^>]*>(.*?)</script>");
     private static final Pattern ISO_DATE = Pattern.compile("20\\d{2}[-.]\\d{2}[-.]\\d{2}");
@@ -128,12 +135,12 @@ public class FlyerCatalogParser {
     public List<DiscoveredPaper> discoverSparPdfs(String html, LocalDate today) {
         Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
         String haystack = html == null ? "" : html.replace("\\/", "/");
+        addSparCatalogMatches(papers, SPAR_CATALOG.matcher(haystack));
+        addSparCatalogMatches(papers, SPAR_CATALOG_PATH.matcher(haystack));
         addSparMatches(papers, SPAR_PDF.matcher(haystack), today, true);
         addSparMatches(papers, SPAR_PATH.matcher(haystack), today, true);
-        if (papers.isEmpty()) {
-            for (DiscoveredPaper fallback : sparWeeklyFallbacks(today)) {
-                papers.putIfAbsent(fallback.sourceKey(), fallback);
-            }
+        for (DiscoveredPaper fallback : sparWeeklyFallbacks(today)) {
+            papers.putIfAbsent(fallback.sourceKey(), fallback);
         }
         return new ArrayList<>(papers.values());
     }
@@ -145,11 +152,9 @@ public class FlyerCatalogParser {
             thursday = thursday.minusWeeks(1);
         }
         for (LocalDate start : List.of(thursday, thursday.plusWeeks(1))) {
-            String folder = start.format(DateTimeFormatter.ofPattern("yyyy/MMdd"));
-            String stamp = start.format(DateTimeFormatter.ofPattern("MMdd"));
-            addSparFallback(papers, folder, "spar-szorolap-" + stamp + "p.pdf", "SPAR szórólap", start);
-            addSparFallback(papers, folder, "interspar-szorolap-" + stamp + "p.pdf", "INTERSPAR szórólap", start);
-            addSparFallback(papers, folder, "spar-market-" + stamp + "p.pdf", "SPAR market", start);
+            papers.add(sparCatalogPaper("spar", start, "1-spar-szorolap", "SPAR szórólap"));
+            papers.add(sparCatalogPaper("interspar", start, "2-interspar-szorolap", "INTERSPAR szórólap"));
+            papers.add(sparCatalogPaper("spar-market", start, "3-spar-market-city-spar", "SPAR Market"));
         }
         return papers;
     }
@@ -310,6 +315,15 @@ public class FlyerCatalogParser {
                 + String.format("%04d", pageNumber) + "_2.jpg";
     }
 
+    public static String pennyTextLayerUrl(String imageUrl) {
+        if (imageUrl == null || !imageUrl.contains("page-html5-substrates/page")) {
+            return null;
+        }
+        return imageUrl
+                .replace("page-html5-substrates/", "page-textlayers/")
+                .replaceFirst("page(\\d{4})_\\d+\\.jpe?g$", "page$1_1.png");
+    }
+
     public static boolean looksLikePennyLeaflet(String html) {
         if (html == null || html.length() < 200) {
             return false;
@@ -410,11 +424,12 @@ public class FlyerCatalogParser {
         if (text == null || text.isBlank()) {
             return products;
         }
-        Matcher matcher = PLAIN_PRICE.matcher(text.replace('\n', ' '));
+        String flat = text.replace('\u00a0', ' ').replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
+        Matcher matcher = PLAIN_PRICE.matcher(flat);
         while (matcher.find() && products.size() < 80) {
-            String name = matcher.group(1).replaceAll("\\s+", " ").trim();
+            String name = shortenProductName(matcher.group(1).trim());
             String price = matcher.group(2).replaceAll("\\s+", " ").trim();
-            if (name.length() < 3 || name.contains("http") || name.toLowerCase().contains("érvényes")) {
+            if (isWeakProductName(name)) {
                 continue;
             }
             products.add(new ParsedProduct(name, price, pageNumber, null));
@@ -567,6 +582,56 @@ public class FlyerCatalogParser {
         return slug.replace('_', ' ').replace('-', ' ').trim();
     }
 
+    private void addSparCatalogMatches(Map<String, DiscoveredPaper> papers, Matcher matcher) {
+        while (matcher.find()) {
+            addSparCatalog(papers, matcher.group(1), matcher.group(2));
+        }
+    }
+
+    private void addSparCatalog(Map<String, DiscoveredPaper> papers, String brand, String slug) {
+        if (brand == null || slug == null || slug.length() < 8) {
+            return;
+        }
+        String brandKey = brand.toLowerCase();
+        try {
+            LocalDate start = LocalDate.parse("20" + slug.substring(0, 6), DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String title = switch (brandKey) {
+                case "interspar" -> "INTERSPAR szórólap";
+                case "spar-market" -> "SPAR Market";
+                default -> "SPAR szórólap";
+            };
+            papers.putIfAbsent(sparSourceKey(brandKey, start), sparCatalogPaper(brandKey, start, slug.substring(7), title));
+        } catch (Exception ignored) {
+            // Ignore malformed catalogue slugs.
+        }
+    }
+
+    private DiscoveredPaper sparCatalogPaper(String brand, LocalDate start, String slugTail, String title) {
+        String yyMMdd = start.format(DateTimeFormatter.ofPattern("yyMMdd"));
+        String mmdd = start.format(DateTimeFormatter.ofPattern("MMdd"));
+        String folder = start.format(DateTimeFormatter.ofPattern("yyyy/MMdd"));
+        String pdfFile = switch (brand) {
+            case "interspar" -> "interspar-szorolap-" + mmdd + "p.pdf";
+            case "spar-market" -> "spar-market-" + mmdd + "p.pdf";
+            default -> "spar-szorolap-" + mmdd + "p.pdf";
+        };
+        String official = "https://www.spar.hu/ajanlatok/" + brand + "/" + yyMMdd + "-" + slugTail;
+        String pdf = "https://www.spar.hu/content/dam/sparhuwebsite/_flyers/" + folder + "/" + pdfFile;
+        return new DiscoveredPaper(
+                "spar",
+                title,
+                official,
+                pdf,
+                sparSourceKey(brand, start),
+                start,
+                start.plusDays(6)
+        );
+    }
+
+    private static String sparSourceKey(String brand, LocalDate start) {
+        return "spar:" + brand + ":" + start;
+    }
+
     private void addSparMatches(Map<String, DiscoveredPaper> papers, Matcher matcher, LocalDate today, boolean limit) {
         while (matcher.find() && (!limit || papers.size() < 6)) {
             String path = matcher.group(1);
@@ -574,29 +639,56 @@ public class FlyerCatalogParser {
         }
     }
 
-    private void addSparFallback(List<DiscoveredPaper> papers, String folder, String file, String title, LocalDate start) {
-        String path = "/content/dam/sparhuwebsite/_flyers/" + folder + "/" + file;
-        Map<String, DiscoveredPaper> one = new LinkedHashMap<>();
-        addSparPaper(one, path, start);
-        papers.addAll(one.values());
-    }
-
     private void addSparPaper(Map<String, DiscoveredPaper> papers, String path, LocalDate start) {
         String file = path.substring(path.lastIndexOf('/') + 1).toLowerCase();
         if (file.contains("partner") || file.contains("nyitas") || file.contains("megujulas")
-                || file.contains("hatosagi") || file.contains("letenye") || file.contains("paks")) {
+                || file.contains("hatosagi") || file.contains("letenye") || file.contains("paks")
+                || file.contains("allat") || file.contains("bor-") || file.contains("katalogus")) {
             return;
         }
-        String url = "https://www.spar.hu" + path;
-        papers.putIfAbsent(path, new DiscoveredPaper(
-                "spar",
-                humanizeSlug(file.replace(".pdf", "")),
-                "https://www.spar.hu/ajanlatok",
-                url,
-                "spar:" + path,
-                start,
-                start.plusDays(6)
-        ));
+        String brand = sparBrandFromFile(file);
+        if (brand == null) {
+            return;
+        }
+        LocalDate from = start;
+        Matcher folder = Pattern.compile("/(20\\d{2})/(\\d{4})/").matcher(path);
+        if (folder.find()) {
+            try {
+                from = LocalDate.parse(folder.group(1) + folder.group(2), DateTimeFormatter.ofPattern("yyyyMMdd"));
+            } catch (Exception ignored) {
+                from = start;
+            }
+        }
+        papers.putIfAbsent(sparSourceKey(brand, from), sparCatalogPaper(brand, from, sparSlugTail(brand), sparTitle(brand)));
+    }
+
+    private static String sparBrandFromFile(String file) {
+        if (file.contains("interspar")) {
+            return "interspar";
+        }
+        if (file.contains("spar-market")) {
+            return "spar-market";
+        }
+        if (file.contains("spar-szorolap") || file.contains("szorolap")) {
+            return "spar";
+        }
+        return null;
+    }
+
+    private static String sparSlugTail(String brand) {
+        return switch (brand) {
+            case "interspar" -> "2-interspar-szorolap";
+            case "spar-market" -> "3-spar-market-city-spar";
+            default -> "1-spar-szorolap";
+        };
+    }
+
+    private static String sparTitle(String brand) {
+        return switch (brand) {
+            case "interspar" -> "INTERSPAR szórólap";
+            case "spar-market" -> "SPAR Market";
+            default -> "SPAR szórólap";
+        };
     }
 
     private DiscoveredPaper pennyRewePaper(int year, int week) {
@@ -633,6 +725,25 @@ public class FlyerCatalogParser {
                 .replace("&nbsp;", " ")
                 .replace("&lt;", "<")
                 .replace("&gt;", ">");
+    }
+
+    private static String shortenProductName(String name) {
+        String[] words = name.split("\\s+");
+        if (words.length <= 6) {
+            return name;
+        }
+        return String.join(" ", java.util.Arrays.copyOfRange(words, words.length - 6, words.length));
+    }
+
+    private static boolean isWeakProductName(String name) {
+        if (name.length() < 3 || name.contains("http")) {
+            return true;
+        }
+        String lower = name.toLowerCase();
+        if (lower.contains("érvényes") || lower.contains("oldalon")) {
+            return true;
+        }
+        return lower.matches("^[\\d ./%gkgmlcsdbáéíóöőúüű-]+$");
     }
 
     private static boolean isPennyLandingPage(String url) {
