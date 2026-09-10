@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class FlyerPersistenceService {
@@ -24,13 +26,19 @@ public class FlyerPersistenceService {
     @Transactional
     public void replaceStore(String store, java.util.List<ParsedCatalog> catalogs, LocalDateTime synced) {
         flyerRepository.deleteByStore(store);
+        flyerRepository.flush();
+        Set<String> savedKeys = new HashSet<>();
         for (ParsedCatalog catalog : catalogs) {
+            String sourceKey = limit(catalog.paper().sourceKey(), 255);
+            if (sourceKey != null && !savedKeys.add(sourceKey)) {
+                continue;
+            }
             Flyer flyer = new Flyer();
             flyer.setStore(catalog.paper().store());
             flyer.setTitle(limit(catalog.paper().title(), 255));
             flyer.setOfficialUrl(limit(catalog.paper().officialUrl(), 1000));
             flyer.setPdfUrl(limit(catalog.paper().pdfUrl(), 1000));
-            flyer.setSourceKey(limit(catalog.paper().sourceKey(), 255));
+            flyer.setSourceKey(sourceKey);
             flyer.setValidFrom(catalog.paper().validFrom());
             flyer.setValidTo(catalog.paper().validTo());
             flyer.setLastSynced(synced);

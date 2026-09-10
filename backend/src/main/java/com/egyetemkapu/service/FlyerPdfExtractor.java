@@ -43,7 +43,7 @@ public class FlyerPdfExtractor {
                 return new byte[0];
             }
             PDFRenderer renderer = new PDFRenderer(document);
-            BufferedImage image = renderer.renderImageWithDPI(pageNumber - 1, 96);
+            BufferedImage image = renderer.renderImageWithDPI(pageNumber - 1, 120);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ImageIO.write(image, "png", out);
             return out.toByteArray();

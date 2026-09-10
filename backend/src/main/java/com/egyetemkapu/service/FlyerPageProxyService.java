@@ -10,6 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageIO;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Set;
@@ -79,6 +85,7 @@ public class FlyerPageProxyService {
         }
         if (imageUrl != null) {
             CachedImage image = fetchAllowed(imageUrl, flyer.getOfficialUrl());
+            image = withPennyTextLayer(image, imageUrl, flyer.getOfficialUrl());
             putImage(cacheKey, image);
             return respond(image);
         }
@@ -120,6 +127,44 @@ public class FlyerPageProxyService {
             return null;
         }
         return spreadsImageCache.get(key);
+    }
+
+    private CachedImage withPennyTextLayer(CachedImage base, String imageUrl, String referer) {
+        String overlayUrl = FlyerCatalogParser.pennyTextLayerUrl(imageUrl);
+        if (overlayUrl == null) {
+            return base;
+        }
+        try {
+            CachedImage overlay = fetchAllowed(overlayUrl, referer);
+            byte[] combined = overlayImages(base.body(), overlay.body());
+            if (combined.length > 32) {
+                return new CachedImage(MediaType.IMAGE_PNG, combined);
+            }
+        } catch (Exception ignored) {
+            // Fall back to the photo layer if the text overlay is missing.
+        }
+        return base;
+    }
+
+    static byte[] overlayImages(byte[] baseBytes, byte[] overlayBytes) {
+        try {
+            BufferedImage base = ImageIO.read(new ByteArrayInputStream(baseBytes));
+            BufferedImage overlay = ImageIO.read(new ByteArrayInputStream(overlayBytes));
+            if (base == null || overlay == null) {
+                return new byte[0];
+            }
+            BufferedImage out = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = out.createGraphics();
+            graphics.drawImage(base, 0, 0, base.getWidth(), base.getHeight(), null);
+            graphics.setComposite(AlphaComposite.SrcOver);
+            graphics.drawImage(overlay, 0, 0, base.getWidth(), base.getHeight(), null);
+            graphics.dispose();
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            ImageIO.write(out, "png", buffer);
+            return buffer.toByteArray();
+        } catch (Exception e) {
+            return new byte[0];
+        }
     }
 
     private CachedImage fetchAllowed(String url, String referer) {
