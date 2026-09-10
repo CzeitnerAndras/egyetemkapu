@@ -385,7 +385,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'sales.pageLoading': 'Oldal betöltése...',
     'sales.pageLoadError': 'Ez az oldal most nem tölthető be. Nyisd meg a hivatalos újságot.',
     'sales.tagline.aldi': 'Heti újság és következő hét',
-    'sales.tagline.spar': 'SPAR, INTERSPAR és katalógusok',
+    'sales.tagline.spar': 'SPAR, INTERSPAR és SPAR Market',
     'sales.tagline.penny': 'Heti újság és ajánlatok',
 
     'admin.uploadNews': 'Új Hír Feltöltése',
@@ -781,7 +781,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'sales.pageLoading': 'Loading page...',
     'sales.pageLoadError': 'This page could not be loaded. Open the official flyer instead.',
     'sales.tagline.aldi': 'This week and next week',
-    'sales.tagline.spar': 'SPAR, INTERSPAR and catalogues',
+    'sales.tagline.spar': 'SPAR, INTERSPAR and SPAR Market',
     'sales.tagline.penny': 'Weekly paper and offers',
 
     'admin.uploadNews': 'Upload New News',
