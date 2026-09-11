@@ -234,4 +234,31 @@ class FlyerCatalogParserTest {
         assertEquals("Kakaóscsiga", products.getFirst().name());
         assertTrue(products.getFirst().priceText().contains("249"));
     }
+
+    @Test
+    void parsesTescoGraphqlLeafletsAndOrdersPagesByJpegNumber() {
+        String json = """
+                {"data":{"leaflets":{"items":[
+                  {"id":690,"slug":"tesco-ujsag-2026-09-10","promoP1Name":"SM","leafletUrl":"https://digitalcontent.api.tesco.com/v2/media/x/sm.pdf","country":"hu","validFrom":"2026-09-10T06:00:00.000Z","validTo":"2026-09-16T21:59:59.000Z","type":"SM","pages":[
+                    {"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/SM.2.jpeg"},
+                    {"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/SM.1.jpeg"}
+                  ]},
+                  {"id":652,"slug":"tesco-ujsag-2026-08-05","promoP1Name":"BTS","leafletUrl":"https://digitalcontent.api.tesco.com/v2/media/x/cat.pdf","country":"hu","validFrom":"2026-08-05T06:00:00.000Z","validTo":"2026-09-13T21:59:59.000Z","type":"CAT","pages":[
+                    {"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/CAT.1.jpeg"}
+                  ]},
+                  {"id":689,"slug":"tesco-ujsag-2026-09-10","promoP1Name":"HM","leafletUrl":"https://digitalcontent.api.tesco.com/v2/media/x/hm.pdf","country":"hu","validFrom":"2026-09-10T06:00:00.000Z","validTo":"2026-09-16T21:59:59.000Z","type":"HM","pages":[
+                    {"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/HM.1.jpeg"}
+                  ]},
+                  {"id":1,"slug":"old","type":"HM","validFrom":"2026-05-01T00:00:00.000Z","validTo":"2026-05-07T00:00:00.000Z","pages":[]}
+                ]}}}
+                """;
+        List<FlyerCatalogParser.ParsedCatalog> catalogs = parser.parseTescoGraphql(json, LocalDate.of(2026, 9, 10));
+        assertEquals(List.of("Tesco Hipermarket", "Tesco Szupermarket", "Tesco Katalógus"),
+                catalogs.stream().map(catalog -> catalog.paper().title()).toList());
+        FlyerCatalogParser.ParsedCatalog supermarket = catalogs.get(1);
+        assertEquals(List.of(1, 2), supermarket.pages().stream().map(FlyerCatalogParser.ParsedPage::pageNumber).toList());
+        assertTrue(supermarket.paper().officialUrl().contains("/szupermarket/tesco-ujsag-2026-09-10/1"));
+        assertEquals("tesco:HM:2026-09-10", catalogs.getFirst().paper().sourceKey());
+        assertEquals(27, FlyerCatalogParser.tescoPageNumber("https://x/file.27.jpeg", 1));
+    }
 }

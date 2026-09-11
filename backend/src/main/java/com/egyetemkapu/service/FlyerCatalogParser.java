@@ -4,10 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -198,6 +202,162 @@ public class FlyerCatalogParser {
             papers.putIfAbsent(paper.sourceKey(), paper);
         }
         return new ArrayList<>(papers.values());
+    }
+
+    public List<ParsedCatalog> parseTescoGraphql(String json, LocalDate today) {
+        List<ParsedCatalog> catalogs = new ArrayList<>();
+        if (json == null || json.isBlank()) {
+            return catalogs;
+        }
+        try {
+            JsonNode items = objectMapper.readTree(json).path("data").path("leaflets").path("items");
+            if (!items.isArray()) {
+                return catalogs;
+            }
+            for (JsonNode item : items) {
+                ParsedCatalog catalog = tescoCatalog(item);
+                if (catalog == null) {
+                    continue;
+                }
+                if (!isCurrentOrUpcoming(catalog.paper().validFrom(), catalog.paper().validTo(), today)) {
+                    continue;
+                }
+                catalogs.add(catalog);
+            }
+        } catch (Exception ignored) {
+            return catalogs;
+        }
+        catalogs.sort(Comparator
+                .comparingInt((ParsedCatalog catalog) -> tescoKind(tescoTypeOf(catalog.paper())))
+                .thenComparing(catalog -> catalog.paper().validFrom(), Comparator.nullsLast(Comparator.naturalOrder())));
+        return catalogs;
+    }
+
+    public String tescoGraphqlBody(LocalDate today) {
+        com.fasterxml.jackson.databind.node.ObjectNode root = objectMapper.createObjectNode();
+        root.put("operationName", "getValidLeafletList");
+        root.put("query", tescoGraphqlQuery());
+        com.fasterxml.jackson.databind.node.ObjectNode variables = root.putObject("variables");
+        variables.put("country", "hu");
+        variables.put("currentDate", today.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toString());
+        return root.toString();
+    }
+
+    public String tescoGraphqlQuery() {
+        return """
+                query getValidLeafletList($country: CountryCode!, $currentDate: DateTime!) {
+                  leaflets(options: { filter: { country: { eq: $country }, validTo: { after: $currentDate } } }) {
+                    items {
+                      id slug promoP1Name leafletUrl country validFrom validTo type
+                      pages { pagePNG }
+                    }
+                    totalItems
+                  }
+                }
+                """;
+    }
+
+    static int tescoPageNumber(String imageUrl, int fallback) {
+        if (imageUrl != null) {
+            Matcher matcher = Pattern.compile("\\.(\\d+)\\.jpe?g(?:\\?|$)", Pattern.CASE_INSENSITIVE).matcher(imageUrl);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            }
+        }
+        return fallback;
+    }
+
+    private ParsedCatalog tescoCatalog(JsonNode item) {
+        String type = item.path("type").asText("");
+        String folder = tescoFolder(type);
+        if (folder == null) {
+            return null;
+        }
+        String slug = item.path("slug").asText("");
+        if (slug.isBlank()) {
+            return null;
+        }
+        LocalDate from = tescoDate(item.path("validFrom").asText(null));
+        LocalDate to = tescoDate(item.path("validTo").asText(null));
+        String official = "https://www.tesco.hu/akciok/katalogusok/" + folder + "/" + slug + "/1";
+        String pdf = textOr(item.path("leafletUrl"), null);
+        String id = item.path("id").asText(slug);
+        DiscoveredPaper paper = new DiscoveredPaper(
+                "tesco",
+                tescoTitle(type),
+                official,
+                pdf,
+                "tesco:" + type + ":" + (from == null ? id : from),
+                from,
+                to
+        );
+        List<ParsedPage> pages = new ArrayList<>();
+        JsonNode pageNodes = item.path("pages");
+        if (pageNodes.isArray()) {
+            int index = 1;
+            for (JsonNode page : pageNodes) {
+                String image = textOr(page.path("pagePNG"), null);
+                if (image == null) {
+                    continue;
+                }
+                pages.add(new ParsedPage(tescoPageNumber(image, index), image, ""));
+                index++;
+            }
+        }
+        pages.sort(Comparator.comparingInt(ParsedPage::pageNumber));
+        return new ParsedCatalog(paper, pages, List.of());
+    }
+
+    static String tescoFolder(String type) {
+        return switch (type == null ? "" : type.toUpperCase()) {
+            case "HM" -> "hipermarket";
+            case "SM" -> "szupermarket";
+            case "CAT" -> "katalogus";
+            default -> null;
+        };
+    }
+
+    static String tescoTitle(String type) {
+        return switch (type == null ? "" : type.toUpperCase()) {
+            case "HM" -> "Tesco Hipermarket";
+            case "SM" -> "Tesco Szupermarket";
+            case "CAT" -> "Tesco Katalógus";
+            default -> "Tesco újság";
+        };
+    }
+
+    static int tescoKind(String type) {
+        return switch (type == null ? "" : type.toUpperCase()) {
+            case "HM" -> 0;
+            case "SM" -> 1;
+            case "CAT" -> 2;
+            default -> 9;
+        };
+    }
+
+    static String tescoTypeOf(DiscoveredPaper paper) {
+        if (paper.sourceKey() != null) {
+            String[] parts = paper.sourceKey().split(":");
+            if (parts.length >= 2) {
+                return parts[1];
+            }
+        }
+        return "";
+    }
+
+    private static LocalDate tescoDate(String iso) {
+        if (iso == null || iso.isBlank()) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(iso).atZoneSameInstant(ZoneId.of("Europe/Budapest")).toLocalDate();
+        } catch (Exception ignored) {
+            try {
+                return Instant.parse(iso).atZone(ZoneId.of("Europe/Budapest")).toLocalDate();
+            } catch (Exception ignoredAgain) {
+                return null;
+            }
+        }
     }
 
     public ParsedCatalog parsePennyLeaflet(DiscoveredPaper paper, String html) {
