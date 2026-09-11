@@ -387,6 +387,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'sales.tagline.aldi': 'Heti újság és következő hét',
     'sales.tagline.spar': 'SPAR, INTERSPAR és SPAR Market',
     'sales.tagline.penny': 'Heti újság és ajánlatok',
+    'sales.tagline.tesco': 'Hipermarket, szupermarket és katalógus',
 
     'admin.uploadNews': 'Új Hír Feltöltése',
     'admin.newsTitle': 'Hír címe',
@@ -783,6 +784,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'sales.tagline.aldi': 'This week and next week',
     'sales.tagline.spar': 'SPAR, INTERSPAR and SPAR Market',
     'sales.tagline.penny': 'Weekly paper and offers',
+    'sales.tagline.tesco': 'Hypermarket, supermarket and catalogue',
 
     'admin.uploadNews': 'Upload New News',
     'admin.newsTitle': 'News Title',
