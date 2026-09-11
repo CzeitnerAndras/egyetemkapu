@@ -18,13 +18,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
-    private static final List<String> STORES = List.of("aldi", "spar", "penny");
+    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco");
+    private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
 
     private final FlyerRepository flyerRepository;
     private final FlyerPersistenceService flyerPersistenceService;
@@ -68,6 +70,7 @@ public class FlyerSyncService {
             syncAldi(today);
             syncSpar(today);
             syncPenny(today);
+            syncTesco(today);
         } finally {
             syncing.set(false);
         }
@@ -189,6 +192,28 @@ public class FlyerSyncService {
         }
     }
 
+    public void syncTesco(LocalDate today) {
+        if (recentlySynced("tesco")) {
+            return;
+        }
+        try {
+            String json = safePostJson(TESCO_GRAPHQL, parser.tescoGraphqlBody(today));
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            for (ParsedCatalog catalog : parser.parseTescoGraphql(json, today)) {
+                ParsedCatalog withProducts = tescoWithProducts(catalog);
+                if (withProducts.pages().isEmpty() && withProducts.products().isEmpty()) {
+                    continue;
+                }
+                catalogs.add(withProducts);
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("tesco", catalogs, LocalDateTime.now(clock));
+            }
+        } catch (Exception e) {
+            log.warn("Tesco flyer sync failed: {}", e.getMessage());
+        }
+    }
+
     public boolean isStale(LocalDateTime now) {
         List<Flyer> flyers = flyerRepository.findAll();
         if (flyers.isEmpty()) {
@@ -202,6 +227,7 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
                 || missingWeeklySpar(flyers, now.toLocalDate())
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
+                || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
                 || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
                 || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts);
     }
@@ -219,6 +245,32 @@ public class FlyerSyncService {
         return flyers.stream().noneMatch(flyer -> ("spar:spar:" + date).equals(flyer.getSourceKey()))
                 || flyers.stream().noneMatch(flyer -> ("spar:interspar:" + date).equals(flyer.getSourceKey()))
                 || flyers.stream().noneMatch(flyer -> ("spar:spar-market:" + date).equals(flyer.getSourceKey()));
+    }
+
+    private ParsedCatalog tescoWithProducts(ParsedCatalog catalog) {
+        byte[] pdf = safeBytes(catalog.paper().pdfUrl(), catalog.paper().officialUrl());
+        if (pdf.length == 0) {
+            return catalog;
+        }
+        List<ParsedPage> rendered = pdfExtractor.extractPages(pdf);
+        if (rendered.isEmpty()) {
+            return catalog;
+        }
+        List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
+        Map<Integer, String> images = new java.util.HashMap<>();
+        for (ParsedPage page : catalog.pages()) {
+            images.put(page.pageNumber(), page.imageUrl());
+        }
+        for (ParsedPage page : rendered) {
+            String image = images.getOrDefault(page.pageNumber(), page.imageUrl());
+            pages.add(new ParsedPage(page.pageNumber(), image, page.text()));
+            products.addAll(parser.extractPricedItems(page.text(), page.pageNumber()));
+        }
+        if (pages.isEmpty()) {
+            pages = catalog.pages();
+        }
+        return new ParsedCatalog(catalog.paper(), pages, products);
     }
 
     private SparPdf downloadSparPdf(DiscoveredPaper paper) {
@@ -265,6 +317,14 @@ public class FlyerSyncService {
         return new ParsedCatalog(catalog.paper(), pages, products);
     }
 
+    private boolean recentlySynced(String store) {
+        LocalDateTime cutoff = LocalDateTime.now(clock).minusHours(12);
+        return flyerRepository.findAll().stream()
+                .filter(flyer -> store.equals(flyer.getStore()))
+                .map(Flyer::getLastSynced)
+                .anyMatch(synced -> synced != null && !synced.isBefore(cutoff));
+    }
+
     private static boolean isPennyReweFlyer(Flyer flyer) {
         return "penny".equals(flyer.getStore()) && FlyerCatalogParser.isPennyReweUrl(flyer.getOfficialUrl());
     }
@@ -304,12 +364,27 @@ public class FlyerSyncService {
         }
     }
 
+    private String safePostJson(String url, String body) {
+        try {
+            return httpClient.postJson(url, body);
+        } catch (Exception e) {
+            log.debug("Flyer POST failed for {}: {}", url, e.getMessage());
+            return "";
+        }
+    }
+
     private byte[] safeBytes(String url) {
+        return safeBytes(url, null);
+    }
+
+    private byte[] safeBytes(String url, String referer) {
         if (url == null || url.isBlank()) {
             return new byte[0];
         }
         try {
-            return httpClient.getBytes(url);
+            return referer == null || referer.isBlank()
+                    ? httpClient.getBytes(url)
+                    : httpClient.getBytes(url, referer);
         } catch (Exception e) {
             log.debug("Flyer binary fetch failed for {}: {}", url, e.getMessage());
             return new byte[0];

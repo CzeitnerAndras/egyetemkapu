@@ -1,5 +1,6 @@
 package com.egyetemkapu.service;
 
+import com.egyetemkapu.model.Flyer;
 import com.egyetemkapu.repository.FlyerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -18,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,5 +131,40 @@ class FlyerSyncServiceTest {
         assertTrue(catalog.pages().getFirst().imageUrl().contains("page0001_2.jpg"));
         assertTrue(catalog.products().stream().anyMatch(product -> product.name().contains("Kakaós")));
         assertTrue(catalog.products().stream().anyMatch(product -> product.pageNumber() == 2));
+    }
+
+    @Test
+    void syncTescoPersistsHypermarketSupermarketAndCatalogue() {
+        String json = """
+                {"data":{"leaflets":{"items":[
+                  {"id":689,"slug":"tesco-ujsag-2026-09-10","leafletUrl":"https://digitalcontent.api.tesco.com/v2/media/x/hm.pdf","validFrom":"2026-09-10T06:00:00.000Z","validTo":"2026-09-16T21:59:59.000Z","type":"HM","pages":[{"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/HM.1.jpeg"}]},
+                  {"id":690,"slug":"tesco-ujsag-2026-09-10","leafletUrl":"https://digitalcontent.api.tesco.com/v2/media/x/sm.pdf","validFrom":"2026-09-10T06:00:00.000Z","validTo":"2026-09-16T21:59:59.000Z","type":"SM","pages":[{"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/SM.1.jpeg"}]},
+                  {"id":652,"slug":"tesco-ujsag-2026-08-05","leafletUrl":"https://digitalcontent.api.tesco.com/v2/media/x/cat.pdf","validFrom":"2026-08-05T06:00:00.000Z","validTo":"2026-09-13T21:59:59.000Z","type":"CAT","pages":[{"pagePNG":"https://digitalcontent.api.tesco.com/v2/media/x/CAT.1.jpeg"}]}
+                ]}}}
+                """;
+        when(httpClient.postJson(org.mockito.ArgumentMatchers.contains("leaflets-be/graphql"), any())).thenReturn(json);
+        when(httpClient.getBytes(any(), any())).thenReturn(new byte[0]);
+
+        service.syncTesco(LocalDate.of(2026, 9, 10));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("tesco"), captor.capture(), any());
+        assertEquals(List.of("Tesco Hipermarket", "Tesco Szupermarket", "Tesco Katalógus"),
+                captor.getValue().stream().map(catalog -> catalog.paper().title()).toList());
+        assertTrue(captor.getValue().getFirst().paper().officialUrl().contains("/hipermarket/tesco-ujsag-2026-09-10/1"));
+    }
+
+    @Test
+    void syncTescoSkipsWhenRecentlySynced() {
+        Flyer existing = new Flyer();
+        existing.setStore("tesco");
+        existing.setLastSynced(LocalDateTime.of(2026, 9, 6, 10, 0));
+        when(flyerRepository.findAll()).thenReturn(List.of(existing));
+
+        service.syncTesco(LocalDate.of(2026, 9, 6));
+
+        verify(httpClient, never()).postJson(any(), any());
+        verify(flyerPersistenceService, never()).replaceStore(eq("tesco"), any(), any());
     }
 }
