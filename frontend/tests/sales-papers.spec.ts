@@ -13,6 +13,7 @@ const flyers = [
   { id: 1, store: 'aldi', title: 'ALDI heti újság', officialUrl: 'https://szorolap.aldi.hu/x/', pageCount: 12, productCount: 8, validFrom: isoDate(0), validTo: isoDate(6) },
   { id: 2, store: 'spar', title: 'SPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok', pageCount: 20, productCount: 0 },
   { id: 3, store: 'penny', title: 'PENNY ajánlatok', officialUrl: 'https://www.penny.hu/ajanlatok', pageCount: 1, productCount: 4 },
+  { id: 4, store: 'tesco', title: 'Tesco Hipermarket', officialUrl: 'https://www.tesco.hu/akciok/katalogusok/hipermarket/tesco-ujsag-2026-09-10/1', pageCount: 34, productCount: 0, validFrom: isoDate(0), validTo: isoDate(6) },
 ];
 
 test.describe('Egyetemkapu E2E - Akciós újság', () => {
@@ -56,12 +57,12 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await expect(page).toHaveURL(/\/akcios-ujsag$/);
   });
 
-  test('három bolt tab jelenik meg, alapértelmezetten az ALDI aktív, és újságok listázódnak', async ({ page }) => {
+  test('négy bolt tab jelenik meg, alapértelmezetten az ALDI aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
     await page.getByRole('button', { name: /Értem|Got it/i }).click();
 
     await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
-    await expect(page.locator('[data-store]')).toHaveCount(3);
+    await expect(page.locator('[data-store]')).toHaveCount(4);
     await expect(page.locator('[data-store="aldi"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('ALDI heti újság')).toBeVisible();
   });
