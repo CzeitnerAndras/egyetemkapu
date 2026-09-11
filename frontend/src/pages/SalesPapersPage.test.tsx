@@ -27,6 +27,9 @@ const flyers = [
     { id: 21, store: 'spar', title: 'INTERSPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok/interspar/260910-2-interspar-szorolap', pageCount: 22, productCount: 10, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 22, store: 'spar', title: 'SPAR Market', officialUrl: 'https://www.spar.hu/ajanlatok/spar-market/260910-3-spar-market-city-spar', pageCount: 12, productCount: 8, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 3, store: 'penny', title: 'PENNY ajánlatok', officialUrl: 'https://www.penny.hu/ajanlatok', pageCount: 1, productCount: 15 },
+    { id: 31, store: 'tesco', title: 'Tesco Hipermarket', officialUrl: 'https://www.tesco.hu/akciok/katalogusok/hipermarket/tesco-ujsag-2026-09-10/1', pageCount: 34, productCount: 0, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 32, store: 'tesco', title: 'Tesco Szupermarket', officialUrl: 'https://www.tesco.hu/akciok/katalogusok/szupermarket/tesco-ujsag-2026-09-10/1', pageCount: 8, productCount: 0, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 33, store: 'tesco', title: 'Tesco Katalógus', officialUrl: 'https://www.tesco.hu/akciok/katalogusok/katalogus/tesco-ujsag-2026-08-05/1', pageCount: 20, productCount: 0, validFrom: isoDate(-5), validTo: isoDate(3) },
 ];
 
 describe('SalesPapersPage Komponens', () => {
@@ -90,6 +93,14 @@ describe('SalesPapersPage Komponens', () => {
         await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.spar/ }));
         const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
         expect(titles).toEqual(['SPAR szórólap', 'INTERSPAR szórólap', 'SPAR Market']);
+    });
+
+    it('TESCO-nál a hipermarket, szupermarket és katalógus sorrendjét tartja', async () => {
+        render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.tesco/ }));
+        const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
+        expect(titles).toEqual(['Tesco Hipermarket', 'Tesco Szupermarket', 'Tesco Katalógus']);
     });
 
     it('elrejti a lejárt újságot', async () => {
