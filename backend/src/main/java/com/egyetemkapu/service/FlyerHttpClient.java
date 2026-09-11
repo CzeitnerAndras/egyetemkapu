@@ -17,6 +17,8 @@ public class FlyerHttpClient {
 
     private static final String USER_AGENT =
             "Egyetemkapu/1.0 (+https://egyetemkapu.hu; student flyer search)";
+    private static final String TESCO_BROWSER_UA =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/172.16.1.3 Safari/537.36";
 
     private final RestTemplate restTemplate;
 
@@ -38,9 +40,25 @@ public class FlyerHttpClient {
     }
 
     public byte[] getBytes(String url) {
-        ResponseEntity<byte[]> response = restTemplate.exchange(
-                URI.create(url), HttpMethod.GET, entity(MediaType.APPLICATION_PDF, MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.ALL), byte[].class);
+        return getBytes(url, null);
+    }
+
+    public byte[] getBytes(String url, String referer) {
+        ResponseEntity<byte[]> response = getBytesWithHeaders(url, referer);
         return response.getBody() == null ? new byte[0] : response.getBody();
+    }
+
+    public String postJson(String url, String body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.USER_AGENT, USER_AGENT);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON, MediaType.ALL));
+        headers.set(HttpHeaders.ORIGIN, "https://www.tesco.hu");
+        headers.set(HttpHeaders.REFERER, "https://www.tesco.hu/akciok/katalogusok");
+        headers.set("apollographql-client-name", "customer-leaflets-fe");
+        ResponseEntity<String> response = restTemplate.exchange(
+                URI.create(url), HttpMethod.POST, new HttpEntity<>(body, headers), String.class);
+        return response.getBody() == null ? "" : response.getBody();
     }
 
     public ResponseEntity<byte[]> getBytesWithHeaders(String url) {
@@ -49,12 +67,27 @@ public class FlyerHttpClient {
 
     public ResponseEntity<byte[]> getBytesWithHeaders(String url, String referer) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.USER_AGENT, USER_AGENT);
-        headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.ALL));
+        boolean tesco = tescoHost(url) || tescoHost(referer);
+        headers.set(HttpHeaders.USER_AGENT, tesco ? TESCO_BROWSER_UA : USER_AGENT);
+        headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.APPLICATION_PDF, MediaType.ALL));
+        if (tesco) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ORIGIN, "https://www.tesco.hu");
+        }
         if (referer != null && !referer.isBlank()) {
             headers.set(HttpHeaders.REFERER, referer);
+        } else if (tesco) {
+            headers.set(HttpHeaders.REFERER, "https://www.tesco.hu/akciok/katalogusok");
         }
         return restTemplate.exchange(URI.create(url), HttpMethod.GET, new HttpEntity<>(headers), byte[].class);
+    }
+
+    private static boolean tescoHost(String value) {
+        if (value == null) {
+            return false;
+        }
+        String lower = value.toLowerCase();
+        return lower.contains("tesco.hu") || lower.contains("tesco.com");
     }
 
     private HttpEntity<Void> entity(MediaType... accept) {
