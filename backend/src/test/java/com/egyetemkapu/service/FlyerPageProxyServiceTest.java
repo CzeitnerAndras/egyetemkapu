@@ -17,5 +17,7 @@ class FlyerPageProxyServiceTest {
                 () -> FlyerPageProxyService.assertAllowed("https://ujsagomat.hu/stolen.pdf"));
         assertThrows(IllegalArgumentException.class,
                 () -> FlyerPageProxyService.assertAllowed("http://www.spar.hu/insecure.pdf"));
+        assertDoesNotThrow(() -> FlyerPageProxyService.assertAllowed(
+                "https://digitalcontent.api.tesco.com/v2/media/dotcom-sk/x/page.1.jpeg"));
     }
 }

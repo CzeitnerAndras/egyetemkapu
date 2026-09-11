@@ -36,7 +36,11 @@ public class FlyerPageProxyService {
             "penny.hu",
             "files.rewe.co.at",
             "www.aldi.hu",
-            "aldi.hu"
+            "aldi.hu",
+            "www.tesco.hu",
+            "tesco.hu",
+            "digitalcontent.api.tesco.com",
+            "api.prod.retail.tesco.com"
     );
 
     private static final int MAX_CACHE = 48;
@@ -180,7 +184,19 @@ public class FlyerPageProxyService {
 
     private byte[] fetchAllowedBytes(String url) {
         assertAllowed(url);
+        String referer = tescoReferer(url);
+        if (referer != null) {
+            byte[] body = httpClient.getBytes(url, referer);
+            return body == null ? new byte[0] : body;
+        }
         return httpClient.getBytes(url);
+    }
+
+    private static String tescoReferer(String url) {
+        if (url != null && (url.contains("tesco.com") || url.contains("tesco.hu"))) {
+            return "https://www.tesco.hu/akciok/katalogusok";
+        }
+        return null;
     }
 
     private void putImage(String key, CachedImage image) {
