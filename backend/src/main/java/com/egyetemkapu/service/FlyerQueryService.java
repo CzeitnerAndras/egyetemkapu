@@ -48,7 +48,6 @@ public class FlyerQueryService {
 
     @Transactional
     public FlyerDetailDto get(Long id) {
-        refreshIfStale();
         Flyer flyer = flyerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen akciós újság."));
         return FlyerDetailDto.from(flyer);
@@ -150,6 +149,15 @@ public class FlyerQueryService {
                 return 1;
             }
             if (hay.contains(":spar-market:") || hay.contains("/spar-market/") || hay.contains("market")) {
+                return 2;
+            }
+            return 0;
+        }
+        if ("tesco".equals(flyer.getStore())) {
+            if (hay.contains(":sm:") || hay.contains("/szupermarket/") || hay.contains("szupermarket")) {
+                return 1;
+            }
+            if (hay.contains(":cat:") || hay.contains("/katalogusok/katalogus/") || hay.contains("katalógus")) {
                 return 2;
             }
             return 0;

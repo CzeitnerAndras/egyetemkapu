@@ -130,6 +130,34 @@ class FlyerQueryServiceTest {
     }
 
     @Test
+    void listPutsTescoHypermarketBeforeSupermarketAndCatalogue() {
+        Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
+        FlyerQueryService listing = new FlyerQueryService(flyerRepository, flyerSyncService, thursday);
+        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
+        Flyer catalogue = datedFlyer("Tesco Katalógus", LocalDate.of(2026, 8, 5), LocalDate.of(2026, 9, 13));
+        catalogue.setStore("tesco");
+        catalogue.setSourceKey("tesco:CAT:2026-08-05");
+        catalogue.setOfficialUrl("https://www.tesco.hu/akciok/katalogusok/katalogus/tesco-ujsag-2026-08-05/1");
+        Flyer supermarket = datedFlyer("Tesco Szupermarket", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 16));
+        supermarket.setStore("tesco");
+        supermarket.setSourceKey("tesco:SM:2026-09-10");
+        supermarket.setOfficialUrl("https://www.tesco.hu/akciok/katalogusok/szupermarket/tesco-ujsag-2026-09-10/1");
+        Flyer hypermarket = datedFlyer("Tesco Hipermarket", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 16));
+        hypermarket.setStore("tesco");
+        hypermarket.setSourceKey("tesco:HM:2026-09-10");
+        hypermarket.setOfficialUrl("https://www.tesco.hu/akciok/katalogusok/hipermarket/tesco-ujsag-2026-09-10/1");
+        when(flyerRepository.findAllByOrderByStoreAscTitleAsc())
+                .thenReturn(List.of(catalogue, supermarket, hypermarket));
+
+        List<String> titles = listing.list(null).stream().map(FlyerSummaryDto::title).toList();
+
+        assertEquals(0, FlyerQueryService.paperKind(hypermarket));
+        assertEquals(1, FlyerQueryService.paperKind(supermarket));
+        assertEquals(2, FlyerQueryService.paperKind(catalogue));
+        assertEquals(List.of("Tesco Hipermarket", "Tesco Szupermarket", "Tesco Katalógus"), titles);
+    }
+
+    @Test
     void searchSkipsExpiredFlyers() {
         Flyer expired = flyerWithProduct("Kakaóscsiga", "249 Ft");
         expired.setValidFrom(LocalDate.of(2026, 5, 14));
