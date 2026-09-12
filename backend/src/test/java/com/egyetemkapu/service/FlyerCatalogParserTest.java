@@ -144,18 +144,31 @@ class FlyerCatalogParserTest {
         assertTrue(catalog.pages().getFirst().imageUrl().endsWith("page0001_2.jpg"));
         assertEquals("2/", parser.pennyPageRelPath(html, 2));
         assertEquals("36-37/", parser.pennyPageRelPath(html, 36));
-        assertTrue(catalog.products().stream().anyMatch(product -> product.priceText().contains("249")));
+        assertTrue(catalog.products().stream().anyMatch(product -> product.name().toLowerCase().contains("csiga")));
     }
 
     @Test
-    void extractsPricedItemsFromPlainText() {
-        List<FlyerCatalogParser.ParsedProduct> products = parser.extractPricedItems("Kakaós csiga 249 Ft tej 199 Ft", 1);
-        assertFalse(products.isEmpty());
-        assertTrue(products.getFirst().priceText().contains("Ft"));
+    void splitsPennyLeafletIntoPageParagraphs() {
+        String html = """
+                <div id="text-container"><p>SISSY TEJ 225 Ft az első oldalon</p>
+                <p>FOKHAGYMA 599 Ft a második oldalon</p></div>
+                """;
+        List<String> pages = parser.extractPennyParagraphs(html);
+        assertEquals(2, pages.size());
+        assertTrue(pages.getFirst().contains("SISSY"));
+        assertTrue(pages.get(1).contains("FOKHAGYMA"));
+        assertFalse(parser.extractPennyPageText(html).contains("FOKHAGYMA"));
     }
 
     @Test
-    void extractsAldiStylePricesWithThousandsAndUnit() {
+    void extractsProductNamesFromPlainText() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.extractProductNames("Kakaós csiga 249 Ft tej 199 Ft", 1);
+        assertTrue(products.stream().anyMatch(product -> product.name().toLowerCase().contains("csiga")));
+        assertTrue(products.stream().anyMatch(product -> product.name().equalsIgnoreCase("tej")));
+    }
+
+    @Test
+    void extractsAldiStyleProductNamesAndDropsUnits() {
         String text = """
                 GOURMET
                 TÚRÓS TÁSKA PESTO
@@ -164,9 +177,10 @@ class FlyerCatalogParserTest {
                 HÚSMESTER FRISS DARÁLT SERTÉSHÚS
                 1 299 Ft/kg
                 """;
-        List<FlyerCatalogParser.ParsedProduct> products = parser.extractPricedItems(text, 1);
-        assertTrue(products.stream().anyMatch(product -> product.priceText().contains("1 299")));
-        assertTrue(products.stream().anyMatch(product -> product.priceText().contains("Ft/kg")));
+        List<FlyerCatalogParser.ParsedProduct> products = parser.extractProductNames(text, 1);
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("TÚRÓS TÁSKA")));
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("DARÁLT SERTÉSHÚS")));
+        assertTrue(products.stream().noneMatch(product -> product.name().equalsIgnoreCase("darab")));
     }
 
     @Test
@@ -205,10 +219,11 @@ class FlyerCatalogParserTest {
         String spreads = """
                 [{"pages":[{"number":1,"images":{"at800":"/resize/page.jpg"},"text":"TÚRÓS TÁSKA 1 299 Ft/kg"}]}]
                 """;
-        FlyerCatalogParser.ParsedCatalog catalog = parser.parsePublitas(paper, null, spreads);
+        FlyerCatalogParser.ParsedCatalog catalog = new com.egyetemkapu.service.flyer.GenericFlyerExtractor(parser)
+                .fillProducts(parser.parsePublitas(paper, null, spreads));
         assertEquals(1, catalog.pages().size());
         assertFalse(catalog.products().isEmpty());
-        assertTrue(catalog.products().getFirst().priceText().contains("1 299"));
+        assertTrue(catalog.products().getFirst().name().toUpperCase().contains("TÚRÓS"));
     }
 
     @Test
@@ -232,7 +247,6 @@ class FlyerCatalogParserTest {
         List<FlyerCatalogParser.ParsedProduct> products = parser.extractHtmlProducts(html);
         assertEquals(1, products.size());
         assertEquals("Kakaóscsiga", products.getFirst().name());
-        assertTrue(products.getFirst().priceText().contains("249"));
     }
 
     @Test
@@ -260,5 +274,46 @@ class FlyerCatalogParserTest {
         assertTrue(supermarket.paper().officialUrl().contains("/szupermarket/tesco-ujsag-2026-09-10/1"));
         assertEquals("tesco:HM:2026-09-10", catalogs.getFirst().paper().sourceKey());
         assertEquals(27, FlyerCatalogParser.tescoPageNumber("https://x/file.27.jpeg", 1));
+    }
+
+    @Test
+    void extractsCoverProductNamesAndDropsSlogans() {
+        String text = """
+                ÍNYENC GRILLKOLBÁSZ
+                2 330 Ft/kg
+                KARLSKRONE ALKOHOLMENTES SÖR
+                119 Ft
+                MOSTANTÓL MÉG TÖBB AKCIÓ!
+                """;
+        List<FlyerCatalogParser.ParsedProduct> products = parser.extractProductNames(text, 1);
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("GRILLKOLBÁSZ")));
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("KARLSKRONE")
+                || product.name().toUpperCase().contains("ALKOHOLMENTES")));
+        assertTrue(products.stream().noneMatch(product ->
+                product.name().equalsIgnoreCase("csomag")
+                        || product.name().toUpperCase().contains("MOSTANTÓL")));
+    }
+
+    @Test
+    void extractsLayoutNamesAndSkipsPrices() {
+        List<FlyerCatalogParser.TextRun> runs = List.of(
+                new FlyerCatalogParser.TextRun(40, 40, 160, 12, "Jägermeister gyógynövénylikőr"),
+                new FlyerCatalogParser.TextRun(40, 90, 60, 12, "4359 Ft"),
+                new FlyerCatalogParser.TextRun(400, 40, 140, 12, "Friss magyar csirkecomb"),
+                new FlyerCatalogParser.TextRun(400, 88, 70, 12, "759 Ft/kg"),
+                new FlyerCatalogParser.TextRun(250, 390, 120, 12, "Először nálunk")
+        );
+        List<FlyerCatalogParser.ParsedProduct> products = parser.extractProductNamesFromLayout(runs, 1);
+        assertTrue(products.stream().anyMatch(product -> product.name().toLowerCase().contains("jägermeister")));
+        assertTrue(products.stream().anyMatch(product -> product.name().toLowerCase().contains("csirkecomb")));
+        assertTrue(products.stream().noneMatch(product -> product.name().toLowerCase().contains("először")));
+    }
+
+    @Test
+    void replacesStoredProductsWhenNamesDiffer() {
+        List<FlyerCatalogParser.ParsedProduct> parsed = List.of(
+                new FlyerCatalogParser.ParsedProduct("Madre pizza", 1, null));
+        assertTrue(FlyerCatalogParser.shouldReplaceStoredProducts(List.of("Őszibarack"), parsed));
+        assertFalse(FlyerCatalogParser.shouldReplaceStoredProducts(List.of("Madre pizza"), parsed));
     }
 }

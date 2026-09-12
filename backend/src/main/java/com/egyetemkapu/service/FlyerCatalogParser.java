@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +38,31 @@ public class FlyerCatalogParser {
     public record ParsedPage(int pageNumber, String imageUrl, String text) {
     }
 
-    public record ParsedProduct(String name, String priceText, int pageNumber, String imageUrl) {
+    public record ParsedProduct(String name, int pageNumber, String imageUrl) {
+    }
+
+    public record TextRun(
+            float x, float y, float width, float height, String text, String font, float fontSize) {
+
+        public TextRun(float x, float y, float width, float height, String text) {
+            this(x, y, width, height, text, "", 0f);
+        }
+
+        public float right() {
+            return x + width;
+        }
+
+        public float bottom() {
+            return y + height;
+        }
+
+        public float centerX() {
+            return x + width / 2f;
+        }
+
+        float centerY() {
+            return y + height / 2f;
+        }
     }
 
     public record ParsedCatalog(
@@ -67,9 +92,20 @@ public class FlyerCatalogParser {
     private static final Pattern PENNY_PRODUCT = Pattern.compile(
             "(?is)<(?:h[1-4]|p|span|div)[^>]*>\\s*([^<]{3,120}?)\\s*</(?:h[1-4]|p|span|div)>\\s*"
                     + "[^<]{0,180}?(\\d[\\d\\s.]{0,8}\\s*Ft)");
-    private static final Pattern PLAIN_PRICE = Pattern.compile(
-            "([\\p{L}][\\p{L}0-9 .%+\\-]{2,80}?)\\s+"
-                    + "(\\d{1,3}(?:[ .]\\d{3})*(?:[,]\\d{1,2})?\\s*(?:Ft(?:/\\p{L}+)?|,-))");
+    private static final Pattern PRICE_TOKEN = Pattern.compile(
+            "(?:\\d{1,3}(?:[ .]\\d{3})+|\\d{1,6})(?:[,]\\d{1,2})?\\s*(?:Ft(?:/[\\p{L}0-9]+)?|,-)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private static final Pattern WEIGHT_TOKEN = Pattern.compile(
+            "(?i)\\d+[\\d.,]*\\s*(?:g|kg|dkg|ml|cl|dl|l)\\s*/\\s*(?:csomag|darab|doboz|db)");
+    private static final Pattern WEIGHT_LINE = Pattern.compile(
+            "(?i)^(?:\\d+[\\d.,]*)?\\s*(?:g|kg|dkg|ml|cl|dl|l|db|darab|csomag|doboz)(?:\\s*/\\s*\\p{L}+)?$");
+    private static final Pattern ARTICLE_NUMBER = Pattern.compile("^\\d{5,8}$");
+    private static final Pattern DISCLAIMER = Pattern.compile(
+            "(?iu)(?:a\\s+)?term[eé]k\\s+a\\s+\\p{L}+\\s+áruházunkban\\s+nem\\s+kapható\\.?"
+                    + "|%?\\s*penny\\s+kártya(?:\\s+nélkül)?"
+                    + "|clubcard"
+                    + "|made with flippingbook"
+                    + "|\\+?\\s*visszaváltási díj[:.\\d\\s]*");
     private static final Pattern JSON_LD = Pattern.compile(
             "(?is)<script[^>]+type=['\"]application/ld\\+json['\"][^>]*>(.*?)</script>");
     private static final Pattern ISO_DATE = Pattern.compile("20\\d{2}[-.]\\d{2}[-.]\\d{2}");
@@ -365,14 +401,17 @@ public class FlyerCatalogParser {
         if (title.isBlank()) {
             title = paper.title();
         }
-        int pageCount = countPennyPages(html);
-        String page1Text = extractPennyPageText(html);
+        List<String> paragraphs = extractPennyParagraphs(html);
+        int pageCount = Math.max(countPennyPages(html), paragraphs.size());
         List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
         for (int page = 1; page <= pageCount; page++) {
-            String text = page == 1 ? page1Text : "";
+            String text = page <= paragraphs.size()
+                    ? paragraphs.get(page - 1)
+                    : page == 1 ? extractPennyPageText(html) : "";
             pages.add(new ParsedPage(page, pennyPageImageUrl(paper.officialUrl(), page), text));
+            products.addAll(extractProductNames(text, page));
         }
-        List<ParsedProduct> products = extractPricedItems(page1Text, 1);
         DiscoveredPaper resolved = new DiscoveredPaper(
                 paper.store(),
                 title,
@@ -433,18 +472,48 @@ public class FlyerCatalogParser {
     }
 
     public String extractPennyPageText(String html) {
+        List<String> paragraphs = extractPennyParagraphs(html);
+        if (!paragraphs.isEmpty()) {
+            return paragraphs.getFirst();
+        }
+        return flattenPennyHtml(html);
+    }
+
+    public List<String> extractPennyParagraphs(String html) {
         if (html == null || html.isBlank() || html.contains("Code injection detected")) {
+            return List.of();
+        }
+        String source = html;
+        Matcher container = PENNY_TEXT.matcher(html);
+        if (container.find()) {
+            source = container.group(1);
+        }
+        source = source.replaceAll("(?is)<p class=\"powered-by\".*", "");
+        List<String> paragraphs = new ArrayList<>();
+        Matcher paragraph = Pattern.compile("(?is)<p(?![^>]*powered-by)[^>]*>(.*?)</p>").matcher(source);
+        while (paragraph.find()) {
+            String text = flattenPennyHtml(paragraph.group(1));
+            if (!text.isBlank() && text.length() > 12) {
+                paragraphs.add(text);
+            }
+        }
+        return paragraphs;
+    }
+
+    private static String flattenPennyHtml(String html) {
+        if (html == null || html.isBlank()) {
             return "";
         }
-        Matcher matcher = PENNY_TEXT.matcher(html);
-        if (!matcher.find()) {
-            return "";
-        }
-        String inner = matcher.group(1)
-                .replaceAll("(?is)<p class=\"powered-by\".*", "")
+        String inner = html
                 .replaceAll("(?is)<script.*?</script>", " ")
+                .replaceAll("(?is)<br\\s*/?>", "\n")
+                .replaceAll("(?is)</(?:p|h[1-6]|div|li|tr|dt|dd)>", "\n")
                 .replaceAll("(?s)<[^>]+>", " ");
-        return htmlUnescape(inner).replaceAll("\\s+", " ").trim();
+        return htmlUnescape(inner)
+                .replaceAll("[\\t\\x0B\\f\\r ]+", " ")
+                .replaceAll(" *\\n *", "\n")
+                .replaceAll("\\n{3,}", "\n\n")
+                .trim();
     }
 
     public static String pennyPageImageUrl(String leafletUrl, int pageNumber) {
@@ -526,11 +595,6 @@ public class FlyerCatalogParser {
         }
         DiscoveredPaper resolved = new DiscoveredPaper(
                 paper.store(), title, paper.officialUrl(), pdfUrl, paper.sourceKey(), from, to);
-        if (products.isEmpty()) {
-            for (ParsedPage page : pages) {
-                products.addAll(extractPricedItems(page.text(), page.pageNumber()));
-            }
-        }
         return new ParsedCatalog(resolved, pages, products);
     }
 
@@ -551,31 +615,57 @@ public class FlyerCatalogParser {
         Matcher matcher = PENNY_PRODUCT.matcher(html);
         while (matcher.find() && products.size() < 400) {
             String name = matcher.group(1).replaceAll("\\s+", " ").trim();
-            String price = matcher.group(2).replaceAll("\\s+", " ").trim();
-            if (name.length() < 3 || name.contains("{") || name.contains("http")) {
+            if (name.length() < 3 || name.contains("{") || name.contains("http") || isWeakProductName(name)) {
                 continue;
             }
-            products.putIfAbsent(HungarianText.normalize(name), new ParsedProduct(name, price, 1, null));
+            products.putIfAbsent(HungarianText.normalize(name), new ParsedProduct(name, 1, null));
         }
         return new ArrayList<>(products.values());
     }
 
-    public List<ParsedProduct> extractPricedItems(String text, int pageNumber) {
-        List<ParsedProduct> products = new ArrayList<>();
+    public List<ParsedProduct> extractProductNames(String text, int pageNumber) {
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
         if (text == null || text.isBlank()) {
-            return products;
+            return List.of();
         }
-        String flat = text.replace('\u00a0', ' ').replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
-        Matcher matcher = PLAIN_PRICE.matcher(flat);
-        while (matcher.find() && products.size() < 80) {
-            String name = shortenProductName(matcher.group(1).trim());
-            String price = matcher.group(2).replaceAll("\\s+", " ").trim();
-            if (isWeakProductName(name)) {
-                continue;
+        text = clipConcatenatedPennyLeaflet(text);
+        for (String rawLine : prepareFlyerText(text).split("\\R")) {
+            addNamedProduct(products, stripPrices(rawLine), pageNumber);
+            if (products.size() >= 80) {
+                break;
             }
-            products.add(new ParsedProduct(name, price, pageNumber, null));
         }
-        return products;
+        return keepPresentableProducts(new ArrayList<>(products.values()));
+    }
+
+    public List<ParsedProduct> extractProductNamesFromLayout(List<TextRun> runs, int pageNumber) {
+        if (runs == null || runs.isEmpty()) {
+            return List.of();
+        }
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
+        for (TextRun token : mergeLayoutTokens(runs)) {
+            if (isLayoutNameToken(token)) {
+                addNamedProduct(products, token.text(), pageNumber);
+            }
+            if (products.size() >= 80) {
+                break;
+            }
+        }
+        return keepPresentableProducts(new ArrayList<>(products.values()));
+    }
+
+    public static boolean shouldReplaceStoredProducts(List<String> storedNames, List<ParsedProduct> parsed) {
+        if (parsed == null || parsed.isEmpty()) {
+            return false;
+        }
+        if (storedNames == null || storedNames.isEmpty()) {
+            return true;
+        }
+        java.util.Set<String> storedKeys = new java.util.LinkedHashSet<>();
+        storedNames.forEach(name -> storedKeys.add(HungarianText.normalize(name)));
+        java.util.Set<String> parsedKeys = new java.util.LinkedHashSet<>();
+        parsed.forEach(product -> parsedKeys.add(HungarianText.normalize(product.name())));
+        return !storedKeys.equals(parsedKeys);
     }
 
     public static boolean isCurrentlyValid(LocalDate from, LocalDate to, LocalDate today) {
@@ -628,9 +718,8 @@ public class FlyerCatalogParser {
         String type = node.path("@type").asText("");
         if ("Product".equalsIgnoreCase(type) || "Offer".equalsIgnoreCase(type)) {
             String name = textOr(node.path("name"), "");
-            String price = textOr(node.path("offers").path("price"), textOr(node.path("price"), ""));
             if (!name.isBlank()) {
-                products.putIfAbsent(HungarianText.normalize(name), new ParsedProduct(name, price.isBlank() ? null : price + " Ft", 1, null));
+                products.putIfAbsent(HungarianText.normalize(name), new ParsedProduct(name, 1, null));
             }
         }
         if (node.isObject()) {
@@ -649,12 +738,11 @@ public class FlyerCatalogParser {
             }
             for (JsonNode product : list) {
                 String name = textOr(product.path("title"), textOr(product.path("name"), ""));
-                if (name.isBlank()) {
+                if (name.isBlank() || isWeakProductName(name)) {
                     continue;
                 }
-                String price = textOr(product.path("price"), textOr(product.path("salePrice"), textOr(product.path("effective_sale_price"), "")));
                 String image = textOr(product.path("image"), textOr(product.path("image_link"), null));
-                products.add(new ParsedProduct(name, price.isBlank() ? null : price, pageNumber, image));
+                products.add(new ParsedProduct(name, pageNumber, image));
             }
         });
         page.findValues("hotspots").forEach(list -> {
@@ -671,8 +759,6 @@ public class FlyerCatalogParser {
         StringBuilder text = new StringBuilder();
         appendText(page.path("text"), text);
         appendText(page.path("ocrText"), text);
-        page.findValues("title").forEach(node -> appendText(node, text));
-        page.findValues("name").forEach(node -> appendText(node, text));
         return text.toString().trim();
     }
 
@@ -681,14 +767,21 @@ public class FlyerCatalogParser {
             return;
         }
         if (node.isTextual()) {
-            String value = node.asText().trim();
+            String value = node.asText().replace('\u00a0', ' ').trim();
             if (!value.isEmpty()) {
                 if (!text.isEmpty()) {
-                    text.append(' ');
+                    text.append(value.contains("\n") || text.toString().endsWith("\n") ? '\n' : ' ');
                 }
                 text.append(value);
             }
-        } else if (node.isArray() || node.isObject()) {
+        } else if (node.isArray()) {
+            for (JsonNode child : node) {
+                if (!text.isEmpty() && text.charAt(text.length() - 1) != '\n') {
+                    text.append('\n');
+                }
+                appendText(child, text);
+            }
+        } else if (node.isObject()) {
             node.forEach(child -> appendText(child, text));
         }
     }
@@ -990,23 +1083,388 @@ public class FlyerCatalogParser {
                 .replace("&gt;", ">");
     }
 
-    private static String shortenProductName(String name) {
-        String[] words = name.split("\\s+");
-        if (words.length <= 6) {
-            return name;
+    static String clipConcatenatedPennyLeaflet(String text) {
+        if (text == null || text.isBlank()) {
+            return text;
         }
-        return String.join(" ", java.util.Arrays.copyOfRange(words, words.length - 6, words.length));
+        Matcher marker = Pattern.compile("(?iu)\\bpenny\\.hu\\s+\\d+").matcher(text);
+        if (marker.find() && marker.start() > 40) {
+            return text.substring(0, marker.start()).trim();
+        }
+        return text;
     }
 
-    private static boolean isWeakProductName(String name) {
-        if (name.length() < 3 || name.contains("http")) {
+    private static String prepareFlyerText(String text) {
+        String prepared = text.replace('\u00a0', ' ');
+        prepared = coalesceSplitPrices(prepared);
+        prepared = insertBreaksAfter(WEIGHT_TOKEN, prepared);
+        prepared = insertBreaksAfter(PRICE_TOKEN, prepared);
+        return prepared;
+    }
+
+    private static String coalesceSplitPrices(String text) {
+        String[] raw = text.split("\\R", -1);
+        List<String> lines = new ArrayList<>();
+        for (String line : raw) {
+            lines.add(line.replace('\u00a0', ' ').replaceAll("[\\t ]+", " ").trim());
+        }
+        List<Integer> numbers = new ArrayList<>();
+        List<Integer> fts = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (line.matches("\\d{2,4}") || line.matches("\\d{1,3}[ .]\\d{3}")) {
+                numbers.add(i);
+            } else if (line.matches("(?i)Ft(?:/[\\p{L}0-9]+)?")) {
+                fts.add(i);
+            }
+        }
+        if (fts.isEmpty() || numbers.isEmpty()) {
+            return String.join("\n", lines);
+        }
+        if (numbers.size() == fts.size() * 2) {
+            for (int i = 0; i < fts.size(); i++) {
+                String ft = lines.get(fts.get(i));
+                int first = numbers.get(i * 2);
+                int second = numbers.get(i * 2 + 1);
+                lines.set(first, lines.get(first) + " " + ft);
+                lines.set(second, lines.get(second) + " " + ft);
+                lines.set(fts.get(i), "");
+            }
+        } else {
+            int n = Math.min(numbers.size(), fts.size());
+            for (int i = 0; i < n; i++) {
+                int numberAt = numbers.get(i);
+                int ftAt = fts.get(i);
+                lines.set(numberAt, lines.get(numberAt) + " " + lines.get(ftAt));
+                lines.set(ftAt, "");
+            }
+        }
+        return String.join("\n", lines);
+    }
+
+    private static int wordCount(String name) {
+        if (name == null || name.isBlank()) {
+            return 0;
+        }
+        return name.trim().split("\\s+").length;
+    }
+
+    private static List<TextRun> mergeLayoutTokens(List<TextRun> runs) {
+        List<TextRun> sorted = new ArrayList<>(runs);
+        sorted.sort(Comparator
+                .comparingDouble((TextRun run) -> Math.round(run.y() / 3f) * 3)
+                .thenComparingDouble(TextRun::x));
+        List<TextRun> tokens = new ArrayList<>();
+        TextRun current = null;
+        for (TextRun run : sorted) {
+            String piece = run.text() == null ? "" : run.text().replace('\u00a0', ' ').trim();
+            if (piece.isBlank()) {
+                continue;
+            }
+            if (current == null) {
+                current = new TextRun(run.x(), run.y(), run.width(), run.height(), piece, run.font(), run.fontSize());
+                continue;
+            }
+            boolean sameLine = Math.abs(run.y() - current.y()) <= 5;
+            float gap = run.x() - (current.x() + current.width());
+            if (sameLine && gap >= -2 && gap <= 10) {
+                float right = Math.max(current.x() + current.width(), run.x() + run.width());
+                float bottom = Math.max(current.y() + current.height(), run.y() + run.height());
+                String joiner = shouldJoinWithSpace(current.text(), piece, gap) ? " " : "";
+                current = new TextRun(
+                        current.x(),
+                        Math.min(current.y(), run.y()),
+                        right - current.x(),
+                        bottom - Math.min(current.y(), run.y()),
+                        current.text() + joiner + piece,
+                        current.font(),
+                        current.fontSize());
+            } else {
+                tokens.add(current);
+                current = new TextRun(run.x(), run.y(), run.width(), run.height(), piece, run.font(), run.fontSize());
+            }
+        }
+        if (current != null) {
+            tokens.add(current);
+        }
+        return tokens;
+    }
+
+    private static boolean isLayoutNameToken(TextRun token) {
+        if (token == null || token.text() == null || PRICE_TOKEN.matcher(token.text()).find()) {
+            return false;
+        }
+        if (isSkippableLine(token.text()) || isQuantityBadge(token.text()) || isJunkPricedLine(token.text())
+                || isSloganName(token.text())) {
+            return false;
+        }
+        String name = cleanProductName(token.text());
+        return !name.isBlank() && looksLikeProductName(name) && !isDescriptionFragment(name)
+                && !isWeakProductName(name);
+    }
+
+    private static String insertBreaksAfter(Pattern pattern, String text) {
+        Matcher matcher = pattern.matcher(text);
+        StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            matcher.appendReplacement(out, Matcher.quoteReplacement(matcher.group() + "\n"));
+        }
+        matcher.appendTail(out);
+        return out.toString();
+    }
+
+    private static void addNamedProduct(Map<String, ParsedProduct> products, String raw, int pageNumber) {
+        String name = cleanProductName(raw);
+        if (name.isBlank() || isSkippableLine(name) || !looksLikeProductName(name)
+                || isDescriptionFragment(name) || isWeakProductName(name) || isSloganName(name)) {
+            return;
+        }
+        products.putIfAbsent(HungarianText.normalize(name), new ParsedProduct(name, pageNumber, null));
+    }
+
+    private static String stripPrices(String line) {
+        if (line == null) {
+            return "";
+        }
+        return PRICE_TOKEN.matcher(line.replace('\u00a0', ' '))
+                .replaceAll(" ")
+                .replaceAll("[\\t ]+", " ")
+                .trim();
+    }
+
+    private static boolean isSkippableLine(String line) {
+        if (isWeightOrUnitLine(line) || ARTICLE_NUMBER.matcher(line).matches()) {
             return true;
         }
-        String lower = name.toLowerCase();
-        if (lower.contains("érvényes") || lower.contains("oldalon")) {
+        String lower = line.toLowerCase(Locale.ROOT);
+        if (isDisclaimerLine(lower)) {
+            return true;
+        }
+        return lower.matches("(?iu)^(?:csak|akció%?|szuper\\s*ár!?|el[oöő]sz[oöő]r(?:\\s+nálunk!?)?|bbq|spórolás)$")
+                || line.matches("(?i)^/?(?:csomag|doboz|darab|kg|db|l)$")
+                || isJunkPricedLine(line)
+                || isSloganName(line)
+                || isDescriptionFragment(line);
+    }
+
+    private static boolean isJunkPricedLine(String line) {
+        if (line == null || line.isBlank()) {
+            return false;
+        }
+        String lower = line.toLowerCase(Locale.ROOT);
+        return isDateLeadIn(lower) || lower.matches("(?iu)^\\d+\\s*(?:liter|l)\\b.*");
+    }
+
+    private static boolean isQuantityBadge(String line) {
+        String lower = line.toLowerCase(Locale.ROOT);
+        return lower.contains("db-tól")
+                || lower.contains("db-től")
+                || lower.contains("cs.-tól")
+                || lower.startsWith("frissen sütve")
+                || lower.matches("(?iu)^\\d+\\s*(?:db|cs\\.?|darab)[- .]*t[oóöő]l$");
+    }
+
+    private static boolean isDateLeadIn(String lower) {
+        return lower.matches(
+                "(?iu)^\\d{1,2}\\s*[.]?\\s*\\d{1,2}\\s*[.]?.*(?:szerda|csütörtök|péntek|szombat|vasárnap|hétfő|kedd).*")
+                || lower.matches(
+                "(?iu)^\\d{1,2}\\s+\\d{1,2}\\s*[.]?\\s*[-.,]*\\s*\\d{1,2}\\s*[.]?.*(?:szerda|csütörtök|péntek|szombat|vasárnap|hétfő|kedd).*");
+    }
+
+    private static boolean isWeightOrUnitLine(String line) {
+        String compact = line.replace(" ", "");
+        if (WEIGHT_LINE.matcher(line).matches() || WEIGHT_LINE.matcher(compact).matches()) {
+            return true;
+        }
+        String lower = line.toLowerCase(Locale.ROOT);
+        return lower.matches("(?iu)^(?:1\\s*kg|frissen sütve\\b.*|db[- ]*t[oóöő]l)$");
+    }
+
+    private static boolean isDisclaimerLine(String lower) {
+        return lower.contains("nem kapható")
+                || lower.contains("áruházunkban")
+                || lower.contains("kártya")
+                || lower.contains("clubcard")
+                || lower.contains("szuper ár")
+                || lower.contains("flippingbook")
+                || lower.contains("újdonság")
+                || lower.contains("ajánlat")
+                || lower.contains("kártyá")
+                || lower.contains("supershop")
+                || lower.contains("készlet tart")
+                || lower.contains("érvényes")
+                || lower.contains("oldalon")
+                || lower.contains("visszaváltási")
+                || lower.contains("húspult")
+                || lower.contains("vásárlásától")
+                || lower.contains("kuponos")
+                || lower.contains("mosás")
+                || lower.contains("vigyél vissza")
+                || lower.contains("db-tól")
+                || lower.contains("db-től")
+                || lower.contains("cs.-tól")
+                || lower.contains("esetén")
+                || lower.contains("nem tartalmazza")
+                || lower.contains("feltüntetett")
+                || lower.contains("visszaváltás")
+                || lower.contains("töltsd le")
+                || lower.contains("spórolás")
+                || lower.contains("kupon")
+                || lower.contains("tesco.hu")
+                || lower.contains("nagybevásárlás")
+                || lower.contains("váltható")
+                || lower.contains("ruházható")
+                || lower.contains("olcsóbb")
+                || lower.contains("mostantól")
+                || lower.contains("vigyél vissza")
+                || lower.contains("ai által")
+                || lower.contains("válogatva itthonról")
+                || lower.matches("(?iu)^(?:.*pultban\\s+)?kapható\\.?$");
+    }
+
+    private static boolean looksLikeProductName(String name) {
+        return !isWeakProductName(name) && name.matches(".*\\p{L}{3,}.*");
+    }
+
+    private static String cleanProductName(String name) {
+        if (name == null || name.isBlank()) {
+            return "";
+        }
+        String cleaned = name;
+        cleaned = cleaned.replaceAll("(?iu)^azon melegében\\s*", " ");
+        cleaned = cleaned.replaceAll("(?iu)^el[oö]sz[oö]r(?:\\s+nálunk!?)?\\s*", " ");
+        cleaned = cleaned.replaceAll("(?iu)^kiszerelésben\\s*", " ");
+        cleaned = cleaned.replaceAll("(?iu)^\\d+\\s*(?:liter|l)\\s+", " ");
+        cleaned = DISCLAIMER.matcher(cleaned).replaceAll(" ");
+        cleaned = cleaned.replaceAll("(?i)\\b\\d{5,8}\\b", " ");
+        cleaned = cleaned.replaceAll("(?iu)(?:^|\\s)(?:csak|akció%?|szuper\\s*ár!?)(?=\\s|$)", " ");
+        cleaned = cleaned.replaceAll("[-+]?\\d{1,3}\\s*%", " ");
+        cleaned = cleaned.replaceAll("(?iu)\\d{1,2}\\.\\d{1,2}\\.?", " ");
+        cleaned = cleaned.replaceAll(
+                "(?iu)\\b(?:csütörtök\\p{L}*|szerdáig|vasárnapig|hétfő\\p{L}*|kedd\\p{L}*)\\b", " ");
+        cleaned = WEIGHT_TOKEN.matcher(cleaned).replaceAll(" ");
+        cleaned = cleaned.replaceAll("(?iu)\\s+\\d+[\\d.,]*\\s*(?:g|kg|dkg|ml|cl|dl|l)\\b", " ");
+        cleaned = cleaned.replaceAll("^[\\s,.;:%/-]+", "").replaceAll("[\\s,.;:/-]+$", "");
+        cleaned = cleaned.replaceAll("\\s+", " ").trim();
+        String[] words = cleaned.split("\\s+");
+        if (words.length > 8) {
+            cleaned = String.join(" ", java.util.Arrays.copyOfRange(words, words.length - 8, words.length));
+        }
+        return cleaned;
+    }
+
+    private static boolean isDescriptionFragment(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.equals("azon melegében")
+                || (lower.startsWith("azon melegében") && wordCount(name) <= 2)
+                || lower.startsWith("csont nélkül")
+                || lower.contains("kiszolgálópult")
+                || lower.contains("kiszerelésben is")
+                || lower.equals("kiszerelésben")
+                || lower.contains("spórolás")
+                || lower.contains("töltsd le")
+                || lower.contains("appot")
+                || lower.contains("pici ár")
+                || lower.contains("reklámújság")
+                || lower.contains("töltőtömeg")
+                || lower.startsWith("gyorsfagyasztott")
+                || lower.startsWith("hámozott")
+                || lower.endsWith("(")
+                || lower.matches("(?iu)^\\d+\\s*(?:liter|l)\\b.*")
+                || isDateLeadIn(lower);
+    }
+
+    /** Strips prices, dates, article numbers and badge words that cling to a product name. */
+    public static String tidyProductName(String raw) {
+        return cleanProductName(raw);
+    }
+
+    /** True when a candidate is fine print, a badge or a slogan rather than something buyable. */
+    public static boolean isJunkProductName(String name) {
+        return name == null || name.isBlank() || isSkippableLine(name) || !looksLikeProductName(name)
+                || isDescriptionFragment(name) || isWeakProductName(name) || isSloganName(name);
+    }
+
+    public static boolean isWeakProductName(String name) {
+        if (name == null) {
+            return true;
+        }
+        String trimmed = name.replaceAll("\\s+", " ").trim();
+        if (trimmed.length() < 3 || trimmed.contains("http")) {
+            return true;
+        }
+        if (trimmed.startsWith("%")) {
+            return true;
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        if (isDisclaimerLine(lower)
+                || lower.matches("(?iu)^(csomag|darab|doboz|db|db[- ]*t[oóöő]l|csak|akció)$")
+                || lower.matches("(?iu)^\\d+\\s*(?:db|cs\\.?|darab|csomag)[- .]*t[oóöő]l$")
+                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar)$")
+                || lower.contains("darab/készlet")
+                || lower.contains("doboz díj")
+                || lower.equals("díj")
+                || lower.endsWith(" díj")
+                || lower.contains("db/cs")
+                || lower.startsWith("frissen sütve")
+                || lower.startsWith("ft/")
+                || isSloganName(trimmed)
+                || isDescriptionFragment(trimmed)) {
             return true;
         }
         return lower.matches("^[\\d ./%gkgmlcsdbáéíóöőúüű-]+$");
+    }
+
+    public static boolean isSloganName(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.contains("mostantól")
+                || lower.contains("még több akció")
+                || lower.contains("először")
+                || lower.contains("olcsóbb")
+                || lower.contains("szuper ár")
+                || lower.contains("válogatva")
+                || lower.contains("jégkrém-kiárusítás")
+                || lower.contains("jégkrém kiárusítás")
+                || lower.startsWith("akár")
+                || lower.contains("pici ár")
+                || lower.contains("töltsd")
+                || lower.contains("appot")
+                || lower.matches("(?iu)^ft[/ ].*")
+                || lower.equals("bbq")
+                || lower.contains("nagybevásárlás");
+    }
+
+    public static List<ParsedProduct> keepPresentableProducts(List<ParsedProduct> products) {
+        if (products == null || products.isEmpty()) {
+            return List.of();
+        }
+        List<ParsedProduct> kept = new ArrayList<>();
+        for (ParsedProduct product : products) {
+            if (product == null || isWeakProductName(product.name()) || isSloganName(product.name())) {
+                continue;
+            }
+            kept.add(product);
+        }
+        return kept;
+    }
+
+    private static boolean shouldJoinWithSpace(String left, String right, float gap) {
+        if (gap > 1.5f) {
+            return true;
+        }
+        if (left == null || right == null || left.isBlank() || right.isBlank()) {
+            return false;
+        }
+        char last = left.charAt(left.length() - 1);
+        char first = right.charAt(0);
+        return left.length() >= 2 && right.length() >= 2
+                && Character.isLetter(last) && Character.isLetter(first);
     }
 
     private static boolean isPennyLandingPage(String url) {
