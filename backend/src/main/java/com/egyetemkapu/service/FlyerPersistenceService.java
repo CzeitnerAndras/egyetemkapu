@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -25,23 +27,38 @@ public class FlyerPersistenceService {
 
     @Transactional
     public void replaceStore(String store, java.util.List<ParsedCatalog> catalogs, LocalDateTime synced) {
-        flyerRepository.deleteByStore(store);
-        flyerRepository.flush();
+        if (catalogs == null || catalogs.isEmpty()) {
+            return;
+        }
+        Map<String, Flyer> existing = new HashMap<>();
+        for (Flyer flyer : flyerRepository.findByStoreOrderByValidFromDescTitleAsc(store)) {
+            if (flyer.getSourceKey() != null) {
+                existing.put(flyer.getSourceKey(), flyer);
+            }
+        }
         Set<String> savedKeys = new HashSet<>();
         for (ParsedCatalog catalog : catalogs) {
             String sourceKey = limit(catalog.paper().sourceKey(), 255);
-            if (sourceKey != null && !savedKeys.add(sourceKey)) {
+            if (sourceKey == null || !savedKeys.add(sourceKey)) {
                 continue;
             }
-            Flyer flyer = new Flyer();
+            Flyer flyer = existing.remove(sourceKey);
+            if (flyer == null) {
+                flyer = new Flyer();
+                flyer.setSourceKey(sourceKey);
+            }
             flyer.setStore(catalog.paper().store());
             flyer.setTitle(limit(catalog.paper().title(), 255));
             flyer.setOfficialUrl(limit(catalog.paper().officialUrl(), 1000));
             flyer.setPdfUrl(limit(catalog.paper().pdfUrl(), 1000));
-            flyer.setSourceKey(sourceKey);
             flyer.setValidFrom(catalog.paper().validFrom());
             flyer.setValidTo(catalog.paper().validTo());
             flyer.setLastSynced(synced);
+            flyer.getPages().clear();
+            flyer.getProducts().clear();
+            if (flyer.getId() != null) {
+                flyerRepository.saveAndFlush(flyer);
+            }
             for (ParsedPage page : catalog.pages()) {
                 FlyerPage entity = new FlyerPage();
                 entity.setPageNumber(page.pageNumber());
@@ -58,6 +75,7 @@ public class FlyerPersistenceService {
             }
             flyerRepository.save(flyer);
         }
+        existing.values().forEach(flyerRepository::delete);
     }
 
     private static String limit(String value, int max) {
