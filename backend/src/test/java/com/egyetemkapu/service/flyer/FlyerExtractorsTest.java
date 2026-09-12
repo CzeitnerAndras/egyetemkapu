@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -188,7 +189,7 @@ class FlyerExtractorsTest {
     }
 
     @Test
-    void aldiExtractorReadsWholeTextBoxesAndSkipsBrandsAndBanners() {
+    void aldiExtractorReadsWholeTextBoxesAndPrefixesBrands() {
         String page = """
                 09.10. CSÜTÖRTÖKTŐL 09.16. SZERDÁIG
                 BBQ
@@ -216,7 +217,105 @@ class FlyerExtractorsTest {
 
         List<ParsedProduct> products = aldi.extractFromPageText(page, 1);
 
-        assertEquals(List.of("TRAPPISTA SAJT", "FÜSTÖLT BACON"), names(products), products.toString());
+        assertEquals(List.of("TOLLE TRAPPISTA SAJT", "FÜSTÖLT BACON"), names(products), products.toString());
+    }
+
+    @Test
+    void aldiExtractorJoinsBrandBoxesWithProductNamesEvenWhenOcrReordersThem() {
+        String page = """
+                09.10. C S Ü T Ö R T Ö K T Ő L 09.16. S Z E R D Á I G
+
+                CSÁSZÁR
+
+                CSIGATÉSZTA
+                8 tojásos
+                200 g/csomag
+
+                BELLASAN
+
+                TÖKMAGOLAJ
+                0,5 l/üveg
+
+                ESPRESSO
+                CREMOSO
+
+                TÁBLÁS CSOKOLÁDÉ
+                töltött tej- vagy étcsokoládé,
+                90 g/darab
+
+                SNACK FUN
+
+                KARLSKRONE
+
+                KENYÉRCHIPS
+                250 g/csomag
+
+                ALKOHOLMENTES
+                SÖR
+                0,5 l/doboz
+
+                BARISSIMO
+
+                TIBI
+
+                POWER FORCE
+
+                SZEMETESZSÁK
+                60 literes
+
+                SILVERSTONE
+
+                BARNA
+                RUM
+                0,7 l/üveg
+
+                ROMEO PREMIUM
+
+                KUTYASNACK
+                150 g vagy
+
+                KOKETT
+
+                TOALETTPAPÍR
+                2 rétegű
+                """;
+
+        List<ParsedProduct> products = aldi.extractFromPageText(page, 12);
+        List<String> found = names(products);
+
+        assertEquals(10, found.size(), found.toString());
+        assertEquals(Set.of(
+                "CSÁSZÁR CSIGATÉSZTA",
+                "BELLASAN TÖKMAGOLAJ",
+                "BARISSIMO ESPRESSO CREMOSO",
+                "TIBI TÁBLÁS CSOKOLÁDÉ",
+                "SNACK FUN KENYÉRCHIPS",
+                "KARLSKRONE ALKOHOLMENTES SÖR",
+                "POWER FORCE SZEMETESZSÁK",
+                "SILVERSTONE BARNA RUM",
+                "ROMEO PREMIUM KUTYASNACK",
+                "KOKETT TOALETTPAPÍR"
+        ), Set.copyOf(found), found.toString());
+        assertTrue(found.stream().noneMatch(name ->
+                name.equals("CSÁSZÁR") || name.equals("CSIGATÉSZTA") || name.equals("BARISSIMO")
+                        || name.equals("TIBI") || name.equals("KOKETT")), found.toString());
+    }
+
+    @Test
+    void aldiExtractorKeepsStandaloneOneWordProducts() {
+        String page = """
+                MINIBUREK
+                300 g/csomag
+                1 990 Ft/kg
+
+                PUDINGPOR
+                40 g/csomag
+                739025
+                """;
+
+        List<ParsedProduct> products = aldi.extractFromPageText(page, 1);
+
+        assertEquals(List.of("MINIBUREK", "PUDINGPOR"), names(products), products.toString());
     }
 
     @Test
