@@ -6,8 +6,8 @@ public record FlyerSearchHitDto(
         String title,
         int pageNumber,
         String productName,
-        String priceText,
         String snippet,
-        String kind
+        String kind,
+        Long productId
 ) {
 }
