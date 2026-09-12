@@ -53,7 +53,6 @@ public class FlyerPersistenceService {
                 FlyerProduct entity = new FlyerProduct();
                 entity.setPageNumber(product.pageNumber());
                 entity.setName(limit(product.name(), 500));
-                entity.setPriceText(limit(product.priceText(), 255));
                 entity.setImageUrl(limit(product.imageUrl(), 2000));
                 flyer.addProduct(entity);
             }

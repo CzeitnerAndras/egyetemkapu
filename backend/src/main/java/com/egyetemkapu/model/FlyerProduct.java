@@ -29,9 +29,6 @@ public class FlyerProduct {
     @Column(nullable = false, length = 500)
     private String name;
 
-    @Column(name = "price_text")
-    private String priceText;
-
     @Column(name = "image_url", length = 2000)
     private String imageUrl;
 }
