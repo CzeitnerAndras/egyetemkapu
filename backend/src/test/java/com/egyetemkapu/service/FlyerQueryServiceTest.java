@@ -101,6 +101,22 @@ class FlyerQueryServiceTest {
     }
 
     @Test
+    void listHidesFlyersWithNoPages() {
+        Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
+        FlyerQueryService listing = new FlyerQueryService(
+                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
+        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
+        Flyer empty = datedFlyer("ALDI KOZEPSO SOR 2026 KW38", LocalDate.of(2026, 9, 17), LocalDate.of(2026, 9, 23));
+        empty.getPages().clear();
+        Flyer online = datedFlyer("ALDI Online", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 16));
+        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(empty, online));
+
+        List<String> titles = listing.list(null).stream().map(FlyerSummaryDto::title).toList();
+
+        assertEquals(List.of("ALDI Online"), titles);
+    }
+
+    @Test
     void listPutsAldiOnlineBeforeMiddleLaneAndSparBrandsInOrder() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
         FlyerQueryService listing = new FlyerQueryService(
@@ -127,11 +143,11 @@ class FlyerQueryServiceTest {
         List<String> titles = listing.list(null).stream().map(FlyerSummaryDto::title).toList();
 
         assertEquals(List.of(
-                "ALDI Online akciós újság",
-                "ALDI Középső sor",
                 "SPAR szórólap",
                 "INTERSPAR szórólap",
-                "SPAR Market"
+                "SPAR Market",
+                "ALDI Online akciós újság",
+                "ALDI Középső sor"
         ), titles);
     }
 
@@ -245,6 +261,9 @@ class FlyerQueryServiceTest {
         flyer.setTitle(title);
         flyer.setValidFrom(from);
         flyer.setValidTo(to);
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(1);
+        flyer.addPage(page);
         return flyer;
     }
 
@@ -253,6 +272,9 @@ class FlyerQueryServiceTest {
         flyer.setId(3L);
         flyer.setStore("aldi");
         flyer.setTitle("ALDI heti újság");
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(2);
+        flyer.addPage(page);
         FlyerProduct product = new FlyerProduct();
         product.setId(11L);
         product.setName(name);

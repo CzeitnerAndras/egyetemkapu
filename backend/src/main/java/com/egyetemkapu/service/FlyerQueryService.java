@@ -28,6 +28,7 @@ public class FlyerQueryService {
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
+    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -170,6 +171,9 @@ public class FlyerQueryService {
     }
 
     private static boolean listed(Flyer flyer, LocalDate today) {
+        if (flyer.getPages() == null || flyer.getPages().isEmpty()) {
+            return false;
+        }
         return FlyerCatalogParser.isCurrentOrUpcoming(flyer.getValidFrom(), flyer.getValidTo(), today);
     }
 
@@ -177,10 +181,15 @@ public class FlyerQueryService {
         return Comparator
                 .comparing((Flyer flyer) -> !FlyerCatalogParser.isCurrentlyValid(
                         flyer.getValidFrom(), flyer.getValidTo(), today))
-                .thenComparing(Flyer::getStore, Comparator.nullsLast(String::compareTo))
+                .thenComparingInt(flyer -> storeRank(flyer.getStore()))
                 .thenComparingInt(FlyerQueryService::paperKind)
                 .thenComparing(Flyer::getValidFrom, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(Flyer::getTitle, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+    }
+
+    static int storeRank(String store) {
+        int index = STORE_ORDER.indexOf(store == null ? "" : store.toLowerCase());
+        return index < 0 ? STORE_ORDER.size() : index;
     }
 
     static int paperKind(Flyer flyer) {

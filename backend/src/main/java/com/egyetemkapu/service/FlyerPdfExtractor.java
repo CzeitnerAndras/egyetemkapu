@@ -44,23 +44,51 @@ public class FlyerPdfExtractor {
             LayoutStripper stripper = new LayoutStripper();
             List<FlyerCatalogParser.ParsedPage> pages = new ArrayList<>();
             List<FlyerCatalogParser.ParsedProduct> products = new ArrayList<>();
-            for (int i = 1; i <= document.getNumberOfPages(); i++) {
-                stripper.setStartPage(i);
-                stripper.setEndPage(i);
-                stripper.clearRuns();
-                String raw = stripper.getText(document);
-                String text = raw == null ? "" : raw.trim();
-                List<FlyerCatalogParser.ParsedProduct> pageProducts = active.extractFromLayout(stripper.runs(), i);
-                if (pageProducts.isEmpty()) {
-                    pageProducts = active.extractFromPageText(text, i);
+            int last = Math.min(document.getNumberOfPages(), FlyerUrlPolicy.MAX_PDF_PAGES);
+            for (int i = 1; i <= last; i++) {
+                try {
+                    stripper.setStartPage(i);
+                    stripper.setEndPage(i);
+                    stripper.clearRuns();
+                    String raw = stripper.getText(document);
+                    String text = raw == null ? "" : raw.trim();
+                    List<FlyerCatalogParser.ParsedProduct> pageProducts = active.extractFromLayout(stripper.runs(), i);
+                    if (pageProducts.isEmpty()) {
+                        pageProducts = active.extractFromPageText(text, i);
+                    }
+                    pages.add(new FlyerCatalogParser.ParsedPage(i, null, text));
+                    products.addAll(pageProducts);
+                } catch (Exception pageError) {
+                    pages.add(new FlyerCatalogParser.ParsedPage(i, null, ""));
                 }
-                pages.add(new FlyerCatalogParser.ParsedPage(i, null, text));
-                products.addAll(pageProducts);
             }
             return new ExtractedDocument(pages, products);
         } catch (Exception e) {
+            return placeholderPages(pdfBytes);
+        }
+    }
+
+    public int countPages(byte[] pdfBytes) {
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            return 0;
+        }
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            return Math.min(document.getNumberOfPages(), FlyerUrlPolicy.MAX_PDF_PAGES);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private ExtractedDocument placeholderPages(byte[] pdfBytes) {
+        int last = countPages(pdfBytes);
+        if (last <= 0) {
             return new ExtractedDocument(List.of(), List.of());
         }
+        List<FlyerCatalogParser.ParsedPage> pages = new ArrayList<>();
+        for (int i = 1; i <= last; i++) {
+            pages.add(new FlyerCatalogParser.ParsedPage(i, null, ""));
+        }
+        return new ExtractedDocument(pages, List.of());
     }
 
     public byte[] renderPagePng(byte[] pdfBytes, int pageNumber) {
@@ -68,7 +96,7 @@ public class FlyerPdfExtractor {
             return new byte[0];
         }
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
-            if (pageNumber > document.getNumberOfPages()) {
+            if (pageNumber > document.getNumberOfPages() || pageNumber > FlyerUrlPolicy.MAX_PDF_PAGES) {
                 return new byte[0];
             }
             PDFRenderer renderer = new PDFRenderer(document);
@@ -81,11 +109,6 @@ public class FlyerPdfExtractor {
         }
     }
 
-    /**
-     * Collects text runs that never mix fonts. Flyers set product names in a heavier face than the
-     * descriptions and legal notes printed right underneath them, so keeping the face intact is what
-     * lets the per-store extractors tell a name apart from the fine print around it.
-     */
     private static final class LayoutStripper extends PDFTextStripper {
         private final List<FlyerCatalogParser.TextRun> runs = new ArrayList<>();
 

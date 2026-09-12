@@ -113,7 +113,7 @@ public class FlyerSyncService {
 
     public void syncSpar(LocalDate today) {
         try {
-            String html = httpClient.getText("https://www.spar.hu/ajanlatok");
+            String html = safeText("https://www.spar.hu/ajanlatok");
             List<DiscoveredPaper> papers = parser.discoverSparPdfs(html, today);
             List<ParsedCatalog> catalogs = new ArrayList<>();
             for (DiscoveredPaper paper : papers) {
@@ -123,32 +123,16 @@ public class FlyerSyncService {
                 if (!FlyerCatalogParser.isCurrentOrUpcoming(paper.validFrom(), paper.validTo(), today)) {
                     continue;
                 }
-                SparPdf pdf = downloadSparPdf(paper);
-                if (pdf.bytes().length == 0) {
-                    continue;
-                }
-                FlyerProductExtractor extractor = extractors.forStore("spar");
-                FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf.bytes(), extractor);
-                if (extracted.pages().isEmpty()) {
-                    continue;
-                }
-                List<ParsedPage> pages = extracted.pages();
-                List<ParsedProduct> products = new ArrayList<>(extracted.products());
-                if (products.isEmpty()) {
-                    for (ParsedPage page : pages) {
-                        products.addAll(extractor.extractFromPageText(page.text(), page.pageNumber()));
+                try {
+                    ParsedCatalog catalog = extractSparCatalog(paper);
+                    if (catalog != null) {
+                        catalogs.add(catalog);
                     }
+                } catch (Exception e) {
+                    log.warn("SPAR flyer failed for {} ({})", paper.title(), e.getMessage());
+                } catch (OutOfMemoryError e) {
+                    log.warn("SPAR flyer ran out of memory for {}", paper.title());
                 }
-                DiscoveredPaper resolved = new DiscoveredPaper(
-                        paper.store(),
-                        paper.title(),
-                        paper.officialUrl(),
-                        pdf.url(),
-                        paper.sourceKey(),
-                        paper.validFrom(),
-                        paper.validTo()
-                );
-                catalogs.add(new ParsedCatalog(resolved, pages, products));
             }
             flyerPersistenceService.replaceStore("spar", catalogs, LocalDateTime.now(clock));
         } catch (Exception e) {
@@ -234,20 +218,28 @@ public class FlyerSyncService {
     }
 
     public boolean isStale(LocalDateTime now) {
+        if (syncing.get()) {
+            return false;
+        }
         List<Flyer> flyers = flyerRepository.findAll();
         if (flyers.isEmpty()) {
             return true;
         }
-        return flyers.stream()
+        boolean aged = flyers.stream()
                 .map(Flyer::getLastSynced)
                 .min(LocalDateTime::compareTo)
                 .map(synced -> synced.isBefore(now.minusHours(12)))
-                .orElse(true)
-                || flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
-                || missingWeeklySpar(flyers, now.toLocalDate())
-                || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
-                || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
-                || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
+                .orElse(true);
+        if (aged) {
+            return true;
+        }
+        if (missingCoreCatalogs(flyers, now.toLocalDate())) {
+            return true;
+        }
+        if (lastLayoutRetryAt != null && lastLayoutRetryAt.isAfter(now.minusMinutes(30))) {
+            return false;
+        }
+        return flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
                 || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts)
                 || pendingLayoutResync();
     }
@@ -323,6 +315,13 @@ public class FlyerSyncService {
         return STORES;
     }
 
+    private static boolean missingCoreCatalogs(List<Flyer> flyers, LocalDate today) {
+        return flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
+                || missingWeeklySpar(flyers, today)
+                || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
+                || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()));
+    }
+
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
         LocalDate thursday = today.with(DayOfWeek.THURSDAY);
         if (thursday.isAfter(today)) {
@@ -372,7 +371,7 @@ public class FlyerSyncService {
                 urls.addAll(parser.sparPdfCandidates(sparBrandFromSourceKey(flyer.getSourceKey()), flyer.getValidFrom()));
             }
             for (String url : urls) {
-                byte[] bytes = safeBytes(url);
+                byte[] bytes = safeBytes(url, sparPdfReferer());
                 if (bytes.length > 0) {
                     return bytes;
                 }
@@ -397,25 +396,64 @@ public class FlyerSyncService {
         return "spar";
     }
 
+    private ParsedCatalog extractSparCatalog(DiscoveredPaper paper) {
+        SparPdf pdf = downloadSparPdf(paper);
+        if (pdf.bytes().length == 0) {
+            return null;
+        }
+        FlyerProductExtractor extractor = extractors.forStore("spar");
+        FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf.bytes(), extractor);
+        if (extracted.pages().isEmpty()) {
+            log.warn("SPAR PDF extract failed for {} ({} bytes)", paper.title(), pdf.bytes().length);
+            return null;
+        }
+        List<ParsedPage> pages = extracted.pages();
+        List<ParsedProduct> products = new ArrayList<>(extracted.products());
+        if (products.isEmpty()) {
+            for (ParsedPage page : pages) {
+                products.addAll(extractor.extractFromPageText(page.text(), page.pageNumber()));
+            }
+        }
+        DiscoveredPaper resolved = new DiscoveredPaper(
+                paper.store(),
+                paper.title(),
+                paper.officialUrl(),
+                pdf.url(),
+                paper.sourceKey(),
+                paper.validFrom(),
+                paper.validTo()
+        );
+        return new ParsedCatalog(resolved, pages, products);
+    }
+
     private SparPdf downloadSparPdf(DiscoveredPaper paper) {
         LinkedHashSet<String> urls = new LinkedHashSet<>();
         if (paper.pdfUrl() != null && !paper.pdfUrl().isBlank()) {
             urls.add(paper.pdfUrl());
         }
         urls.addAll(parser.sparPdfCandidates(FlyerCatalogParser.sparBrandOf(paper), paper.validFrom()));
+        String referer = sparPdfReferer();
         for (String url : urls) {
-            byte[] bytes = safeBytes(url);
+            byte[] bytes = safeBytes(url, referer);
             if (bytes.length > 0) {
                 return new SparPdf(url, bytes);
             }
         }
+        log.warn("SPAR PDF missing for {} ({})", paper.title(), paper.officialUrl());
         return new SparPdf(paper.pdfUrl(), new byte[0]);
+    }
+
+    private static String sparPdfReferer() {
+        return "https://www.spar.hu/ajanlatok";
     }
 
     private record SparPdf(String url, byte[] bytes) {
     }
 
     private static boolean keepCatalog(ParsedCatalog catalog, LocalDate today) {
+        if (catalog == null || catalog.pages() == null || catalog.pages().isEmpty()) {
+            return false;
+        }
         return FlyerCatalogParser.isCurrentOrUpcoming(
                 catalog.paper().validFrom(), catalog.paper().validTo(), today);
     }
@@ -530,6 +568,9 @@ public class FlyerSyncService {
     }
 
     private String safeText(String url) {
+        if (!FlyerUrlPolicy.isAllowed(url)) {
+            return "";
+        }
         try {
             return httpClient.getText(url);
         } catch (Exception e) {
@@ -539,6 +580,9 @@ public class FlyerSyncService {
     }
 
     private String safePostJson(String url, String body) {
+        if (!FlyerUrlPolicy.isAllowed(url)) {
+            return "";
+        }
         try {
             return httpClient.postJson(url, body);
         } catch (Exception e) {
@@ -552,7 +596,7 @@ public class FlyerSyncService {
     }
 
     private byte[] safeBytes(String url, String referer) {
-        if (url == null || url.isBlank()) {
+        if (!FlyerUrlPolicy.isAllowed(url)) {
             return new byte[0];
         }
         try {

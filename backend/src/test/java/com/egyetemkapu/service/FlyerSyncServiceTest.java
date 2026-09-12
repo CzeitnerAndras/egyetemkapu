@@ -20,9 +20,12 @@ import java.time.ZoneId;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,12 +74,30 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void syncAldiSkipsPublicationsWithNoPages() {
+        when(httpClient.getText("https://www.aldi.hu/online-akcios-ujsag"))
+                .thenReturn("<a href=\"https://szorolap.aldi.hu/aldi_kozepso_sor_2026_kw38/\">x</a>");
+        when(httpClient.getText("https://szorolap.aldi.hu/aldi_kozepso_sor_2026_kw38/data.json"))
+                .thenReturn("{\"config\":{\"publicationTitle\":\"ALDI KOZEPSO SOR 2026 KW38\"}}");
+        when(httpClient.getText("https://szorolap.aldi.hu/aldi_kozepso_sor_2026_kw38/spreads.json"))
+                .thenReturn("{\"spreads\":[]}");
+
+        service.syncAldi(LocalDate.of(2026, 9, 12));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("aldi"), captor.capture(), any());
+        assertTrue(captor.getValue().isEmpty());
+    }
+
+    @Test
     void syncSparPersistsFallbackPdfWhenPageHasNoLinks() {
         when(httpClient.getText("https://www.spar.hu/ajanlatok")).thenReturn("<html></html>");
-        when(httpClient.getBytes(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
-            String url = invocation.getArgument(0);
-            return url.endsWith("/spar-szorolap-0903p.pdf") ? new byte[] { 1, 2, 3, 4 } : new byte[0];
-        });
+        when(httpClient.getBytes(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> {
+                    String url = invocation.getArgument(0);
+                    return url.endsWith("/spar-szorolap-0903p.pdf") ? new byte[] { 1, 2, 3, 4 } : new byte[0];
+                });
         when(pdfExtractor.extractDocument(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> {
                     byte[] pdf = invocation.getArgument(0);
@@ -95,6 +116,38 @@ class FlyerSyncServiceTest {
         verify(flyerPersistenceService).replaceStore(eq("spar"), captor.capture(), any());
         assertEquals(1, captor.getValue().size());
         assertEquals("Kakaós csiga", captor.getValue().getFirst().products().getFirst().name());
+        assertTrue(captor.getValue().getFirst().paper().officialUrl().contains("/ajanlatok/spar/260903-1-spar-szorolap"));
+        verify(httpClient, atLeastOnce()).getBytes(
+                org.mockito.ArgumentMatchers.contains("spar-szorolap-0903p.pdf"),
+                eq("https://www.spar.hu/ajanlatok"));
+    }
+
+    @Test
+    void syncSparUsesWeeklyFallbackWhenListingIsBlocked() {
+        when(httpClient.getText("https://www.spar.hu/ajanlatok"))
+                .thenThrow(new RuntimeException("403 Forbidden"));
+        when(httpClient.getBytes(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> {
+                    String url = invocation.getArgument(0);
+                    return url.endsWith("/spar-szorolap-0903p.pdf") ? new byte[] { 1, 2, 3, 4 } : new byte[0];
+                });
+        when(pdfExtractor.extractDocument(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> {
+                    byte[] pdf = invocation.getArgument(0);
+                    if (pdf == null || pdf.length == 0) {
+                        return new FlyerPdfExtractor.ExtractedDocument(List.of(), List.of());
+                    }
+                    return new FlyerPdfExtractor.ExtractedDocument(
+                            List.of(new FlyerCatalogParser.ParsedPage(1, null, "Kakaós csiga 249 Ft")),
+                            List.of(new FlyerCatalogParser.ParsedProduct("Kakaós csiga", 1, null)));
+                });
+
+        service.syncSpar(LocalDate.of(2026, 9, 6));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("spar"), captor.capture(), any());
+        assertEquals(1, captor.getValue().size());
         assertTrue(captor.getValue().getFirst().paper().officialUrl().contains("/ajanlatok/spar/260903-1-spar-szorolap"));
     }
 
@@ -197,7 +250,7 @@ class FlyerSyncServiceTest {
         wrong.setName("Őszibarack");
         wrong.setPageNumber(1);
         flyer.addProduct(wrong);
-        when(httpClient.getBytes("https://www.spar.hu/content/dam/x.pdf")).thenReturn(new byte[] { 1, 2, 3 });
+        when(httpClient.getBytes(eq("https://www.spar.hu/content/dam/x.pdf"), any())).thenReturn(new byte[] { 1, 2, 3 });
         when(pdfExtractor.extractDocument(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenReturn(new FlyerPdfExtractor.ExtractedDocument(
                         List.of(new FlyerCatalogParser.ParsedPage(1, null, "Madre pizza")),
@@ -210,5 +263,69 @@ class FlyerSyncServiceTest {
         assertEquals("Madre pizza", flyer.getProducts().getFirst().getName());
         assertEquals("Madre pizza", flyer.getPages().getFirst().getPageText());
         verify(flyerRepository).save(flyer);
+    }
+
+    @Test
+    void syncPennyDoesNotFetchPoisonedViewerUrls() {
+        when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenReturn(
+                "<a href=\"https://169.254.169.254/publitas/stolen\">x</a>"
+                        + "<a href=\"https://evil.example/szorolap/stolen\">y</a>");
+
+        service.syncPenny(LocalDate.of(2026, 9, 6));
+
+        verify(httpClient, never()).getText(org.mockito.ArgumentMatchers.contains("169.254"));
+        verify(httpClient, never()).getText(org.mockito.ArgumentMatchers.contains("evil.example"));
+        verify(httpClient, never()).getBytes(org.mockito.ArgumentMatchers.contains("169.254"));
+        verify(httpClient, never()).getBytes(org.mockito.ArgumentMatchers.contains("evil.example"), any());
+    }
+
+    @Test
+    void isStaleDoesNotRetriggerRightAfterASyncAttempt() {
+        Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
+        Flyer penny = storeFlyer("penny", "penny:rewe:202636",
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/");
+        Flyer spar = storeFlyer("spar", "spar:spar:2026-09-03",
+                "https://www.spar.hu/ajanlatok/spar/260903-1-spar-szorolap");
+        Flyer inter = storeFlyer("spar", "spar:interspar:2026-09-03",
+                "https://www.spar.hu/ajanlatok/interspar/260903-2-interspar-szorolap");
+        Flyer market = storeFlyer("spar", "spar:spar-market:2026-09-03",
+                "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar");
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market));
+        lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
+        lenient().when(httpClient.getText(any())).thenReturn("");
+        lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
+        lenient().when(httpClient.getBytes(any(), any())).thenReturn(new byte[0]);
+        lenient().when(httpClient.postJson(any(), any())).thenReturn("");
+
+        LocalDateTime now = LocalDateTime.of(2026, 9, 6, 10, 0);
+        assertFalse(service.isStale(now));
+    }
+
+    @Test
+    void isStaleWhenCurrentWeeklySparIsMissingEvenRightAfterASync() {
+        Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
+        Flyer penny = storeFlyer("penny", "penny:rewe:202636",
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/");
+        Flyer nextWeek = storeFlyer("spar", "spar:spar:2026-09-10",
+                "https://www.spar.hu/ajanlatok/spar/260910-1-spar-szorolap");
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, nextWeek));
+        lenient().when(httpClient.getText(any())).thenReturn("");
+        lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
+        lenient().when(httpClient.getBytes(any(), any())).thenReturn(new byte[0]);
+        lenient().when(httpClient.postJson(any(), any())).thenReturn("");
+
+        LocalDateTime now = LocalDateTime.of(2026, 9, 6, 10, 0);
+        assertTrue(service.isStale(now));
+        service.syncAll();
+        assertTrue(service.isStale(now));
+    }
+
+    private static Flyer storeFlyer(String store, String sourceKey, String url) {
+        Flyer flyer = new Flyer();
+        flyer.setStore(store);
+        flyer.setSourceKey(sourceKey);
+        flyer.setOfficialUrl(url);
+        flyer.setLastSynced(LocalDateTime.of(2026, 9, 6, 9, 0));
+        return flyer;
     }
 }
