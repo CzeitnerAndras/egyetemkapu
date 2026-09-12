@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { NoticeModal } from '../components/NoticeModal';
 import { PageHeader, PageShell } from '../components/PageLayout';
 import { useNotice } from '../components/useNotice';
+import {
+    addItem,
+    groupByStore,
+    itemKey,
+    loadShoppingList,
+    removeItem,
+    saveShoppingList,
+    setQuantity,
+    type ShoppingListItem,
+} from '../utils/shoppingList';
 
 export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco';
 
@@ -25,9 +35,15 @@ interface SearchHit {
     title: string;
     pageNumber: number;
     productName?: string | null;
-    priceText?: string | null;
     snippet: string;
     kind: 'product' | 'page';
+    productId?: number | null;
+}
+
+interface FlyerProduct {
+    id: number;
+    pageNumber: number;
+    name: string;
 }
 
 interface FlyerDetail {
@@ -36,6 +52,7 @@ interface FlyerDetail {
     title: string;
     officialUrl: string;
     pages: { pageNumber: number; hasImage: boolean }[];
+    products?: FlyerProduct[];
 }
 
 const STORES: StoreId[] = ['aldi', 'spar', 'penny', 'tesco'];
@@ -55,11 +72,12 @@ export default function SalesPapersPage() {
     const [error, setError] = useState('');
     const [viewer, setViewer] = useState<{ flyer: FlyerDetail; page: number } | null>(null);
     const [pageStatus, setPageStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+    const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>(() => loadShoppingList());
 
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
-        fetch('/api/flyers')
+        fetch('/api/flyers', { cache: 'no-store' })
             .then((res) => {
                 if (!res.ok) throw new Error('load');
                 return res.json();
@@ -84,6 +102,10 @@ export default function SalesPapersPage() {
         };
     }, [t]);
 
+    useEffect(() => {
+        saveShoppingList(shoppingList);
+    }, [shoppingList]);
+
     const storeFlyers = useMemo(
         () => flyers
             .filter((flyer) => flyer.store === activeStore)
@@ -101,7 +123,7 @@ export default function SalesPapersPage() {
         }
         setSearching(true);
         try {
-            const res = await fetch(`/api/flyers/search?q=${encodeURIComponent(q)}`);
+            const res = await fetch(`/api/flyers/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' });
             if (!res.ok) throw new Error('search');
             const data = await res.json();
             setHits(Array.isArray(data) ? data : []);
@@ -116,7 +138,7 @@ export default function SalesPapersPage() {
 
     const openFlyer = async (flyerId: number, pageNumber = 1) => {
         try {
-            const res = await fetch(`/api/flyers/${flyerId}`);
+            const res = await fetch(`/api/flyers/${flyerId}`, { cache: 'no-store' });
             if (!res.ok) throw new Error('detail');
             const flyer: FlyerDetail = await res.json();
             const first = flyer.pages[0]?.pageNumber ?? pageNumber;
@@ -135,6 +157,35 @@ export default function SalesPapersPage() {
     };
 
     const storeLabel = (store: StoreId) => store.toUpperCase();
+
+    const addToList = (draft: {
+        productId?: number | null;
+        flyerId: number;
+        store: StoreId;
+        flyerTitle: string;
+        pageNumber: number;
+        name: string;
+    }) => {
+        setShoppingList((prev) => addItem(prev, draft));
+    };
+
+    const listedKey = (
+        productId?: number | null,
+        flyerId?: number,
+        pageNumber?: number,
+        name?: string | null,
+    ) =>
+        itemKey({
+            productId,
+            flyerId: flyerId ?? 0,
+            pageNumber: pageNumber ?? 0,
+            name: name ?? '',
+        });
+
+    const pageProducts = viewer
+        ? (viewer.flyer.products ?? []).filter((product) => product.pageNumber === viewer.page)
+        : [];
+    const listGroups = groupByStore(shoppingList);
 
     const currentPageIndex = viewer
         ? viewer.flyer.pages.findIndex((page) => page.pageNumber === viewer.page)
@@ -233,24 +284,47 @@ export default function SalesPapersPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {hits.map((hit, index) => (
-                                <button
-                                    key={`${hit.flyerId}-${hit.kind}-${hit.pageNumber}-${index}`}
-                                    type="button"
-                                    onClick={() => openFlyer(hit.flyerId, hit.pageNumber)}
-                                    className={PAPER_CARD}
-                                >
-                                    <div className="flex items-center justify-between gap-3 mb-2">
-                                        <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-[#3b0764]">
-                                            {storeLabel(hit.store)} · {t('sales.page', { page: hit.pageNumber })}
-                                        </span>
-                                        <span className="text-[11px] font-bold uppercase">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
-                                    </div>
-                                    <h3 className="font-bold uppercase leading-tight mb-1">
-                                        {hit.productName || hit.title}
-                                    </h3>
-                                    {hit.priceText && <p className="font-black mb-1">{hit.priceText}</p>}
-                                    <p className="text-sm opacity-80">{hit.snippet}</p>
-                                </button>
+                                <div key={`${hit.flyerId}-${hit.kind}-${hit.pageNumber}-${index}`} className={PAPER_CARD}>
+                                    <button
+                                        type="button"
+                                        onClick={() => openFlyer(hit.flyerId, hit.pageNumber)}
+                                        className="w-full text-left cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-between gap-3 mb-2">
+                                            <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-[#3b0764]">
+                                                {storeLabel(hit.store)} · {t('sales.page', { page: hit.pageNumber })}
+                                            </span>
+                                            <span className="text-[11px] font-bold uppercase">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
+                                        </div>
+                                        <h3 className="font-bold uppercase leading-tight mb-1">
+                                            {hit.productName || hit.title}
+                                        </h3>
+                                        {hit.kind === 'product' ? (
+                                            <p className="text-sm opacity-80">{hit.title}</p>
+                                        ) : hit.snippet ? (
+                                            <p className="text-sm opacity-80">{hit.snippet}</p>
+                                        ) : null}
+                                    </button>
+                                    {hit.kind === 'product' && hit.productName && (
+                                        <button
+                                            type="button"
+                                            onClick={() => addToList({
+                                                productId: hit.productId,
+                                                flyerId: hit.flyerId,
+                                                store: hit.store,
+                                                flyerTitle: hit.title,
+                                                pageNumber: hit.pageNumber,
+                                                name: hit.productName ?? hit.title,
+                                            })}
+                                            className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black cursor-pointer"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                            {shoppingList.some((item) => item.id === listedKey(hit.productId, hit.flyerId, hit.pageNumber, hit.productName))
+                                                ? t('sales.listAdded')
+                                                : t('sales.listAdd')}
+                                        </button>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     )}
@@ -278,6 +352,75 @@ export default function SalesPapersPage() {
                             </span>
                         </button>
                     ))}
+
+                    <section className="mt-6 bg-slate-100 dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-sm text-black dark:text-white secret:text-[#1cf85d]">
+                        <div className="flex items-center gap-2 mb-2">
+                            <ShoppingCart className="w-4 h-4" />
+                            <h2 className="text-sm font-black uppercase secret:font-mono">{t('sales.listTitle')}</h2>
+                        </div>
+                        <p className="text-xs font-medium mb-3 opacity-80">{t('sales.listHint')}</p>
+                        {shoppingList.length === 0 ? (
+                            <p className="text-sm font-bold">{t('sales.listEmpty')}</p>
+                        ) : (
+                            <>
+                                {listGroups.map((group) => (
+                                    <div key={group.store} className="mb-4">
+                                        <div className="flex items-center justify-between gap-2 mb-2 border-b-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-1">
+                                            <p className="text-xs font-black uppercase">{storeLabel(group.store)}</p>
+                                        </div>
+                                        <ul className="space-y-2">
+                                            {group.items.map((item) => (
+                                                <li key={item.id} className="text-sm">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <p className="font-bold leading-tight">{item.name}</p>
+                                                            <p className="text-xs opacity-80">
+                                                                {t('sales.page', { page: item.pageNumber })}
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShoppingList((prev) => removeItem(prev, item.id))}
+                                                            className="shrink-0 cursor-pointer"
+                                                            aria-label={t('sales.listRemove')}
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="mt-1 flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShoppingList((prev) => setQuantity(prev, item.id, item.quantity - 1))}
+                                                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-0.5 cursor-pointer"
+                                                            aria-label={t('sales.listDecrease')}
+                                                        >
+                                                            <Minus className="w-3 h-3" />
+                                                        </button>
+                                                        <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShoppingList((prev) => setQuantity(prev, item.id, item.quantity + 1))}
+                                                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-0.5 cursor-pointer"
+                                                            aria-label={t('sales.listIncrease')}
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={() => setShoppingList([])}
+                                    className="mt-2 text-xs font-bold uppercase cursor-pointer"
+                                >
+                                    {t('sales.listClear')}
+                                </button>
+                            </>
+                        )}
+                    </section>
                 </div>
 
                 <div className="w-full lg:w-3/4">
@@ -331,13 +474,18 @@ export default function SalesPapersPage() {
 
             {viewer && createPortal(
                 <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center p-2 sm:p-4">
-                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1100px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
+                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1400px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
                         <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
                             <div className="min-w-0 text-black dark:text-white secret:text-[#1cf85d]">
                                 <p className="text-xs font-black uppercase">{storeLabel(viewer.flyer.store)}</p>
                                 <h2 className="text-lg font-bold uppercase secret:font-mono leading-tight truncate">{viewer.flyer.title}</h2>
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
+                                {shoppingList.length > 0 && (
+                                    <span className="hidden sm:inline text-xs font-black uppercase text-black dark:text-white secret:text-[#1cf85d]">
+                                        {t('sales.listCount', { count: shoppingList.reduce((sum, item) => sum + item.quantity, 0) })}
+                                    </span>
+                                )}
                                 <a
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
@@ -357,18 +505,57 @@ export default function SalesPapersPage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-slate-200 dark:bg-[#121212] secret:bg-black p-3 min-h-0 relative">
-                            {pageStatus !== 'ok' && (
-                                <p className="sticky top-1/3 font-bold uppercase secret:font-mono text-black dark:text-[#c084fc] secret:text-[#1cf85d] text-center px-4 z-10">
-                                    {pageStatus === 'error' ? t('sales.pageLoadError') : t('sales.pageLoading')}
-                                </p>
-                            )}
-                            <img
-                                key={pageSrc}
-                                src={pageSrc}
-                                alt={t('sales.page', { page: viewer.page })}
-                                className={`block w-full h-auto border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
-                            />
+                        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+                            <div className="flex-1 overflow-auto bg-slate-200 dark:bg-[#121212] secret:bg-black p-3 min-h-0 relative">
+                                {pageStatus !== 'ok' && (
+                                    <p className="sticky top-1/3 font-bold uppercase secret:font-mono text-black dark:text-[#c084fc] secret:text-[#1cf85d] text-center px-4 z-10">
+                                        {pageStatus === 'error' ? t('sales.pageLoadError') : t('sales.pageLoading')}
+                                    </p>
+                                )}
+                                <img
+                                    key={pageSrc}
+                                    src={pageSrc}
+                                    alt={t('sales.page', { page: viewer.page })}
+                                    className={`block w-full h-auto border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
+                                />
+                            </div>
+                            <aside className="lg:w-80 shrink-0 max-h-48 lg:max-h-none overflow-auto border-t-4 lg:border-t-0 lg:border-l-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 text-black dark:text-white secret:text-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black">
+                                <h3 className="text-xs font-black uppercase">{t('sales.listPageProducts')}</h3>
+                                <p className="text-[11px] font-medium opacity-80 mb-3">{t('sales.listPageHint')}</p>
+                                {pageProducts.length === 0 ? (
+                                    <p className="text-sm font-medium opacity-80">{t('sales.listNoPageProducts')}</p>
+                                ) : (
+                                    <ul className="space-y-2">
+                                        {pageProducts.map((product) => {
+                                            const onList = shoppingList.some((item) =>
+                                                item.id === listedKey(product.id, viewer.flyer.id, product.pageNumber, product.name));
+                                            return (
+                                                <li key={product.id}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addToList({
+                                                            productId: product.id,
+                                                            flyerId: viewer.flyer.id,
+                                                            store: viewer.flyer.store,
+                                                            flyerTitle: viewer.flyer.title,
+                                                            pageNumber: product.pageNumber,
+                                                            name: product.name,
+                                                        })}
+                                                        aria-label={onList ? t('sales.listAdded') : t('sales.listAdd')}
+                                                        className={`w-full text-left p-2 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer ${
+                                                            onList
+                                                                ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
+                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-fuchsia-400 dark:hover:bg-[#3b0764]'
+                                                        }`}
+                                                    >
+                                                        <p className="font-bold leading-tight">{product.name}</p>
+                                                    </button>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </aside>
                         </div>
 
                         <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d]">

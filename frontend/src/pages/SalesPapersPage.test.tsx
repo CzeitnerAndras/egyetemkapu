@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SalesPapersPage from './SalesPapersPage';
 
@@ -35,6 +35,7 @@ const flyers = [
 describe('SalesPapersPage Komponens', () => {
     beforeEach(() => {
         sessionStorage.clear();
+        localStorage.clear();
         document.documentElement.classList.remove('flyer-open');
         globalThis.fetch = jest.fn().mockImplementation((url: string) => {
             if (url === '/api/flyers') {
@@ -44,7 +45,7 @@ describe('SalesPapersPage Komponens', () => {
                 return Promise.resolve({
                     ok: true,
                     json: async () => ([
-                        { flyerId: 1, store: 'aldi', title: 'ALDI heti újság', pageNumber: 2, productName: 'Kakaóscsiga', priceText: '249 Ft', snippet: 'Kakaóscsiga 249 Ft', kind: 'product' },
+        { flyerId: 1, store: 'aldi', title: 'ALDI heti újság', pageNumber: 2, productName: 'Kakaóscsiga', snippet: 'Kakaóscsiga', kind: 'product', productId: 11 },
                     ]),
                 });
             }
@@ -57,6 +58,10 @@ describe('SalesPapersPage Komponens', () => {
                         title: 'ALDI heti újság',
                         officialUrl: 'https://szorolap.aldi.hu/x/',
                         pages: [{ pageNumber: 1, hasImage: true }, { pageNumber: 2, hasImage: true }],
+                        products: [
+                            { id: 11, pageNumber: 2, name: 'Kakaóscsiga' },
+                            { id: 12, pageNumber: 1, name: 'Tej' },
+                        ],
                     }),
                 });
             }
@@ -119,7 +124,6 @@ describe('SalesPapersPage Komponens', () => {
         await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
 
         expect(await screen.findByText('Kakaóscsiga')).toBeInTheDocument();
-        expect(screen.getByText('249 Ft')).toBeInTheDocument();
 
         await userEvent.click(screen.getByText('Kakaóscsiga'));
         await waitFor(() => {
@@ -128,5 +132,26 @@ describe('SalesPapersPage Komponens', () => {
         });
         expect(screen.getByRole('link', { name: /sales.openOfficial/ })).toHaveAttribute('href', 'https://szorolap.aldi.hu/x/');
         expect(document.documentElement.classList.contains('flyer-open')).toBe(true);
+        const pageProducts = screen.getByRole('complementary');
+        expect(within(pageProducts).getByText('Kakaóscsiga')).toBeInTheDocument();
+        expect(within(pageProducts).getByText('sales.listPageHint')).toBeInTheDocument();
+        await userEvent.click(within(pageProducts).getByRole('button', { name: 'sales.listAdd' }));
+        expect(within(pageProducts).getByRole('button', { name: 'sales.listAdded' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'sales.listTitle' })).toBeInTheDocument();
+    });
+
+    it('keresésből a listára teszi a terméket boltonként', async () => {
+        render(<SalesPapersPage />);
+        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        await screen.findByText('ALDI heti újság');
+        await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
+        await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
+        expect(await screen.findByText('Kakaóscsiga')).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /sales\.listAdd/ }));
+        expect(screen.getByRole('heading', { name: 'sales.listTitle' })).toBeInTheDocument();
+        expect(screen.getAllByText('Kakaóscsiga').length).toBeGreaterThan(1);
+        const shoppingList = screen.getByRole('heading', { name: 'sales.listTitle' }).closest('section');
+        expect(shoppingList).not.toBeNull();
+        expect(within(shoppingList as HTMLElement).getByText('ALDI')).toBeInTheDocument();
     });
 });

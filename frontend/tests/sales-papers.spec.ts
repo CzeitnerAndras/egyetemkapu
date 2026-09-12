@@ -30,7 +30,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { flyerId: 1, store: 'aldi', title: 'ALDI heti újság', pageNumber: 2, productName: 'Kakaóscsiga', priceText: '249 Ft', snippet: 'Kakaóscsiga 249 Ft', kind: 'product' },
+          { flyerId: 1, store: 'aldi', title: 'ALDI heti újság', pageNumber: 2, productName: 'Kakaóscsiga', snippet: 'Kakaóscsiga', kind: 'product' },
         ]),
       });
     });
