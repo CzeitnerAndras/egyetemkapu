@@ -73,6 +73,7 @@ public class FlyerQueryService {
         }
         List<FlyerSearchHitDto> hits = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
+        Set<String> productPages = new LinkedHashSet<>();
         LocalDate today = LocalDate.now(clock);
         for (Flyer flyer : flyerRepository.findAllByOrderByStoreAscTitleAsc()) {
             if (!listed(flyer, today)) {
@@ -85,6 +86,7 @@ public class FlyerQueryService {
                     }
                     String key = flyer.getId() + ":product:" + product.getId();
                     if (seen.add(key)) {
+                        productPages.add(flyer.getId() + ":" + product.getPageNumber());
                         hits.add(new FlyerSearchHitDto(
                                 flyer.getId(),
                                 flyer.getStore(),
@@ -100,6 +102,9 @@ public class FlyerQueryService {
             }
             if (flyer.getPages() != null) {
                 for (FlyerPage page : flyer.getPages()) {
+                    if (productPages.contains(flyer.getId() + ":" + page.getPageNumber())) {
+                        continue;
+                    }
                     if (!HungarianText.contains(page.getPageText(), query)) {
                         continue;
                     }

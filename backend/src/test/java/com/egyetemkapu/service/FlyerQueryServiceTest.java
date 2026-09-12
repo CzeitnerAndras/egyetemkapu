@@ -78,6 +78,20 @@ class FlyerQueryServiceTest {
     }
 
     @Test
+    void searchOmitsFlyerPageWhenAProductOnThatPageAlreadyMatched() {
+        Flyer flyer = flyerWithProduct("Karlskrone ínyenc grillkolbász");
+        flyer.getPages().getFirst().setPageText("Karlskrone ínyenc grillkolbász 2330 Ft/kg alkoholmentes sör");
+        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
+        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(flyer));
+
+        List<FlyerSearchHitDto> hits = service.search("karlskrone");
+
+        assertEquals(1, hits.size());
+        assertEquals("product", hits.getFirst().kind());
+        assertEquals("Karlskrone ínyenc grillkolbász", hits.getFirst().productName());
+    }
+
+    @Test
     void blankQueryReturnsNothing() {
         assertTrue(service.search("   ").isEmpty());
     }
