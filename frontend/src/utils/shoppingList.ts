@@ -15,7 +15,7 @@ export interface ShoppingListItem {
 
 export type ShoppingListDraft = Omit<ShoppingListItem, 'id' | 'quantity'> & { quantity?: number };
 
-const STORE_ORDER: ShoppingStoreId[] = ['aldi', 'spar', 'penny', 'tesco'];
+const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi'];
 
 export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | 'pageNumber' | 'name'>): string {
     if (item.productId != null) {

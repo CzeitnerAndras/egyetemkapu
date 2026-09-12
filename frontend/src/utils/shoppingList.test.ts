@@ -50,7 +50,7 @@ describe('shoppingList', () => {
             item({ id: 'p:22', productId: 22, store: 'tesco', name: 'Tej', flyerTitle: 'Tesco Hipermarket' }),
         ];
         const grouped = groupByStore(list);
-        expect(grouped.map((group) => group.store)).toEqual(['aldi', 'tesco']);
+        expect(grouped.map((group) => group.store)).toEqual(['tesco', 'aldi']);
         expect(removeItem(list, 'p:11')).toHaveLength(1);
         expect(setQuantity(list, 'p:11', 0)).toHaveLength(1);
     });

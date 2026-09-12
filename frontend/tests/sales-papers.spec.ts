@@ -57,26 +57,26 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await expect(page).toHaveURL(/\/akcios-ujsag$/);
   });
 
-  test('négy bolt tab jelenik meg, alapértelmezetten az ALDI aktív, és újságok listázódnak', async ({ page }) => {
+  test('négy bolt tab jelenik meg, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
     await page.getByRole('button', { name: /Értem|Got it/i }).click();
 
     await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
     await expect(page.locator('[data-store]')).toHaveCount(4);
-    await expect(page.locator('[data-store="aldi"]')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByText('ALDI heti újság')).toBeVisible();
+    await expect(page.locator('[data-store="spar"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('SPAR szórólap')).toBeVisible();
   });
 
   test('másik boltra kattintva lecserélődik az újságlista', async ({ page }) => {
     await page.goto('/akcios-ujsag');
     await page.getByRole('button', { name: /Értem|Got it/i }).click();
-    await expect(page.getByText('ALDI heti újság')).toBeVisible();
+    await expect(page.getByText('SPAR szórólap')).toBeVisible();
 
     await page.locator('[data-store="penny"]').click();
 
     await expect(page.locator('[data-store="penny"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('PENNY ajánlatok')).toBeVisible();
-    await expect(page.getByText('ALDI heti újság')).toHaveCount(0);
+    await expect(page.getByText('SPAR szórólap')).toHaveCount(0);
   });
 
   test('keresés találatot ad, és megnyitja a lapozót', async ({ page }) => {

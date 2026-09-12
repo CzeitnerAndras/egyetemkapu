@@ -55,7 +55,7 @@ interface FlyerDetail {
     products?: FlyerProduct[];
 }
 
-const STORES: StoreId[] = ['aldi', 'spar', 'penny', 'tesco'];
+const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi'];
 
 const PAPER_CARD =
     'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
@@ -63,7 +63,7 @@ const PAPER_CARD =
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
     const notice = useNotice('sales-dev');
-    const [activeStore, setActiveStore] = useState<StoreId>('aldi');
+    const [activeStore, setActiveStore] = useState<StoreId>('spar');
     const [flyers, setFlyers] = useState<FlyerSummary[]>([]);
     const [query, setQuery] = useState('');
     const [hits, setHits] = useState<SearchHit[] | null>(null);
@@ -109,6 +109,7 @@ export default function SalesPapersPage() {
     const storeFlyers = useMemo(
         () => flyers
             .filter((flyer) => flyer.store === activeStore)
+            .filter((flyer) => flyer.pageCount > 0)
             .filter((flyer) => isCurrentOrUpcomingFlyer(flyer))
             .sort(compareFlyers),
         [flyers, activeStore],
@@ -347,9 +348,6 @@ export default function SalesPapersPage() {
                                 }`}
                         >
                             <span className="block text-xl leading-none">{storeLabel(store)}</span>
-                            <span className="block mt-2 text-xs font-bold normal-case">
-                                {t(`sales.tagline.${store}`)}
-                            </span>
                         </button>
                     ))}
 

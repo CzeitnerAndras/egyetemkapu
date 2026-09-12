@@ -23,6 +23,7 @@ const flyers = [
     { id: 1, store: 'aldi', title: 'ALDI heti újság', officialUrl: 'https://szorolap.aldi.hu/x/', pageCount: 12, productCount: 8, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 11, store: 'aldi', title: 'ALDI Középső sor termékei', officialUrl: 'https://szorolap.aldi.hu/kozepso/', pageCount: 18, productCount: 45, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 12, store: 'aldi', title: 'ALDI Online akciós újság', officialUrl: 'https://szorolap.aldi.hu/online/', pageCount: 52, productCount: 211, validFrom: isoDate(0), validTo: isoDate(6) },
+    { id: 13, store: 'aldi', title: 'ALDI KOZEPSO SOR 2026 KW38', officialUrl: 'https://szorolap.aldi.hu/kw38/', pageCount: 0, productCount: 0, validFrom: isoDate(7), validTo: isoDate(13) },
     { id: 2, store: 'spar', title: 'SPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok/spar/260910-1-spar-szorolap', pageCount: 20, productCount: 0, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 21, store: 'spar', title: 'INTERSPAR szórólap', officialUrl: 'https://www.spar.hu/ajanlatok/interspar/260910-2-interspar-szorolap', pageCount: 22, productCount: 10, validFrom: isoDate(0), validTo: isoDate(6) },
     { id: 22, store: 'spar', title: 'SPAR Market', officialUrl: 'https://www.spar.hu/ajanlatok/spar-market/260910-3-spar-market-city-spar', pageCount: 12, productCount: 8, validFrom: isoDate(0), validTo: isoDate(6) },
@@ -69,23 +70,30 @@ describe('SalesPapersPage Komponens', () => {
         });
     });
 
-    it('betölti az ALDI újságokat és vált SPAR-ra', async () => {
+    it('betölti a SPAR újságokat és vált ALDI-ra', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
 
-        expect(await screen.findByText('ALDI heti újság')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /ALDI heti újság/ }).className).toContain('dark:hover:bg-[#3b0764]');
-        expect(screen.getByRole('button', { name: /sales\.tagline\.aldi/ })).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'SPAR szórólap' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'SPAR szórólap' }).closest('button')?.className)
+            .toContain('dark:hover:bg-[#3b0764]');
+        expect(screen.getByRole('button', { name: /^ALDI$/ })).toBeInTheDocument();
+        const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
+        expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([
+            'spar', 'penny', 'tesco', 'aldi',
+        ]);
 
-        await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.spar/ }));
-        expect(screen.getByText('SPAR szórólap')).toBeInTheDocument();
-        expect(screen.queryByText('ALDI heti újság')).not.toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
+        expect(screen.getByText('ALDI heti újság')).toBeInTheDocument();
+        expect(screen.queryByText('SPAR szórólap')).not.toBeInTheDocument();
         expect(screen.queryByText('ALDI 20. hét')).not.toBeInTheDocument();
     });
 
     it('ALDI-nál az online újságot rakja a középső sor elé', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        await screen.findByRole('heading', { name: 'SPAR szórólap' });
+        await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
         await screen.findByText('ALDI Online akciós újság');
         const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
         expect(titles[0]).toBe('ALDI Online akciós újság');
@@ -95,7 +103,7 @@ describe('SalesPapersPage Komponens', () => {
     it('SPAR-nál a heti SPAR, INTERSPAR és SPAR Market sorrendjét tartja', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
-        await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.spar/ }));
+        await screen.findByRole('heading', { name: 'SPAR szórólap' });
         const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
         expect(titles).toEqual(['SPAR szórólap', 'INTERSPAR szórólap', 'SPAR Market']);
     });
@@ -103,7 +111,8 @@ describe('SalesPapersPage Komponens', () => {
     it('TESCO-nál a hipermarket, szupermarket és katalógus sorrendjét tartja', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
-        await userEvent.click(screen.getByRole('button', { name: /sales\.tagline\.tesco/ }));
+        await screen.findByRole('heading', { name: 'SPAR szórólap' });
+        await userEvent.click(screen.getByRole('button', { name: /^TESCO$/ }));
         const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
         expect(titles).toEqual(['Tesco Hipermarket', 'Tesco Szupermarket', 'Tesco Katalógus']);
     });
@@ -111,14 +120,17 @@ describe('SalesPapersPage Komponens', () => {
     it('elrejti a lejárt újságot', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+        await screen.findByRole('heading', { name: 'SPAR szórólap' });
+        await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
         expect(await screen.findByText('ALDI heti újság')).toBeInTheDocument();
         expect(screen.queryByText('ALDI 20. hét')).not.toBeInTheDocument();
+        expect(screen.queryByText('ALDI KOZEPSO SOR 2026 KW38')).not.toBeInTheDocument();
     });
 
     it('keresésre megjeleníti a termék találatot, majd megnyitja a lapozót', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
-        await screen.findByText('ALDI heti újság');
+        await screen.findByText('SPAR szórólap');
 
         await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
         await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
@@ -143,7 +155,7 @@ describe('SalesPapersPage Komponens', () => {
     it('keresésből a listára teszi a terméket boltonként', async () => {
         render(<SalesPapersPage />);
         await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
-        await screen.findByText('ALDI heti újság');
+        await screen.findByText('SPAR szórólap');
         await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
         await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
         expect(await screen.findByText('Kakaóscsiga')).toBeInTheDocument();
