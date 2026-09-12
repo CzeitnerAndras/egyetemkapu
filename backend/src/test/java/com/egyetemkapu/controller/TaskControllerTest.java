@@ -4,6 +4,7 @@ import com.egyetemkapu.model.Task;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.TaskRepository;
 import com.egyetemkapu.repository.UserRepository;
+import com.egyetemkapu.security.ClientIpResolver;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.service.RateLimitingService;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,9 @@ class TaskControllerTest {
 
     @MockitoBean
     private RateLimitingService rateLimitingService;
+
+    @MockitoBean
+    private ClientIpResolver clientIpResolver;
 
     @Test
     void getAllTasks_AuthorizedUser_ReturnsTasks() throws Exception {
