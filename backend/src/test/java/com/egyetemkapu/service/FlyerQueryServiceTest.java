@@ -1,11 +1,13 @@
 package com.egyetemkapu.service;
 
+import com.egyetemkapu.dto.FlyerDetailDto;
 import com.egyetemkapu.dto.FlyerSearchHitDto;
 import com.egyetemkapu.dto.FlyerSummaryDto;
 import com.egyetemkapu.model.Flyer;
 import com.egyetemkapu.model.FlyerPage;
 import com.egyetemkapu.model.FlyerProduct;
 import com.egyetemkapu.repository.FlyerRepository;
+import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,12 +38,13 @@ class FlyerQueryServiceTest {
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(Instant.parse("2026-09-06T10:00:00Z"), ZoneId.of("Europe/Budapest"));
-        service = new FlyerQueryService(flyerRepository, flyerSyncService, clock);
+        service = new FlyerQueryService(
+                flyerRepository, flyerSyncService, clock, new FlyerExtractorRegistry(new FlyerCatalogParser()));
     }
 
     @Test
     void searchFindsAccentInsensitiveProductAndRefreshesWhenStale() {
-        Flyer flyer = flyerWithProduct("Kakaóscsiga", "249 Ft");
+        Flyer flyer = flyerWithProduct("Kakaóscsiga");
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(true);
         when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(flyer));
 
@@ -81,7 +85,8 @@ class FlyerQueryServiceTest {
     @Test
     void listShowsCurrentFlyersBeforeUpcomingAndHidesExpired() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
-        FlyerQueryService listing = new FlyerQueryService(flyerRepository, flyerSyncService, thursday);
+        FlyerQueryService listing = new FlyerQueryService(
+                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(
                 datedFlyer("ALDI 36. hét", LocalDate.of(2026, 9, 3), LocalDate.of(2026, 9, 9)),
@@ -98,7 +103,8 @@ class FlyerQueryServiceTest {
     @Test
     void listPutsAldiOnlineBeforeMiddleLaneAndSparBrandsInOrder() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
-        FlyerQueryService listing = new FlyerQueryService(flyerRepository, flyerSyncService, thursday);
+        FlyerQueryService listing = new FlyerQueryService(
+                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         Flyer middle = datedFlyer("ALDI Középső sor", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 16));
         middle.setOfficialUrl("https://szorolap.aldi.hu/aldi_kozepso_sor_2026_kw37/");
@@ -132,7 +138,8 @@ class FlyerQueryServiceTest {
     @Test
     void listPutsTescoHypermarketBeforeSupermarketAndCatalogue() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
-        FlyerQueryService listing = new FlyerQueryService(flyerRepository, flyerSyncService, thursday);
+        FlyerQueryService listing = new FlyerQueryService(
+                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         Flyer catalogue = datedFlyer("Tesco Katalógus", LocalDate.of(2026, 8, 5), LocalDate.of(2026, 9, 13));
         catalogue.setStore("tesco");
@@ -159,13 +166,76 @@ class FlyerQueryServiceTest {
 
     @Test
     void searchSkipsExpiredFlyers() {
-        Flyer expired = flyerWithProduct("Kakaóscsiga", "249 Ft");
+        Flyer expired = flyerWithProduct("Kakaóscsiga");
         expired.setValidFrom(LocalDate.of(2026, 5, 14));
         expired.setValidTo(LocalDate.of(2026, 5, 20));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
         when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(expired));
 
         assertTrue(service.search("kakaoscsiga").isEmpty());
+    }
+
+    @Test
+    void getIncludesProductsForTheFlyer() {
+        Flyer flyer = flyerWithProduct("Kakaóscsiga");
+        when(flyerRepository.findById(3L)).thenReturn(Optional.of(flyer));
+
+        FlyerDetailDto detail = service.get(3L);
+
+        assertEquals(1, detail.products().size());
+        assertEquals(11L, detail.products().getFirst().id());
+        assertEquals("Kakaóscsiga", detail.products().getFirst().name());
+        assertEquals(2, detail.products().getFirst().pageNumber());
+    }
+
+    @Test
+    void getReplacesWeakUnitNamesFromStoredPageText() {
+        Flyer flyer = flyerWithProduct("csomag");
+        flyer.getProducts().getFirst().setPageNumber(1);
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(1);
+        page.setPageText("""
+                ÍNYENC GRILLKOLBÁSZ
+                300 g/csomag
+                2 330 Ft/kg
+
+                699
+                Ft
+                """);
+        flyer.addPage(page);
+        when(flyerRepository.findById(3L)).thenReturn(Optional.of(flyer));
+        when(flyerRepository.save(flyer)).thenReturn(flyer);
+
+        FlyerDetailDto detail = service.get(3L);
+
+        assertTrue(detail.products().stream().anyMatch(product ->
+                product.name().toUpperCase().contains("GRILLKOLBÁSZ")));
+        assertTrue(detail.products().stream().noneMatch(product -> "csomag".equalsIgnoreCase(product.name())));
+        verify(flyerSyncService).refreshStoredLayout(flyer);
+    }
+
+    @Test
+    void getReplacesMismatchedStrongProductsFromStoredPageText() {
+        Flyer flyer = flyerWithProduct("Őszibarack");
+        flyer.getProducts().getFirst().setPageNumber(1);
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(1);
+        page.setPageText("""
+                ÍNYENC GRILLKOLBÁSZ
+                300 g/csomag
+
+                699
+                Ft
+                """);
+        flyer.addPage(page);
+        when(flyerRepository.findById(3L)).thenReturn(Optional.of(flyer));
+        when(flyerRepository.save(flyer)).thenReturn(flyer);
+
+        FlyerDetailDto detail = service.get(3L);
+
+        assertTrue(detail.products().stream().anyMatch(product ->
+                product.name().toUpperCase().contains("GRILLKOLBÁSZ")));
+        assertTrue(detail.products().stream().noneMatch(product -> "Őszibarack".equalsIgnoreCase(product.name())));
     }
 
     private static Flyer datedFlyer(String title, LocalDate from, LocalDate to) {
@@ -178,7 +248,7 @@ class FlyerQueryServiceTest {
         return flyer;
     }
 
-    private static Flyer flyerWithProduct(String name, String price) {
+    private static Flyer flyerWithProduct(String name) {
         Flyer flyer = new Flyer();
         flyer.setId(3L);
         flyer.setStore("aldi");
@@ -186,7 +256,6 @@ class FlyerQueryServiceTest {
         FlyerProduct product = new FlyerProduct();
         product.setId(11L);
         product.setName(name);
-        product.setPriceText(price);
         product.setPageNumber(2);
         flyer.addProduct(product);
         return flyer;

@@ -7,6 +7,8 @@ import com.egyetemkapu.model.Flyer;
 import com.egyetemkapu.model.FlyerPage;
 import com.egyetemkapu.model.FlyerProduct;
 import com.egyetemkapu.repository.FlyerRepository;
+import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
+import com.egyetemkapu.service.flyer.FlyerProductExtractor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +27,17 @@ public class FlyerQueryService {
     private final FlyerRepository flyerRepository;
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
+    private final FlyerExtractorRegistry extractors;
 
-    public FlyerQueryService(FlyerRepository flyerRepository, FlyerSyncService flyerSyncService, Clock clock) {
+    public FlyerQueryService(
+            FlyerRepository flyerRepository,
+            FlyerSyncService flyerSyncService,
+            Clock clock,
+            FlyerExtractorRegistry extractors) {
         this.flyerRepository = flyerRepository;
         this.flyerSyncService = flyerSyncService;
         this.clock = clock;
+        this.extractors = extractors;
     }
 
     @Transactional
@@ -50,6 +58,9 @@ public class FlyerQueryService {
     public FlyerDetailDto get(Long id) {
         Flyer flyer = flyerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen akciós újság."));
+        if (!flyerSyncService.refreshStoredLayout(flyer)) {
+            reparseProductsFromPageText(flyer);
+        }
         return FlyerDetailDto.from(flyer);
     }
 
@@ -68,8 +79,7 @@ public class FlyerQueryService {
             }
             if (flyer.getProducts() != null) {
                 for (FlyerProduct product : flyer.getProducts()) {
-                    if (!HungarianText.contains(product.getName(), query)
-                            && !HungarianText.contains(product.getPriceText(), query)) {
+                    if (!HungarianText.contains(product.getName(), query)) {
                         continue;
                     }
                     String key = flyer.getId() + ":product:" + product.getId();
@@ -80,9 +90,9 @@ public class FlyerQueryService {
                                 flyer.getTitle(),
                                 product.getPageNumber(),
                                 product.getName(),
-                                product.getPriceText(),
-                                HungarianText.snippet(product.getName() + " " + nullToEmpty(product.getPriceText()), query, 80),
-                                "product"
+                                HungarianText.snippet(product.getName(), query, 80),
+                                "product",
+                                product.getId()
                         ));
                     }
                 }
@@ -100,15 +110,57 @@ public class FlyerQueryService {
                                 flyer.getTitle(),
                                 page.getPageNumber(),
                                 null,
-                                null,
                                 HungarianText.snippet(page.getPageText(), query, 90),
-                                "page"
+                                "page",
+                                null
                         ));
                     }
                 }
             }
         }
         return hits.size() > 80 ? hits.subList(0, 80) : hits;
+    }
+
+    private void reparseProductsFromPageText(Flyer flyer) {
+        if (flyer.getPages() == null || flyer.getPages().isEmpty()) {
+            return;
+        }
+        List<FlyerCatalogParser.ParsedProduct> incoming = new ArrayList<>();
+        Set<Integer> replacePages = new LinkedHashSet<>();
+        FlyerProductExtractor extractor = extractors.forStore(flyer.getStore());
+        for (FlyerPage page : flyer.getPages()) {
+            List<FlyerCatalogParser.ParsedProduct> parsed =
+                    extractor.extractFromPageText(page.getPageText(), page.getPageNumber());
+            List<String> storedNames = flyer.getProducts() == null
+                    ? List.of()
+                    : flyer.getProducts().stream()
+                            .filter(product -> product.getPageNumber() == page.getPageNumber())
+                            .map(FlyerProduct::getName)
+                            .toList();
+            if (FlyerCatalogParser.shouldReplaceStoredProducts(storedNames, parsed)) {
+                replacePages.add(page.getPageNumber());
+                incoming.addAll(parsed);
+            }
+        }
+        if (replacePages.isEmpty()) {
+            return;
+        }
+        flyer.getProducts().removeIf(product -> replacePages.contains(product.getPageNumber()));
+        for (FlyerCatalogParser.ParsedProduct product : incoming) {
+            FlyerProduct entity = new FlyerProduct();
+            entity.setPageNumber(product.pageNumber());
+            entity.setName(limit(product.name(), 500));
+            entity.setImageUrl(limit(product.imageUrl(), 2000));
+            flyer.addProduct(entity);
+        }
+        flyerRepository.save(flyer);
+    }
+
+    private static String limit(String value, int max) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= max ? value : value.substring(0, max);
     }
 
     private void refreshIfStale() {
@@ -163,9 +215,5 @@ public class FlyerQueryService {
             return 0;
         }
         return 0;
-    }
-
-    private static String nullToEmpty(String value) {
-        return value == null ? "" : value;
     }
 }

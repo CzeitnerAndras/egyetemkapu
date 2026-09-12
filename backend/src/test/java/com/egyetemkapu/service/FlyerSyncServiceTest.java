@@ -1,7 +1,10 @@
 package com.egyetemkapu.service;
 
 import com.egyetemkapu.model.Flyer;
+import com.egyetemkapu.model.FlyerPage;
+import com.egyetemkapu.model.FlyerProduct;
 import com.egyetemkapu.repository.FlyerRepository;
+import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +42,14 @@ class FlyerSyncServiceTest {
     void setUp() {
         parser = new FlyerCatalogParser();
         Clock clock = Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest"));
-        service = new FlyerSyncService(flyerRepository, flyerPersistenceService, httpClient, parser, pdfExtractor, clock);
+        service = new FlyerSyncService(
+                flyerRepository,
+                flyerPersistenceService,
+                httpClient,
+                parser,
+                pdfExtractor,
+                new FlyerExtractorRegistry(parser),
+                clock);
     }
 
     @Test
@@ -67,13 +77,15 @@ class FlyerSyncServiceTest {
             String url = invocation.getArgument(0);
             return url.endsWith("/spar-szorolap-0903p.pdf") ? new byte[] { 1, 2, 3, 4 } : new byte[0];
         });
-        when(pdfExtractor.extractPages(org.mockito.ArgumentMatchers.any()))
+        when(pdfExtractor.extractDocument(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> {
                     byte[] pdf = invocation.getArgument(0);
                     if (pdf == null || pdf.length == 0) {
-                        return List.of();
+                        return new FlyerPdfExtractor.ExtractedDocument(List.of(), List.of());
                     }
-                    return List.of(new FlyerCatalogParser.ParsedPage(1, null, "Kakaós csiga 249 Ft"));
+                    return new FlyerPdfExtractor.ExtractedDocument(
+                            List.of(new FlyerCatalogParser.ParsedPage(1, null, "Kakaós csiga 249 Ft")),
+                            List.of(new FlyerCatalogParser.ParsedProduct("Kakaós csiga", 1, null)));
                 });
 
         service.syncSpar(LocalDate.of(2026, 9, 6));
@@ -166,5 +178,37 @@ class FlyerSyncServiceTest {
 
         verify(httpClient, never()).postJson(any(), any());
         verify(flyerPersistenceService, never()).replaceStore(eq("tesco"), any(), any());
+    }
+
+    @Test
+    void refreshStoredLayoutReplacesWrongSparProductsFromPdf() {
+        Flyer flyer = new Flyer();
+        flyer.setId(9L);
+        flyer.setStore("spar");
+        flyer.setTitle("SPAR szórólap");
+        flyer.setPdfUrl("https://www.spar.hu/content/dam/x.pdf");
+        flyer.setSourceKey("spar:spar:2026-09-10");
+        flyer.setValidFrom(LocalDate.of(2026, 9, 10));
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(1);
+        page.setPageText("Madre pizza\n7499 Ft");
+        flyer.addPage(page);
+        FlyerProduct wrong = new FlyerProduct();
+        wrong.setName("Őszibarack");
+        wrong.setPageNumber(1);
+        flyer.addProduct(wrong);
+        when(httpClient.getBytes("https://www.spar.hu/content/dam/x.pdf")).thenReturn(new byte[] { 1, 2, 3 });
+        when(pdfExtractor.extractDocument(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new FlyerPdfExtractor.ExtractedDocument(
+                        List.of(new FlyerCatalogParser.ParsedPage(1, null, "Madre pizza")),
+                        List.of(new FlyerCatalogParser.ParsedProduct("Madre pizza", 1, null))));
+        when(flyerRepository.save(flyer)).thenReturn(flyer);
+
+        assertTrue(service.refreshStoredLayout(flyer));
+
+        assertEquals(1, flyer.getProducts().size());
+        assertEquals("Madre pizza", flyer.getProducts().getFirst().getName());
+        assertEquals("Madre pizza", flyer.getPages().getFirst().getPageText());
+        verify(flyerRepository).save(flyer);
     }
 }

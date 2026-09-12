@@ -1,11 +1,15 @@
 package com.egyetemkapu.service;
 
 import com.egyetemkapu.model.Flyer;
+import com.egyetemkapu.model.FlyerPage;
+import com.egyetemkapu.model.FlyerProduct;
 import com.egyetemkapu.repository.FlyerRepository;
 import com.egyetemkapu.service.FlyerCatalogParser.DiscoveredPaper;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedCatalog;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedPage;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedProduct;
+import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
+import com.egyetemkapu.service.flyer.FlyerProductExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -19,6 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -27,14 +32,18 @@ public class FlyerSyncService {
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
     private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco");
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
+    private static final int PRODUCT_PARSER_GENERATION = 5;
 
     private final FlyerRepository flyerRepository;
     private final FlyerPersistenceService flyerPersistenceService;
     private final FlyerHttpClient httpClient;
     private final FlyerCatalogParser parser;
     private final FlyerPdfExtractor pdfExtractor;
+    private final FlyerExtractorRegistry extractors;
     private final Clock clock;
     private final AtomicBoolean syncing = new AtomicBoolean(false);
+    private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
+    private volatile LocalDateTime lastLayoutRetryAt;
 
     public FlyerSyncService(
             FlyerRepository flyerRepository,
@@ -42,12 +51,14 @@ public class FlyerSyncService {
             FlyerHttpClient httpClient,
             FlyerCatalogParser parser,
             FlyerPdfExtractor pdfExtractor,
+            FlyerExtractorRegistry extractors,
             Clock clock) {
         this.flyerRepository = flyerRepository;
         this.flyerPersistenceService = flyerPersistenceService;
         this.httpClient = httpClient;
         this.parser = parser;
         this.pdfExtractor = pdfExtractor;
+        this.extractors = extractors;
         this.clock = clock;
     }
 
@@ -72,6 +83,7 @@ public class FlyerSyncService {
             syncPenny(today);
             syncTesco(today);
         } finally {
+            lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
         }
     }
@@ -86,8 +98,9 @@ public class FlyerSyncService {
                 String spreadsJson = safeText(trimUrl(paper.officialUrl()) + "spreads.json");
                 ParsedCatalog catalog = parser.parsePublitas(paper, dataJson, spreadsJson);
                 if (catalog.pages().isEmpty() && catalog.paper().pdfUrl() != null) {
-                    catalog = withPdfPages(catalog);
+                    catalog = withPdfPages(catalog, extractors.forStore("aldi"));
                 }
+                catalog = extractors.forStore("aldi").fillProducts(catalog);
                 if (keepCatalog(catalog, today)) {
                     catalogs.add(catalog);
                 }
@@ -114,13 +127,17 @@ public class FlyerSyncService {
                 if (pdf.bytes().length == 0) {
                     continue;
                 }
-                List<ParsedPage> pages = pdfExtractor.extractPages(pdf.bytes());
-                if (pages.isEmpty()) {
+                FlyerProductExtractor extractor = extractors.forStore("spar");
+                FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf.bytes(), extractor);
+                if (extracted.pages().isEmpty()) {
                     continue;
                 }
-                List<ParsedProduct> products = new ArrayList<>();
-                for (ParsedPage page : pages) {
-                    products.addAll(parser.extractPricedItems(page.text(), page.pageNumber()));
+                List<ParsedPage> pages = extracted.pages();
+                List<ParsedProduct> products = new ArrayList<>(extracted.products());
+                if (products.isEmpty()) {
+                    for (ParsedPage page : pages) {
+                        products.addAll(extractor.extractFromPageText(page.text(), page.pageNumber()));
+                    }
                 }
                 DiscoveredPaper resolved = new DiscoveredPaper(
                         paper.store(),
@@ -156,10 +173,12 @@ public class FlyerSyncService {
                 } else if (paper.officialUrl().contains("publitas") || paper.officialUrl().contains("szorolap")) {
                     String dataJson = safeText(trimUrl(paper.officialUrl()) + "data.json");
                     String spreadsJson = safeText(trimUrl(paper.officialUrl()) + "spreads.json");
-                    catalog = parser.parsePublitas(paper, dataJson, spreadsJson);
+                    catalog = extractors.forStore("penny").fillProducts(
+                            parser.parsePublitas(paper, dataJson, spreadsJson));
                 } else if (paper.pdfUrl() != null) {
-                    List<ParsedPage> pages = pdfExtractor.extractPages(safeBytes(paper.pdfUrl()));
-                    catalog = new ParsedCatalog(paper, pages, List.of());
+                    FlyerProductExtractor extractor = extractors.forStore("penny");
+                    List<ParsedPage> pages = pdfExtractor.extractPages(safeBytes(paper.pdfUrl()), extractor);
+                    catalog = extractor.fillProducts(new ParsedCatalog(paper, pages, List.of()));
                 } else {
                     continue;
                 }
@@ -193,7 +212,7 @@ public class FlyerSyncService {
     }
 
     public void syncTesco(LocalDate today) {
-        if (recentlySynced("tesco")) {
+        if (recentlySynced("tesco") && !tescoProductsLookWrong()) {
             return;
         }
         try {
@@ -229,7 +248,75 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
                 || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
                 || flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
-                || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts);
+                || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts)
+                || pendingLayoutResync();
+    }
+
+    public boolean refreshStoredLayout(Flyer flyer) {
+        if (flyer == null || !usesPdfLayout(flyer.getStore())) {
+            return false;
+        }
+        Long id = flyer.getId();
+        if (id != null && Integer.valueOf(PRODUCT_PARSER_GENERATION).equals(layoutApplied.get(id))) {
+            return true;
+        }
+        byte[] pdf = downloadFlyerPdf(flyer);
+        if (pdf.length == 0) {
+            return false;
+        }
+        FlyerProductExtractor extractor = extractors.forStore(flyer.getStore());
+        FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf, extractor);
+        if (extracted.pages().isEmpty()) {
+            return false;
+        }
+        List<ParsedProduct> products = new ArrayList<>(extracted.products());
+        if (products.isEmpty()) {
+            for (ParsedPage page : extracted.pages()) {
+                products.addAll(extractor.extractFromPageText(page.text(), page.pageNumber()));
+            }
+        }
+        if (products.isEmpty()) {
+            return false;
+        }
+        Map<Integer, String> texts = new java.util.HashMap<>();
+        for (ParsedPage page : extracted.pages()) {
+            texts.put(page.pageNumber(), page.text());
+        }
+        if (flyer.getPages() != null) {
+            for (FlyerPage page : flyer.getPages()) {
+                String text = texts.get(page.getPageNumber());
+                if (text != null && !text.isBlank()) {
+                    page.setPageText(text);
+                }
+            }
+        }
+        flyer.getProducts().clear();
+        for (ParsedProduct product : products) {
+            FlyerProduct entity = new FlyerProduct();
+            entity.setPageNumber(product.pageNumber());
+            entity.setName(limit(product.name(), 500));
+            entity.setImageUrl(limit(product.imageUrl(), 2000));
+            flyer.addProduct(entity);
+        }
+        flyerRepository.save(flyer);
+        if (id != null) {
+            layoutApplied.put(id, PRODUCT_PARSER_GENERATION);
+        }
+        log.info("Re-extracted {} flyer {} with {} products", flyer.getStore(), flyer.getTitle(), products.size());
+        return true;
+    }
+
+    private boolean pendingLayoutResync() {
+        if (!layoutLooksWrong()) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now(clock);
+        return lastLayoutRetryAt == null || lastLayoutRetryAt.isBefore(now.minusMinutes(15));
+    }
+
+    private boolean layoutLooksWrong() {
+        return tescoProductsLookWrong() || sparProductsLookWrong()
+                || aldiProductsLookWrong() || pennyProductsLookWrong();
     }
 
     public List<String> stores() {
@@ -252,25 +339,62 @@ public class FlyerSyncService {
         if (pdf.length == 0) {
             return catalog;
         }
-        List<ParsedPage> rendered = pdfExtractor.extractPages(pdf);
-        if (rendered.isEmpty()) {
+        FlyerProductExtractor extractor = extractors.forStore("tesco");
+        FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf, extractor);
+        if (extracted.pages().isEmpty()) {
             return catalog;
         }
-        List<ParsedPage> pages = new ArrayList<>();
-        List<ParsedProduct> products = new ArrayList<>();
         Map<Integer, String> images = new java.util.HashMap<>();
         for (ParsedPage page : catalog.pages()) {
             images.put(page.pageNumber(), page.imageUrl());
         }
-        for (ParsedPage page : rendered) {
+        List<ParsedPage> pages = new ArrayList<>();
+        for (ParsedPage page : extracted.pages()) {
             String image = images.getOrDefault(page.pageNumber(), page.imageUrl());
             pages.add(new ParsedPage(page.pageNumber(), image, page.text()));
-            products.addAll(parser.extractPricedItems(page.text(), page.pageNumber()));
         }
-        if (pages.isEmpty()) {
-            pages = catalog.pages();
+        List<ParsedProduct> products = new ArrayList<>(extracted.products());
+        if (products.isEmpty()) {
+            for (ParsedPage page : pages) {
+                products.addAll(extractor.extractFromPageText(page.text(), page.pageNumber()));
+            }
         }
         return new ParsedCatalog(catalog.paper(), pages, products);
+    }
+
+    private byte[] downloadFlyerPdf(Flyer flyer) {
+        if ("spar".equals(flyer.getStore())) {
+            LinkedHashSet<String> urls = new LinkedHashSet<>();
+            if (flyer.getPdfUrl() != null && !flyer.getPdfUrl().isBlank()) {
+                urls.add(flyer.getPdfUrl());
+            }
+            if (flyer.getValidFrom() != null) {
+                urls.addAll(parser.sparPdfCandidates(sparBrandFromSourceKey(flyer.getSourceKey()), flyer.getValidFrom()));
+            }
+            for (String url : urls) {
+                byte[] bytes = safeBytes(url);
+                if (bytes.length > 0) {
+                    return bytes;
+                }
+            }
+            return new byte[0];
+        }
+        return safeBytes(flyer.getPdfUrl(), flyer.getOfficialUrl());
+    }
+
+    private static boolean usesPdfLayout(String store) {
+        return "spar".equals(store) || "tesco".equals(store);
+    }
+
+    private static String sparBrandFromSourceKey(String sourceKey) {
+        if (sourceKey == null) {
+            return "spar";
+        }
+        String[] parts = sourceKey.split(":");
+        if (parts.length >= 2 && !parts[1].isBlank()) {
+            return parts[1];
+        }
+        return "spar";
     }
 
     private SparPdf downloadSparPdf(DiscoveredPaper paper) {
@@ -297,24 +421,74 @@ public class FlyerSyncService {
     }
 
     private ParsedCatalog withPennyPageTexts(ParsedCatalog catalog, String indexHtml) {
+        FlyerProductExtractor extractor = extractors.forStore("penny");
+        List<String> paragraphs = parser.extractPennyParagraphs(indexHtml);
         String base = trimUrl(catalog.paper().officialUrl());
         List<ParsedPage> pages = new ArrayList<>();
         List<ParsedProduct> products = new ArrayList<>();
         for (ParsedPage page : catalog.pages()) {
-            String html = page.pageNumber() == 1
-                    ? indexHtml
-                    : safeText(base + parser.pennyPageRelPath(indexHtml, page.pageNumber()));
-            String text = parser.extractPennyPageText(html);
+            String text = page.pageNumber() <= paragraphs.size()
+                    ? paragraphs.get(page.pageNumber() - 1)
+                    : "";
+            if (text.isBlank() && page.pageNumber() > 1) {
+                String html = safeText(base + parser.pennyPageRelPath(indexHtml, page.pageNumber()));
+                List<String> remote = parser.extractPennyParagraphs(html);
+                if (page.pageNumber() <= remote.size()) {
+                    text = remote.get(page.pageNumber() - 1);
+                } else if (!remote.isEmpty()) {
+                    text = remote.getFirst();
+                } else {
+                    text = parser.extractPennyPageText(html);
+                }
+            }
             if (text.isBlank()) {
                 text = page.text() == null ? "" : page.text();
             }
             pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), text));
-            products.addAll(parser.extractPricedItems(text, page.pageNumber()));
+            products.addAll(extractor.extractFromPageText(text, page.pageNumber()));
         }
         if (products.isEmpty()) {
             products.addAll(catalog.products());
         }
         return new ParsedCatalog(catalog.paper(), pages, products);
+    }
+
+    private boolean tescoProductsLookWrong() {
+        return flyerRepository.findProductNamesByStore("tesco").stream().anyMatch(name ->
+                HungarianText.contains(name, "töltsd")
+                        || HungarianText.contains(name, "appot")
+                        || HungarianText.contains(name, "többféle")
+                        || HungarianText.contains(name, "olcsóbb")
+                        || FlyerCatalogParser.isSloganName(name)
+                        || FlyerCatalogParser.isWeakProductName(name));
+    }
+
+    private boolean sparProductsLookWrong() {
+        return flyerRepository.findProductNamesByStore("spar").stream().anyMatch(name ->
+                HungarianText.contains(name, "csont nélkül")
+                        || HungarianText.contains(name, "kiszolgálópult")
+                        || HungarianText.contains(name, "spórolás")
+                        || HungarianText.contains(name, "kiszerelésben is")
+                        || HungarianText.contains(name, "töltőtömeg")
+                        || HungarianText.contains(name, "először")
+                        || FlyerCatalogParser.isSloganName(name)
+                        || FlyerCatalogParser.isWeakProductName(name)
+                        || (name != null && name.trim().endsWith("(")));
+    }
+
+    private boolean aldiProductsLookWrong() {
+        return flyerRepository.findProductNamesByStore("aldi").stream().anyMatch(name ->
+                HungarianText.contains(name, "frisscsirke")
+                        || FlyerCatalogParser.isSloganName(name)
+                        || FlyerCatalogParser.isWeakProductName(name));
+    }
+
+    private boolean pennyProductsLookWrong() {
+        return flyerRepository.findProductNamesByStore("penny").stream().anyMatch(name ->
+                name != null && (name.matches("(?i)^\\d+\\s*x\\s+.*")
+                        || (HungarianText.contains(name, "fokhagyma") && HungarianText.contains(name, "kelbimbó"))
+                        || FlyerCatalogParser.isSloganName(name)
+                        || FlyerCatalogParser.isWeakProductName(name)));
     }
 
     private boolean recentlySynced(String store) {
@@ -350,8 +524,8 @@ public class FlyerSyncService {
                 .allMatch(page -> page.getImageUrl() == null || page.getImageUrl().isBlank());
     }
 
-    private ParsedCatalog withPdfPages(ParsedCatalog catalog) {
-        List<ParsedPage> pages = pdfExtractor.extractPages(safeBytes(catalog.paper().pdfUrl()));
+    private ParsedCatalog withPdfPages(ParsedCatalog catalog, FlyerProductExtractor extractor) {
+        List<ParsedPage> pages = pdfExtractor.extractPages(safeBytes(catalog.paper().pdfUrl()), extractor);
         return new ParsedCatalog(catalog.paper(), pages, catalog.products());
     }
 
@@ -391,6 +565,13 @@ public class FlyerSyncService {
         }
     }
 
+    private static String limit(String value, int max) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= max ? value : value.substring(0, max);
+    }
+
     private static String joinNames(List<ParsedProduct> products) {
         StringBuilder text = new StringBuilder();
         for (ParsedProduct product : products) {
@@ -398,9 +579,6 @@ public class FlyerSyncService {
                 text.append(' ');
             }
             text.append(product.name());
-            if (product.priceText() != null) {
-                text.append(' ').append(product.priceText());
-            }
         }
         return text.toString();
     }

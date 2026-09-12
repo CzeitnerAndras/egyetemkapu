@@ -5,6 +5,7 @@ import com.egyetemkapu.dto.FlyerSearchHitDto;
 import com.egyetemkapu.dto.FlyerSummaryDto;
 import com.egyetemkapu.service.FlyerPageProxyService;
 import com.egyetemkapu.service.FlyerQueryService;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,8 +38,10 @@ public class FlyerController {
     }
 
     @GetMapping("/{id}")
-    public FlyerDetailDto get(@PathVariable Long id) {
-        return flyerQueryService.get(id);
+    public ResponseEntity<FlyerDetailDto> get(@PathVariable Long id) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(flyerQueryService.get(id));
     }
 
     @GetMapping("/{id}/pages/{pageNumber}")
