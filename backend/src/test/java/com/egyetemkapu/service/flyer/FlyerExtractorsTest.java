@@ -221,6 +221,21 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void aldiExtractorStillPrefixesBbqWhenItIsTheProductBrand() {
+        String page = """
+                BBQ
+
+                GRILLSZÓSZ
+                500 ml/üveg
+                599 Ft
+                """;
+
+        List<ParsedProduct> products = aldi.extractFromPageText(page, 1);
+
+        assertEquals(List.of("BBQ GRILLSZÓSZ"), names(products), products.toString());
+    }
+
+    @Test
     void aldiExtractorJoinsBrandBoxesWithProductNamesEvenWhenOcrReordersThem() {
         String page = """
                 09.10. C S Ü T Ö R T Ö K T Ő L 09.16. S Z E R D Á I G

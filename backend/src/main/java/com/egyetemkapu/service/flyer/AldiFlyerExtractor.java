@@ -20,6 +20,8 @@ arrive immediately before its product, in a brand run followed by a product run,
 public class AldiFlyerExtractor extends GenericFlyerExtractor {
 
     private static final Pattern BLANK_LINE = Pattern.compile("\\R\\s*\\R");
+    private static final Pattern VALIDITY_LINE = Pattern.compile(
+            "(?iu)\\d{1,2}\\s*[.]\\s*\\d{1,2}.*(?:h[eé]tf[oő]|kedd|szerd|cs[uü]t[oö]rt[oö]k|p[eé]ntek|szombat|vas[aá]rnap)");
     private static final Pattern MARKETING = Pattern.compile(
             "(?iu)\\baldi\\b|akci[oó]|aj[aá]nlat|sz[aá]ll[ií]tjuk|olcs[oó]|h[uű]s[eé]gprogram|pontgy[uű]jt[eé]s"
                     + "|k[ií]n[aá]lat|felt[eé]tel|h[ií]rlev[eé]l|szuper|k[eé]szlet erej[eé]ig"
@@ -73,6 +75,10 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
             if (isBrand(names, index)) {
                 List<String> brands = new ArrayList<>();
                 while (index < names.size() && isBrand(names, index)) {
+                    if (isSectionTitle(names, index)) {
+                        index++;
+                        continue;
+                    }
                     brands.add(names.get(index++));
                 }
                 List<String> products = new ArrayList<>();
@@ -130,6 +136,15 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
         return isHouseBrand(name) || isMultiWordBrand(name);
     }
 
+    private static boolean isSectionTitle(List<String> names, int index) {
+        String name = names.get(index).trim();
+        return isHouseBrand(name)
+                && name.indexOf(' ') < 0
+                && name.length() <= 3
+                && index + 1 < names.size()
+                && isBrand(names, index + 1);
+    }
+
     private static boolean isMultiWordBrand(String name) {
         String[] words = name.trim().split("\\s+");
         if (words.length < 2) {
@@ -143,7 +158,7 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
         List<String> parts = new ArrayList<>();
         for (String raw : box.split("\\R")) {
             String line = raw.trim();
-            if (line.isEmpty()) {
+            if (line.isEmpty() || VALIDITY_LINE.matcher(line).find()) {
                 continue;
             }
             if (MARKETING.matcher(line).find()) {
@@ -162,7 +177,7 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
     }
 
     private static boolean isHouseBrand(String name) {
-        String key = HungarianText.normalize(FlyerProductNames.tidy(name))
+        String key = HungarianText.normalize(name)
                 .replace('\u2019', '\'')
                 .replace('\u2018', '\'');
         return HOUSE_BRANDS.contains(key);
