@@ -332,6 +332,21 @@ describe('Navbar Komponens', () => {
         expect(screen.queryByText('nav.system')).not.toBeInTheDocument();
     });
 
+    it('mentett téma nélkül világos módban indul, a rendszer sötét preferenciájától függetlenül', () => {
+        document.documentElement.classList.add('dark');
+        renderWithRouter();
+
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+        expect(localStorage.getItem('theme')).toBeNull();
+    });
+
+    it('elmentett sötét témával sötét módban indul', () => {
+        localStorage.setItem('theme', 'dark');
+        renderWithRouter();
+
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+    });
+
     it('a témaváltó kapcsolóra kattintva váltja a sötét módot, és menti a localStorage-ba', async () => {
         const { container } = renderWithRouter();
         const user = setup();

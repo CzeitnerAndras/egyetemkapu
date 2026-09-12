@@ -121,9 +121,12 @@ export default function Navbar() {
       setIsDarkMode(true);
       localStorage.setItem('secretMode', 'true');
       localStorage.setItem('theme', 'dark');
-    } else if (document.documentElement.classList.contains('dark') || localStorage.getItem('theme') === 'dark') {
+    } else if (localStorage.getItem('theme') === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
+    } else {
+      setIsDarkMode(false);
+      document.documentElement.classList.remove('dark');
     }
 
     const handleSecretLogoff = () => {
