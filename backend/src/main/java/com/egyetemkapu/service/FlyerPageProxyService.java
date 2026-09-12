@@ -16,34 +16,13 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.net.URI;
 import java.time.Duration;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class FlyerPageProxyService {
 
-    private static final Set<String> ALLOWED_HOSTS = Set.of(
-            "szorolap.aldi.hu",
-            "view.publitas.com",
-            "view-private.publitas.com",
-            "cdn.publitas.com",
-            "cdn2.publitas.com",
-            "www.spar.hu",
-            "spar.hu",
-            "www.penny.hu",
-            "penny.hu",
-            "files.rewe.co.at",
-            "www.aldi.hu",
-            "aldi.hu",
-            "www.tesco.hu",
-            "tesco.hu",
-            "digitalcontent.api.tesco.com",
-            "api.prod.retail.tesco.com"
-    );
-
-    private static final int MAX_CACHE = 48;
+    private static final int MAX_CACHE = 96;
 
     private record CachedImage(MediaType type, byte[] body) {
     }
@@ -108,7 +87,7 @@ public class FlyerPageProxyService {
 
     private String lookupPublitasImage(Flyer flyer, int pageNumber) {
         String official = flyer.getOfficialUrl();
-        if (official == null || official.isBlank()) {
+        if (!FlyerUrlPolicy.isAllowed(official)) {
             return null;
         }
         String key = official + ":" + pageNumber;
@@ -118,7 +97,9 @@ public class FlyerPageProxyService {
         }
         try {
             String base = official.endsWith("/") ? official : official + "/";
-            String spreadsJson = httpClient.getText(base + "spreads.json");
+            String spreadsUrl = base + "spreads.json";
+            FlyerUrlPolicy.assertAllowed(spreadsUrl);
+            String spreadsJson = httpClient.getText(spreadsUrl);
             FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
                     flyer.getStore(), flyer.getTitle(), official, flyer.getPdfUrl(), "lookup", null, null);
             FlyerCatalogParser.ParsedCatalog catalog = parser.parsePublitas(paper, null, spreadsJson);
@@ -154,7 +135,8 @@ public class FlyerPageProxyService {
         try {
             BufferedImage base = ImageIO.read(new ByteArrayInputStream(baseBytes));
             BufferedImage overlay = ImageIO.read(new ByteArrayInputStream(overlayBytes));
-            if (base == null || overlay == null) {
+            if (base == null || overlay == null
+                    || tooLarge(base) || tooLarge(overlay)) {
                 return new byte[0];
             }
             BufferedImage out = new BufferedImage(base.getWidth(), base.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -172,7 +154,7 @@ public class FlyerPageProxyService {
     }
 
     private CachedImage fetchAllowed(String url, String referer) {
-        assertAllowed(url);
+        FlyerUrlPolicy.assertAllowed(url);
         ResponseEntity<byte[]> remote = httpClient.getBytesWithHeaders(url, referer);
         byte[] body = remote.getBody() == null ? new byte[0] : remote.getBody();
         if (body.length < 32) {
@@ -183,7 +165,7 @@ public class FlyerPageProxyService {
     }
 
     private byte[] fetchAllowedBytes(String url) {
-        assertAllowed(url);
+        FlyerUrlPolicy.assertAllowed(url);
         String referer = tescoReferer(url);
         if (referer != null) {
             byte[] body = httpClient.getBytes(url, referer);
@@ -213,11 +195,12 @@ public class FlyerPageProxyService {
                 .body(image.body());
     }
 
+    private static boolean tooLarge(BufferedImage image) {
+        return image.getWidth() > FlyerUrlPolicy.MAX_IMAGE_EDGE
+                || image.getHeight() > FlyerUrlPolicy.MAX_IMAGE_EDGE;
+    }
+
     static void assertAllowed(String url) {
-        URI uri = URI.create(url);
-        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
-        if (!"https".equalsIgnoreCase(uri.getScheme()) || !ALLOWED_HOSTS.contains(host)) {
-            throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
-        }
+        FlyerUrlPolicy.assertAllowed(url);
     }
 }
