@@ -6,10 +6,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
@@ -27,6 +29,7 @@ public class FlyerHttpClient {
         factory.setConnectTimeout(12_000);
         factory.setReadTimeout(60_000);
         this.restTemplate = new RestTemplate(factory);
+        useUtf8ForText(this.restTemplate);
     }
 
     public FlyerHttpClient(RestTemplate restTemplate) {
@@ -88,6 +91,18 @@ public class FlyerHttpClient {
         }
         String lower = value.toLowerCase();
         return lower.contains("tesco.hu") || lower.contains("tesco.com");
+    }
+
+    /**
+     * PENNY's leaflet host serves UTF-8 without a charset parameter, and the HTTP default of
+     * ISO-8859-1 mangles exactly the two letters that are not Latin-1 (Ő and Ű). Product names such as
+     * "VATTACUKOR ÍZŰ FEHÉR SZŐLŐ" then break apart mid-word.
+     */
+    private static void useUtf8ForText(RestTemplate template) {
+        template.getMessageConverters().replaceAll(converter ->
+                converter instanceof StringHttpMessageConverter
+                        ? new StringHttpMessageConverter(StandardCharsets.UTF_8)
+                        : converter);
     }
 
     private HttpEntity<Void> entity(MediaType... accept) {
