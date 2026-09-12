@@ -6,6 +6,7 @@ uploads/
 .env.*
 !.env.example
 backend/src/main/resources/application-local.properties
+.tmp-flyers/
 *.pem
 *.key
 id_rsa
