@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /S3CR3T
+Disallow: /profile
+Disallow: /settings
+Disallow: /uj-jelszo
+Disallow: /reset-password
+Disallow: /elfelejtett-jelszo
+
+Sitemap: https://egyetemkapu.hu/sitemap.xml

@@ -26,6 +26,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.logout': 'Kijelentkezés',
     'nav.switchToEn': 'Switch to English',
     'nav.switchToHu': 'Váltás magyarra',
+    'seo.defaultTitle': 'Egyetemkapu – egyetemi hallgatói portál',
+    'seo.description': 'Naptár, kalkulátorok, jegyzetek, hivatkozásgenerátor és egyetemi linkek egy helyen a magyar és külföldi hallgatóknak.',
     'notice.gotIt': 'Értem',
     'notice.close': 'Bezárás',
 
@@ -432,6 +434,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.logout': 'Log out',
     'nav.switchToEn': 'Switch to English',
     'nav.switchToHu': 'Switch to Hungarian',
+    'seo.defaultTitle': 'Egyetemkapu – university student portal',
+    'seo.description': 'Calendar, calculators, notes, a citation generator, and university links in one place for Hungarian students.',
     'notice.gotIt': 'Got it',
     'notice.close': 'Close',
 
