@@ -87,7 +87,10 @@ public class FlyerCatalogParser {
             "/ajanlatok/(spar|interspar|spar-market)/(\\d{6}-\\d+-[a-z0-9-]+)",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern PUBLITAS = Pattern.compile(
-            "https?://(?:view\\.)?publitas\\.com/[^\"'\\s>]+",
+            "https://(?:(?:view(?:-private)?|cdn2?)\\.)?publitas\\.com/[^\"'\\s>]+",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern PENNY_VIEWER = Pattern.compile(
+            "https://(?:szorolap\\.aldi\\.hu|(?:(?:view(?:-private)?|cdn2?)\\.)?publitas\\.com)/[^\"'\\s>]*",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern PENNY_PRODUCT = Pattern.compile(
             "(?is)<(?:h[1-4]|p|span|div)[^>]*>\\s*([^<]{3,120}?)\\s*</(?:h[1-4]|p|span|div)>\\s*"
@@ -161,8 +164,8 @@ public class FlyerCatalogParser {
         String haystack = html == null ? "" : html.replace("\\/", "/");
         addSparCatalogMatches(papers, SPAR_CATALOG.matcher(haystack));
         addSparCatalogMatches(papers, SPAR_CATALOG_PATH.matcher(haystack));
-        addSparMatches(papers, SPAR_PDF.matcher(haystack), today, true);
-        addSparMatches(papers, SPAR_PATH.matcher(haystack), today, true);
+        addSparMatches(papers, SPAR_PDF.matcher(haystack), today);
+        addSparMatches(papers, SPAR_PATH.matcher(haystack), today);
         return keepCurrentOrUpcoming(papers.values(), today);
     }
 
@@ -190,35 +193,13 @@ public class FlyerCatalogParser {
                         Integer.parseInt(rewe.group(1).substring(4)));
                 papers.putIfAbsent(paper.sourceKey(), paper);
             }
-            Matcher aldiLike = Pattern.compile("https?://[^\"'\\s>]+(?:publitas|szorolap)[^\"'\\s>]*",
-                    Pattern.CASE_INSENSITIVE).matcher(html.replace("\\/", "/"));
-            while (aldiLike.find() && papers.size() < 8) {
-                String url = aldiLike.group();
-                if (isPennyLandingPage(url) || isPennyReweUrl(url)) {
-                    continue;
-                }
-                papers.putIfAbsent(url, new DiscoveredPaper(
-                        "penny",
-                        "PENNY reklámújság",
-                        url,
-                        url.toLowerCase().contains(".pdf") ? url : null,
-                        "penny:" + url,
-                        today.minusDays(3),
-                        today.plusDays(4)
-                ));
+            Matcher viewers = PENNY_VIEWER.matcher(html.replace("\\/", "/"));
+            while (viewers.find() && papers.size() < 8) {
+                addPennyViewer(papers, viewers.group(), today);
             }
-            Matcher publitas = PUBLITAS.matcher(html);
+            Matcher publitas = PUBLITAS.matcher(html.replace("\\/", "/"));
             while (publitas.find() && papers.size() < 8) {
-                String url = publitas.group();
-                papers.putIfAbsent(url, new DiscoveredPaper(
-                        "penny",
-                        "PENNY reklámújság",
-                        url,
-                        null,
-                        "penny:" + url,
-                        today.minusDays(3),
-                        today.plusDays(4)
-                ));
+                addPennyViewer(papers, publitas.group(), today);
             }
         }
         for (DiscoveredPaper fallback : pennyWeeklyFallbacks(today)) {
@@ -316,7 +297,7 @@ public class FlyerCatalogParser {
         LocalDate from = tescoDate(item.path("validFrom").asText(null));
         LocalDate to = tescoDate(item.path("validTo").asText(null));
         String official = "https://www.tesco.hu/akciok/katalogusok/" + folder + "/" + slug + "/1";
-        String pdf = textOr(item.path("leafletUrl"), null);
+        String pdf = FlyerUrlPolicy.allowedOrNull(textOr(item.path("leafletUrl"), null));
         String id = item.path("id").asText(slug);
         DiscoveredPaper paper = new DiscoveredPaper(
                 "tesco",
@@ -332,7 +313,7 @@ public class FlyerCatalogParser {
         if (pageNodes.isArray()) {
             int index = 1;
             for (JsonNode page : pageNodes) {
-                String image = textOr(page.path("pagePNG"), null);
+                String image = FlyerUrlPolicy.allowedOrNull(textOr(page.path("pagePNG"), null));
                 if (image == null) {
                     continue;
                 }
@@ -561,7 +542,12 @@ public class FlyerCatalogParser {
             if (dataJson != null && !dataJson.isBlank()) {
                 JsonNode data = objectMapper.readTree(dataJson);
                 title = textOr(data.path("config").path("publicationTitle"), title);
-                pdfUrl = textOr(data.path("config").path("downloadPdfUrl"), pdfUrl);
+                String downloaded = textOr(data.path("config").path("downloadPdfUrl"), null);
+                if (FlyerUrlPolicy.isAllowed(downloaded)) {
+                    pdfUrl = downloaded;
+                } else if (!FlyerUrlPolicy.isAllowed(pdfUrl)) {
+                    pdfUrl = null;
+                }
                 LocalDate[] range = parseDates(title + " " + textOr(data.path("config").path("description"), ""));
                 if (range[0] != null) {
                     from = range[0];
@@ -583,7 +569,7 @@ public class FlyerCatalogParser {
                                 String image = firstImage(page, paper.officialUrl());
                                 String text = collectText(page);
                                 pages.add(new ParsedPage(number, image, text));
-                                collectProducts(page, number, products);
+                                collectProducts(page, number, products, paper.officialUrl());
                                 fallbackPage = number + 1;
                             }
                         }
@@ -731,7 +717,7 @@ public class FlyerCatalogParser {
         }
     }
 
-    private void collectProducts(JsonNode page, int pageNumber, List<ParsedProduct> products) {
+    private void collectProducts(JsonNode page, int pageNumber, List<ParsedProduct> products, String officialUrl) {
         page.findValues("products").forEach(list -> {
             if (!list.isArray()) {
                 return;
@@ -741,7 +727,8 @@ public class FlyerCatalogParser {
                 if (name.isBlank() || isWeakProductName(name)) {
                     continue;
                 }
-                String image = textOr(product.path("image"), textOr(product.path("image_link"), null));
+                String image = resolveAssetUrl(
+                        officialUrl, textOr(product.path("image"), textOr(product.path("image_link"), null)));
                 products.add(new ParsedProduct(name, pageNumber, image));
             }
         });
@@ -750,7 +737,7 @@ public class FlyerCatalogParser {
                 return;
             }
             for (JsonNode hotspot : list) {
-                collectProducts(hotspot, pageNumber, products);
+                collectProducts(hotspot, pageNumber, products, officialUrl);
             }
         });
     }
@@ -821,7 +808,7 @@ public class FlyerCatalogParser {
             if (!"https".equalsIgnoreCase(resolved.getScheme()) || resolved.getHost() == null) {
                 return null;
             }
-            return resolved.toString();
+            return FlyerUrlPolicy.allowedOrNull(resolved.toString());
         } catch (IllegalArgumentException ignored) {
             return null;
         }
@@ -918,8 +905,8 @@ public class FlyerCatalogParser {
         }
         String tail = slugTail.toLowerCase();
         return switch (brand.toLowerCase()) {
-            case "spar" -> tail.matches("\\d+-spar-szorolap");
-            case "interspar" -> tail.matches("\\d+-interspar-szorolap");
+            case "spar" -> tail.matches("\\d+-spar-szorolap(?:-p)?");
+            case "interspar" -> tail.matches("\\d+-interspar-szorolap(?:-p)?");
             case "spar-market" -> tail.matches("\\d+-spar-market-city-spar");
             default -> false;
         };
@@ -937,10 +924,9 @@ public class FlyerCatalogParser {
         return "spar:" + brand + ":" + start;
     }
 
-    private void addSparMatches(Map<String, DiscoveredPaper> papers, Matcher matcher, LocalDate today, boolean limit) {
-        while (matcher.find() && (!limit || papers.size() < 6)) {
-            String path = matcher.group(1);
-            addSparPaper(papers, path, today);
+    private void addSparMatches(Map<String, DiscoveredPaper> papers, Matcher matcher, LocalDate today) {
+        while (matcher.find()) {
+            addSparPaper(papers, matcher.group(1), today);
         }
     }
 
@@ -962,7 +948,24 @@ public class FlyerCatalogParser {
                 from = start;
             }
         }
-        papers.putIfAbsent(sparSourceKey(brand, from), sparCatalogPaper(brand, from, sparSlugTail(brand), sparTitle(brand)));
+        String pdfUrl = "https://www.spar.hu" + path;
+        DiscoveredPaper incoming = sparCatalogPaper(brand, from, sparSlugTail(brand), sparTitle(brand));
+        incoming = new DiscoveredPaper(
+                incoming.store(),
+                incoming.title(),
+                incoming.officialUrl(),
+                pdfUrl,
+                incoming.sourceKey(),
+                incoming.validFrom(),
+                incoming.validTo());
+        papers.merge(incoming.sourceKey(), incoming, (existing, next) -> new DiscoveredPaper(
+                existing.store(),
+                existing.title(),
+                existing.officialUrl(),
+                next.pdfUrl(),
+                existing.sourceKey(),
+                existing.validFrom(),
+                existing.validTo()));
     }
 
     private static String sparBrandFromFile(String file) {
@@ -1470,5 +1473,20 @@ public class FlyerCatalogParser {
     private static boolean isPennyLandingPage(String url) {
         String lower = url.toLowerCase();
         return lower.contains("penny.hu") && !lower.contains(".pdf") && !lower.contains("publitas");
+    }
+
+    private void addPennyViewer(Map<String, DiscoveredPaper> papers, String url, LocalDate today) {
+        if (!FlyerUrlPolicy.isAllowed(url) || isPennyLandingPage(url) || isPennyReweUrl(url)) {
+            return;
+        }
+        papers.putIfAbsent(url, new DiscoveredPaper(
+                "penny",
+                "PENNY reklámújság",
+                url,
+                url.toLowerCase().contains(".pdf") ? url : null,
+                "penny:" + url,
+                today.minusDays(3),
+                today.plusDays(4)
+        ));
     }
 }

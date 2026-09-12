@@ -108,6 +108,20 @@ class FlyerCatalogParserTest {
     }
 
     @Test
+    void acceptsPreviewSparSlugsAndPrefersListedPdfNames() {
+        LocalDate saturday = LocalDate.of(2026, 9, 12);
+        String html = """
+                <a href="https://www.spar.hu/ajanlatok/spar/260912-1-spar-szorolap-p">preview</a>
+                <a href="https://www.spar.hu/content/dam/sparhuwebsite/_flyers/2026/0910/spar-szorolap0910p.pdf">pdf</a>
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverSparPdfs(html, saturday);
+        assertTrue(papers.stream().anyMatch(paper -> "spar:spar:2026-09-12".equals(paper.sourceKey())));
+        assertTrue(papers.stream().anyMatch(paper ->
+                "spar:spar:2026-09-10".equals(paper.sourceKey())
+                        && paper.pdfUrl().contains("spar-szorolap0910p.pdf")));
+    }
+
+    @Test
     void fallsBackToReweWeeklyLeafletAndSkipsLandingPages() {
         String html = "<a href=\"https://www.penny.hu/reklamujsag\">újság</a>";
         List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverPennyPapers(html, today);
@@ -235,7 +249,39 @@ class FlyerCatalogParserTest {
                 "https://view.publitas.com/page.jpg",
                 FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/x/", "//view.publitas.com/page.jpg"));
         assertNull(FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/x/", "http://evil.example/x.jpg"));
+        assertNull(FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/x/", "https://evil.example/x.jpg"));
+        assertNull(FlyerCatalogParser.resolveAssetUrl("https://szorolap.aldi.hu/x/", "https://169.254.169.254/publitas/x.jpg"));
     }
+
+    @Test
+    void pennyDiscoveryKeepsAllowlistedViewersAndDropsPoisonedHosts() {
+        String html = """
+                <a href="https://169.254.169.254/publitas/stolen">no</a>
+                <a href="https://evil.example/szorolap/stolen">no</a>
+                <a href="http://view.publitas.com/penny/insecure">no</a>
+                <a href="https://view.publitas.com/penny/ok">yes</a>
+                """;
+        java.util.List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverPennyPapers(html, today);
+        assertTrue(papers.stream().anyMatch(paper ->
+                "https://view.publitas.com/penny/ok".equals(paper.officialUrl())));
+        assertTrue(papers.stream().noneMatch(paper ->
+                paper.officialUrl().contains("169.254")
+                        || paper.officialUrl().contains("evil.example")
+                        || paper.officialUrl().startsWith("http://view.publitas.com")));
+    }
+
+    @Test
+    void parsePublitasDropsOffAllowlistPdfDownloads() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "aldi", "ALDI", "https://szorolap.aldi.hu/demo/",
+                "https://szorolap.aldi.hu/demo.pdf", "aldi:demo", today, today);
+        String data = """
+                {"config":{"publicationTitle":"ALDI","downloadPdfUrl":"https://evil.example/x.pdf"}}
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parsePublitas(paper, data, null);
+        assertEquals("https://szorolap.aldi.hu/demo.pdf", catalog.paper().pdfUrl());
+    }
+
 
     @Test
     void extractsHtmlProductsFromJsonLd() {
