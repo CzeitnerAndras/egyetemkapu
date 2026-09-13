@@ -379,12 +379,12 @@ describe('Navbar Komponens', () => {
         });
 
         expect(mockNavigate).toHaveBeenCalledWith('/S3CR3T');
-        expect(localStorage.getItem('secretMode')).toBe('true');
+        expect(localStorage.getItem('secretMode')).toBeNull();
         expect(document.documentElement.classList.contains('secret')).toBe(true);
     });
 
     it('titkos módban a témaváltóra való 10 gyors kattintás fatal error képernyőt vált ki', async () => {
-        localStorage.setItem('secretMode', 'true');
+        window.history.pushState({}, '', '/S3CR3T');
         const { container } = renderWithRouter();
         const user = setup();
 
@@ -403,7 +403,7 @@ describe('Navbar Komponens', () => {
     });
 
     it('a triggerLogoffEffect esemény törli a titkos módot, és a kezdőlapra navigál', async () => {
-        localStorage.setItem('secretMode', 'true');
+        window.history.pushState({}, '', '/S3CR3T');
         localStorage.setItem('terminalHacked', 'true');
         renderWithRouter();
 
@@ -421,13 +421,40 @@ describe('Navbar Komponens', () => {
         expect(document.documentElement.classList.contains('secret')).toBe(false);
     });
 
-    it('elmentett titkos mód esetén induláskor beállítja a "secret" és "dark" osztályokat', () => {
+    it('korábban mentett titkos módot nem állítja vissza újratöltéskor', () => {
         localStorage.setItem('secretMode', 'true');
+        localStorage.setItem('theme', 'light');
+        renderWithRouter();
+
+        expect(document.documentElement.classList.contains('secret')).toBe(false);
+        expect(document.documentElement.classList.contains('dark')).toBe(false);
+        expect(localStorage.getItem('secretMode')).toBeNull();
+    });
+
+    it('a /S3CR3T oldalon induláskor bekapcsolja a titkos módot', () => {
+        window.history.pushState({}, '', '/S3CR3T');
         renderWithRouter();
 
         expect(document.documentElement.classList.contains('secret')).toBe(true);
         expect(document.documentElement.classList.contains('dark')).toBe(true);
-        expect(localStorage.getItem('theme')).toBe('dark');
+    });
+
+    it('titkos módban a témaváltó kattintható, de a titkos téma megmarad', async () => {
+        window.history.pushState({}, '', '/S3CR3T');
+        const { container } = renderWithRouter();
+        const user = setup();
+
+        await openMenu(user, container);
+        const toggle = getThemeToggle(container);
+        const knob = toggle.querySelector('div');
+        expect(knob?.className).toContain('translate-x-5');
+
+        await user.click(toggle);
+
+        expect(document.documentElement.classList.contains('secret')).toBe(true);
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+        expect(toggle.querySelector('div')?.className).toContain('translate-x-1');
+        expect(localStorage.getItem('theme')).toBeNull();
     });
 
     it('a zászló ikonra kattintva meghívja a nyelvváltás funkciót', async () => {

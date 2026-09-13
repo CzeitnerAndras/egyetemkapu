@@ -29,6 +29,10 @@ describe('FocusRoomPage Komponens', () => {
 
         expect(screen.getByText('25:00')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'focus.start' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'focus.break' }).className)
+            .toContain('secret:hover:bg-[#1cf85d]');
+        expect(screen.getByRole('button', { name: 'focus.break' }).className)
+            .not.toContain('secret:hover:bg-[#1cf85d]/20');
 
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
     });

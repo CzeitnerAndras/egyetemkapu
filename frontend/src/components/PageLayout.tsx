@@ -5,7 +5,7 @@ type PageShellVariant = 'default' | 'fill' | 'auth';
 
 const SHELL_CLASS: Record<PageShellVariant, string> = {
     default: 'w-full px-4 sm:px-6 lg:px-16 mx-auto mt-6 sm:mt-8 pb-12 relative z-20',
-    fill: 'w-full px-4 sm:px-6 lg:px-16 mx-auto mt-6 sm:mt-8 pb-6 relative z-20 flex flex-col min-h-[calc(100dvh-6.5rem)]',
+    fill: 'w-full px-4 sm:px-6 lg:px-16 mx-auto mt-4 sm:mt-6 pb-4 relative z-20 flex flex-col h-[calc(100dvh-8.25rem)] max-h-[calc(100dvh-8.25rem)] min-h-0 overflow-hidden',
     auth: 'w-full px-4 sm:px-6 lg:px-16 mx-auto mt-8 sm:mt-16 pb-12 relative z-20 flex justify-center',
 };
 

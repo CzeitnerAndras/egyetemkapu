@@ -300,7 +300,7 @@ export default function CalculatorPage() {
                                 value={expression}
                                 onChange={(e) => setExpression(e.target.value)}
                                 placeholder="x^2+2x"
-                                className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none text-lg font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/50"
+                                className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none text-lg font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/50"
                             />
                         </div>
                         <div className="pt-3.5">

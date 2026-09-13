@@ -36,19 +36,20 @@ describe('ReferencePage Komponens', () => {
         const titleInput = screen.getByPlaceholderText('ref.titlePlaceholder');
         const yearInput = screen.getByPlaceholderText('pl. 2024');
         const publisherInput = screen.getByPlaceholderText('ref.publisherPlaceholder');
-        const styleSelect = screen.getByRole('combobox');
+        const styleSelect = screen.getByRole('button', { name: 'ref.style' });
 
         await user.type(authorInput, 'Gipsz Jakab');
         await user.type(titleInput, 'A nagy tesztkönyv');
         await user.type(yearInput, '2024');
         await user.type(publisherInput, 'Teszt Kiadó');
-        await user.selectOptions(styleSelect, 'MLA');
+        await user.click(styleSelect);
+        await user.click(screen.getByRole('option', { name: 'MLA' }));
 
         expect(authorInput).toHaveValue('Gipsz Jakab');
         expect(titleInput).toHaveValue('A nagy tesztkönyv');
         expect(yearInput).toHaveValue('2024');
         expect(publisherInput).toHaveValue('Teszt Kiadó');
-        expect(styleSelect).toHaveValue('MLA');
+        expect(styleSelect).toHaveTextContent('MLA');
     });
 
     it('sikeres hívás után megjeleníti a generált hivatkozást', async () => {

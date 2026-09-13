@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookMarked, Copy, Check, PenTool, Sparkles } from 'lucide-react';
+import { BookMarked, Copy, Check, PenTool, Sparkles, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
 
@@ -14,6 +14,13 @@ export default function ReferencePage() {
     const [generatedRef, setGeneratedRef] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isStyleOpen, setIsStyleOpen] = useState(false);
+
+    const styles = [
+        { id: 'APA', label: 'APA' },
+        { id: 'MLA', label: 'MLA' },
+        { id: 'HARVARD', label: 'Harvard' },
+    ];
 
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -70,32 +77,62 @@ export default function ReferencePage() {
                     <form onSubmit={handleGenerate} className="space-y-4">
                         <div className="flex flex-col">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.author')}</label>
-                            <input type="text" placeholder={language === 'en' ? 'e.g. John Doe' : 'pl. John Doe'} value={author} onChange={e => setAuthor(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                            <input type="text" placeholder={language === 'en' ? 'e.g. John Doe' : 'pl. John Doe'} value={author} onChange={e => setAuthor(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
                         </div>
 
                         <div className="flex flex-col">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.fieldTitle')}</label>
-                            <input required type="text" placeholder={t('ref.titlePlaceholder')} value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                            <input required type="text" placeholder={t('ref.titlePlaceholder')} value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.year')}</label>
-                                <input type="text" placeholder={language === 'en' ? 'e.g. 2024' : 'pl. 2024'} value={year} onChange={e => setYear(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                                <input type="text" placeholder={language === 'en' ? 'e.g. 2024' : 'pl. 2024'} value={year} onChange={e => setYear(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
                             </div>
-                            <div className="flex flex-col">
+                            <div className={`flex flex-col relative ${isStyleOpen ? 'z-50' : 'z-10'}`}>
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.style')}</label>
-                                <select value={style} onChange={e => setStyle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors">
-                                    <option value="APA">APA</option>
-                                    <option value="MLA">MLA</option>
-                                    <option value="HARVARD">Harvard</option>
-                                </select>
+                                <button
+                                    type="button"
+                                    aria-haspopup="listbox"
+                                    aria-expanded={isStyleOpen}
+                                    aria-label={t('ref.style')}
+                                    onClick={() => setIsStyleOpen(!isStyleOpen)}
+                                    className="flex items-center justify-between w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors"
+                                >
+                                    <span>{styles.find((item) => item.id === style)?.label}</span>
+                                    <ChevronDown className={`w-5 h-5 ml-2 transition-transform ${isStyleOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isStyleOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsStyleOpen(false)}></div>
+                                        <div role="listbox" className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-lg z-50 flex flex-col">
+                                            {styles.map((item) => (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    role="option"
+                                                    aria-selected={style === item.id}
+                                                    onClick={() => {
+                                                        setStyle(item.id);
+                                                        setIsStyleOpen(false);
+                                                    }}
+                                                    className={`text-left p-2 font-bold cursor-pointer transition-colors secret:font-mono uppercase ${style === item.id
+                                                        ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black'
+                                                        : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
                         <div className="flex flex-col">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.publisher')}</label>
-                            <input type="text" placeholder={t('ref.publisherPlaceholder')} value={publisher} onChange={e => setPublisher(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                            <input type="text" placeholder={t('ref.publisherPlaceholder')} value={publisher} onChange={e => setPublisher(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
                         </div>
 
                         <button type="submit" disabled={isLoading} className="w-full bg-fuchsia-400 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-cyan-400 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#000]">

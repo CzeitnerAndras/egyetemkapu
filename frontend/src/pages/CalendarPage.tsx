@@ -320,7 +320,7 @@ export default function CalendarPage() {
                         <div className="flex flex-col group">
                             <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
                             <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                             />
                         </div>
 
@@ -329,7 +329,7 @@ export default function CalendarPage() {
                                 <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
                                 <input required type="text" value={taskType} onChange={e => setTaskType(e.target.value)}
                                     placeholder={t('cal.typePlaceholder')}
-                                    className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white bg-white dark:bg-[#121212] dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
+                                    className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                                 />
                             </div>
 
@@ -339,7 +339,7 @@ export default function CalendarPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsTimeOpen(!isTimeOpen)}
-                                    className="flex items-center justify-between w-full border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none bg-white dark:bg-[#121212] text-black dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono cursor-pointer transition-colors hover:border-fuchsia-500 focus:border-fuchsia-500"
+                                    className="flex items-center justify-between w-full border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono cursor-pointer transition-colors hover:border-fuchsia-500 focus:border-fuchsia-500"
                                 >
                                     <span>{time}</span>
                                     <Clock className="w-4 h-4 ml-1" />

@@ -58,7 +58,7 @@ interface FlyerDetail {
 const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi'];
 
 const PAPER_CARD =
-    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
+    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
 
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
@@ -344,7 +344,7 @@ export default function SalesPapersPage() {
                             className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer
                                 ${activeStore === store
                                     ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-[#3b0764]'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black'
                                 }`}
                         >
                             <span className="block text-xl leading-none">{storeLabel(store)}</span>
@@ -488,14 +488,14 @@ export default function SalesPapersPage() {
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                 >
                                     <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setViewer(null)}
-                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-[#3b0764]"
+                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                     aria-label={t('sales.closeViewer')}
                                 >
                                     <X className="w-5 h-5" />
@@ -543,7 +543,7 @@ export default function SalesPapersPage() {
                                                         className={`w-full text-left p-2 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer ${
                                                             onList
                                                                 ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
-                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-fuchsia-400 dark:hover:bg-[#3b0764]'
+                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-fuchsia-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black'
                                                         }`}
                                                     >
                                                         <p className="font-bold leading-tight">{product.name}</p>

@@ -227,11 +227,11 @@ export default function KnowledgeBasePage() {
                         <form onSubmit={handleUpload} className="space-y-5">
                             <div className="flex flex-col">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldTitle')}</label>
-                                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldDesc')}</label>
-                                <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold resize-none shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors"></textarea>
+                                <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold resize-none shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors"></textarea>
                             </div>
 
                             {/* --- Category Dropdown --- */}

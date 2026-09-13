@@ -245,13 +245,13 @@ export default function FocusRoomPage() {
 
                     {/* --- Pomodoro --- */}
                     <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none flex flex-col items-center justify-center shrink-0">
-                        <div className="flex w-full border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-white rounded-full secret:rounded-none overflow-hidden mb-6 shadow-[4px_4px_0px_#000] dark:shadow-none">
+                        <div className="flex w-full border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black rounded-full secret:rounded-none overflow-hidden mb-6 shadow-[4px_4px_0px_#000] dark:shadow-none">
                             <button
                                 onClick={() => handleSetMode(true)}
                                 className={`flex-1 py-2 font-bold flex items-center justify-center transition-colors secret:font-mono uppercase cursor-pointer border-r-4 border-black dark:border-gray-700 secret:border-[#1cf85d]
                                     ${isFocusMode
                                         ? 'bg-fuchsia-400 dark:bg-[#a855f7] text-black dark:text-white secret:bg-[#1cf85d] secret:text-black'
-                                        : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'
+                                        : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black'
                                     }`}
                             >
                                 <BrainCircuit className="w-5 h-5 mr-2" /> {t('focus.focus')}
@@ -261,7 +261,7 @@ export default function FocusRoomPage() {
                                 className={`flex-1 py-2 font-bold flex items-center justify-center transition-colors secret:font-mono uppercase cursor-pointer
                                     ${!isFocusMode
                                         ? 'bg-cyan-400 dark:bg-blue-500 text-black dark:text-white secret:bg-[#1cf85d] secret:text-black'
-                                        : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'
+                                        : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black'
                                     }`}
                             >
                                 <Coffee className="w-5 h-5 mr-2" /> {t('focus.break')}
@@ -315,7 +315,7 @@ export default function FocusRoomPage() {
                             value={noteContent}
                             onChange={(e) => setNoteContent(e.target.value)}
                             placeholder={t('focus.notePlaceholder')}
-                            className="flex-1 w-full resize-none outline-none bg-slate-50 border-4 border-black p-2 shadow-inner dark:bg-transparent dark:border-transparent dark:shadow-none text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-600 secret:placeholder-[#1cf85d]/30 font-medium"
+                            className="flex-1 w-full resize-none outline-none bg-slate-50 border-4 border-black p-2 shadow-inner dark:bg-transparent dark:border-transparent dark:shadow-none secret:bg-black secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-600 secret:placeholder-[#1cf85d]/30 font-medium"
                         />
                     </div>
                 </div>
@@ -336,7 +336,7 @@ export default function FocusRoomPage() {
                                 <div
                                     key={task.id}
                                     onClick={() => toggleTask(task.id)}
-                                    className="flex items-center p-3 border-4 mb-3 cursor-pointer transition-all secret:rounded-none bg-white dark:bg-[#2a2a2a] secret:bg-transparent border-black dark:border-[#a855f7]/50 secret:border-[#1cf85d] hover:shadow-[4px_4px_0px_#06b6d4] hover:-translate-y-1 shadow-[2px_2px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0 dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d]/10"
+                                    className="flex items-center p-3 border-4 mb-3 cursor-pointer transition-all secret:rounded-none bg-white dark:bg-[#2a2a2a] secret:bg-transparent border-black dark:border-[#a855f7]/50 secret:border-[#1cf85d] hover:shadow-[4px_4px_0px_#06b6d4] hover:-translate-y-1 shadow-[2px_2px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] secret:hover:bg-[#1cf85d]/10"
                                 >
                                     <div className="mr-3">
                                         <Circle className="w-5 h-5 text-black dark:text-gray-500 secret:text-[#1cf85d]/70 hover:text-green-600 secret:hover:text-[#1cf85d]" />
@@ -361,7 +361,7 @@ export default function FocusRoomPage() {
                                 value={newTaskTitle}
                                 onChange={e => setNewTaskTitle(e.target.value)}
                                 placeholder={t('focus.addTask')}
-                                className="flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] mr-2 p-2 outline-none bg-white dark:bg-transparent dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
+                                className="flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] mr-2 p-2 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
                             />
                             <button
                                 type="submit"

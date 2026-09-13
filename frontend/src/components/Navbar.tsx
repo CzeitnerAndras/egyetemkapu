@@ -112,21 +112,22 @@ export default function Navbar() {
 
     document.addEventListener('mousedown', handleClickOutside);
 
+    localStorage.removeItem('secretMode');
     const isSecretPath = window.location.pathname === '/S3CR3T';
-    const isSecretSaved = localStorage.getItem('secretMode') === 'true';
 
-    if (isSecretPath || isSecretSaved) {
+    if (isSecretPath) {
       document.documentElement.classList.add('secret', 'dark');
       setIsSecretMode(true);
       setIsDarkMode(true);
-      localStorage.setItem('secretMode', 'true');
-      localStorage.setItem('theme', 'dark');
-    } else if (localStorage.getItem('theme') === 'dark') {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
     } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove('secret');
+      if (localStorage.getItem('theme') === 'dark') {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
+      } else {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove('dark');
+      }
     }
 
     const handleSecretLogoff = () => {
@@ -150,6 +151,28 @@ export default function Navbar() {
   }, [loadCurrentUser]);
 
   const handleThemeToggle = () => {
+    clickCountRef.current = (clickCountRef.current || 0) + 1;
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = window.setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 500);
+
+    if (clickCountRef.current >= 10 && !isAnimating && !isFatalError) {
+      if (isSecretMode || document.documentElement.classList.contains('secret')) {
+        triggerFatalErrorEffect();
+      } else {
+        triggerSecretEffect();
+      }
+      return;
+    }
+
+    if (isSecretMode || document.documentElement.classList.contains('secret')) {
+      document.documentElement.classList.add('secret', 'dark');
+      setIsDarkMode((prev) => !prev);
+      return;
+    }
+
     const newTheme = !isDarkMode;
     setIsDarkMode(newTheme);
 
@@ -159,21 +182,6 @@ export default function Navbar() {
     } else {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
-    }
-
-    clickCountRef.current = (clickCountRef.current || 0) + 1;
-
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = window.setTimeout(() => {
-      clickCountRef.current = 0;
-    }, 500);
-
-    if (clickCountRef.current >= 10 && !isAnimating && !isFatalError) {
-      if (isSecretMode) {
-        triggerFatalErrorEffect();
-      } else {
-        triggerSecretEffect();
-      }
     }
   };
 
@@ -187,7 +195,6 @@ export default function Navbar() {
     setTimeout(() => {
       document.documentElement.classList.add('secret');
       document.documentElement.classList.add('dark');
-      localStorage.setItem('secretMode', 'true');
       setIsDarkMode(true);
       setIsSecretMode(true);
       navigate('/S3CR3T');
@@ -425,7 +432,7 @@ export default function Navbar() {
 
         {/* --- Fő Dropdown Menü --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#d946ef] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#d946ef] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-[60] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
             <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50 bg-cyan-400 dark:bg-transparent secret:bg-transparent">
               <div className="flex items-center space-x-2">
@@ -440,11 +447,12 @@ export default function Navbar() {
               </div>
 
               <button
+                type="button"
                 onClick={handleThemeToggle}
-                className={`w-11 h-6 rounded-full relative transition-colors duration-300 cursor-pointer shadow-inner border-2 border-black dark:border-transparent secret:border-[#1cf85d] ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-fuchsia-500 shadow-[2px_2px_0px_#000] secret:bg-transparent secret:shadow-none'
+                className={`w-11 h-6 rounded-full relative z-10 transition-colors duration-300 cursor-pointer shadow-inner border-2 border-black dark:border-transparent secret:border-[#1cf85d] ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-fuchsia-500 shadow-[2px_2px_0px_#000] secret:bg-transparent secret:shadow-none'
                   }`}
               >
-                <div className={`w-4 h-4 rounded-full border-2 border-black dark:border-transparent secret:border-transparent absolute top-0.5 transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-slate-100 secret:bg-black translate-x-5' : 'bg-slate-100 secret:bg-[#1cf85d] translate-x-1'
+                <div className={`w-4 h-4 rounded-full border-2 border-black dark:border-transparent secret:border-transparent absolute top-0.5 pointer-events-none transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-slate-100 secret:bg-black translate-x-5' : 'bg-slate-100 secret:bg-[#1cf85d] translate-x-1'
                   }`}></div>
               </button>
             </div>

@@ -15,7 +15,7 @@ describe('PageLayout Komponensek', () => {
     it('a fill variáns kitölti a képernyő magasságát', () => {
         render(<PageShell variant="fill">chat</PageShell>);
 
-        expect(screen.getByRole('main').className).toContain('min-h-[calc(100dvh-6.5rem)]');
+        expect(screen.getByRole('main').className).toContain('h-[calc(100dvh-8.25rem)]');
     });
 
     it('az auth variáns középre igazítja a kártyát', () => {

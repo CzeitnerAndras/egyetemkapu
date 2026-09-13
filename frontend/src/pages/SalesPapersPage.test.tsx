@@ -77,6 +77,8 @@ describe('SalesPapersPage Komponens', () => {
         expect(await screen.findByRole('heading', { name: 'SPAR szórólap' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'SPAR szórólap' }).closest('button')?.className)
             .toContain('dark:hover:bg-[#3b0764]');
+        expect(screen.getByRole('heading', { name: 'SPAR szórólap' }).closest('button')?.className)
+            .toContain('secret:hover:border-[#1cf85d]');
         expect(screen.getByRole('button', { name: /^ALDI$/ })).toBeInTheDocument();
         const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
         expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([

@@ -39,6 +39,7 @@ describe('LinksPage Komponens', () => {
         const link = screen.getByRole('link', { name: 'Neptun Hallgatói Web' });
         expect(link).toHaveAttribute('target', '_blank');
         expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        expect(link.className).toContain('secret:hover:border-[#1cf85d]');
     });
 
     it('egyetem váltásakor a megfelelő linkeket jeleníti meg', async () => {

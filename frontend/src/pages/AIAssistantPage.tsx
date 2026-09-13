@@ -130,7 +130,7 @@ export default function AIAssistantPage() {
         <PageShell variant="fill">
 
             {/* --- Fő Konténer --- */}
-            <div className="flex-1 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 overflow-hidden relative rounded-sm secret:rounded-none">
+            <div className="flex-1 min-h-0 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[8px_8px_0px_#d946ef] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 overflow-hidden relative rounded-sm secret:rounded-none">
 
                 {/* --- Fejléc --- */}
                 <div className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
@@ -141,7 +141,7 @@ export default function AIAssistantPage() {
                 </div>
 
                 {/* --- Chat Ablak --- */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-100 dark:bg-gradient-to-b dark:from-[#121212] dark:to-[#1a1a1a] secret:bg-none secret:bg-transparent transition-colors custom-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 bg-slate-100 dark:bg-gradient-to-b dark:from-[#121212] dark:to-[#1a1a1a] secret:bg-none secret:bg-transparent transition-colors custom-scrollbar">
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
 
@@ -151,9 +151,9 @@ export default function AIAssistantPage() {
                                 </div>
                             )}
 
-                            <div className={`max-w-[85%] sm:max-w-[75%] p-3 sm:p-4 border-2 text-base sm:text-lg leading-relaxed transition-all duration-300 secret:font-mono ${msg.role === 'user'}
-                                ? 'bg-cyan-400 dark:bg-gradient-to-br dark:from-[#2d2d2d] dark:to-[#3d3d3d] secret:bg-none secret:bg-transparent border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed text-black dark:text-gray-100 secret:text-[#1cf85d] rounded-tl-xl rounded-tr-xl rounded-bl-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg'
-                                : 'bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-gray-200 secret:text-[#1cf85d] rounded-tr-xl rounded-bl-xl rounded-br-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg'
+                            <div className={`max-w-[85%] sm:max-w-[75%] p-3 sm:p-4 border-2 text-base sm:text-lg leading-relaxed transition-all duration-300 secret:font-mono ${msg.role === 'user'
+                                ? 'bg-cyan-400 dark:bg-gradient-to-br dark:from-[#2d2d2d] dark:to-[#3d3d3d] secret:bg-none secret:bg-transparent border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed text-black dark:text-gray-100 secret:text-[#1cf85d] rounded-tl-xl rounded-tr-xl rounded-bl-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg secret:hover:shadow-[0_0_12px_rgba(28,248,93,0.35)]'
+                                : 'bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-gray-200 secret:text-[#1cf85d] rounded-tr-xl rounded-bl-xl rounded-br-xl secret:rounded-none shadow-[4px_4px_0px_#000] dark:shadow-md hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-lg secret:hover:shadow-[0_0_12px_rgba(28,248,93,0.35)]'
                                 }`}>
                                 {msg.role === 'user' ? `> ${msg.text}` : msg.text}
                             </div>
@@ -191,7 +191,7 @@ export default function AIAssistantPage() {
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder={t('ai.placeholder')}
-                            className="flex-1 min-w-0 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-[#1cf85d]/30 text-base sm:text-lg bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] placeholder:secret:text-[#1cf85d]/50 secret:font-mono transition-all shadow-[4px_4px_0px_#000] dark:shadow-inner"
+                            className="flex-1 min-w-0 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-[#1cf85d]/30 text-base sm:text-lg bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] placeholder:secret:text-[#1cf85d]/50 secret:font-mono transition-all shadow-[4px_4px_0px_#000] dark:shadow-inner"
                             disabled={isLoading}
                         />
                         <button
