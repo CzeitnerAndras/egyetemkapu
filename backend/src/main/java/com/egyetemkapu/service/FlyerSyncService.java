@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
-    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco");
+    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco", "auchan");
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
 
@@ -82,6 +82,7 @@ public class FlyerSyncService {
             syncSpar(today);
             syncPenny(today);
             syncTesco(today);
+            syncAuchan(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -217,6 +218,40 @@ public class FlyerSyncService {
         }
     }
 
+    public void syncAuchan(LocalDate today) {
+        try {
+            String html = safeText("https://auchan.hu/") + "\n" + safeText("https://auchan.hu/katalogusok");
+            List<DiscoveredPaper> papers = parser.discoverAuchanPapers(html, today);
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            for (DiscoveredPaper paper : papers) {
+                if (!keepCatalogPaper(paper, today) || catalogs.size() >= 8) {
+                    continue;
+                }
+                String catalogHtml = safeText(paper.officialUrl());
+                if (catalogHtml.isBlank()) {
+                    continue;
+                }
+                ParsedCatalog catalog = extractors.forStore("auchan")
+                        .fillProducts(parser.parseAuchanIpaper(paper, catalogHtml));
+                if (keepCatalog(catalog, today)) {
+                    catalogs.add(catalog);
+                }
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("auchan", catalogs, LocalDateTime.now(clock));
+            }
+        } catch (Exception e) {
+            log.warn("Auchan flyer sync failed: {}", e.getMessage());
+        }
+    }
+
+    private static boolean keepCatalogPaper(DiscoveredPaper paper, LocalDate today) {
+        if (paper == null) {
+            return false;
+        }
+        return FlyerCatalogParser.isCurrentOrUpcoming(paper.validFrom(), paper.validTo(), today);
+    }
+
     public boolean isStale(LocalDateTime now) {
         if (syncing.get()) {
             return false;
@@ -319,7 +354,8 @@ public class FlyerSyncService {
         return flyers.stream().noneMatch(flyer -> "spar".equals(flyer.getStore()))
                 || missingWeeklySpar(flyers, today)
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
-                || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "auchan".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
@@ -377,6 +413,9 @@ public class FlyerSyncService {
                 }
             }
             return new byte[0];
+        }
+        if ("auchan".equals(flyer.getStore())) {
+            return safeBytes(flyer.getPdfUrl(), "https://auchan.hu/");
         }
         return safeBytes(flyer.getPdfUrl(), flyer.getOfficialUrl());
     }
