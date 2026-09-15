@@ -17,7 +17,8 @@ public class FlyerExtractorRegistry {
                 "aldi", new AldiFlyerExtractor(parser),
                 "spar", new SparFlyerExtractor(parser),
                 "penny", new PennyFlyerExtractor(parser),
-                "tesco", new TescoFlyerExtractor(parser)
+                "tesco", new TescoFlyerExtractor(parser),
+                "auchan", new AuchanFlyerExtractor(parser)
         );
     }
 
