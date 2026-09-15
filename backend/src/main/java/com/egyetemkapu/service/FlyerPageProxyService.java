@@ -66,6 +66,12 @@ public class FlyerPageProxyService {
         if (imageUrl == null) {
             imageUrl = lookupPublitasImage(flyer, pageNumber);
         }
+        if (FlyerCatalogParser.isAuchanIpaperUrl(flyer.getOfficialUrl())) {
+            String fresh = lookupIpaperImage(flyer, pageNumber);
+            if (fresh != null) {
+                imageUrl = fresh;
+            }
+        }
         if (imageUrl != null) {
             CachedImage image = fetchAllowed(imageUrl, flyer.getOfficialUrl());
             image = withPennyTextLayer(image, imageUrl, flyer.getOfficialUrl());
@@ -103,6 +109,33 @@ public class FlyerPageProxyService {
             FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
                     flyer.getStore(), flyer.getTitle(), official, flyer.getPdfUrl(), "lookup", null, null);
             FlyerCatalogParser.ParsedCatalog catalog = parser.parsePublitas(paper, null, spreadsJson);
+            catalog.pages().forEach(parsed -> {
+                if (parsed.imageUrl() != null) {
+                    spreadsImageCache.put(official + ":" + parsed.pageNumber(), parsed.imageUrl());
+                }
+            });
+        } catch (Exception ignored) {
+            return null;
+        }
+        return spreadsImageCache.get(key);
+    }
+
+    private String lookupIpaperImage(Flyer flyer, int pageNumber) {
+        String official = flyer.getOfficialUrl();
+        if (!FlyerCatalogParser.isAuchanIpaperUrl(official) || !FlyerUrlPolicy.isAllowed(official)) {
+            return null;
+        }
+        String key = official + ":" + pageNumber;
+        String cached = spreadsImageCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            FlyerUrlPolicy.assertAllowed(official);
+            String html = httpClient.getText(official);
+            FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                    flyer.getStore(), flyer.getTitle(), official, flyer.getPdfUrl(), "lookup", null, null);
+            FlyerCatalogParser.ParsedCatalog catalog = parser.parseAuchanIpaper(paper, html);
             catalog.pages().forEach(parsed -> {
                 if (parsed.imageUrl() != null) {
                     spreadsImageCache.put(official + ":" + parsed.pageNumber(), parsed.imageUrl());
