@@ -95,6 +95,15 @@ public class FlyerCatalogParser {
     private static final Pattern PENNY_PRODUCT = Pattern.compile(
             "(?is)<(?:h[1-4]|p|span|div)[^>]*>\\s*([^<]{3,120}?)\\s*</(?:h[1-4]|p|span|div)>\\s*"
                     + "[^<]{0,180}?(\\d[\\d\\s.]{0,8}\\s*Ft)");
+    private static final Pattern AUCHAN_CATALOG = Pattern.compile(
+            "https?://reklamujsag\\.auchan\\.hu/(?:online-katalogusok/)?(\\d{4}/[^/\"']+/([^/?#\"'\\s>]+))/?",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AUCHAN_PAPER_GUID = Pattern.compile(
+            "cdn\\.ipaper\\.io/iPaper/Papers/([0-9a-fA-F-]{36})",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern AUCHAN_PAGE_TOKEN = Pattern.compile(
+            "token=([A-Za-z0-9_~-]+)&token_path=([^&\"']+Pages[^&\"']*)&expires=(\\d+)",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern PRICE_TOKEN = Pattern.compile(
             "(?:\\d{1,3}(?:[ .]\\d{3})+|\\d{1,6})(?:[,]\\d{1,2})?\\s*(?:Ft(?:/[\\p{L}0-9]+)?|,-)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -107,6 +116,7 @@ public class FlyerCatalogParser {
             "(?iu)(?:a\\s+)?term[eé]k\\s+a\\s+\\p{L}+\\s+áruházunkban\\s+nem\\s+kapható\\.?"
                     + "|%?\\s*penny\\s+kártya(?:\\s+nélkül)?"
                     + "|clubcard"
+                    + "|bizalomkártya(?:\\s+nélkül)?"
                     + "|made with flippingbook"
                     + "|\\+?\\s*visszaváltási díj[:.\\d\\s]*");
     private static final Pattern JSON_LD = Pattern.compile(
@@ -206,6 +216,266 @@ public class FlyerCatalogParser {
             papers.putIfAbsent(fallback.sourceKey(), fallback);
         }
         return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    public List<DiscoveredPaper> discoverAuchanPapers(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        String haystack = unescapeEmbeddedUrls(html);
+        Matcher matcher = AUCHAN_CATALOG.matcher(haystack);
+        while (matcher.find()) {
+            String relPath = matcher.group(1).replaceAll("/+$", "");
+            String slug = matcher.group(2).replaceAll("/+$", "");
+            LocalDate[] dates = parseAuchanDates(slug);
+            if (dates[0] == null || dates[1] == null) {
+                continue;
+            }
+            String officialUrl = "https://reklamujsag.auchan.hu/online-katalogusok/" + relPath + "/";
+            String sourceKey = "auchan:" + slug;
+            papers.putIfAbsent(sourceKey, new DiscoveredPaper(
+                    "auchan",
+                    formatAuchanTitle(slug),
+                    officialUrl,
+                    null,
+                    sourceKey,
+                    dates[0],
+                    dates[1]
+            ));
+        }
+        for (DiscoveredPaper fallback : auchanWeeklyFallbacks(today)) {
+            papers.putIfAbsent(fallback.sourceKey(), fallback);
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    public List<DiscoveredPaper> auchanWeeklyFallbacks(LocalDate today) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        LocalDate thursday = today.with(DayOfWeek.THURSDAY);
+        if (thursday.isAfter(today)) {
+            thursday = thursday.minusWeeks(1);
+        }
+        for (LocalDate start : List.of(thursday, thursday.plusWeeks(1))) {
+            int year = start.getYear();
+            int week = start.get(WeekFields.ISO.weekOfWeekBasedYear());
+            LocalDate end = start.plusDays(6);
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM-dd");
+            String startStr = start.format(fmt);
+            String endStr = end.format(fmt);
+            String hiperSlug = String.format("%04d-%s-%s-heti-hipermarket-ajanlataink", year, startStr, endStr);
+            String hiperUrl = "https://reklamujsag.auchan.hu/online-katalogusok/"
+                    + year + "/tr" + String.format("%02d", week) + "/" + hiperSlug + "/";
+            papers.add(new DiscoveredPaper(
+                    "auchan", "Auchan Hipermarket", hiperUrl, null, "auchan:" + hiperSlug, start, end));
+            String szuperSlug = String.format("%04d-%s-%s-heti-szupermarket-ajanlataink", year, startStr, endStr);
+            String szuperUrl = "https://reklamujsag.auchan.hu/online-katalogusok/"
+                    + year + "/tr" + String.format("%02d", week) + "/" + szuperSlug + "/";
+            papers.add(new DiscoveredPaper(
+                    "auchan", "Auchan Szupermarket", szuperUrl, null, "auchan:" + szuperSlug, start, end));
+        }
+        return papers;
+    }
+
+    public ParsedCatalog parseAuchanIpaper(DiscoveredPaper paper, String html) {
+        String source = unescapeEmbeddedUrls(html);
+        JsonNode settings = readJsonObject(source, "window.staticSettings");
+        List<String> texts = auchanPageTexts(settings);
+        int pageCount = Math.max(texts.size(), auchanPageCount(settings, source));
+        pageCount = Math.min(Math.max(pageCount, texts.isEmpty() ? 0 : 1), FlyerUrlPolicy.MAX_PDF_PAGES);
+        String guid = auchanPaperGuid(source);
+        String[] token = auchanPageToken(source);
+        List<ParsedPage> pages = new ArrayList<>();
+        for (int page = 1; page <= pageCount; page++) {
+            String text = page <= texts.size() ? texts.get(page - 1) : "";
+            String image = auchanPageImageUrl(guid, page, token);
+            pages.add(new ParsedPage(page, image, text));
+        }
+        String title = paper.title();
+        if (settings != null) {
+            title = textOr(settings.path("pageTitleUndecorated"), textOr(settings.path("name"), title));
+            if (title != null && title.matches("\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-.*")) {
+                title = formatAuchanTitle(title);
+            }
+        }
+        DiscoveredPaper resolved = new DiscoveredPaper(
+                paper.store(),
+                title,
+                paper.officialUrl(),
+                paper.pdfUrl(),
+                paper.sourceKey(),
+                paper.validFrom(),
+                paper.validTo());
+        return new ParsedCatalog(resolved, pages, List.of());
+    }
+
+    public static boolean isAuchanIpaperUrl(String url) {
+        return url != null && url.toLowerCase(Locale.ROOT).contains("reklamujsag.auchan.hu");
+    }
+
+    static String unescapeEmbeddedUrls(String html) {
+        if (html == null || html.isBlank()) {
+            return "";
+        }
+        return html.replace("\\u002F", "/")
+                .replace("\\u002f", "/")
+                .replace("\\u0026", "&")
+                .replace("\\/", "/");
+    }
+
+    private static LocalDate[] parseAuchanDates(String slug) {
+        if (slug == null) {
+            return new LocalDate[] { null, null };
+        }
+        Matcher matcher = Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})-(\\d{2})-(\\d{2})").matcher(slug);
+        if (matcher.find()) {
+            int year = Integer.parseInt(matcher.group(1));
+            int fromM = Integer.parseInt(matcher.group(2));
+            int fromD = Integer.parseInt(matcher.group(3));
+            int toM = Integer.parseInt(matcher.group(4));
+            int toD = Integer.parseInt(matcher.group(5));
+            int toYear = (toM < fromM) ? year + 1 : year;
+            try {
+                return new LocalDate[] {
+                        LocalDate.of(year, fromM, fromD),
+                        LocalDate.of(toYear, toM, toD)
+                };
+            } catch (Exception ignored) {
+            }
+        }
+        return new LocalDate[] { null, null };
+    }
+
+    private static String formatAuchanTitle(String slug) {
+        String clean = slug.replaceAll("^\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}-?", "").toLowerCase(Locale.ROOT);
+        if (clean.contains("heti-hipermarket")) {
+            return "Auchan Hipermarket";
+        }
+        if (clean.contains("heti-szupermarket")) {
+            return "Auchan Szupermarket";
+        }
+        if (clean.contains("kedvenc-marka")) {
+            return "Auchan Kedvenc márkáink";
+        }
+        if (clean.contains("nemzetkozi-konyha")) {
+            return "Auchan Nemzetközi konyha";
+        }
+        if (clean.contains("elektronikai")) {
+            return "Auchan Elektronikai ajánlatok";
+        }
+        if (clean.contains("konyhai-eszkoz")) {
+            return "Auchan Konyhai eszközök";
+        }
+        String words = clean.replace('-', ' ').trim();
+        if (words.isBlank()) {
+            return "Auchan heti ajánlatok";
+        }
+        return "Auchan " + words.substring(0, 1).toUpperCase(Locale.ROOT) + words.substring(1);
+    }
+
+    private JsonNode readJsonObject(String html, String marker) {
+        if (html == null || marker == null) {
+            return null;
+        }
+        int start = html.indexOf(marker);
+        if (start < 0) {
+            return null;
+        }
+        int brace = html.indexOf('{', start);
+        if (brace < 0) {
+            return null;
+        }
+        String json = extractJsonObject(html, brace);
+        if (json == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(json);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static String extractJsonObject(String html, int brace) {
+        boolean inString = false;
+        boolean escape = false;
+        int depth = 0;
+        for (int i = brace; i < html.length(); i++) {
+            char c = html.charAt(i);
+            if (inString) {
+                if (escape) {
+                    escape = false;
+                } else if (c == '\\') {
+                    escape = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+            } else if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    return html.substring(brace, i + 1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private static List<String> auchanPageTexts(JsonNode settings) {
+        if (settings == null || !settings.path("pageTexts").isArray()) {
+            return List.of();
+        }
+        List<String> texts = new ArrayList<>();
+        for (JsonNode node : settings.path("pageTexts")) {
+            texts.add(node.asText("").replace('\u00a0', ' ').trim());
+        }
+        return texts;
+    }
+
+    private static int auchanPageCount(JsonNode settings, String html) {
+        if (settings != null && settings.path("pages").isArray() && !settings.path("pages").isEmpty()) {
+            return settings.path("pages").size();
+        }
+        Matcher matcher = Pattern.compile("\"pageCount\"\\s*:\\s*(\\d+)").matcher(html == null ? "" : html);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
+        }
+        return 0;
+    }
+
+    private static String auchanPaperGuid(String html) {
+        if (html == null) {
+            return null;
+        }
+        Matcher matcher = AUCHAN_PAPER_GUID.matcher(html);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private static String[] auchanPageToken(String html) {
+        if (html == null) {
+            return null;
+        }
+        Matcher matcher = AUCHAN_PAGE_TOKEN.matcher(html);
+        while (matcher.find()) {
+            String path = matcher.group(2);
+            if (path.toLowerCase(Locale.ROOT).contains("pages")) {
+                return new String[] { matcher.group(1), path, matcher.group(3) };
+            }
+        }
+        return null;
+    }
+
+    static String auchanPageImageUrl(String guid, int pageNumber, String[] token) {
+        if (guid == null || guid.isBlank() || token == null || token.length < 3 || pageNumber < 1) {
+            return null;
+        }
+        return FlyerUrlPolicy.allowedOrNull(
+                "https://cdn.ipaper.io/iPaper/Papers/" + guid + "/Pages/" + pageNumber
+                        + "/Zoom.jpg?token=" + token[0]
+                        + "&token_path=" + token[1]
+                        + "&expires=" + token[2]);
     }
 
     public List<DiscoveredPaper> pennyWeeklyFallbacks(LocalDate today) {
@@ -1288,6 +1558,7 @@ public class FlyerCatalogParser {
                 || lower.contains("áruházunkban")
                 || lower.contains("kártya")
                 || lower.contains("clubcard")
+                || lower.contains("bizalomkártya")
                 || lower.contains("szuper ár")
                 || lower.contains("flippingbook")
                 || lower.contains("újdonság")
@@ -1314,6 +1585,7 @@ public class FlyerCatalogParser {
                 || lower.contains("spórolás")
                 || lower.contains("kupon")
                 || lower.contains("tesco.hu")
+                || lower.contains("auchan.hu")
                 || lower.contains("nagybevásárlás")
                 || lower.contains("váltható")
                 || lower.contains("ruházható")
@@ -1380,12 +1652,10 @@ public class FlyerCatalogParser {
                 || isDateLeadIn(lower);
     }
 
-    /** Strips prices, dates, article numbers and badge words that cling to a product name. */
     public static String tidyProductName(String raw) {
         return cleanProductName(raw);
     }
 
-    /** True when a candidate is fine print, a badge or a slogan rather than something buyable. */
     public static boolean isJunkProductName(String name) {
         return name == null || name.isBlank() || isSkippableLine(name) || !looksLikeProductName(name)
                 || isDescriptionFragment(name) || isWeakProductName(name) || isSloganName(name);
@@ -1406,7 +1676,7 @@ public class FlyerCatalogParser {
         if (isDisclaimerLine(lower)
                 || lower.matches("(?iu)^(csomag|darab|doboz|db|db[- ]*t[oóöő]l|csak|akció)$")
                 || lower.matches("(?iu)^\\d+\\s*(?:db|cs\\.?|darab|csomag)[- .]*t[oóöő]l$")
-                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar)$")
+                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan)$")
                 || lower.contains("darab/készlet")
                 || lower.contains("doboz díj")
                 || lower.equals("díj")
