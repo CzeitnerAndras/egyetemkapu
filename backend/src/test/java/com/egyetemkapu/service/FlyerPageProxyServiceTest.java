@@ -23,5 +23,7 @@ class FlyerPageProxyServiceTest {
                 () -> FlyerPageProxyService.assertAllowed("https://user:pass@www.spar.hu/x.pdf"));
         assertDoesNotThrow(() -> FlyerPageProxyService.assertAllowed(
                 "https://digitalcontent.api.tesco.com/v2/media/dotcom-sk/x/page.1.jpeg"));
+        assertDoesNotThrow(() -> FlyerPageProxyService.assertAllowed(
+                "https://cdn.ipaper.io/iPaper/Papers/0d13e120-58cb-4d20-bd32-6b5557475386/Pages/1/Zoom.jpg"));
     }
 }

@@ -18,6 +18,9 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://www.spar.hu/content/dam/x.pdf"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://digitalcontent.api.tesco.com/v2/media/x.jpeg"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://auchan.hu/"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://reklamujsag.auchan.hu/online-katalogusok/x/"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://cdn.ipaper.io/iPaper/Papers/x/Pages/1/Zoom.jpg"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

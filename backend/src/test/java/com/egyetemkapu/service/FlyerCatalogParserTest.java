@@ -362,4 +362,49 @@ class FlyerCatalogParserTest {
         assertTrue(FlyerCatalogParser.shouldReplaceStoredProducts(List.of("Őszibarack"), parsed));
         assertFalse(FlyerCatalogParser.shouldReplaceStoredProducts(List.of("Madre pizza"), parsed));
     }
+
+    @Test
+    void discoversAuchanCatalogsFromHomepageLinksAndEscapedJson() {
+        String html = """
+                <a href="https://reklamujsag.auchan.hu/online-katalogusok/2026/tr37/2026-09-10-09-16-heti-hipermarket-ajanlataink/?page=6">hiper</a>
+                "https:\\u002F\\u002Freklamujsag.auchan.hu\\u002Fonline-katalogusok\\u002F2026\\u002Ftr37\\u002F2026-09-10-09-16-heti-szupermarket-ajanlataink\\u002F"
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverAuchanPapers(html, LocalDate.of(2026, 9, 15));
+        assertTrue(papers.stream().anyMatch(paper ->
+                "auchan:2026-09-10-09-16-heti-hipermarket-ajanlataink".equals(paper.sourceKey())
+                        && paper.pdfUrl() == null
+                        && "Auchan Hipermarket".equals(paper.title())
+                        && paper.officialUrl().endsWith("/2026-09-10-09-16-heti-hipermarket-ajanlataink/")));
+        assertTrue(papers.stream().anyMatch(paper ->
+                "auchan:2026-09-10-09-16-heti-szupermarket-ajanlataink".equals(paper.sourceKey())));
+        assertTrue(papers.stream().noneMatch(paper ->
+                paper.pdfUrl() != null && paper.pdfUrl().contains("pdf/download.pdf")));
+    }
+
+    @Test
+    void parsesAuchanIpaperPageTextAndSignedPageImages() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "auchan",
+                "Auchan Hipermarket",
+                "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr37/2026-09-10-09-16-heti-hipermarket-ajanlataink/",
+                null,
+                "auchan:2026-09-10-09-16-heti-hipermarket-ajanlataink",
+                LocalDate.of(2026, 9, 10),
+                LocalDate.of(2026, 9, 16));
+        String html = """
+                <script>window.staticSettings = {
+                  "name":"2026-09-10-09-16-heti-hipermarket-ajanlataink",
+                  "pages":[1,2],
+                  "pageTexts":["CSIRKE ALSÓCOMB 785 Ft ÉDESBURGONYA 589 Ft","SEGAFREDO KÁVÉ 1799 Ft"]
+                };</script>
+                token=KfKqKt-DGjOax5VLrmnZk_NtKvNGy_io9hIGE_m0Hf0&token_path=%2fiPaper%2fPapers%2f0d13e120-58cb-4d20-bd32-6b5557475386%2fPages%2f&expires=1789580561
+                https://cdn.ipaper.io/iPaper/Papers/0d13e120-58cb-4d20-bd32-6b5557475386/Enrichments/x.json
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parseAuchanIpaper(paper, html);
+        assertEquals(2, catalog.pages().size());
+        assertTrue(catalog.pages().getFirst().text().contains("CSIRKE"));
+        assertTrue(catalog.pages().getFirst().imageUrl().contains("/Pages/1/Zoom.jpg"));
+        assertTrue(catalog.pages().getFirst().imageUrl().contains("cdn.ipaper.io"));
+        assertEquals("Auchan Hipermarket", catalog.paper().title());
+    }
 }
