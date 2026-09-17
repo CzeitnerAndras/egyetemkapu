@@ -3,6 +3,7 @@ import {
     groupByStore,
     itemKey,
     removeItem,
+    renameItem,
     setQuantity,
     type ShoppingListItem,
 } from './shoppingList';
@@ -53,5 +54,13 @@ describe('shoppingList', () => {
         expect(grouped.map((group) => group.store)).toEqual(['tesco', 'aldi']);
         expect(removeItem(list, 'p:11')).toHaveLength(1);
         expect(setQuantity(list, 'p:11', 0)).toHaveLength(1);
+    });
+
+    it('átírja a hibás nevet, de a tétel azonosítóját megtartja', () => {
+        const renamed = renameItem([item()], 'p:11', '  Kakaós csiga  ');
+        expect(renamed).toHaveLength(1);
+        expect(renamed[0].id).toBe('p:11');
+        expect(renamed[0].name).toBe('Kakaós csiga');
+        expect(renameItem([item()], 'p:11', '   ')).toEqual([item()]);
     });
 });

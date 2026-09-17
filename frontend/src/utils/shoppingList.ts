@@ -41,6 +41,14 @@ export function setQuantity(list: ShoppingListItem[], id: string, quantity: numb
     return list.map((item) => (item.id === id ? { ...item, quantity } : item));
 }
 
+export function renameItem(list: ShoppingListItem[], id: string, name: string): ShoppingListItem[] {
+    const trimmed = name.replace(/\s+/g, ' ').trim();
+    if (!trimmed) {
+        return list;
+    }
+    return list.map((item) => (item.id === id ? { ...item, name: trimmed } : item));
+}
+
 export function removeItem(list: ShoppingListItem[], id: string): ShoppingListItem[] {
     return list.filter((item) => item.id !== id);
 }
@@ -73,7 +81,7 @@ export function saveShoppingList(list: ShoppingListItem[]): void {
 
 function normalizeItem(item: ShoppingListItem): ShoppingListItem {
     return {
-        id: itemKey(item),
+        id: item.id || itemKey(item),
         productId: item.productId,
         flyerId: item.flyerId,
         store: item.store,
