@@ -82,7 +82,7 @@ describe('SalesPapersPage Komponens', () => {
         expect(screen.getByRole('button', { name: /^ALDI$/ })).toBeInTheDocument();
         const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
         expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([
-            'spar', 'penny', 'tesco', 'aldi',
+            'spar', 'penny', 'tesco', 'aldi', 'auchan',
         ]);
 
         await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
