@@ -163,9 +163,19 @@ describe('SalesPapersPage Komponens', () => {
         expect(await screen.findByText('Kakaóscsiga')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: /sales\.listAdd/ }));
         expect(screen.getByRole('heading', { name: 'sales.listTitle' })).toBeInTheDocument();
-        expect(screen.getAllByText('Kakaóscsiga').length).toBeGreaterThan(1);
+        expect(screen.getAllByText('Kakaóscsiga').length).toBeGreaterThan(0);
         const shoppingList = screen.getByRole('heading', { name: 'sales.listTitle' }).closest('section');
         expect(shoppingList).not.toBeNull();
         expect(within(shoppingList as HTMLElement).getByText('ALDI')).toBeInTheDocument();
+        const nameField = within(shoppingList as HTMLElement).getByLabelText('sales.listEditName');
+        expect(nameField).toHaveValue('Kakaóscsiga');
+        await userEvent.clear(nameField);
+        await userEvent.type(nameField, 'Kakaós csiga');
+        await userEvent.tab();
+        expect(nameField).toHaveValue('Kakaós csiga');
+        expect(JSON.parse(localStorage.getItem('egyetemkapu.shoppingList') || '[]')[0]).toMatchObject({
+            id: 'p:11',
+            name: 'Kakaós csiga',
+        });
     });
 });

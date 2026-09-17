@@ -11,6 +11,7 @@ import {
     itemKey,
     loadShoppingList,
     removeItem,
+    renameItem,
     saveShoppingList,
     setQuantity,
     type ShoppingListItem,
@@ -371,7 +372,11 @@ export default function SalesPapersPage() {
                                                 <li key={item.id} className="text-sm">
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="min-w-0">
-                                                            <p className="font-bold leading-tight">{item.name}</p>
+                                                            <ShoppingListName
+                                                                name={item.name}
+                                                                label={t('sales.listEditName')}
+                                                                onCommit={(name) => setShoppingList((prev) => renameItem(prev, item.id, name))}
+                                                            />
                                                             <p className="text-xs opacity-80">
                                                                 {t('sales.page', { page: item.pageNumber })}
                                                             </p>
@@ -675,4 +680,52 @@ function compareFlyers(a: FlyerSummary, b: FlyerSummary, today = localIsoDate())
         return from;
     }
     return a.title.localeCompare(b.title, 'hu');
+}
+
+function ShoppingListName({
+    name,
+    label,
+    onCommit,
+}: {
+    name: string;
+    label: string;
+    onCommit: (next: string) => void;
+}) {
+    const [draft, setDraft] = useState(name);
+
+    useEffect(() => {
+        setDraft(name);
+    }, [name]);
+
+    const commit = () => {
+        const trimmed = draft.replace(/\s+/g, ' ').trim();
+        if (!trimmed) {
+            setDraft(name);
+            return;
+        }
+        if (trimmed !== name) {
+            onCommit(trimmed);
+        } else if (draft !== trimmed) {
+            setDraft(trimmed);
+        }
+    };
+
+    return (
+        <input
+            value={draft}
+            aria-label={label}
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={commit}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                    event.currentTarget.blur();
+                }
+                if (event.key === 'Escape') {
+                    setDraft(name);
+                    event.currentTarget.blur();
+                }
+            }}
+            className="w-full bg-transparent font-bold leading-tight text-black dark:text-white secret:text-[#1cf85d] border-2 border-transparent focus:border-black dark:focus:border-[#a855f7] secret:focus:border-[#1cf85d] px-0.5 -mx-0.5 outline-none"
+        />
+    );
 }
