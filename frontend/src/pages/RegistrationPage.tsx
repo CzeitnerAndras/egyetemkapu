@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Info } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { AuthCard, AuthHeader, PageShell } from '../components/PageLayout';
 
@@ -11,6 +12,7 @@ export default function RegistrationPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showPasswordHint, setShowPasswordHint] = useState(false);
 
     const navigate = useNavigate();
 
@@ -101,7 +103,30 @@ export default function RegistrationPage() {
 
                     {/* --- Jelszó --- */}
                     <div className="flex flex-col group">
-                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">Jelszó</label>
+                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase flex items-center">
+                            {t('register.password')}
+                            <button
+                                type="button"
+                                className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full secret:rounded-none border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-[#c084fc] secret:text-[#1cf85d] cursor-help"
+                                aria-label={t('register.passwordInfo')}
+                                aria-describedby="register-password-hint"
+                                onMouseEnter={() => setShowPasswordHint(true)}
+                                onMouseLeave={() => setShowPasswordHint(false)}
+                                onFocus={() => setShowPasswordHint(true)}
+                                onBlur={() => setShowPasswordHint(false)}
+                            >
+                                <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                        </label>
+                        {showPasswordHint && (
+                            <p
+                                id="register-password-hint"
+                                role="tooltip"
+                                className="mb-2 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black p-2 text-xs font-bold leading-snug text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_10px_rgba(28,248,93,0.4)] secret:font-mono"
+                            >
+                                {t('register.passwordHint')}
+                            </p>
+                        )}
                         <input
                             type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
                             className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
