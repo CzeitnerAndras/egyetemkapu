@@ -12,6 +12,7 @@ interface Task {
     completed: boolean;
     pingDayBefore: boolean;
     pingOnDay: boolean;
+    pingHoursBefore?: number;
 }
 
 function formatLocalDeadline(date = new Date()): string {

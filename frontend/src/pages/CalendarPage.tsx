@@ -13,6 +13,7 @@ interface Task {
     pingOnDay: boolean;
     pingTelegramDayBefore?: boolean;
     pingTelegramOnDay?: boolean;
+    pingHoursBefore?: number;
 }
 
 export default function CalendarPage() {
@@ -27,6 +28,7 @@ export default function CalendarPage() {
     const [pingOnDay, setPingOnDay] = useState(false);
     const [pingTelegramDayBefore, setPingTelegramDayBefore] = useState(false);
     const [pingTelegramOnDay, setPingTelegramOnDay] = useState(false);
+    const [pingHoursBefore, setPingHoursBefore] = useState(24);
     const [loading, setLoading] = useState(true);
     const [isTimeOpen, setIsTimeOpen] = useState(false);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -85,6 +87,11 @@ export default function CalendarPage() {
     const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
 
     {/* --- Dátum formázó segédek --- */ }
+    const clampPingHours = (hours: number) => {
+        if (!Number.isFinite(hours) || hours < 1) return 24;
+        return Math.min(168, Math.floor(hours));
+    };
+
     const formatDateForApi = (date: Date, timeStr: string) => {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -129,7 +136,8 @@ export default function CalendarPage() {
             pingDayBefore,
             pingOnDay,
             pingTelegramDayBefore,
-            pingTelegramOnDay
+            pingTelegramOnDay,
+            pingHoursBefore: clampPingHours(pingHoursBefore)
         };
 
         fetch('/api/tasks', {
@@ -404,13 +412,23 @@ export default function CalendarPage() {
                                 <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
                             </p>
                             <label className="flex items-center space-x-2 cursor-pointer group">
-                                <input type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
-                            </label>
-                            <label className="flex items-center space-x-2 cursor-pointer group">
                                 <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
+                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingAtDeadline')}</span>
                             </label>
+                            <div className="flex items-center space-x-2">
+                                <input id="discord-hours-before" type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={168}
+                                    value={Number.isFinite(pingHoursBefore) ? pingHoursBefore : ''}
+                                    onChange={e => setPingHoursBefore(Number(e.target.value))}
+                                    onBlur={() => setPingHoursBefore(hours => clampPingHours(hours))}
+                                    className="w-14 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-0.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] text-center text-xs secret:font-mono"
+                                    aria-label={t('cal.pingHoursBefore')}
+                                />
+                                <label htmlFor="discord-hours-before" className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase cursor-pointer">{t('cal.pingHoursBefore')}</label>
+                            </div>
                         </div>
 
                         {/* --- Telegram ping beállítások --- */}
@@ -419,13 +437,23 @@ export default function CalendarPage() {
                                 <Send className="w-3.5 h-3.5 mr-1" /> Telegram
                             </p>
                             <label className="flex items-center space-x-2 cursor-pointer group">
-                                <input type="checkbox" checked={pingTelegramDayBefore} onChange={e => setPingTelegramDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingBefore')}</span>
-                            </label>
-                            <label className="flex items-center space-x-2 cursor-pointer group">
                                 <input type="checkbox" checked={pingTelegramOnDay} onChange={e => setPingTelegramOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
-                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingDay')}</span>
+                                <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingAtDeadline')}</span>
                             </label>
+                            <div className="flex items-center space-x-2">
+                                <input id="telegram-hours-before" type="checkbox" checked={pingTelegramDayBefore} onChange={e => setPingTelegramDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={168}
+                                    value={Number.isFinite(pingHoursBefore) ? pingHoursBefore : ''}
+                                    onChange={e => setPingHoursBefore(Number(e.target.value))}
+                                    onBlur={() => setPingHoursBefore(hours => clampPingHours(hours))}
+                                    className="w-14 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-0.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] text-center text-xs secret:font-mono"
+                                    aria-label={t('cal.pingHoursBefore')}
+                                />
+                                <label htmlFor="telegram-hours-before" className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase cursor-pointer">{t('cal.pingHoursBefore')}</label>
+                            </div>
                         </div>
 
                         <p className="text-[10px] font-bold text-black/70 dark:text-gray-400 secret:text-[#1cf85d]/70 secret:font-mono leading-snug">

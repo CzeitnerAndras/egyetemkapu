@@ -166,6 +166,7 @@ describe('CalendarPage Komponens', () => {
                         pingOnDay: false,
                         pingTelegramDayBefore: false,
                         pingTelegramOnDay: false,
+                        pingHoursBefore: 24,
                     }),
                 })
             );
@@ -210,6 +211,67 @@ describe('CalendarPage Komponens', () => {
             );
             expect(screen.getByText('Sikeresen törölve!')).toBeInTheDocument();
             expect(screen.queryByText(/Törlendő feladat/)).not.toBeInTheDocument();
+        });
+    });
+
+    it('elmenti a pontos és az X órával előtti ping beállítást', async () => {
+        localStorage.setItem('token', 'test-token');
+
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, json: async () => [] })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    id: 3,
+                    title: 'Pingelt feladat',
+                    taskType: 'ZH',
+                    deadline: formatDateForApi(today, '08:00'),
+                    completed: false,
+                    pingDayBefore: true,
+                    pingOnDay: true,
+                    pingTelegramDayBefore: false,
+                    pingTelegramOnDay: true,
+                    pingHoursBefore: 3,
+                }),
+            });
+
+        const { container } = render(<CalendarPage />);
+
+        await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+        const titleInput = container.querySelectorAll('input[type="text"]')[0] as HTMLInputElement;
+        const typeInput = container.querySelectorAll('input[type="text"]')[1] as HTMLInputElement;
+        const hourInputs = container.querySelectorAll('input[type="number"]');
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+
+        const user = userEvent.setup();
+        await user.type(titleInput, 'Pingelt feladat');
+        await user.type(typeInput, 'ZH');
+        await user.click(checkboxes[0]);
+        await user.click(checkboxes[1]);
+        await user.click(checkboxes[2]);
+        await user.clear(hourInputs[0]);
+        await user.type(hourInputs[0], '3');
+        await user.click(screen.getByRole('button', { name: 'cal.save' }));
+
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/tasks',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: 'Pingelt feladat',
+                        taskType: 'ZH',
+                        deadline: formatDateForApi(today, '08:00'),
+                        completed: false,
+                        pingDayBefore: true,
+                        pingOnDay: true,
+                        pingTelegramDayBefore: false,
+                        pingTelegramOnDay: true,
+                        pingHoursBefore: 3,
+                    }),
+                })
+            );
         });
     });
 });
