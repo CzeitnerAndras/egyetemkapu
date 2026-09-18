@@ -42,6 +42,9 @@ public class Task {
     @Column(name = "ping_telegram_on_day")
     private boolean pingTelegramOnDay = false;
 
+    @Column(name = "ping_hours_before", nullable = false)
+    private Integer pingHoursBefore = 24;
+
     @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "user_id")

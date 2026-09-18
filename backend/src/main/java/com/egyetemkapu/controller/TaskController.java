@@ -5,6 +5,7 @@ import com.egyetemkapu.model.Task;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.TaskRepository;
 import com.egyetemkapu.repository.UserRepository;
+import com.egyetemkapu.service.TaskNotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,7 @@ public class TaskController {
         if (userOpt.isEmpty()) return ResponseEntity.status(401).build();
         task.setId(null);
         task.setUser(userOpt.get());
+        task.setPingHoursBefore(TaskNotificationService.clampPingHoursBefore(task.getPingHoursBefore()));
         
         if (task.getTaskType() == null) task.setTaskType("Naptár");
         
@@ -91,6 +93,7 @@ public class TaskController {
                     task.setPingOnDay(updatedTask.isPingOnDay());
                     task.setPingTelegramDayBefore(updatedTask.isPingTelegramDayBefore());
                     task.setPingTelegramOnDay(updatedTask.isPingTelegramOnDay());
+                    task.setPingHoursBefore(TaskNotificationService.clampPingHoursBefore(updatedTask.getPingHoursBefore()));
 
                     return ResponseEntity.ok(taskRepository.save(task));
                 })

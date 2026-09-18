@@ -9,17 +9,18 @@ final class DeadlinePingMessages {
         return language != null && language.equalsIgnoreCase("en");
     }
 
-    static String dayBefore(String language, String title, String type) {
+    static String atDeadline(String language, String title, String type) {
         if (isEnglish(language)) {
-            return "Reminder: **" + title + "** (" + type + ") is due tomorrow.";
+            return "Reminder: **" + title + "** (" + type + ") is due now.";
         }
-        return "Emlékeztető: holnap lejár a(z) **" + title + "** (" + type + ") határideje.";
+        return "Emlékeztető: most lejár a(z) **" + title + "** (" + type + ") határideje.";
     }
 
-    static String twoHoursBefore(String language, String title, String type) {
+    static String hoursBefore(String language, String title, String type, int hours) {
         if (isEnglish(language)) {
-            return "Reminder: **" + title + "** (" + type + ") is due in 2 hours.";
+            String unit = hours == 1 ? "hour" : "hours";
+            return "Reminder: **" + title + "** (" + type + ") is due in " + hours + " " + unit + ".";
         }
-        return "Emlékeztető: 2 óra múlva lejár a(z) **" + title + "** (" + type + ") határideje.";
+        return "Emlékeztető: " + hours + " óra múlva lejár a(z) **" + title + "** (" + type + ") határideje.";
     }
 }
