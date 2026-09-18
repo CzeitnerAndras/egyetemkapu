@@ -51,6 +51,17 @@ describe('RegistrationPage Komponens', () => {
         expect(screen.getByRole('button', { name: 'Regisztráció' })).toBeInTheDocument();
     });
 
+    it('a jelszó mellett infóikonon mutatja a jelszó követelményeit', async () => {
+        const user = userEvent.setup();
+        render(<RegistrationPage />);
+
+        expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+        await user.hover(screen.getByRole('button', { name: 'register.passwordInfo' }));
+
+        expect(screen.getByRole('tooltip')).toHaveTextContent('register.passwordHint');
+    });
+
     it('hibát jelenít meg, ha a jelszavak nem egyeznek, és nem hív fetch-et', async () => {
         const user = userEvent.setup();
         const { container } = render(<RegistrationPage />);
