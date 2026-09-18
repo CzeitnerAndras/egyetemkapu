@@ -105,7 +105,8 @@ class TaskControllerTest {
                             "pingDayBefore": false,
                             "pingOnDay": false,
                             "pingTelegramDayBefore": false,
-                            "pingTelegramOnDay": false
+                            "pingTelegramOnDay": false,
+                            "pingHoursBefore": 6
                         }
                         """))
                 .andExpect(status().isOk());
@@ -115,5 +116,6 @@ class TaskControllerTest {
         assertNull(captor.getValue().getId());
         assertEquals(mockUser, captor.getValue().getUser());
         assertEquals("Másik user feladata", captor.getValue().getTitle());
+        assertEquals(6, captor.getValue().getPingHoursBefore());
     }
 }
