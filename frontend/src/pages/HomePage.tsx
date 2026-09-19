@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Megaphone, Zap, Calendar, Bot, Send, Users, Calculator, FileText, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import { sendPresenceHeartbeat } from '../utils/presence';
 
 interface EventItem {
   id: number;
@@ -132,15 +133,13 @@ export default function HomePage() {
         setLoading(false);
       });
 
-    {/* --- Regisztrált felhasználók száma --- */ }
-    fetch('/api/users/count')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data && typeof data.count === 'number') {
-          setUsersCount(data.count);
+    {/* --- Jelenleg aktív felhasználók száma --- */ }
+    sendPresenceHeartbeat()
+      .then((count) => {
+        if (typeof count === 'number') {
+          setUsersCount(count);
         }
-      })
-      .catch((err) => console.error('Hiba a felhasználószám lekérésekor:', err));
+      });
 
     {/* --- Feltöltött dokumentumok száma --- */ }
     fetch('/api/documents')
