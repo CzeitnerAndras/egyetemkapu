@@ -127,10 +127,10 @@ describe('HomePage Komponens', () => {
         });
     });
 
-    it('lekéri a statisztikai adatokat (regisztrált felhasználók, dokumentumok, megoldott egyenletek) hitelesítés nélkül', async () => {
+    it('lekéri a statisztikai adatokat (aktív felhasználók, dokumentumok, megoldott egyenletek) hitelesítés nélkül', async () => {
         mockFetchByUrl({
             '/api/events': { ok: true, json: async () => [] },
-            '/api/users/count': { ok: true, json: async () => ({ count: 42 }) },
+            '/api/users/heartbeat': { ok: true, json: async () => ({ count: 42 }) },
             '/api/documents': { ok: true, json: async () => [{ id: 1 }, { id: 2 }] },
             '/api/tools/calculator/count': { ok: true, json: async () => ({ count: 153 }) },
         });
@@ -138,7 +138,10 @@ describe('HomePage Komponens', () => {
         render(<HomePage />);
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith('/api/users/count');
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/users/heartbeat',
+                expect.objectContaining({ method: 'POST' })
+            );
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/documents');
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/tools/calculator/count');
         });
