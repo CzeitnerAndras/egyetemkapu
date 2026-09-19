@@ -5,6 +5,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.service.ActiveUserService;
 import com.egyetemkapu.service.UserAccountService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,16 +25,19 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final UserAccountService userAccountService;
+    private final ActiveUserService activeUserService;
 
     public UserController(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
-            UserAccountService userAccountService) {
+            UserAccountService userAccountService,
+            ActiveUserService activeUserService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userAccountService = userAccountService;
+        this.activeUserService = activeUserService;
     }
 
     private Optional<User> getCurrentUser() {
@@ -42,10 +46,15 @@ public class UserController {
     }
 
     @GetMapping("/count")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> getUserCount() {
-        long count = userRepository.count();
-        return ResponseEntity.ok(Map.of("count", count));
+    public ResponseEntity<?> getActiveUserCount() {
+        return ResponseEntity.ok(Map.of("count", activeUserService.countActive()));
+    }
+
+    @PostMapping("/heartbeat")
+    public ResponseEntity<?> heartbeat(@RequestBody(required = false) Map<String, String> payload) {
+        String visitorId = payload == null ? null : payload.get("visitorId");
+        activeUserService.heartbeat(visitorId);
+        return ResponseEntity.ok(Map.of("count", activeUserService.countActive()));
     }
 
     @GetMapping("/me")
