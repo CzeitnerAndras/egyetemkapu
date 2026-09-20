@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { BookOpen, Upload, Download, FileText, X, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { downloadAuthenticatedFile } from '../utils/downloadFile';
 
 interface Document {
     id: number;
@@ -85,20 +86,7 @@ export default function KnowledgeBasePage() {
     };
 
     const handleDownload = (id: number, fileName: string) => {
-        const token = localStorage.getItem('token');
-        fetch(`/api/documents/download/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            });
+        void downloadAuthenticatedFile(`/api/documents/download/${id}`, fileName);
     };
 
     const translateCategory = (cat: string) => {

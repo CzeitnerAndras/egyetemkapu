@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ShieldAlert, Check, X, Download, Lightbulb, Trash2, FileText, Megaphone, Plus } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { downloadAuthenticatedFile } from '../utils/downloadFile';
 
 interface PendingDocument {
     id: number;
@@ -81,20 +82,7 @@ export default function AdminPanelPage() {
     };
 
     const handleDownload = (id: number, fileName: string) => {
-        const token = localStorage.getItem('token');
-        fetch(`/api/documents/download/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            });
+        void downloadAuthenticatedFile(`/api/documents/admin/${id}/download`, fileName);
     };
 
     const handleDeleteSuggestion = async (id: number) => {
