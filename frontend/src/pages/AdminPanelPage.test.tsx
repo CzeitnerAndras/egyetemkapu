@@ -163,7 +163,7 @@ describe('AdminPanelPage Komponens', () => {
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
-                '/api/documents/download/3',
+                '/api/documents/admin/3/download',
                 expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
             );
         });
