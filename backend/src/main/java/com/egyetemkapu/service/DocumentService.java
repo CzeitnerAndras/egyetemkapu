@@ -108,10 +108,26 @@ public class DocumentService {
 
     @Transactional(readOnly = true)
     public Document getApprovedDocument(Long id) {
+        return getDocumentForDownload(id, false);
+    }
+
+    @Transactional(readOnly = true)
+    public Document getDocumentForAdminDownload(Long id) {
+        return getDocumentForDownload(id, true);
+    }
+
+    @Transactional(readOnly = true)
+    public Path getDocumentPath(Long id) {
+        return Paths.get(getApprovedDocument(id).getFilePath());
+    }
+
+    private Document getDocumentForDownload(Long id, boolean includePending) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));
 
-        if (document.getStatus() != DocumentStatus.APPROVED) {
+        boolean allowed = document.getStatus() == DocumentStatus.APPROVED
+                || (includePending && document.getStatus() == DocumentStatus.PENDING);
+        if (!allowed) {
             throw new RuntimeException("A dokumentum még nem érhető el letöltésre");
         }
 
@@ -120,10 +136,5 @@ public class DocumentService {
             throw new RuntimeException("Érvénytelen fájlútvonal");
         }
         return document;
-    }
-
-    @Transactional(readOnly = true)
-    public Path getDocumentPath(Long id) {
-        return Paths.get(getApprovedDocument(id).getFilePath());
     }
 }

@@ -59,20 +59,9 @@ public class DocumentController {
     @LogAction("Dokumentum letöltése")
     public ResponseEntity<Resource> downloadDocument(@PathVariable Long id) {
         try {
-            Document document = documentService.getApprovedDocument(id);
-            Path filePath = Paths.get(document.getFilePath());
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (resource.exists() || resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"")
-                        .body(resource);
-            } else {
-                throw new RuntimeException("Fájl nem olvasható");
-            }
+            return serveDocument(documentService.getApprovedDocument(id));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.notFound().build();
         }
     }
 
@@ -83,6 +72,16 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.getPendingDocuments().stream()
                 .map(DocumentResponseDto::from)
                 .toList());
+    }
+
+    @GetMapping("/admin/{id}/download")
+    @LogAction("Admin: Dokumentum letöltése ellenőrzésre")
+    public ResponseEntity<Resource> downloadDocumentForReview(@PathVariable Long id) {
+        try {
+            return serveDocument(documentService.getDocumentForAdminDownload(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/admin/{id}/approve")
@@ -97,5 +96,23 @@ public class DocumentController {
     public ResponseEntity<?> rejectDocument(@PathVariable Long id) {
         documentService.rejectDocument(id);
         return ResponseEntity.ok(Map.of("message", "Dokumentum elutasítva és törölve!"));
+    }
+
+    private ResponseEntity<Resource> serveDocument(Document document) {
+        try {
+            Path filePath = Paths.get(document.getFilePath()).toAbsolutePath().normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
