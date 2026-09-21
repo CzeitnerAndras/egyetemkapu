@@ -11,7 +11,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tools/calculator")
-@CrossOrigin
 public class CalculatorController {
 
     private static final String CALCULATOR_ACTION = "Komplex számológép hívás";

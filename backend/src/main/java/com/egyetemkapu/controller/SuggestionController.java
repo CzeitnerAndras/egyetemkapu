@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/suggestions")
-@CrossOrigin
 public class SuggestionController {
 
     private final SuggestionRepository suggestionRepository;

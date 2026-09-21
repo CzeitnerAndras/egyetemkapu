@@ -20,7 +20,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/documents")
-@CrossOrigin
 public class DocumentController {
 
     private final DocumentService documentService;

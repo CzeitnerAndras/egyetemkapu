@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/tasks")
-@CrossOrigin
 public class TaskController {
 
     private final TaskRepository taskRepository;

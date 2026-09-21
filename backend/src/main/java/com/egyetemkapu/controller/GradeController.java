@@ -17,7 +17,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/grades")
-@CrossOrigin
 public class GradeController {
 
     private final GradeRepository gradeRepository;

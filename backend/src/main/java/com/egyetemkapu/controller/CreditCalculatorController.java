@@ -9,7 +9,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/calculator")
-@CrossOrigin
 public class CreditCalculatorController {
 
     private final CreditCalculatorService calculatorService;
