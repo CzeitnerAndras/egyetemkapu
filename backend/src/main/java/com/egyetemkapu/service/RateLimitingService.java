@@ -26,6 +26,18 @@ public class RateLimitingService {
         return cache.computeIfAbsent("reset:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
     }
 
+    public Bucket resolveLoginBucket(String clientKey) {
+        return cache.computeIfAbsent("login:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+    }
+
+    public Bucket resolveRegisterBucket(String clientKey) {
+        return cache.computeIfAbsent("register:" + clientKey, key -> newFixedBucket(5, Duration.ofMinutes(15)));
+    }
+
+    public Bucket resolveVerifyEmailBucket(String clientKey) {
+        return cache.computeIfAbsent("verify:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+    }
+
     private Bucket newBucket(String username) {
         return newFixedBucket(5, Duration.ofMinutes(1));
     }
