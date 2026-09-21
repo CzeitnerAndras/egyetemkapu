@@ -33,4 +33,18 @@ class CreditCalculatorServiceTest {
         double result = calculatorService.calculateWeightedAverage(subjects);
         assertEquals(0.0, result, "Üres lista esetén az átlagnak 0-nak kell lennie");
     }
+
+    @Test
+    void testCalculateWeightedAverage_NullList_ReturnsZero() {
+        assertEquals(0.0, calculatorService.calculateWeightedAverage(null), "Null lista esetén az átlagnak 0-nak kell lennie");
+    }
+
+    @Test
+    void testCalculateWeightedAverage_ZeroCredits_ReturnsZero() {
+        SubjectResultDto subject = new SubjectResultDto();
+        subject.setCredit(0);
+        subject.setGrade(5);
+
+        assertEquals(0.0, calculatorService.calculateWeightedAverage(List.of(subject)));
+    }
 }
