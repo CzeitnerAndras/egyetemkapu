@@ -61,6 +61,35 @@ class DocumentServiceTest {
         assertEquals(approved, documentService.getApprovedDocument(4L));
     }
 
+    @Test
+    void getApprovedDocument_rejectsMissingDocuments() {
+        when(documentRepository.findById(99L)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> documentService.getApprovedDocument(99L));
+        assertEquals("Dokumentum nem található", ex.getMessage());
+    }
+
+    @Test
+    void getApprovedDocument_rejectsPathsOutsideUploadRoot() {
+        Document leaked = pendingDocument(5L);
+        leaked.setStatus(DocumentStatus.APPROVED);
+        leaked.setFilePath(uploadRoot.getParent().resolve("secret.txt").toString());
+        when(documentRepository.findById(5L)).thenReturn(Optional.of(leaked));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> documentService.getApprovedDocument(5L));
+        assertEquals("Érvénytelen fájlútvonal", ex.getMessage());
+    }
+
+    @Test
+    void getDocumentForAdminDownload_rejectsPathsOutsideUploadRoot() {
+        Document leaked = pendingDocument(6L);
+        leaked.setFilePath(uploadRoot.resolve("..").resolve("secret.txt").normalize().toString());
+        when(documentRepository.findById(6L)).thenReturn(Optional.of(leaked));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> documentService.getDocumentForAdminDownload(6L));
+        assertEquals("Érvénytelen fájlútvonal", ex.getMessage());
+    }
+
     private Document pendingDocument(Long id) {
         Document document = new Document();
         document.setId(id);
