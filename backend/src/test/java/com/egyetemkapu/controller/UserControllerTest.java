@@ -65,4 +65,17 @@ class UserControllerTest {
 
         verify(activeUserService).heartbeat("11111111-1111-4111-8111-111111111111");
     }
+
+    @Test
+    void heartbeat_emptyPayloadStillReturnsCount() throws Exception {
+        when(activeUserService.countActive()).thenReturn(0);
+
+        mockMvc.perform(post("/api/users/heartbeat")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(0));
+
+        verify(activeUserService).heartbeat(null);
+    }
 }
