@@ -280,6 +280,42 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void syncAuchanPersistsIpaperPagesFromTheHomepage() {
+        String listing = """
+                <a href="https://reklamujsag.auchan.hu/online-katalogusok/2026/tr37/2026-09-10-09-16-heti-hipermarket-ajanlataink/">hiper</a>
+                """;
+        String catalog = """
+                <script>window.staticSettings = {
+                  "name":"2026-09-10-09-16-heti-hipermarket-ajanlataink",
+                  "pages":[1],
+                  "pageTexts":["CSIRKE ALSÓCOMB 785 Ft ÉDESBURGONYA 589 Ft"]
+                };</script>
+                """;
+        when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
+            String url = invocation.getArgument(0);
+            if (url.contains("reklamujsag.auchan.hu") && url.contains("hipermarket")) {
+                return catalog;
+            }
+            if (url.contains("auchan.hu")) {
+                return listing;
+            }
+            return "";
+        });
+
+        service.syncAuchan(LocalDate.of(2026, 9, 15));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("auchan"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog parsed = captor.getValue().getFirst();
+        assertEquals(1, parsed.pages().size());
+        assertTrue(parsed.products().stream().anyMatch(product -> product.name().toUpperCase().contains("CSIRKE")),
+                parsed.products().toString());
+        assertTrue(parsed.products().stream().noneMatch(product ->
+                product.name() != null && product.name().contains("hivatalos oldalon")));
+    }
+
+    @Test
     void isStaleDoesNotRetriggerRightAfterASyncAttempt() {
         Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
         Flyer penny = storeFlyer("penny", "penny:rewe:202636",
@@ -290,7 +326,9 @@ class FlyerSyncServiceTest {
                 "https://www.spar.hu/ajanlatok/interspar/260903-2-interspar-szorolap");
         Flyer market = storeFlyer("spar", "spar:spar-market:2026-09-03",
                 "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar");
-        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market));
+        Flyer auchan = storeFlyer("auchan", "auchan:2026-09-03-09-09-heti-hipermarket-ajanlataink",
+                "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr36/x/");
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);

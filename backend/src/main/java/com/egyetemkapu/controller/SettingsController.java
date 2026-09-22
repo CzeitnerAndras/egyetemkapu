@@ -16,7 +16,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/settings")
-@CrossOrigin
 public class SettingsController {
 
     private final SettingsRepository settingsRepository;

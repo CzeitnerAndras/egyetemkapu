@@ -11,16 +11,20 @@ jest.mock('../i18n/LanguageContext', () => {
 
 describe('SettingsPage Komponens', () => {
     beforeEach(() => {
-        globalThis.fetch = jest.fn();
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
         localStorage.clear();
         jest.clearAllMocks();
     });
 
-    it('token nélkül nem próbálja lekérni a beállításokat', async () => {
+    it('cookie nélkül is megpróbálja lekérni a beállításokat', async () => {
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 401 });
         render(<SettingsPage />);
 
         await waitFor(() => {
-            expect(globalThis.fetch).not.toHaveBeenCalled();
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/settings',
+                expect.objectContaining({ credentials: 'include' })
+            );
         });
     });
 
@@ -36,7 +40,7 @@ describe('SettingsPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/settings',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
 
@@ -70,7 +74,8 @@ describe('SettingsPage Komponens', () => {
         expect(telegramInput).toHaveValue('123456');
     });
 
-    it('bejelentkezés nélküli mentéskor a needLogin üzenetet jeleníti meg, és nem hív fetch-et', async () => {
+    it('bejelentkezés nélküli mentéskor a needLogin üzenetet jeleníti meg', async () => {
+        (globalThis.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
         render(<SettingsPage />);
 
         const user = userEvent.setup();
@@ -79,7 +84,6 @@ describe('SettingsPage Komponens', () => {
         await waitFor(() => {
             expect(screen.getByText('settings.needLogin')).toBeInTheDocument();
         });
-        expect(globalThis.fetch).not.toHaveBeenCalled();
     });
 
     it('sikeres mentéskor a saved üzenetet jeleníti meg', async () => {
@@ -101,10 +105,7 @@ describe('SettingsPage Komponens', () => {
                 '/api/settings',
                 expect.objectContaining({
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-token',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({ discordWebhook: 'https://discord.com/api/webhooks/xyz', telegramChatId: '' }),
                 })
             );

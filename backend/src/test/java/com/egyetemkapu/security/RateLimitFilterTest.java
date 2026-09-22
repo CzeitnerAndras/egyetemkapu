@@ -145,6 +145,36 @@ class RateLimitFilterTest {
     }
 
     @Test
+    void rejectsLoginOverLimit() throws Exception {
+        when(rateLimitingService.resolveLoginBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(false);
+
+        MockHttpServletResponse response = callFilter("POST", "/api/auth/login");
+
+        assertEquals(429, response.getStatus());
+    }
+
+    @Test
+    void rejectsRegisterOverLimit() throws Exception {
+        when(rateLimitingService.resolveRegisterBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(false);
+
+        MockHttpServletResponse response = callFilter("POST", "/api/auth/register");
+
+        assertEquals(429, response.getStatus());
+    }
+
+    @Test
+    void allowsLoginWithinLimit() throws Exception {
+        when(rateLimitingService.resolveLoginBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(true);
+
+        MockHttpServletResponse response = callFilter("POST", "/api/auth/login");
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
     void ignoresSpoofedForwardedForFromUntrustedRemote() throws Exception {
         when(rateLimitingService.resolveForgotPasswordBucket("203.0.113.10")).thenReturn(bucket);
         when(bucket.tryConsume(1)).thenReturn(true);

@@ -25,4 +25,13 @@ class HungarianTextTest {
         String snippet = HungarianText.snippet("Heti ajánlat: friss kakaóscsiga 249 Ft a pultnál", "kakaoscsiga", 12);
         assertTrue(snippet.toLowerCase().contains("kakaóscsiga") || snippet.toLowerCase().contains("kakaoscsiga"));
     }
+
+    @Test
+    void normalizeAndContainsHandleNullAndEmpty() {
+        assertEquals("", HungarianText.normalize(null));
+        assertFalse(HungarianText.contains("Kenyér", ""));
+        assertFalse(HungarianText.contains("Kenyér", null));
+        assertEquals("", HungarianText.snippet(null, "tej", 8));
+        assertEquals("Rövid szöveg", HungarianText.snippet("Rövid szöveg", "nincs", 20));
+    }
 }

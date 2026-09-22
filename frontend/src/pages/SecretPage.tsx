@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
 import TerminalHack from '../components/TerminalGame';
+import { fetchWithAuth } from '../utils/authApi';
 
 export default function SecretPage() {
     const [username, setUsername] = useState('UNKNOWN');
@@ -15,19 +16,14 @@ export default function SecretPage() {
     const [isSavingNote, setIsSavingNote] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            fetch('/api/users/me', {
-                headers: { 'Authorization': `Bearer ${token}` }
+        fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false, retryOn401: false })
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data && data.username) {
+                    setUsername(data.username);
+                }
             })
-                .then(res => res.ok ? res.json() : null)
-                .then(data => {
-                    if (data && data.username) {
-                        setUsername(data.username);
-                    }
-                })
-                .catch(err => console.error("Hiba a név lekérésekor:", err));
-        }
+            .catch(err => console.error("Hiba a név lekérésekor:", err));
     }, []);
 
     const handleLogoff = () => {
@@ -37,11 +33,8 @@ export default function SecretPage() {
     const openNotes = async () => {
         setShowNotes(true);
         setIsLoadingNote(true);
-        const token = localStorage.getItem('token');
         try {
-            const res = await fetch('/api/notes', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth('/api/notes', {}, { redirectOnAuthFailure: false });
             if (res.ok) {
                 const data = await res.json();
                 if (data && data.length > 0) {
@@ -60,26 +53,19 @@ export default function SecretPage() {
 
     const saveNote = async () => {
         setIsSavingNote(true);
-        const token = localStorage.getItem('token');
         try {
             if (noteId) {
-                await fetch(`/api/notes/${noteId}`, {
+                await fetchWithAuth(`/api/notes/${noteId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: noteContent })
-                });
+                }, { redirectOnAuthFailure: false });
             } else {
-                const res = await fetch('/api/notes', {
+                const res = await fetchWithAuth('/api/notes', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ content: noteContent })
-                });
+                }, { redirectOnAuthFailure: false });
                 if (res.ok) {
                     const data = await res.json();
                     setNoteId(data.id);

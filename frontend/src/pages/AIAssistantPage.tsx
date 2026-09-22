@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface Message {
     id: number;
@@ -75,17 +76,13 @@ export default function AIAssistantPage() {
         }
 
         setIsLoading(true);
-        const token = localStorage.getItem('token');
 
         try {
-            const response = await fetch('/api/ai/ask', {
+            const response = await fetchWithAuth('/api/ai/ask', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: userText })
-            });
+            }, { redirectOnAuthFailure: false });
 
             if (response.status === 401 || response.status === 403) {
                 throw new Error('unauthorized');
@@ -193,6 +190,7 @@ export default function AIAssistantPage() {
                             placeholder={t('ai.placeholder')}
                             className="flex-1 min-w-0 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-[#1cf85d]/30 text-base sm:text-lg bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] placeholder:secret:text-[#1cf85d]/50 secret:font-mono transition-all shadow-[4px_4px_0px_#000] dark:shadow-inner"
                             disabled={isLoading}
+                            maxLength={4000}
                         />
                         <button
                             type="submit"

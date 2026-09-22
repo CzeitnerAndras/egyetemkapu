@@ -1,6 +1,6 @@
 export const SHOPPING_LIST_KEY = 'egyetemkapu.shoppingList';
 
-export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco';
+export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan';
 
 export interface ShoppingListItem {
     id: string;
@@ -15,7 +15,7 @@ export interface ShoppingListItem {
 
 export type ShoppingListDraft = Omit<ShoppingListItem, 'id' | 'quantity'> & { quantity?: number };
 
-const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi'];
+const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan'];
 
 export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | 'pageNumber' | 'name'>): string {
     if (item.productId != null) {
@@ -39,6 +39,14 @@ export function setQuantity(list: ShoppingListItem[], id: string, quantity: numb
         return list.filter((item) => item.id !== id);
     }
     return list.map((item) => (item.id === id ? { ...item, quantity } : item));
+}
+
+export function renameItem(list: ShoppingListItem[], id: string, name: string): ShoppingListItem[] {
+    const trimmed = name.replace(/\s+/g, ' ').trim();
+    if (!trimmed) {
+        return list;
+    }
+    return list.map((item) => (item.id === id ? { ...item, name: trimmed } : item));
 }
 
 export function removeItem(list: ShoppingListItem[], id: string): ShoppingListItem[] {
@@ -73,7 +81,7 @@ export function saveShoppingList(list: ShoppingListItem[]): void {
 
 function normalizeItem(item: ShoppingListItem): ShoppingListItem {
     return {
-        id: itemKey(item),
+        id: item.id || itemKey(item),
         productId: item.productId,
         flyerId: item.flyerId,
         store: item.store,

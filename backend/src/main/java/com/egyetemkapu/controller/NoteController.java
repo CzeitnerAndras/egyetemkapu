@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/notes")
-@CrossOrigin
 public class NoteController {
 
     private final NoteRepository noteRepository;

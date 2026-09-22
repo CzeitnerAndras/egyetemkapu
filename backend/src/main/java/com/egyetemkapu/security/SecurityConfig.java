@@ -32,16 +32,19 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
+    private final OriginCsrfFilter originCsrfFilter;
     private final boolean swaggerEnabled;
     private final String allowedOrigins;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RateLimitFilter rateLimitFilter,
+            OriginCsrfFilter originCsrfFilter,
             @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled,
             @Value("${CORS_ALLOWED_ORIGINS:" + DEFAULT_ALLOWED_ORIGINS + "}") String allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.rateLimitFilter = rateLimitFilter;
+        this.originCsrfFilter = originCsrfFilter;
         this.swaggerEnabled = swaggerEnabled;
         this.allowedOrigins = allowedOrigins;
     }
@@ -83,6 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/flyers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/documents").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/count").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/heartbeat").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tools/calculator/count").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/calculator/weighted-average").permitAll()
                         .requestMatchers("/api/documents/admin/**").hasRole("ADMIN")
@@ -94,6 +98,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(originCsrfFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitFilter, JwtAuthenticationFilter.class);
 

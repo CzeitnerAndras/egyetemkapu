@@ -32,7 +32,7 @@ const getThemeToggle = (container: HTMLElement) =>
 
 describe('Navbar Komponens', () => {
     beforeEach(() => {
-        globalThis.fetch = jest.fn();
+        globalThis.fetch = jest.fn().mockResolvedValue({ status: 401, ok: false, json: async () => ({}) });
         localStorage.clear();
         document.documentElement.className = '';
         window.history.pushState({}, '', '/');
@@ -151,6 +151,7 @@ describe('Navbar Komponens', () => {
         localStorage.setItem('token', 'test-token');
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
             ok: true,
+            status: 200,
             json: async () => ({ username: 'admin_user', role: 'ROLE_ADMIN' }),
         });
 
@@ -162,7 +163,8 @@ describe('Navbar Komponens', () => {
 
         const [requestedUrl, requestInit] = (globalThis.fetch as jest.Mock).mock.calls[0];
         expect(requestedUrl).toBe('/api/users/me');
-        expect((requestInit.headers as Headers).get('Authorization')).toBe('Bearer test-token');
+        expect(requestInit.credentials).toBe('include');
+        expect((requestInit.headers as Headers).get('Authorization')).toBeNull();
 
         const user = setup();
         await openMenu(user, container);
@@ -183,14 +185,19 @@ describe('Navbar Komponens', () => {
     });
 
     it('profil ikonra kattintva bejelentkezve megnyitja a profil menüt, és megjeleníti a felhasználónevet', async () => {
+        jest.useRealTimers();
         localStorage.setItem('token', 'test-token');
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+        (globalThis.fetch as jest.Mock).mockResolvedValue({
             ok: true,
+            status: 200,
             json: async () => ({ username: 'teszt_elek' }),
         });
 
         const { container } = renderWithRouter();
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+        await act(async () => {
+            await Promise.resolve();
+        });
 
         const user = setup();
         await user.click(container.querySelector('.lucide-user')!);
@@ -213,7 +220,6 @@ describe('Navbar Komponens', () => {
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(3));
 
         expect((globalThis.fetch as jest.Mock).mock.calls[1][0]).toBe('/api/auth/refresh');
-        expect(localStorage.getItem('token')).toBe('new-token');
 
         const user = setup();
         await user.click(container.querySelector('.lucide-user')!);
@@ -244,8 +250,6 @@ describe('Navbar Komponens', () => {
         const { container } = renderWithRouter();
         const user = setup();
 
-        localStorage.setItem('token', 'fresh-token');
-        localStorage.setItem('refreshToken', 'fresh-refresh-token');
         (globalThis.fetch as jest.Mock).mockResolvedValue({
             status: 200,
             ok: true,
@@ -262,42 +266,42 @@ describe('Navbar Komponens', () => {
         expect(await screen.findByText(/friss_elek/)).toBeInTheDocument();
     });
 
-    it('átmeneti szerverhiba (500) esetén nem dobja el a munkamenetet', async () => {
-        localStorage.setItem('token', 'test-token');
+    it('átmeneti szerverhiba (500) esetén nem hívja a logout végpontot', async () => {
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ status: 500, ok: false });
 
-        const { container } = renderWithRouter();
+        renderWithRouter();
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
 
-        expect(localStorage.getItem('token')).toBe('test-token');
-
-        const user = setup();
-        await user.click(container.querySelector('.lucide-user')!);
-
-        expect(mockNavigate).not.toHaveBeenCalledWith('/login');
+        expect(globalThis.fetch).not.toHaveBeenCalledWith(
+            '/api/auth/logout',
+            expect.anything()
+        );
     });
 
     it('kijelentkezéskor törli a tokeneket, meghívja a logout végpontot, és a kezdőlapra navigál', async () => {
+        jest.useRealTimers();
         localStorage.setItem('token', 'test-token');
         localStorage.setItem('refreshToken', 'test-refresh-token');
         (globalThis.fetch as jest.Mock)
-            .mockResolvedValueOnce({ ok: true, json: async () => ({ username: 'teszt_elek' }) })
+            .mockResolvedValueOnce({ status: 200, ok: true, json: async () => ({ username: 'teszt_elek' }) })
             .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
         const { container } = renderWithRouter();
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+        await act(async () => {
+            await Promise.resolve();
+        });
 
         const user = setup();
         await user.click(container.querySelector('.lucide-user')!);
-        await user.click(screen.getByText('nav.logout'));
+        await user.click(await screen.findByText('nav.logout'));
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/auth/logout',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refreshToken: 'test-refresh-token' }),
+                    credentials: 'include',
                 })
             );
         });

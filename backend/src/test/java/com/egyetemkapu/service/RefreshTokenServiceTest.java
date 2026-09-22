@@ -5,6 +5,7 @@ import com.egyetemkapu.model.RefreshToken;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.RefreshTokenRepository;
 import com.egyetemkapu.repository.UserRepository;
+import com.egyetemkapu.security.PasswordResetTokens;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +32,7 @@ class RefreshTokenServiceTest {
     private RefreshTokenService refreshTokenService;
 
     @Test
-    void createRefreshToken_ExistingToken_ReusesRowInsteadOfInserting() {
+    void createRefreshToken_ExistingToken_ReusesRowAndStoresHash() {
         User user = new User();
         user.setId(1L);
         RefreshToken existing = new RefreshToken();
@@ -44,15 +45,16 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByUser(user)).thenReturn(Optional.of(existing));
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
 
-        RefreshToken result = refreshTokenService.createRefreshToken(1L);
+        RefreshTokenService.IssuedRefreshToken issued = refreshTokenService.createRefreshToken(1L);
 
-        assertEquals(42L, result.getId());
-        assertNotEquals("regi-token", result.getToken());
+        assertEquals(42L, existing.getId());
+        assertEquals(PasswordResetTokens.hash(issued.rawToken()), existing.getToken());
+        assertNotEquals(issued.rawToken(), existing.getToken());
         verify(refreshTokenRepository, never()).deleteByUser(any());
     }
 
     @Test
-    void createRefreshToken_NoExistingToken_CreatesNewOne() {
+    void createRefreshToken_NoExistingToken_CreatesHashedToken() {
         User user = new User();
         user.setId(1L);
 
@@ -60,12 +62,36 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByUser(user)).thenReturn(Optional.empty());
         when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
 
-        RefreshToken result = refreshTokenService.createRefreshToken(1L);
+        RefreshTokenService.IssuedRefreshToken issued = refreshTokenService.createRefreshToken(1L);
 
-        assertNull(result.getId());
-        assertEquals(user, result.getUser());
-        assertNotNull(result.getToken());
-        assertTrue(result.getExpiryDate().isAfter(LocalDateTime.now()));
+        assertFalse(issued.rawToken().isBlank());
+        verify(refreshTokenRepository).save(argThat(saved ->
+                saved.getUser().equals(user)
+                        && PasswordResetTokens.hash(issued.rawToken()).equals(saved.getToken())
+                        && saved.getExpiryDate().isAfter(LocalDateTime.now())));
+    }
+
+    @Test
+    void findByRawToken_LooksUpSha256Hash() {
+        when(refreshTokenRepository.findByToken(PasswordResetTokens.hash("nyers")))
+                .thenReturn(Optional.of(new RefreshToken()));
+
+        assertTrue(refreshTokenService.findByRawToken("nyers").isPresent());
+        assertTrue(refreshTokenService.findByRawToken(" ").isEmpty());
+    }
+
+    @Test
+    void rotate_ReplacesHashAndExtendsExpiry() {
+        RefreshToken current = new RefreshToken();
+        current.setToken("regi-hash");
+        current.setExpiryDate(LocalDateTime.now().plusDays(1));
+        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(i -> i.getArgument(0));
+
+        RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(current);
+
+        assertEquals(PasswordResetTokens.hash(rotated.rawToken()), current.getToken());
+        assertNotEquals("regi-hash", current.getToken());
+        assertTrue(current.getExpiryDate().isAfter(LocalDateTime.now().plusDays(6)));
     }
 
     @Test
@@ -90,6 +116,6 @@ class RefreshTokenServiceTest {
         });
 
         assertEquals("A Refresh Token lejárt! Kérlek, jelentkezz be újra.", exception.getMessage());
-        verify(refreshTokenRepository, times(1)).delete(token); 
+        verify(refreshTokenRepository, times(1)).delete(token);
     }
 }

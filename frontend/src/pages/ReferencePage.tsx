@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BookMarked, Copy, Check, PenTool, Sparkles, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { fetchWithAuth } from '../utils/authApi';
 
 export default function ReferencePage() {
     const { t, language } = useLanguage();
@@ -27,18 +28,14 @@ export default function ReferencePage() {
         setIsLoading(true);
         setIsCopied(false);
 
-        const token = localStorage.getItem('token');
         const requestBody = { author, title, year, publisher, style };
 
         try {
-            const res = await fetch('/api/tools/reference/generate', {
+            const res = await fetchWithAuth('/api/tools/reference/generate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody)
-            });
+            }, { redirectOnAuthFailure: false });
 
             if (res.ok) {
                 const data = await res.json();

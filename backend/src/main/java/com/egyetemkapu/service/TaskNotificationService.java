@@ -13,6 +13,9 @@ import java.time.temporal.ChronoUnit;
 @Service
 public class TaskNotificationService {
 
+    static final int MIN_PING_HOURS_BEFORE = 1;
+    static final int MAX_PING_HOURS_BEFORE = 168;
+
     private final TaskRepository taskRepository;
     private final SettingsRepository settingsRepository;
     private final NotificationSenderService notificationSenderService;
@@ -39,18 +42,21 @@ public class TaskNotificationService {
             if (task.getDeadline() == null || task.getUser() == null) continue;
 
             LocalDateTime deadlineMinute = task.getDeadline().truncatedTo(ChronoUnit.MINUTES);
-            boolean dayBefore = nowMinute.equals(deadlineMinute.minusHours(24));
-            boolean twoHoursBefore = nowMinute.equals(deadlineMinute.minusHours(2));
+            int hoursBeforeDeadline = task.getPingHoursBefore() == null ? 0 : task.getPingHoursBefore();
+            boolean atDeadline = nowMinute.equals(deadlineMinute);
+            boolean hoursBefore = isValidHoursBefore(hoursBeforeDeadline)
+                    && nowMinute.equals(deadlineMinute.minusHours(hoursBeforeDeadline));
 
-            if (!dayBefore && !twoHoursBefore) continue;
+            if (!atDeadline && !hoursBefore) continue;
 
             Settings settings = settingsRepository.findByUser(task.getUser()).orElse(null);
             if (settings == null) continue;
 
             String language = task.getUser().getPreferredLanguage();
 
-            if (dayBefore) {
-                String msg = DeadlinePingMessages.dayBefore(language, task.getTitle(), task.getTaskType());
+            if (hoursBefore) {
+                String msg = DeadlinePingMessages.hoursBefore(
+                        language, task.getTitle(), task.getTaskType(), hoursBeforeDeadline);
 
                 if (task.isPingDayBefore() && isValid(settings.getDiscordWebhook()))
                     notificationSenderService.sendDiscordMessage(settings.getDiscordWebhook(), msg);
@@ -59,8 +65,8 @@ public class TaskNotificationService {
                     notificationSenderService.sendTelegramMessage(settings.getTelegramChatId(), msg);
             }
 
-            if (twoHoursBefore) {
-                String msg = DeadlinePingMessages.twoHoursBefore(language, task.getTitle(), task.getTaskType());
+            if (atDeadline) {
+                String msg = DeadlinePingMessages.atDeadline(language, task.getTitle(), task.getTaskType());
 
                 if (task.isPingOnDay() && isValid(settings.getDiscordWebhook()))
                     notificationSenderService.sendDiscordMessage(settings.getDiscordWebhook(), msg);
@@ -69,6 +75,15 @@ public class TaskNotificationService {
                     notificationSenderService.sendTelegramMessage(settings.getTelegramChatId(), msg);
             }
         }
+    }
+
+    public static int clampPingHoursBefore(Integer hours) {
+        if (hours == null || hours < MIN_PING_HOURS_BEFORE) return 24;
+        return Math.min(MAX_PING_HOURS_BEFORE, hours);
+    }
+
+    private static boolean isValidHoursBefore(int hours) {
+        return hours >= MIN_PING_HOURS_BEFORE && hours <= MAX_PING_HOURS_BEFORE;
     }
 
     private boolean isValid(String value) {

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { ShieldAlert, Check, X, Download, Lightbulb, Trash2, FileText, Megaphone, Plus } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { downloadAuthenticatedFile } from '../utils/downloadFile';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface PendingDocument {
     id: number;
@@ -38,11 +40,8 @@ export default function AdminPanelPage() {
     }, []);
 
     const fetchPending = async () => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await fetch('/api/documents/admin/pending', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth('/api/documents/admin/pending', {}, { redirectOnAuthFailure: false });
             if (res.ok) setPendingDocs(await res.json());
         } catch (error) {
             console.error("Hiba:", error);
@@ -52,11 +51,8 @@ export default function AdminPanelPage() {
     };
 
     const fetchSuggestions = async () => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await fetch('/api/suggestions', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth('/api/suggestions', {}, { redirectOnAuthFailure: false });
             if (res.ok) setSuggestions(await res.json());
         } catch (error) {
             console.error("Hiba az ötletek lekérésekor:", error);
@@ -66,12 +62,10 @@ export default function AdminPanelPage() {
     };
 
     const handleAction = async (id: number, action: 'approve' | 'reject') => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`/api/documents/admin/${id}/${action}`, {
-                method: action === 'approve' ? 'PUT' : 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth(`/api/documents/admin/${id}/${action}`, {
+                method: action === 'approve' ? 'PUT' : 'DELETE'
+            }, { redirectOnAuthFailure: false });
             if (res.ok) {
                 setPendingDocs(pendingDocs.filter(doc => doc.id !== id));
             }
@@ -81,29 +75,12 @@ export default function AdminPanelPage() {
     };
 
     const handleDownload = (id: number, fileName: string) => {
-        const token = localStorage.getItem('token');
-        fetch(`/api/documents/download/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            });
+        void downloadAuthenticatedFile(`/api/documents/admin/${id}/download`, fileName);
     };
 
     const handleDeleteSuggestion = async (id: number) => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await fetch(`/api/suggestions/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetchWithAuth(`/api/suggestions/${id}`, { method: 'DELETE' }, { redirectOnAuthFailure: false });
             if (res.ok) {
                 setSuggestions(suggestions.filter(sug => sug.id !== id));
             }
@@ -117,9 +94,6 @@ export default function AdminPanelPage() {
         setIsUploadingNews(true);
         setNewsMsg(null);
 
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
         const payload = {
             title: newsTitle,
             description: newsDescription,
@@ -128,14 +102,11 @@ export default function AdminPanelPage() {
         };
 
         try {
-            const res = await fetch('/api/events', {
+            const res = await fetchWithAuth('/api/events', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            });
+            }, { redirectOnAuthFailure: false });
 
             if (res.ok) {
                 setNewsMsg({ text: t('admin.newsSuccess'), type: 'success' });

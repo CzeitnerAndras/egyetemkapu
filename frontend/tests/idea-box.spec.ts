@@ -8,11 +8,6 @@ test.describe('Egyetemkapu E2E - Ötletláda', () => {
 
     await page.goto('/otletlada');
 
-    await page.evaluate(() => {
-      localStorage.setItem('token', 'e2e-mock-token');
-    });
-    await page.reload();
-
     const titleInput = page.locator('input[type="text"]');
     await titleInput.waitFor({ state: 'visible' });
     await titleInput.fill('Több 3D-s projekt');

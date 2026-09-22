@@ -49,6 +49,21 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     "Túl sok jelszó-visszaállítási kísérlet. Próbáld újra később.")) {
                 return;
             }
+        } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/login".equals(path)) {
+            if (!consume(rateLimitingService.resolveLoginBucket(clientIpResolver.resolve(request)), response,
+                    "Túl sok belépési kísérlet. Próbáld újra később.")) {
+                return;
+            }
+        } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/register".equals(path)) {
+            if (!consume(rateLimitingService.resolveRegisterBucket(clientIpResolver.resolve(request)), response,
+                    "Túl sok regisztrációs kísérlet. Próbáld újra később.")) {
+                return;
+            }
+        } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/verify-email".equals(path)) {
+            if (!consume(rateLimitingService.resolveVerifyEmailBucket(clientIpResolver.resolve(request)), response,
+                    "Túl sok megerősítési kísérlet. Próbáld újra később.")) {
+                return;
+            }
         }
         
         boolean isProtectedTool = path.startsWith("/api/ai") || path.startsWith("/api/tools");

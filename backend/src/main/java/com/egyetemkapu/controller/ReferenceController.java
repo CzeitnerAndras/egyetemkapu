@@ -8,7 +8,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tools/reference")
-@CrossOrigin
 public class ReferenceController {
 
     private final ReferenceService referenceService;

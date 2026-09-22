@@ -23,12 +23,16 @@ public final class FlyerUrlPolicy {
             "www.tesco.hu",
             "tesco.hu",
             "digitalcontent.api.tesco.com",
-            "api.prod.retail.tesco.com"
+            "api.prod.retail.tesco.com",
+            "auchan.hu",
+            "www.auchan.hu",
+            "reklamujsag.auchan.hu",
+            "cdn.ipaper.io"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;
     static final int MAX_BINARY_BYTES = 60 * 1024 * 1024;
-    static final int MAX_PDF_PAGES = 48;
+    static final int MAX_PDF_PAGES = 64;
     static final int MAX_IMAGE_EDGE = 4096;
     static final int MAX_REDIRECTS = 5;
 

@@ -189,6 +189,26 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void auchanExtractorReadsAllCapsOfferNamesFromIpaperText() {
+        String cover = """
+                52834_MM hipermarket Gyűjtsd a matricákat
+                CSIRKE ALSÓ- VAGY FELSŐCOMB Ft/kg, vákuumcsomagoltan
+                ÉDESBURGONYA Ft/kg, M/L méret
+                SEGAFREDO CAFFÈ CREMA SZEMES KÁVÉ Ft/db, 1 kg
+                PEPSI ZERO SZÉNSAVAS ÜDÍTŐITAL 4x2 l 275 Ft/l
+                """;
+        List<ParsedProduct> products = new AuchanFlyerExtractor(parser).extractFromPageText(cover, 1);
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("CSIRKE")),
+                products.toString());
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("ÉDESBURGONYA")),
+                products.toString());
+        assertTrue(products.stream().anyMatch(product -> product.name().toUpperCase().contains("SEGAFREDO")),
+                products.toString());
+        assertTrue(products.stream().noneMatch(product -> product.name().toUpperCase().contains("HIPERMARKET")
+                || product.name().toUpperCase().contains("MATRICÁ")), products.toString());
+    }
+
+    @Test
     void aldiExtractorReadsWholeTextBoxesAndPrefixesBrands() {
         String page = """
                 09.10. CSÜTÖRTÖKTŐL 09.16. SZERDÁIG

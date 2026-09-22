@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { BookOpen, Upload, Download, FileText, X, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { downloadAuthenticatedFile } from '../utils/downloadFile';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface Document {
     id: number;
@@ -33,12 +35,11 @@ export default function KnowledgeBasePage() {
 
     const fetchDocuments = async () => {
         setLoading(true);
-        const token = localStorage.getItem('token');
         let url = '/api/documents';
         if (categoryFilter) url += `?category=${categoryFilter}`;
 
         try {
-            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            const res = await fetchWithAuth(url, {}, { redirectOnAuthFailure: false, retryOn401: false });
             if (res.ok) {
                 const data = await res.json();
                 setDocuments(data);
@@ -54,7 +55,6 @@ export default function KnowledgeBasePage() {
         e.preventDefault();
         if (!file) return;
 
-        const token = localStorage.getItem('token');
         const formData = new FormData();
         formData.append('file', file);
         formData.append('title', title);
@@ -62,11 +62,10 @@ export default function KnowledgeBasePage() {
         formData.append('category', category);
 
         try {
-            const res = await fetch('/api/documents/upload', {
+            const res = await fetchWithAuth('/api/documents/upload', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
-            });
+            }, { redirectOnAuthFailure: false });
 
             const data = await res.json();
             if (res.ok) {
@@ -85,20 +84,7 @@ export default function KnowledgeBasePage() {
     };
 
     const handleDownload = (id: number, fileName: string) => {
-        const token = localStorage.getItem('token');
-        fetch(`/api/documents/download/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            });
+        void downloadAuthenticatedFile(`/api/documents/download/${id}`, fileName);
     };
 
     const translateCategory = (cat: string) => {
@@ -277,6 +263,7 @@ export default function KnowledgeBasePage() {
                                         {language === 'en' ? 'Browse' : 'Tallózás'}
                                         <input
                                             type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                             onChange={e => setFile(e.target.files ? e.target.files[0] : null)}
                                             className="hidden"
                                         />

@@ -39,4 +39,13 @@ describe('DocumentTitle', () => {
         expect(document.title).toBe('admin.title | Egyetemkapu');
         expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex, nofollow');
     });
+
+    it('a jelszó-visszaállító oldalakat is noindexre állítja', () => {
+        renderAt('/elfelejtett-jelszo');
+
+        expect(document.title).toBe('forgot.title | Egyetemkapu');
+        expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex, nofollow');
+        expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href'))
+            .toBe('https://egyetemkapu.hu/elfelejtett-jelszo');
+    });
 });

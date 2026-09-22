@@ -17,7 +17,7 @@ class SecurityConfigTest {
     private static final String DEFAULTS = SecurityConfig.DEFAULT_ALLOWED_ORIGINS;
 
     private CorsConfiguration corsConfigFor(String origins) {
-        SecurityConfig config = new SecurityConfig(null, null, false, origins);
+        SecurityConfig config = new SecurityConfig(null, null, null, false, origins);
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/login");
         CorsConfiguration configuration = config.corsConfigurationSource().getCorsConfiguration(request);
         assertNotNull(configuration, "a /api/** útvonalra kell CORS beállítás");
@@ -73,7 +73,7 @@ class SecurityConfigTest {
 
     @Test
     void doesNotExposeAGeneratedDefaultUser() {
-        SecurityConfig config = new SecurityConfig(null, null, false, DEFAULTS);
+        SecurityConfig config = new SecurityConfig(null, null, null, false, DEFAULTS);
 
         assertThrows(UsernameNotFoundException.class,
                 () -> config.userDetailsService().loadUserByUsername("user"));

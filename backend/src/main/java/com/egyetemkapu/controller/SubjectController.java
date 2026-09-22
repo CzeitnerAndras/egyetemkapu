@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/subjects")
-@CrossOrigin
 public class SubjectController {
 
     private final SubjectRepository subjectRepository;

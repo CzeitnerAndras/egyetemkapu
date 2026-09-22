@@ -3,9 +3,13 @@ package com.egyetemkapu.controller;
 import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.UserRepository;
+import com.egyetemkapu.security.AuthCookies;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.service.ActiveUserService;
 import com.egyetemkapu.service.UserAccountService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,23 +21,28 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin
 public class UserController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final UserAccountService userAccountService;
+    private final ActiveUserService activeUserService;
+    private final boolean cookieSecure;
 
     public UserController(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
-            UserAccountService userAccountService) {
+            UserAccountService userAccountService,
+            ActiveUserService activeUserService,
+            @Value("${app.auth.cookie-secure:false}") boolean cookieSecure) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userAccountService = userAccountService;
+        this.activeUserService = activeUserService;
+        this.cookieSecure = cookieSecure;
     }
 
     private Optional<User> getCurrentUser() {
@@ -42,10 +51,15 @@ public class UserController {
     }
 
     @GetMapping("/count")
-    @Transactional(readOnly = true)
-    public ResponseEntity<?> getUserCount() {
-        long count = userRepository.count();
-        return ResponseEntity.ok(Map.of("count", count));
+    public ResponseEntity<?> getActiveUserCount() {
+        return ResponseEntity.ok(Map.of("count", activeUserService.countActive()));
+    }
+
+    @PostMapping("/heartbeat")
+    public ResponseEntity<?> heartbeat(@RequestBody(required = false) Map<String, String> payload) {
+        String visitorId = payload == null ? null : payload.get("visitorId");
+        activeUserService.heartbeat(visitorId);
+        return ResponseEntity.ok(Map.of("count", activeUserService.countActive()));
     }
 
     @GetMapping("/me")
@@ -84,7 +98,7 @@ public class UserController {
     @PutMapping("/username")
     @LogAction("Felhasználónév módosítása")
     @Transactional
-    public ResponseEntity<?> updateUsername(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> updateUsername(@RequestBody Map<String, String> request, HttpServletResponse response) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
 
@@ -98,8 +112,8 @@ public class UserController {
         user.setUsername(newUsername);
         userRepository.save(user);
 
-        String newToken = jwtUtil.generateToken(newUsername);
-        return ResponseEntity.ok(Map.of("message", "Sikeres frissítés!", "token", newToken));
+        AuthCookies.setAccess(response, jwtUtil.generateToken(newUsername), cookieSecure);
+        return ResponseEntity.ok(Map.of("message", "Sikeres frissítés!"));
     }
 
     @PutMapping("/password")
@@ -130,11 +144,12 @@ public class UserController {
     @DeleteMapping("/me")
     @LogAction("Felhasználói fiók törlése")
     @Transactional
-    public ResponseEntity<?> deleteAccount() {
+    public ResponseEntity<?> deleteAccount(HttpServletResponse response) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
 
         userAccountService.deleteAccount(userOpt.get());
+        AuthCookies.clearSession(response, cookieSecure);
         return ResponseEntity.ok(Map.of("message", "Fiók törölve!"));
     }
 }

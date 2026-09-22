@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Settings, BellRing, MessageSquare, Send, Save, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { fetchWithAuth } from '../utils/authApi';
 
 export default function SettingsPage() {
     const { t } = useLanguage();
@@ -12,13 +13,8 @@ export default function SettingsPage() {
 
     useEffect(() => {
         const fetchSettings = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
             try {
-                const res = await fetch('/api/settings', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetchWithAuth('/api/settings', {}, { redirectOnAuthFailure: false, retryOn401: false });
                 if (res.ok) {
                     const data = await res.json();
                     if (data.discordWebhook) setDiscordWebhook(data.discordWebhook);
@@ -37,22 +33,16 @@ export default function SettingsPage() {
         setIsLoading(true);
         setMessage(null);
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setMessage({ text: t('settings.needLogin'), type: 'error' });
-            setIsLoading(false);
-            return;
-        }
-
         try {
-            const res = await fetch('/api/settings', {
+            const res = await fetchWithAuth('/api/settings', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ discordWebhook, telegramChatId })
-            });
+            }, { redirectOnAuthFailure: false });
+            if (res.status === 401 || res.status === 403) {
+                setMessage({ text: t('settings.needLogin'), type: 'error' });
+                return;
+            }
 
             if (res.ok) {
                 setMessage({ text: t('settings.saved'), type: 'success' });

@@ -69,10 +69,7 @@ describe('ReferencePage Komponens', () => {
             '/api/tools/reference/generate',
             expect.objectContaining({
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer test-token'
-                },
+                credentials: 'include',
                 body: JSON.stringify({
                     author: '',
                     title: 'A nagy tesztkönyv',

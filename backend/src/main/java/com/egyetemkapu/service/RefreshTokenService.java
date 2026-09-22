@@ -5,15 +5,19 @@ import com.egyetemkapu.model.RefreshToken;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.RefreshTokenRepository;
 import com.egyetemkapu.repository.UserRepository;
+import com.egyetemkapu.security.AuthCookies;
+import com.egyetemkapu.security.PasswordResetTokens;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
+
+    public record IssuedRefreshToken(String rawToken) {
+    }
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
@@ -24,25 +28,30 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public RefreshToken createRefreshToken(Long userId) {
+    public IssuedRefreshToken createRefreshToken(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Felhasználó nem található"));
 
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)
                 .orElseGet(() -> {
-                    RefreshToken newToken = new RefreshToken();
-                    newToken.setUser(user);
-                    return newToken;
+                    RefreshToken created = new RefreshToken();
+                    created.setUser(user);
+                    return created;
                 });
 
-        refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setExpiryDate(LocalDateTime.now().plusDays(7));
-
-        return refreshTokenRepository.save(refreshToken);
+        String rawToken = PasswordResetTokens.newRawToken();
+        refreshToken.setToken(PasswordResetTokens.hash(rawToken));
+        refreshToken.setExpiryDate(LocalDateTime.now().plus(AuthCookies.REFRESH_TTL));
+        refreshTokenRepository.save(refreshToken);
+        return new IssuedRefreshToken(rawToken);
     }
 
-    public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
+    public Optional<RefreshToken> findByRawToken(String rawToken) {
+        String hash = PasswordResetTokens.hash(rawToken);
+        if (hash.isEmpty()) {
+            return Optional.empty();
+        }
+        return refreshTokenRepository.findByToken(hash);
     }
 
     public RefreshToken verifyExpiration(RefreshToken token) {
@@ -51,6 +60,16 @@ public class RefreshTokenService {
             throw new TokenRefreshException("A Refresh Token lejárt! Kérlek, jelentkezz be újra.");
         }
         return token;
+    }
+
+    @Transactional
+    public IssuedRefreshToken rotate(RefreshToken current) {
+        verifyExpiration(current);
+        String rawToken = PasswordResetTokens.newRawToken();
+        current.setToken(PasswordResetTokens.hash(rawToken));
+        current.setExpiryDate(LocalDateTime.now().plus(AuthCookies.REFRESH_TTL));
+        refreshTokenRepository.save(current);
+        return new IssuedRefreshToken(rawToken);
     }
 
     @Transactional

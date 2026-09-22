@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import SecretPage from './pages/SecretPage';
 import AIAssistantPage from './pages/AIAssistantPage';
 import CalendarPage from './pages/CalendarPage';
@@ -22,12 +23,14 @@ import LinksPage from './pages/LinksPage';
 import SalesPapersPage from './pages/SalesPapersPage';
 import { LanguageProvider } from './i18n/LanguageContext';
 import DocumentTitle from './components/DocumentTitle';
+import PresenceHeartbeat from './components/PresenceHeartbeat';
 
 function App() {
   return (
     <LanguageProvider>
     <Router>
       <DocumentTitle />
+      <PresenceHeartbeat />
       <div className="min-h-screen overflow-x-clip bg-gradient-to-br from-slate-300 via-indigo-100 to-slate-200 animate-gradient dark:from-[#121212] dark:via-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-[#031e08] secret:text-[#1cf85d] transition-colors duration-500">
         <Navbar />
 
@@ -37,6 +40,7 @@ function App() {
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/elfelejtett-jelszo" element={<ForgotPasswordPage />} />
           <Route path="/uj-jelszo" element={<ResetPasswordPage />} />
+          <Route path="/email-megerosites" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<Navigate to="/elfelejtett-jelszo" replace />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/S3CR3T" element={<SecretPage />} />

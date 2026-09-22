@@ -21,7 +21,7 @@ const formatDateForApi = (date: Date, timeStr: string) => {
 
 describe('CalendarPage Komponens', () => {
     beforeEach(() => {
-        globalThis.fetch = jest.fn();
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
         localStorage.clear();
         jest.clearAllMocks();
     });
@@ -69,7 +69,12 @@ describe('CalendarPage Komponens', () => {
         await waitFor(() => {
             expect(screen.getByText('cal.noTasks')).toBeInTheDocument();
         });
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/tasks',
+                expect.objectContaining({ credentials: 'include' })
+            );
+        });
     });
 
     it('bejelentkezve lekéri és a kiválasztott naphoz megjeleníti a feladatokat', async () => {
@@ -95,14 +100,17 @@ describe('CalendarPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/tasks',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
             expect(screen.getByText(/Teszt feladat/)).toBeInTheDocument();
         });
     });
 
-    it('bejelentkezés nélkül a mentés blokkolva van, és nem hív fetch-et', async () => {
+    it('bejelentkezés nélkül a mentés 401-re needLogin üzenetet mutat', async () => {
+        (globalThis.fetch as jest.Mock).mockResolvedValue({ ok: false, status: 401 });
+
         const { container } = render(<CalendarPage />);
+        await waitFor(() => expect(globalThis.fetch).toHaveBeenCalled());
 
         const titleInput = container.querySelectorAll('input[type="text"]')[0] as HTMLInputElement;
         const typeInput = container.querySelectorAll('input[type="text"]')[1] as HTMLInputElement;
@@ -115,7 +123,6 @@ describe('CalendarPage Komponens', () => {
         await waitFor(() => {
             expect(screen.getByText('cal.needLogin')).toBeInTheDocument();
         });
-        expect(globalThis.fetch).not.toHaveBeenCalled();
     });
 
     it('bejelentkezve elmenti az új feladatot, és megjeleníti a listában', async () => {
@@ -153,10 +160,7 @@ describe('CalendarPage Komponens', () => {
                 '/api/tasks',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-token',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({
                         title: 'Új feladat',
                         taskType: 'Projekt',
@@ -166,6 +170,7 @@ describe('CalendarPage Komponens', () => {
                         pingOnDay: false,
                         pingTelegramDayBefore: false,
                         pingTelegramOnDay: false,
+                        pingHoursBefore: 24,
                     }),
                 })
             );
@@ -205,11 +210,128 @@ describe('CalendarPage Komponens', () => {
                 '/api/tasks/5',
                 expect.objectContaining({
                     method: 'DELETE',
-                    headers: { Authorization: 'Bearer test-token' },
+                    credentials: 'include',
                 })
             );
             expect(screen.getByText('Sikeresen törölve!')).toBeInTheDocument();
             expect(screen.queryByText(/Törlendő feladat/)).not.toBeInTheDocument();
+        });
+    });
+
+    it('elmenti a pontos és az X órával előtti ping beállítást', async () => {
+        localStorage.setItem('token', 'test-token');
+
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, json: async () => [] })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    id: 3,
+                    title: 'Pingelt feladat',
+                    taskType: 'ZH',
+                    deadline: formatDateForApi(today, '08:00'),
+                    completed: false,
+                    pingDayBefore: true,
+                    pingOnDay: true,
+                    pingTelegramDayBefore: false,
+                    pingTelegramOnDay: true,
+                    pingHoursBefore: 3,
+                }),
+            });
+
+        const { container } = render(<CalendarPage />);
+
+        await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+        const titleInput = container.querySelectorAll('input[type="text"]')[0] as HTMLInputElement;
+        const typeInput = container.querySelectorAll('input[type="text"]')[1] as HTMLInputElement;
+        const hourInputs = container.querySelectorAll('input[type="number"]');
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+
+        const user = userEvent.setup();
+        await user.type(titleInput, 'Pingelt feladat');
+        await user.type(typeInput, 'ZH');
+        await user.click(checkboxes[0]);
+        await user.click(checkboxes[1]);
+        await user.click(checkboxes[2]);
+        await user.clear(hourInputs[0]);
+        await user.type(hourInputs[0], '3');
+        await user.click(screen.getByRole('button', { name: 'cal.save' }));
+
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/tasks',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: 'Pingelt feladat',
+                        taskType: 'ZH',
+                        deadline: formatDateForApi(today, '08:00'),
+                        completed: false,
+                        pingDayBefore: true,
+                        pingOnDay: true,
+                        pingTelegramDayBefore: false,
+                        pingTelegramOnDay: true,
+                        pingHoursBefore: 3,
+                    }),
+                })
+            );
+        });
+    });
+
+    it('túl nagy óraszámot 168-ra szorít mentéskor', async () => {
+        localStorage.setItem('token', 'test-token');
+
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, json: async () => [] })
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    id: 4,
+                    title: 'Clampelt feladat',
+                    taskType: 'ZH',
+                    deadline: formatDateForApi(today, '08:00'),
+                    completed: false,
+                    pingDayBefore: true,
+                    pingOnDay: false,
+                    pingTelegramDayBefore: false,
+                    pingTelegramOnDay: false,
+                    pingHoursBefore: 168,
+                }),
+            });
+
+        const { container } = render(<CalendarPage />);
+        await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
+
+        const titleInput = container.querySelectorAll('input[type="text"]')[0] as HTMLInputElement;
+        const typeInput = container.querySelectorAll('input[type="text"]')[1] as HTMLInputElement;
+        const hourInputs = container.querySelectorAll('input[type="number"]');
+
+        const user = userEvent.setup();
+        await user.type(titleInput, 'Clampelt feladat');
+        await user.type(typeInput, 'ZH');
+        await user.clear(hourInputs[0]);
+        await user.type(hourInputs[0], '200');
+        await user.click(screen.getByRole('button', { name: 'cal.save' }));
+
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/tasks',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title: 'Clampelt feladat',
+                        taskType: 'ZH',
+                        deadline: formatDateForApi(today, '08:00'),
+                        completed: false,
+                        pingDayBefore: false,
+                        pingOnDay: false,
+                        pingTelegramDayBefore: false,
+                        pingTelegramOnDay: false,
+                        pingHoursBefore: 168,
+                    }),
+                })
+            );
         });
     });
 });

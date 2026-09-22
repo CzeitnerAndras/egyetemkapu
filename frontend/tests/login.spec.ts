@@ -26,8 +26,8 @@ test.describe('Egyetemkapu E2E - Autentikációs folyamat', () => {
 
     await expect(page).toHaveURL('http://localhost:5173/');
 
-    const token = await page.evaluate(() => localStorage.getItem('token'));
-    expect(token).toBeTruthy();
+    const cookies = await page.context().cookies();
+    expect(cookies.some((cookie) => cookie.name === 'ek_access' && cookie.httpOnly)).toBeTruthy();
   });
 
   test('Hibás bejelentkezés esetén valós hibaüzenet jelenik meg', async ({ page }) => {

@@ -54,21 +54,21 @@ describe('HomePage Komponens', () => {
         expect(screen.getByText('home.loadingNews')).toBeInTheDocument();
     });
 
-    it('lekéri a híreket a megfelelő végpontról, token nélkül nem hívja az admin ellenőrzést', async () => {
+    it('lekéri a híreket, és cookie-val ellenőrzi a felhasználót', async () => {
         mockFetchByUrl({ '/api/events': { ok: true, json: async () => [] } });
 
         render(<HomePage />);
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/events');
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/users/me',
+                expect.objectContaining({ credentials: 'include' })
+            );
         });
-        expect(globalThis.fetch).not.toHaveBeenCalledWith(
-            expect.stringContaining('/api/users/me'),
-            expect.anything()
-        );
     });
 
-    it('bejelentkezett felhasználó esetén lekéri a felhasználói adatokat is', async () => {
+    it('bejelentkezett felhasználó esetén cookie-val kéri le a felhasználói adatokat', async () => {
         localStorage.setItem('token', 'test-token');
         mockFetchByUrl({
             '/api/events': { ok: true, json: async () => [] },
@@ -80,7 +80,7 @@ describe('HomePage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/users/me',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
     });
@@ -127,10 +127,10 @@ describe('HomePage Komponens', () => {
         });
     });
 
-    it('lekéri a statisztikai adatokat (regisztrált felhasználók, dokumentumok, megoldott egyenletek) hitelesítés nélkül', async () => {
+    it('lekéri a statisztikai adatokat (aktív felhasználók, dokumentumok, megoldott egyenletek) hitelesítés nélkül', async () => {
         mockFetchByUrl({
             '/api/events': { ok: true, json: async () => [] },
-            '/api/users/count': { ok: true, json: async () => ({ count: 42 }) },
+            '/api/users/heartbeat': { ok: true, json: async () => ({ count: 42 }) },
             '/api/documents': { ok: true, json: async () => [{ id: 1 }, { id: 2 }] },
             '/api/tools/calculator/count': { ok: true, json: async () => ({ count: 153 }) },
         });
@@ -138,7 +138,10 @@ describe('HomePage Komponens', () => {
         render(<HomePage />);
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith('/api/users/count');
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/users/heartbeat',
+                expect.objectContaining({ method: 'POST' })
+            );
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/documents');
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/tools/calculator/count');
         });
@@ -246,7 +249,7 @@ describe('HomePage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/events/1',
-                expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ method: 'DELETE', credentials: 'include' })
             );
             expect(screen.queryByText('Törlendő hír')).not.toBeInTheDocument();
         });

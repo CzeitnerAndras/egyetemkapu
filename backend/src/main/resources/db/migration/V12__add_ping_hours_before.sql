@@ -1,0 +1,2 @@
+ALTER TABLE tasks
+ADD COLUMN ping_hours_before INTEGER DEFAULT 24 NOT NULL;

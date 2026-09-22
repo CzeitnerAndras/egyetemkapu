@@ -30,23 +30,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtUtil.validateToken(token)) {
-                String username = jwtUtil.extractUsername(token);
-                userRepository.findByUsername(username).ifPresent(user -> {
-                    List<SimpleGrantedAuthority> authorities =
-                            List.of(new SimpleGrantedAuthority(normalizeRole(user.getRole())));
+        String token = resolveToken(request);
+        if (token != null && jwtUtil.validateToken(token)) {
+            String username = jwtUtil.extractUsername(token);
+            userRepository.findByUsername(username).ifPresent(user -> {
+                List<SimpleGrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority(normalizeRole(user.getRole())));
 
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(username, null, authorities);
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                });
-            }
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(username, null, authorities);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            });
         }
         filterChain.doFilter(request, response);
+    }
+
+    private static String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+        return AuthCookies.readAccess(request);
     }
 
     private String normalizeRole(String role) {

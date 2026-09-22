@@ -56,6 +56,27 @@ class PasswordResetNotifierTest {
     }
 
     @Test
+    void sendVerificationLink_SendsEmailAndTelegramWhenConfigured() throws Exception {
+        User user = new User();
+        user.setEmail("diak@egyetemkapu.hu");
+        user.setPreferredLanguage("hu");
+        user.setUsername("diak");
+
+        Settings settings = new Settings();
+        settings.setTelegramChatId("12345");
+
+        when(mailSenderProvider.getIfAvailable()).thenReturn(mailSender);
+        when(mailSender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
+        when(settingsRepository.findByUser(user)).thenReturn(Optional.of(settings));
+        when(environment.acceptsProfiles(any(Profiles.class))).thenReturn(false);
+
+        notifier("smtp.example.com").sendVerificationLink(user, "https://egyetemkapu.hu/email-megerosites#token=abc");
+
+        verify(mailSender).send(any(MimeMessage.class));
+        verify(notificationSenderService).sendTelegramMessage(eq("12345"), contains("https://egyetemkapu.hu/email-megerosites#token=abc"));
+    }
+
+    @Test
     void sendResetLink_SkipsEmailWhenHostMissing() {
         User user = new User();
         user.setEmail("diak@egyetemkapu.hu");

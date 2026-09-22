@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Send, Lightbulb, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { fetchWithAuth } from '../utils/authApi';
 
 export default function IdeaBoxPage() {
     const { t } = useLanguage();
@@ -15,22 +16,16 @@ export default function IdeaBoxPage() {
         setIsLoading(true);
         setMessage(null);
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setMessage({ text: t('idea.needLogin'), type: 'error' });
-            setIsLoading(false);
-            return;
-        }
-
         try {
-            const res = await fetch('/api/suggestions', {
+            const res = await fetchWithAuth('/api/suggestions', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ title, description })
-            });
+            }, { redirectOnAuthFailure: false });
+            if (res.status === 401 || res.status === 403) {
+                setMessage({ text: t('idea.needLogin'), type: 'error' });
+                return;
+            }
 
             if (res.ok) {
                 setMessage({ text: t('idea.thanks'), type: 'success' });
