@@ -44,4 +44,8 @@ public class User {
     @JsonIgnore
     @Column(name = "preferred_language", nullable = false, length = 8)
     private String preferredLanguage = "hu";
+
+    @JsonIgnore
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = true;
 }

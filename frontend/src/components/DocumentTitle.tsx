@@ -12,6 +12,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/elfelejtett-jelszo': 'forgot.title',
     '/uj-jelszo': 'reset.title',
     '/reset-password': 'reset.title',
+    '/email-megerosites': 'verify.title',
     '/ai': 'ai.title',
     '/naptar': 'nav.calendar',
     '/profile': 'profile.title',
@@ -36,6 +37,7 @@ const NOINDEX_PATHS = new Set([
     '/uj-jelszo',
     '/reset-password',
     '/elfelejtett-jelszo',
+    '/email-megerosites',
 ]);
 
 function setMeta(selector: string, attr: 'name' | 'property', key: string, content: string) {
