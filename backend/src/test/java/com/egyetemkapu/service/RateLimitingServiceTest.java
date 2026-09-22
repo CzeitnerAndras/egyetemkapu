@@ -30,6 +30,18 @@ class RateLimitingServiceTest {
     }
 
     @Test
+    void authBucketsAreIndependentAndCapped() {
+        assertNotSame(service.resolveLoginBucket("127.0.0.1"), service.resolveRegisterBucket("127.0.0.1"));
+        assertNotSame(service.resolveLoginBucket("127.0.0.1"), service.resolveForgotPasswordBucket("127.0.0.1"));
+
+        Bucket login = service.resolveLoginBucket("10.0.0.1");
+        for (int i = 0; i < 10; i++) {
+            assertTrue(login.tryConsume(1));
+        }
+        assertFalse(login.tryConsume(1));
+    }
+
+    @Test
     void mathBucketAllowsFiveRequestsThenRejects() {
         Bucket bucket = service.resolveBucket("diak");
         for (int i = 0; i < 5; i++) {

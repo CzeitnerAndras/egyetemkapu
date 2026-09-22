@@ -124,4 +124,18 @@ class JwtAuthenticationFilterTest {
     void missingHeader_LeavesContextUnauthenticated() throws Exception {
         assertNull(runFilterWithToken(null));
     }
+
+    @Test
+    void accessCookie_AuthenticatesWhenBearerMissing() throws Exception {
+        givenUserWithRole("teszt_elek", "ROLE_USER");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new jakarta.servlet.http.Cookie(AuthCookies.ACCESS, "valid-token"));
+
+        new JwtAuthenticationFilter(jwtUtil, userRepository)
+                .doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth);
+        assertEquals("teszt_elek", auth.getName());
+    }
 }
