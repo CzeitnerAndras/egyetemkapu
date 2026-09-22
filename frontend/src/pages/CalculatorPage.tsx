@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calculator, Sigma, Plus, Trash2, FunctionSquare, ArrowRight, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface Subject {
     id: number;
@@ -71,15 +72,10 @@ export default function CalculatorPage() {
                 credit: s.credit,
                 grade: s.grade
             }));
-            const token = localStorage.getItem('token');
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
-
             const response = await fetch('/api/calculator/weighted-average', {
                 method: 'POST',
-                headers,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify(payload)
             });
 
@@ -105,15 +101,9 @@ export default function CalculatorPage() {
         setMathResult(null);
         setMathError(null);
 
-        const token = localStorage.getItem('token');
-
         try {
             const safeExpression = encodeURIComponent(expression);
-            const response = await fetch(`/api/tools/calculator/${operation}/${safeExpression}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const response = await fetchWithAuth(`/api/tools/calculator/${operation}/${safeExpression}`, {}, { redirectOnAuthFailure: false });
 
             if (response.status === 401 || response.status === 403) {
                 setMathError("Kérlek, jelentkezz be a funkció használatához!");

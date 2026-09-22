@@ -4,6 +4,7 @@ import { X, Megaphone, Zap, Calendar, Bot, Send, Users, Calculator, FileText, Tr
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
 import { sendPresenceHeartbeat } from '../utils/presence';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface EventItem {
   id: number;
@@ -96,12 +97,8 @@ export default function HomePage() {
 
   useEffect(() => {
     {/* --- Admin jog ellenőrzése --- */ }
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-        .then(res => res.ok ? res.json() : null)
+    fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false, retryOn401: false })
+      .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data) {
             const userRole = data.role || (data.roles && data.roles[0]) || '';
@@ -111,7 +108,6 @@ export default function HomePage() {
           }
         })
         .catch(err => console.error("Hiba a felhasználó lekérésekor:", err));
-    }
 
     {/* --- Hírek lekérése (GET) --- */ }
     fetch('/api/events')
@@ -206,12 +202,8 @@ export default function HomePage() {
       return;
     }
 
-    const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/events/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetchWithAuth(`/api/events/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setEvents(prevEvents => prevEvents.filter(event => event.id !== id));
       } else {
@@ -262,6 +254,7 @@ export default function HomePage() {
               onChange={(e) => setAiInput(e.target.value)}
               placeholder={t('home.aiPlaceholder')}
               className="w-full bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-4 pl-14 pr-16 text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none focus:border-cyan-400 dark:focus:border-[#a855f7] secret:font-mono text-lg font-bold transition-colors"
+              maxLength={4000}
             />
             <button type="submit" className="absolute inset-y-0 right-0 pr-4 flex items-center text-fuchsia-500 dark:text-[#a855f7] secret:text-[#1cf85d] hover:text-cyan-500 dark:hover:text-white transition-colors cursor-pointer group-hover:scale-110">
               <Send className="w-6 h-6" />

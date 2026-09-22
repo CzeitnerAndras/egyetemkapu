@@ -19,6 +19,7 @@ export default function LoginPage() {
             const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ email, password })
             });
 
@@ -33,8 +34,12 @@ export default function LoginPage() {
             }
 
             const data = await response.json();
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('refreshToken', data.refreshToken);
+            if (!data || data.ok !== true) {
+                setError(t('login.serverError'));
+                return;
+            }
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
             window.dispatchEvent(new Event('authChanged'));
             navigate('/');
         } catch (err) {

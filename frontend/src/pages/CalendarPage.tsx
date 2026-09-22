@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Bell, Trash2, Calendar as CalendarIcon, Plus, Clock, Send } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import { fetchWithAuth } from '../utils/authApi';
 
 interface Task {
     id?: number;
@@ -35,15 +36,7 @@ export default function CalendarPage() {
 
     {/* --- Adatok lekérése JWT tokennel --- */ }
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setLoading(false);
-            return;
-        }
-
-        fetch('/api/tasks', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth('/api/tasks', {}, { redirectOnAuthFailure: false, retryOn401: false })
             .then(res => {
                 if (!res.ok) throw new Error('Nincs jogosultság a feladatok lekéréséhez');
                 return res.json();
@@ -122,12 +115,6 @@ export default function CalendarPage() {
         e.preventDefault();
         setMessage(null);
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setMessage({ text: t('cal.needLogin') || 'A teendő mentéséhez be kell jelentkezned!', type: 'error' });
-            return;
-        }
-
         const newTask = {
             title,
             taskType: taskType || 'Egyéb',
@@ -140,15 +127,16 @@ export default function CalendarPage() {
             pingHoursBefore: clampPingHours(pingHoursBefore)
         };
 
-        fetch('/api/tasks', {
+        fetchWithAuth('/api/tasks', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newTask)
-        })
+        }, { redirectOnAuthFailure: false })
             .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    setMessage({ text: t('cal.needLogin') || 'A teendő mentéséhez be kell jelentkezned!', type: 'error' });
+                    return Promise.reject(new Error('login'));
+                }
                 if (!res.ok) throw new Error('Mentés sikertelen');
                 return res.json();
             })
@@ -160,6 +148,7 @@ export default function CalendarPage() {
                 setTimeout(() => setMessage(null), 3000);
             })
             .catch(err => {
+                if (err instanceof Error && err.message === 'login') return;
                 console.error('Mentési hiba:', err);
                 setMessage({ text: 'Hiba történt a mentés során.', type: 'error' });
             });
@@ -167,17 +156,12 @@ export default function CalendarPage() {
 
     {/* --- Törlés JWT tokennel --- */ }
     const handleDeleteTask = (id: number) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            setMessage({ text: t('cal.needLogin') || 'A törléshez be kell jelentkezned!', type: 'error' });
-            return;
-        }
-
-        fetch(`/api/tasks/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        fetchWithAuth(`/api/tasks/${id}`, { method: 'DELETE' }, { redirectOnAuthFailure: false })
             .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    setMessage({ text: t('cal.needLogin') || 'A törléshez be kell jelentkezned!', type: 'error' });
+                    return;
+                }
                 if (res.ok) {
                     setTasks(tasks.filter(t => t.id !== id));
                     setMessage({ text: 'Sikeresen törölve!', type: 'success' });

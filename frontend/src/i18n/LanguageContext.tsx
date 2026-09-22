@@ -18,12 +18,11 @@ function readStoredLanguage(): Lang {
 }
 
 function persistLanguageToServer(language: Lang) {
-  if (!localStorage.getItem('token')) return;
   fetchWithAuth('/api/users/me/language', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ language }),
-  }, { redirectOnAuthFailure: false }).catch(() => {});
+  }, { redirectOnAuthFailure: false, retryOn401: false }).catch(() => {});
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

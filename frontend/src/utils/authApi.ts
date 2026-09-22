@@ -1,5 +1,6 @@
 type AuthFetchOptions = {
     redirectOnAuthFailure?: boolean;
+    retryOn401?: boolean;
 };
 
 export const clearSession = () => {
@@ -7,34 +8,21 @@ export const clearSession = () => {
     localStorage.removeItem('refreshToken');
 };
 
-let refreshPromise: Promise<string | null> | null = null;
+clearSession();
 
-const refreshAccessToken = (): Promise<string | null> => {
+let refreshPromise: Promise<boolean> | null = null;
+
+const refreshAccessToken = (): Promise<boolean> => {
     if (refreshPromise) return refreshPromise;
 
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) return Promise.resolve(null);
-
-    const pending = fetch('/api/auth/refresh', {
+    const pending = Promise.resolve(fetch('/api/auth/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
-    })
-        .then(async response => {
-            if (!response.ok) return null;
-
-            const data = await response.json();
-            if (!data || !data.token) return null;
-
-            localStorage.setItem('token', data.token);
-            if (data.refreshToken) {
-                localStorage.setItem('refreshToken', data.refreshToken);
-            }
-            return data.token as string;
-        })
+        credentials: 'include',
+    }))
+        .then(response => !!response && response.ok)
         .catch(err => {
             console.error("Hiba a token frissítésekor", err);
-            return null;
+            return false;
         })
         .finally(() => {
             refreshPromise = null;
@@ -47,22 +35,23 @@ const refreshAccessToken = (): Promise<string | null> => {
 export const fetchWithAuth = async (
     url: string,
     options: RequestInit = {},
-    { redirectOnAuthFailure = true }: AuthFetchOptions = {}
+    { redirectOnAuthFailure = true, retryOn401 = true }: AuthFetchOptions = {}
 ): Promise<Response> => {
-    const send = (accessToken: string | null) => {
+    const send = () => {
         const headers = new Headers(options.headers || {});
-        if (accessToken) {
-            headers.set('Authorization', `Bearer ${accessToken}`);
-        }
-        return fetch(url, { ...options, headers });
+        return fetch(url, { ...options, headers, credentials: 'include' });
     };
 
-    const response = await send(localStorage.getItem('token'));
+    const response = await send();
+    if (!response) {
+        throw new Error('Üres válasz a szervertől');
+    }
     if (response.status !== 401) return response;
+    if (!retryOn401) return response;
 
-    const newAccessToken = await refreshAccessToken();
-    if (newAccessToken) {
-        return send(newAccessToken);
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+        return send();
     }
 
     clearSession();

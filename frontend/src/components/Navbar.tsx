@@ -9,7 +9,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [username, setUsername] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('token'));
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSecretMode, setIsSecretMode] = useState(false);
@@ -69,15 +69,6 @@ export default function Navbar() {
   }, [updateNavOverflow, language]);
 
   const loadCurrentUser = useCallback(async () => {
-    if (!localStorage.getItem('token')) {
-      setIsLoggedIn(false);
-      setUsername('');
-      setIsAdmin(false);
-      return;
-    }
-
-    setIsLoggedIn(true);
-
     try {
       const res = await fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false });
 
@@ -93,6 +84,7 @@ export default function Navbar() {
 
       const data = await res.json();
       if (data && data.username) {
+        setIsLoggedIn(true);
         setUsername(data.username);
         const userRole = data.role || (data.roles && data.roles[0]) || '';
         setIsAdmin(userRole.includes('ADMIN') || !!data.isAdmin);
@@ -272,17 +264,13 @@ export default function Navbar() {
   };
 
   const handleLogout = async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
-        });
-      } catch (error) {
-        console.error('Hiba a kijelentkezéskor', error);
-      }
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Hiba a kijelentkezéskor', error);
     }
     clearSession();
     setIsLoggedIn(false);

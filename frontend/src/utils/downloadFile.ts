@@ -1,11 +1,5 @@
 export async function downloadAuthenticatedFile(url: string, fileName: string): Promise<boolean> {
-    const token = localStorage.getItem('token');
-    const headers: HeadersInit = {};
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-
-    const res = await fetch(url, { headers });
+    const res = await fetch(url, { credentials: 'include' });
     if (!res.ok) {
         return false;
     }

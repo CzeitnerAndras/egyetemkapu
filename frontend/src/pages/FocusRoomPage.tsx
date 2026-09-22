@@ -126,7 +126,6 @@ export default function FocusRoomPage() {
         if (!title) return;
 
         setTaskError('');
-        const token = localStorage.getItem('token');
         const newTaskObj = {
             title,
             taskType: 'Fókusz',
@@ -139,11 +138,6 @@ export default function FocusRoomPage() {
 
         setTasks(current => [...current, optimisticTask]);
         setNewTaskTitle('');
-
-        if (!token) {
-            setTaskError(t('focus.needLogin'));
-            return;
-        }
 
         try {
             const res = await fetchWithAuth('/api/tasks', {

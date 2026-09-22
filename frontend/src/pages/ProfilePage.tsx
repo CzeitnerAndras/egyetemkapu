@@ -16,12 +16,6 @@ export default function ProfilePage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/login');
-            return;
-        }
-
         fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false })
             .then(res => {
                 if (res.status === 401 || res.status === 403) {
@@ -68,11 +62,8 @@ export default function ProfilePage() {
             });
 
             if (response.ok) {
-                const data = await response.json();
-
-                if (data.token) {
-                    localStorage.setItem('token', data.token);
-                }
+                await response.json();
+                window.dispatchEvent(new Event('authChanged'));
 
                 showMessage('Felhasználónév sikeresen frissítve!', 'success');
                 setCurrentUsername(newUsername);
