@@ -14,12 +14,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class DocumentService {
+
+    static final long MAX_UPLOAD_BYTES = 10L * 1024 * 1024;
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "jpg", "jpeg", "png");
+    private static final byte[] PDF_MAGIC = {0x25, 0x50, 0x44, 0x46};
+    private static final byte[] PNG_MAGIC = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+    private static final byte[] JPEG_MAGIC = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
 
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
@@ -52,7 +59,22 @@ public class DocumentService {
         User uploader = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Felhasználó nem található"));
 
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Üres fájl nem tölthető fel");
+        }
+        if (file.getSize() > MAX_UPLOAD_BYTES) {
+            throw new IllegalArgumentException("A fájl maximum 10 MB lehet");
+        }
+
         String originalFileName = sanitizeFileName(file.getOriginalFilename());
+        byte[] content = file.getBytes();
+        if (content.length > MAX_UPLOAD_BYTES) {
+            throw new IllegalArgumentException("A fájl maximum 10 MB lehet");
+        }
+        if (!isAllowedUpload(originalFileName, content)) {
+            throw new IllegalArgumentException("Csak PDF, JPEG vagy PNG fájl tölthető fel");
+        }
+
         String uniqueFileName = UUID.randomUUID() + "_" + originalFileName;
         Path filePath = uploadRoot.resolve(uniqueFileName).normalize();
 
@@ -60,7 +82,7 @@ public class DocumentService {
             throw new RuntimeException("Érvénytelen fájlnév");
         }
 
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        Files.write(filePath, content);
 
         Document document = new Document();
         document.setTitle(title);
@@ -72,6 +94,43 @@ public class DocumentService {
         document.setStatus(DocumentStatus.PENDING);
 
         return documentRepository.save(document);
+    }
+
+    static boolean isAllowedUpload(String fileName, byte[] content) {
+        if (fileName == null || content == null || content.length == 0) {
+            return false;
+        }
+        String extension = extensionOf(fileName);
+        if (!ALLOWED_EXTENSIONS.contains(extension)) {
+            return false;
+        }
+        if ("pdf".equals(extension)) {
+            return startsWith(content, PDF_MAGIC);
+        }
+        if ("png".equals(extension)) {
+            return startsWith(content, PNG_MAGIC);
+        }
+        return startsWith(content, JPEG_MAGIC);
+    }
+
+    private static String extensionOf(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        if (dot < 0 || dot == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(dot + 1).toLowerCase(Locale.ROOT);
+    }
+
+    private static boolean startsWith(byte[] content, byte[] magic) {
+        if (content.length < magic.length) {
+            return false;
+        }
+        for (int i = 0; i < magic.length; i++) {
+            if (content[i] != magic[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Transactional(readOnly = true)

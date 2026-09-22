@@ -1,7 +1,5 @@
 package com.egyetemkapu.service;
 
-import com.egyetemkapu.model.PromptLog;
-import com.egyetemkapu.repository.PromptLogRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,7 +13,8 @@ import java.util.Map;
 @Service
 public class AiService {
 
-    private final PromptLogRepository promptLogRepository;
+    static final int MAX_PROMPT_CHARS = 4000;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${AI_API_KEY:nincs_megadva}")
@@ -23,15 +22,17 @@ public class AiService {
 
     private final String aiApiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
-    public AiService(PromptLogRepository promptLogRepository) {
-        this.promptLogRepository = promptLogRepository;
-    }
-
     @SuppressWarnings("unchecked")
     public String askAi(String userPrompt) {
         if ("nincs_megadva".equals(aiApiKey)) {
             System.out.println("AI API kulcs nincs beállítva!");
             return "Hiányzik az API kulcs.";
+        }
+        if (userPrompt == null || userPrompt.isBlank()) {
+            return "Üres kérdés.";
+        }
+        if (userPrompt.length() > MAX_PROMPT_CHARS) {
+            return "A kérdés maximum " + MAX_PROMPT_CHARS + " karakter lehet.";
         }
 
         try {
@@ -54,14 +55,7 @@ public class AiService {
             if (responseBody != null) {
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                String aiAnswer = (String) message.get("content");
-
-                PromptLog log = new PromptLog();
-                log.setPrompt(userPrompt);
-                log.setResponse(aiAnswer);
-                promptLogRepository.save(log);
-
-                return aiAnswer;
+                return (String) message.get("content");
             }
             return "Üres válasz érkezett az AI-tól.";
 

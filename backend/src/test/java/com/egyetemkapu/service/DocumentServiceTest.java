@@ -15,7 +15,9 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,6 +90,24 @@ class DocumentServiceTest {
 
         RuntimeException ex = assertThrows(RuntimeException.class, () -> documentService.getDocumentForAdminDownload(6L));
         assertEquals("Érvénytelen fájlútvonal", ex.getMessage());
+    }
+
+    @Test
+    void isAllowedUpload_acceptsPdfJpegPngMagicBytes() {
+        assertTrue(DocumentService.isAllowedUpload("jegyzet.pdf", "%PDF-1.4".getBytes()));
+        assertTrue(DocumentService.isAllowedUpload("kep.PNG", new byte[]{
+                (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00
+        }));
+        assertTrue(DocumentService.isAllowedUpload("foto.jpg", new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x10}));
+        assertTrue(DocumentService.isAllowedUpload("foto.jpeg", new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x10}));
+    }
+
+    @Test
+    void isAllowedUpload_rejectsUnknownOrMismatchedTypes() {
+        assertFalse(DocumentService.isAllowedUpload("virus.exe", new byte[]{'M', 'Z'}));
+        assertFalse(DocumentService.isAllowedUpload("hamis.pdf", new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF}));
+        assertFalse(DocumentService.isAllowedUpload("jegyzet.docx", "%PDF-1.4".getBytes()));
+        assertFalse(DocumentService.isAllowedUpload("ures.pdf", new byte[0]));
     }
 
     private Document pendingDocument(Long id) {
