@@ -42,12 +42,12 @@ describe('LoginPage Komponens', () => {
         expect(screen.getByRole('link', { name: 'login.forgotPassword' })).toHaveAttribute('href', '/elfelejtett-jelszo');
     });
 
-    it('sikeres bejelentkezés esetén elmenti a tokeneket és átirányít a főoldalra', async () => {
+    it('sikeres bejelentkezés esetén cookie-s munkamenetet indít és átirányít a főoldalra', async () => {
         const user = userEvent.setup();
         
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
             ok: true,
-            json: async () => ({ token: 'valos_jwt_token', refreshToken: 'valos_refresh_token' }),
+            json: async () => ({ ok: true }),
         });
 
         renderWithRouter();
@@ -62,11 +62,12 @@ describe('LoginPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
                 method: 'POST',
+                credentials: 'include',
                 body: JSON.stringify({ email: 'teszt_elek@egyetemkapu.hu', password: 'Titkos123!' })
             }));
             
-            expect(localStorage.setItem).toHaveBeenCalledWith('token', 'valos_jwt_token');
-            expect(localStorage.setItem).toHaveBeenCalledWith('refreshToken', 'valos_refresh_token');
+            expect(localStorage.setItem).not.toHaveBeenCalledWith('token', expect.anything());
+            expect(localStorage.setItem).not.toHaveBeenCalledWith('refreshToken', expect.anything());
             expect(mockNavigate).toHaveBeenCalledWith('/');
         });
     });

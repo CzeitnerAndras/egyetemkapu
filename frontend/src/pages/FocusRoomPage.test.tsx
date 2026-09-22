@@ -2,10 +2,6 @@ import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import FocusRoomPage from './FocusRoomPage';
 
-function headerValue(headers: HeadersInit | undefined, name: string): string | null {
-    return new Headers(headers).get(name);
-}
-
 jest.mock('../i18n/LanguageContext', () => ({
     useLanguage: () => ({
         t: (key: string) => key,
@@ -123,7 +119,7 @@ describe('FocusRoomPage Komponens', () => {
                 ([url, options]) => url === '/api/tasks/9' && options?.method === 'PUT'
             );
             expect(putCall).toBeDefined();
-            expect(headerValue(putCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+            expect(putCall[1].credentials).toBe('include');
             expect(JSON.parse(putCall[1].body)).toEqual({
                 id: 9,
                 title: 'Fontos feladat',
@@ -172,7 +168,7 @@ describe('FocusRoomPage Komponens', () => {
             ([url, options]) => url === '/api/tasks' && options?.method === 'POST'
         );
         expect(postCall).toBeDefined();
-        expect(headerValue(postCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+        expect(postCall[1].credentials).toBe('include');
         expect(JSON.parse(postCall[1].body)).toEqual(
             expect.objectContaining({
                 title: 'Új fókusz feladat',
@@ -229,7 +225,7 @@ describe('FocusRoomPage Komponens', () => {
                 ([url, options]) => url === '/api/notes' && options?.method === 'POST'
             );
             expect(postCall).toBeDefined();
-            expect(headerValue(postCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+            expect(postCall[1].credentials).toBe('include');
             expect(JSON.parse(postCall[1].body)).toEqual({ content: 'Gyors jegyzet' });
         });
     });
@@ -254,7 +250,7 @@ describe('FocusRoomPage Komponens', () => {
                 ([url, options]) => url === '/api/notes/7' && options?.method === 'PUT'
             );
             expect(putCall).toBeDefined();
-            expect(headerValue(putCall[1].headers, 'Authorization')).toBe('Bearer test-token');
+            expect(putCall[1].credentials).toBe('include');
             expect(JSON.parse(putCall[1].body)).toEqual({ content: 'Régi jegyzet - frissítve' });
         });
     });

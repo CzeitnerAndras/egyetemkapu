@@ -17,7 +17,7 @@ const setup = () => userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
 
 describe('SecretPage Komponens', () => {
     beforeEach(() => {
-        globalThis.fetch = jest.fn();
+        globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
         localStorage.clear();
         jest.clearAllMocks();
         jest.useFakeTimers();
@@ -56,26 +56,37 @@ describe('SecretPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/users/me',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
 
         expect(await screen.findByText(/TESZT_ELEK/)).toBeInTheDocument();
     });
 
-    it('token nélkül nem hívja meg a felhasználó lekérő végpontot', () => {
+    it('cookie nélkül UNKNOWN felhasználónevet mutat, ha a /me hívás sikertelen', async () => {
         hackTerminal();
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 401 });
         render(<SecretPage />);
 
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/users/me',
+                expect.objectContaining({ credentials: 'include' })
+            );
+        });
         expect(screen.getByText(/UNKNOWN/)).toBeInTheDocument();
     });
 
     it('a "run:// details" gombra kattintva megnyitja a jegyzet modált, és lekéri a jegyzeteket', async () => {
         hackTerminal();
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: async () => [{ id: 7, content: 'Régi jegyzet' }],
+        (globalThis.fetch as jest.Mock).mockImplementation((url: string) => {
+            if (url === '/api/notes') {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => [{ id: 7, content: 'Régi jegyzet' }],
+                });
+            }
+            return Promise.resolve({ ok: false, status: 401 });
         });
 
         const user = setup();
@@ -86,7 +97,7 @@ describe('SecretPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/notes',
-                expect.objectContaining({ headers: { Authorization: 'Bearer null' } })
+                expect.objectContaining({ credentials: 'include' })
             );
             expect(screen.getByDisplayValue('Régi jegyzet')).toBeInTheDocument();
         });
@@ -94,7 +105,12 @@ describe('SecretPage Komponens', () => {
 
     it('betöltés közben a "loading..." szöveget jeleníti meg, majd eltűnik', async () => {
         hackTerminal();
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => [] });
+        (globalThis.fetch as jest.Mock).mockImplementation((url: string) => {
+            if (url === '/api/notes') {
+                return Promise.resolve({ ok: true, json: async () => [] });
+            }
+            return Promise.resolve({ ok: false, status: 401 });
+        });
 
         const user = setup();
         render(<SecretPage />);
@@ -131,10 +147,7 @@ describe('SecretPage Komponens', () => {
                 '/api/notes/3',
                 expect.objectContaining({
                     method: 'PUT',
-                    headers: {
-                        Authorization: 'Bearer test-token',
-                        'Content-Type': 'application/json',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({ content: 'Frissített szöveg' }),
                 })
             );
@@ -163,10 +176,7 @@ describe('SecretPage Komponens', () => {
                 '/api/notes',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: {
-                        Authorization: 'Bearer test-token',
-                        'Content-Type': 'application/json',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({ content: 'Új jegyzet' }),
                 })
             );
@@ -175,7 +185,12 @@ describe('SecretPage Komponens', () => {
 
     it('a modál hátterére kattintva bezárja a jegyzeteket, de a panelen belüli kattintás nem', async () => {
         hackTerminal();
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => [] });
+        (globalThis.fetch as jest.Mock).mockImplementation((url: string) => {
+            if (url === '/api/notes') {
+                return Promise.resolve({ ok: true, json: async () => [] });
+            }
+            return Promise.resolve({ ok: false, status: 401 });
+        });
 
         const user = setup();
         render(<SecretPage />);

@@ -73,7 +73,7 @@ describe('KnowledgeBasePage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
             expect(screen.getByText('Fizika jegyzet')).toBeInTheDocument();
             expect(screen.getByText(/kovacs\.anna/)).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('KnowledgeBasePage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents/download/1',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
     });
@@ -173,7 +173,8 @@ describe('KnowledgeBasePage Komponens', () => {
         });
 
         const [, options] = (globalThis.fetch as jest.Mock).mock.calls[1];
-        expect(options.headers).toEqual({ Authorization: 'Bearer test-token' });
+        expect(options.credentials).toBe('include');
+        expect(new Headers(options.headers).get('Authorization')).toBeNull();
 
         const formData = options.body as FormData;
         expect(formData.get('title')).toBe('Fizika jegyzet');

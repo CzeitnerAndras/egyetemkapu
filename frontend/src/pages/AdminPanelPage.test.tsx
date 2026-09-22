@@ -49,11 +49,11 @@ describe('AdminPanelPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents/admin/pending',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/suggestions',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
     });
@@ -115,7 +115,7 @@ describe('AdminPanelPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents/admin/1/approve',
-                expect.objectContaining({ method: 'PUT', headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ method: 'PUT', credentials: 'include' })
             );
             expect(screen.queryByText('Tanterv 2026')).not.toBeInTheDocument();
         });
@@ -138,7 +138,7 @@ describe('AdminPanelPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents/admin/2/reject',
-                expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ method: 'DELETE', credentials: 'include' })
             );
             expect(screen.queryByText('Rossz dokumentum')).not.toBeInTheDocument();
         });
@@ -164,7 +164,7 @@ describe('AdminPanelPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents/admin/3/download',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
     });
@@ -186,7 +186,7 @@ describe('AdminPanelPage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/suggestions/9',
-                expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ method: 'DELETE', credentials: 'include' })
             );
             expect(screen.queryByText(/Törlendő ötlet/)).not.toBeInTheDocument();
         });
@@ -213,10 +213,7 @@ describe('AdminPanelPage Komponens', () => {
                 '/api/events',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-token',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({
                         title: 'Új esemény',
                         description: 'Esemény leírása',
@@ -274,8 +271,9 @@ describe('AdminPanelPage Komponens', () => {
         });
     });
 
-    it('bejelentkezés nélkül a hír mentése nem hív fetch-et, és a gomb töltés állapotban ragad', async () => {
+    it('bejelentkezés nélkül cookie-val küldi a hír mentését', async () => {
         mockInitialFetches();
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 401 });
 
         const { container } = render(<AdminPanelPage />);
         await waitForListsToLoad();
@@ -288,11 +286,11 @@ describe('AdminPanelPage Komponens', () => {
         await user.type(descInput, 'Leírás');
         await user.click(screen.getByRole('button', { name: 'admin.newsSubmit' }));
 
-        expect(globalThis.fetch).toHaveBeenCalledTimes(2);
-
         await waitFor(() => {
-            expect(screen.getByRole('button', { name: 'admin.loading' })).toBeDisabled();
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/events',
+                expect.objectContaining({ method: 'POST', credentials: 'include' })
+            );
         });
-        expect(screen.queryByText('admin.newsError')).not.toBeInTheDocument();
     });
 });

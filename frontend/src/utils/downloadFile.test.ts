@@ -35,7 +35,7 @@ describe('downloadAuthenticatedFile', () => {
 
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/documents/admin/3/download',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
             expect(window.URL.createObjectURL).toHaveBeenCalled();
             expect(click).toHaveBeenCalled();

@@ -54,21 +54,21 @@ describe('HomePage Komponens', () => {
         expect(screen.getByText('home.loadingNews')).toBeInTheDocument();
     });
 
-    it('lekéri a híreket a megfelelő végpontról, token nélkül nem hívja az admin ellenőrzést', async () => {
+    it('lekéri a híreket, és cookie-val ellenőrzi a felhasználót', async () => {
         mockFetchByUrl({ '/api/events': { ok: true, json: async () => [] } });
 
         render(<HomePage />);
 
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith('/api/events');
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/users/me',
+                expect.objectContaining({ credentials: 'include' })
+            );
         });
-        expect(globalThis.fetch).not.toHaveBeenCalledWith(
-            expect.stringContaining('/api/users/me'),
-            expect.anything()
-        );
     });
 
-    it('bejelentkezett felhasználó esetén lekéri a felhasználói adatokat is', async () => {
+    it('bejelentkezett felhasználó esetén cookie-val kéri le a felhasználói adatokat', async () => {
         localStorage.setItem('token', 'test-token');
         mockFetchByUrl({
             '/api/events': { ok: true, json: async () => [] },
@@ -80,7 +80,7 @@ describe('HomePage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/users/me',
-                expect.objectContaining({ headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ credentials: 'include' })
             );
         });
     });
@@ -249,7 +249,7 @@ describe('HomePage Komponens', () => {
         await waitFor(() => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 '/api/events/1',
-                expect.objectContaining({ method: 'DELETE', headers: { Authorization: 'Bearer test-token' } })
+                expect.objectContaining({ method: 'DELETE', credentials: 'include' })
             );
             expect(screen.queryByText('Törlendő hír')).not.toBeInTheDocument();
         });

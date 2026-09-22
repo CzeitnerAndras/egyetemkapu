@@ -27,7 +27,8 @@ const expectAuthCall = (
 
     const init = call![1] as RequestInit;
     expect(init.body).toBe(body);
-    expect((init.headers as Headers).get('Authorization')).toBe('Bearer test-token');
+    expect(init.credentials).toBe('include');
+    expect((init.headers as Headers).get('Authorization')).toBeNull();
     expect((init.headers as Headers).get('Content-Type')).toBe(contentType ?? null);
 };
 
@@ -55,15 +56,18 @@ describe('ProfilePage Komponens', () => {
         jest.clearAllMocks();
     });
 
-    it('bejelentkezés oldalra irányít, ha nincs token, és nem hív fetch-et', () => {
+    it('401 esetén a bejelentkezés oldalra irányít', async () => {
+        mockProfileFetch({ status: 401, ok: false });
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ status: 401, ok: false, json: async () => ({}) });
+
         render(<ProfilePage />);
 
-        expect(mockNavigate).toHaveBeenCalledWith('/login');
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        await waitFor(() => {
+            expect(mockNavigate).toHaveBeenCalledWith('/login');
+        });
     });
 
-    it('érvényes token esetén lekéri és megjeleníti a felhasználónevet', async () => {
-        localStorage.setItem('token', 'test-token');
+    it('érvényes munkamenet esetén lekéri és megjeleníti a felhasználónevet', async () => {
         mockProfileFetch({ username: 'kovacs.anna' });
 
         render(<ProfilePage />);
@@ -77,6 +81,7 @@ describe('ProfilePage Komponens', () => {
     it('lejárt token (401) esetén eltávolítja a tokent, és a bejelentkezés oldalra irányít', async () => {
         localStorage.setItem('token', 'test-token');
         mockProfileFetch({ status: 401, ok: false });
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ status: 401, ok: false, json: async () => ({}) });
 
         render(<ProfilePage />);
 
@@ -114,7 +119,7 @@ describe('ProfilePage Komponens', () => {
         expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it('sikeresen frissíti a felhasználónevet, és frissíti a tokent, ha a szerver újat küld', async () => {
+    it('sikeresen frissíti a felhasználónevet cookie-s munkamenettel', async () => {
         localStorage.setItem('token', 'test-token');
         mockProfileFetch({ username: 'regi.nev' });
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
@@ -138,7 +143,6 @@ describe('ProfilePage Komponens', () => {
             });
             expect(screen.getByText(/Felhasználónév sikeresen frissítve!/)).toBeInTheDocument();
             expect(screen.getByText(/uj\.nev/)).toBeInTheDocument();
-            expect(localStorage.getItem('token')).toBe('new-token');
         });
 
         const input = container.querySelector('input[type="text"]') as HTMLInputElement;
@@ -330,7 +334,7 @@ describe('ProfilePage Komponens', () => {
         expect(screen.queryByText('Biztos vagy benne?')).not.toBeInTheDocument();
     });
 
-    it('hibaüzenetet jelenít meg, ha a fiók törlése sikertelen, és megtartja a tokent', async () => {
+    it('hibaüzenetet jelenít meg, ha a fiók törlése sikertelen', async () => {
         localStorage.setItem('token', 'test-token');
         mockProfileFetch();
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, json: async () => ({}) });
@@ -345,7 +349,7 @@ describe('ProfilePage Komponens', () => {
         await waitFor(() => {
             expect(screen.getByText(/Nem sikerült törölni a fiókot\./)).toBeInTheDocument();
         });
-        expect(localStorage.getItem('token')).toBe('test-token');
+        expect(mockNavigate).not.toHaveBeenCalledWith('/');
         expect(screen.queryByText('Biztos vagy benne?')).not.toBeInTheDocument();
     });
 });

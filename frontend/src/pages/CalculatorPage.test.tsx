@@ -50,7 +50,7 @@ describe('CalculatorPage Komponens', () => {
                 '/api/calculator/weighted-average',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify([
                         { credit: 3, grade: 5 },
                         { credit: 3, grade: 5 },
@@ -98,7 +98,7 @@ describe('CalculatorPage Komponens', () => {
             expect(globalThis.fetch).toHaveBeenCalledWith(
                 `/api/tools/calculator/integrate/${encodeURIComponent('x^2')}`,
                 expect.objectContaining({
-                    headers: { Authorization: 'Bearer test-token' },
+                    credentials: 'include',
                 })
             );
             expect(screen.getByText('calc.result')).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe('CalculatorPage Komponens', () => {
     });
 
     it('bejelentkezési hibát jelez, ha a szerver 401-et ad vissza', async () => {
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+        (globalThis.fetch as jest.Mock).mockResolvedValue({
             ok: false,
             status: 401,
             json: async () => ({}),

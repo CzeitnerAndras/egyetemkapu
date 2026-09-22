@@ -57,10 +57,7 @@ describe('AIAssistantPage Komponens', () => {
                 '/api/ai/ask',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer null',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({ prompt: 'Mi a helyzet?' }),
                 })
             );
@@ -68,9 +65,7 @@ describe('AIAssistantPage Komponens', () => {
         });
     });
 
-    it('bejelentkezett tokennel az Authorization fejlécben küldi el a kérést', async () => {
-        localStorage.setItem('token', 'test-token');
-
+    it('cookie-val küldi el a kérést, Authorization fejléc nélkül', async () => {
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
             ok: true,
             status: 200,
@@ -84,17 +79,14 @@ describe('AIAssistantPage Komponens', () => {
         await user.click(screen.getByRole('button', { name: 'ai.send' }));
 
         await waitFor(() => {
-            expect(globalThis.fetch).toHaveBeenCalledWith(
-                '/api/ai/ask',
-                expect.objectContaining({
-                    headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
-                })
-            );
+            const init = (globalThis.fetch as jest.Mock).mock.calls[0][1] as RequestInit;
+            expect(init.credentials).toBe('include');
+            expect(new Headers(init.headers).get('Authorization')).toBeNull();
         });
     });
 
     it('bejelentkezési hibát jelez, ha a szerver 401-et ad vissza', async () => {
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+        (globalThis.fetch as jest.Mock).mockResolvedValue({
             ok: false,
             status: 401,
             json: async () => ({}),

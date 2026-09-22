@@ -24,6 +24,11 @@ describe('IdeaBoxPage Komponens', () => {
     });
 
     it('bejelentkezés nélkül nem küldi el az ötletet, és hibaüzenetet jelez', async () => {
+        (globalThis.fetch as jest.Mock).mockResolvedValue({
+            ok: false,
+            status: 401,
+        });
+
         const user = userEvent.setup();
         render(<IdeaBoxPage />);
 
@@ -34,7 +39,7 @@ describe('IdeaBoxPage Komponens', () => {
         await waitFor(() => {
             expect(screen.getByText('idea.needLogin')).toBeInTheDocument();
         });
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        expect(globalThis.fetch).toHaveBeenCalled();
         expect(screen.getByRole('button', { name: 'idea.submit' })).not.toBeDisabled();
     });
 
@@ -61,10 +66,7 @@ describe('IdeaBoxPage Komponens', () => {
                 '/api/suggestions',
                 expect.objectContaining({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: 'Bearer test-token',
-                    },
+                    credentials: 'include',
                     body: JSON.stringify({
                         title: 'Több zöld terület',
                         description: 'Legyen park az egyetem mellett.',
