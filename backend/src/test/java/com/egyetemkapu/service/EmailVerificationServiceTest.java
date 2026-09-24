@@ -17,10 +17,12 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -92,5 +94,28 @@ class EmailVerificationServiceTest {
         when(tokenRepository.findByTokenHash(PasswordResetTokens.hash("lejart"))).thenReturn(Optional.of(expired));
         assertEquals(EmailVerificationService.INVALID_TOKEN_MESSAGE, service.verify("lejart").orElseThrow());
         verify(tokenRepository).delete(expired);
+    }
+
+    @Test
+    void verify_BlankToken_ReturnsErrorWithoutLookup() {
+        assertEquals(EmailVerificationService.INVALID_TOKEN_MESSAGE, service.verify("  ").orElseThrow());
+        assertEquals(EmailVerificationService.INVALID_TOKEN_MESSAGE, service.verify(null).orElseThrow());
+        verify(tokenRepository, never()).findByTokenHash(anyString());
+    }
+
+    @Test
+    void issueFor_ReusesExistingTokenRow() {
+        User user = new User();
+        user.setId(3L);
+        EmailVerificationToken existing = new EmailVerificationToken();
+        existing.setUser(user);
+        existing.setTokenHash("regi-hash");
+        when(tokenRepository.findByUser(user)).thenReturn(Optional.of(existing));
+        when(tokenRepository.save(any(EmailVerificationToken.class))).thenAnswer(i -> i.getArgument(0));
+
+        service.issueFor(user);
+
+        assertNotEquals("regi-hash", existing.getTokenHash());
+        verify(tokenRepository).save(existing);
     }
 }
