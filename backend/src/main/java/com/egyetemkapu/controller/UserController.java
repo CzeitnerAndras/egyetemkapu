@@ -6,7 +6,9 @@ import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.AuthCookies;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.security.UsernamePolicy;
 import com.egyetemkapu.service.ActiveUserService;
+import com.egyetemkapu.service.RefreshTokenService;
 import com.egyetemkapu.service.UserAccountService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,7 @@ public class UserController {
     private final JwtUtil jwtUtil;
     private final UserAccountService userAccountService;
     private final ActiveUserService activeUserService;
+    private final RefreshTokenService refreshTokenService;
     private final boolean cookieSecure;
 
     public UserController(
@@ -36,12 +39,14 @@ public class UserController {
             JwtUtil jwtUtil,
             UserAccountService userAccountService,
             ActiveUserService activeUserService,
+            RefreshTokenService refreshTokenService,
             @Value("${app.auth.cookie-secure:false}") boolean cookieSecure) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.userAccountService = userAccountService;
         this.activeUserService = activeUserService;
+        this.refreshTokenService = refreshTokenService;
         this.cookieSecure = cookieSecure;
     }
 
@@ -102,24 +107,30 @@ public class UserController {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
 
-        String newUsername = request.get("newUsername");
-        
-        if (userRepository.findByUsername(newUsername).isPresent()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ez a felhasználónév már foglalt!"));
+        String newUsername = trimToNull(request.get("newUsername"));
+        if (!UsernamePolicy.isValid(newUsername)) {
+            return ResponseEntity.badRequest().body(Map.of("error", UsernamePolicy.UNAVAILABLE_MESSAGE));
         }
 
         User user = userOpt.get();
+        if (newUsername.equals(user.getUsername())) {
+            return ResponseEntity.ok(Map.of("message", "Sikeres frissítés!", "username", user.getUsername()));
+        }
+        if (userRepository.findByUsername(newUsername).isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", UsernamePolicy.UNAVAILABLE_MESSAGE));
+        }
+
         user.setUsername(newUsername);
         userRepository.save(user);
 
         AuthCookies.setAccess(response, jwtUtil.generateToken(newUsername), cookieSecure);
-        return ResponseEntity.ok(Map.of("message", "Sikeres frissítés!"));
+        return ResponseEntity.ok(Map.of("message", "Sikeres frissítés!", "username", newUsername));
     }
 
     @PutMapping("/password")
     @LogAction("Jelszó módosítása")
     @Transactional
-    public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> updatePassword(@RequestBody Map<String, String> request, HttpServletResponse response) {
         Optional<User> userOpt = getCurrentUser();
         if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
 
@@ -138,6 +149,11 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
+        refreshTokenService.deleteByUserId(user.getId());
+        RefreshTokenService.IssuedRefreshToken refresh = refreshTokenService.createRefreshToken(user.getId());
+        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername()), cookieSecure);
+        AuthCookies.setRefresh(response, refresh.rawToken(), cookieSecure);
+
         return ResponseEntity.ok(Map.of("message", "Jelszó sikeresen frissítve!"));
     }
 
@@ -151,5 +167,13 @@ public class UserController {
         userAccountService.deleteAccount(userOpt.get());
         AuthCookies.clearSession(response, cookieSecure);
         return ResponseEntity.ok(Map.of("message", "Fiók törölve!"));
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
