@@ -8,6 +8,7 @@ import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.AuthCookies;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.security.UsernamePolicy;
 import com.egyetemkapu.service.EmailVerificationService;
 import com.egyetemkapu.service.PasswordResetService;
 import com.egyetemkapu.service.RefreshTokenService;
@@ -30,7 +31,6 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private static final Pattern USERNAME = Pattern.compile("^[a-zA-Z0-9._-]{3,32}$");
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]{1,64}@[^@\\s]{1,255}$");
     private static final String GENERIC_LOGIN_ERROR = "Hibás e-mail cím vagy jelszó!";
     private static final String GENERIC_REGISTER_ERROR = "A regisztráció nem sikerült.";
@@ -71,7 +71,7 @@ public class AuthController {
         if (!PasswordPolicy.isValid(password)) {
             return ResponseEntity.badRequest().body(Map.of("error", PasswordPolicy.WEAK_PASSWORD_MESSAGE));
         }
-        if (username == null || email == null || !USERNAME.matcher(username).matches() || !EMAIL.matcher(email).matches()) {
+        if (username == null || email == null || !UsernamePolicy.isValid(username) || !EMAIL.matcher(email).matches()) {
             return ResponseEntity.badRequest().body(Map.of("error", GENERIC_REGISTER_ERROR));
         }
         Optional<User> existingEmail = userRepository.findByEmail(email);
