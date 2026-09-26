@@ -94,6 +94,7 @@ class TaskControllerTest {
         mockMvc.perform(post("/api/tasks")
                 .with(user("teszt_hallgato"))
                 .principal(() -> "teszt_hallgato")
+                .header("Origin", "https://egyetemkapu.hu")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
