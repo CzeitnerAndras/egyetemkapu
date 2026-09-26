@@ -76,6 +76,7 @@ class EgyetemkapuEndToEndTest {
 
         mockMvc.perform(post("/api/tasks")
                 .header("Authorization", "Bearer " + realJwtToken)
+                .header("Origin", "https://egyetemkapu.hu")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(taskPayload))
                 .andExpect(status().isOk());
