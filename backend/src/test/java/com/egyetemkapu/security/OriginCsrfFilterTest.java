@@ -14,13 +14,35 @@ class OriginCsrfFilterTest {
     private final OriginCsrfFilter filter = new OriginCsrfFilter(SecurityConfig.DEFAULT_ALLOWED_ORIGINS);
 
     @Test
-    void skipsSafeMethodsAndRequestsWithoutAuthCookies() throws Exception {
+    void skipsSafeMethods() throws Exception {
         MockHttpServletRequest get = new MockHttpServletRequest("GET", "/api/notes");
         get.setCookies(new jakarta.servlet.http.Cookie(AuthCookies.ACCESS, "jwt"));
         assertTrue(filter.shouldNotFilter(get));
 
-        MockHttpServletRequest post = new MockHttpServletRequest("POST", "/api/auth/login");
-        assertTrue(filter.shouldNotFilter(post));
+        MockHttpServletRequest login = new MockHttpServletRequest("POST", "/api/auth/login");
+        assertFalse(filter.shouldNotFilter(login));
+    }
+
+    @Test
+    void rejectsLoginFromUnknownOrigin() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/login");
+        request.addHeader("Origin", "https://tamado.example");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void allowsLoginFromSiteOrigin() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/auth/login");
+        request.addHeader("Origin", "https://egyetemkapu.hu");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
     }
 
     @Test
