@@ -14,9 +14,10 @@ public class AuchanFlyerExtractor extends GenericFlyerExtractor {
 
     private static final float MIN_SIZE = 7.2f;
     private static final float MAX_SIZE = 14.5f;
+    private static final Pattern SOFT_HYPHEN = Pattern.compile("\u00ad[ \\t]?");
     private static final Pattern OFFER_NAME = Pattern.compile(
             "(?u)(?<!\\p{L})([A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'-]{3,}"
-                    + "(?:(?:[ \\t]+|-)[A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'.-]{0,}){0,8})(?!\\p{L})");
+                    + "(?:(?:[ \\t]+|-|,\\s+)[A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'.-]{0,}){0,8})(?!\\p{L})");
 
     public AuchanFlyerExtractor(FlyerCatalogParser parser) {
         super(parser);
@@ -45,8 +46,12 @@ public class AuchanFlyerExtractor extends GenericFlyerExtractor {
         return super.extractFromPageText(text, pageNumber);
     }
 
+    private static String normalizeOfferText(String text) {
+        return SOFT_HYPHEN.matcher(text.replace('\u00a0', ' ')).replaceAll("");
+    }
+
     private List<ParsedProduct> extractOffers(String text, int pageNumber) {
-        Matcher matcher = OFFER_NAME.matcher(text.replace('\u00a0', ' '));
+        Matcher matcher = OFFER_NAME.matcher(normalizeOfferText(text));
         List<ParsedProduct> products = new ArrayList<>();
         while (matcher.find()) {
             String name = FlyerCatalogParser.tidyProductName(matcher.group(1).replace('*', ' '));
