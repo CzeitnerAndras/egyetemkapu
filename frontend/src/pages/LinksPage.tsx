@@ -59,7 +59,7 @@ export default function LinksPage() {
                     { title: l("Záróvizsga", "Final Examination"), url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
                     { title: l("Képzések / Tantervi Háló", "Programs / Curricula"), url: "https://inf.unideb.hu/2026-szeptembertol-meghirdetett-kepzesek" },
                     { title: l("Syllabus", "Syllabus"), url: "https://www.ik.unideb.hu/syllabi/" },
-                    { title: l("Órarend", "timetable"), url: "https://levelezo.inf.unideb.hu/orarend/#/?order=date,program,instructor,subject,room&program=PTI-MSC-21-1" },
+                    { title: l("Órarend", "Timetable"), url: "https://levelezo.inf.unideb.hu/orarend/#/?order=date,program,instructor,subject,room&program=PTI-MSC-26-1" },
                 ]
             },
             {
