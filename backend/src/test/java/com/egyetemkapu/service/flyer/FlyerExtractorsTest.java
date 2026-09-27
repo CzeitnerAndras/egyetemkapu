@@ -209,6 +209,40 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void auchanExtractorKeepsACommaInsideAnAllCapsOfferName() {
+        String page = """
+                AUCHAN KEDVENC FÜSTÖLT-FŐTT, FŰSZERES TARJA 4290 Ft/kg, 3790 Ft/kg, csemegepultban kapható
+                ZÁDOR FÜSTÖLT, ELSŐ CSÜLÖK 1590 Ft/kg, 1290 Ft/kg, csemegepultban kapható
+                BOGÁDI FÜSTÖLT KOLBÁSZ 5990 Ft/kg, csemege vagy csípős, csemegepultban kapható
+                """;
+
+        List<ParsedProduct> products = new AuchanFlyerExtractor(parser).extractFromPageText(page, 4);
+
+        assertEquals(List.of(
+                "AUCHAN KEDVENC FÜSTÖLT-FŐTT, FŰSZERES TARJA",
+                "ZÁDOR FÜSTÖLT, ELSŐ CSÜLÖK",
+                "BOGÁDI FÜSTÖLT KOLBÁSZ"), names(products), products.toString());
+    }
+
+    @Test
+    void auchanExtractorJoinsOfferNamesBrokenBySoftHyphens() {
+        String page = """
+                PETRE\u00adZSELYEM\u00adGYÖKÉR Ft/kg, származási hely: Magyarország
+                ZELLER\u00adGUMÓ Ft/kg
+                AUCHAN KEDVENC GESZTENYE\u00ad TORTA 6990 Ft/kg
+                ZELLERSZÁR Ft/csomag
+                """;
+
+        List<ParsedProduct> products = new AuchanFlyerExtractor(parser).extractFromPageText(page, 5);
+
+        assertEquals(List.of(
+                "PETREZSELYEMGYÖKÉR",
+                "ZELLERGUMÓ",
+                "AUCHAN KEDVENC GESZTENYETORTA",
+                "ZELLERSZÁR"), names(products), products.toString());
+    }
+
+    @Test
     void aldiExtractorReadsWholeTextBoxesAndPrefixesBrands() {
         String page = """
                 09.10. CSÜTÖRTÖKTŐL 09.16. SZERDÁIG
