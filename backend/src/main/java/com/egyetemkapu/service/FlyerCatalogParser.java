@@ -1602,6 +1602,10 @@ public class FlyerCatalogParser {
     }
 
     private static String cleanProductName(String name) {
+        return cleanProductName(name, 8);
+    }
+
+    private static String cleanProductName(String name, int maxWords) {
         if (name == null || name.isBlank()) {
             return "";
         }
@@ -1622,8 +1626,8 @@ public class FlyerCatalogParser {
         cleaned = cleaned.replaceAll("^[\\s,.;:%/-]+", "").replaceAll("[\\s,.;:/-]+$", "");
         cleaned = cleaned.replaceAll("\\s+", " ").trim();
         String[] words = cleaned.split("\\s+");
-        if (words.length > 8) {
-            cleaned = String.join(" ", java.util.Arrays.copyOfRange(words, words.length - 8, words.length));
+        if (maxWords > 0 && words.length > maxWords) {
+            cleaned = String.join(" ", java.util.Arrays.copyOfRange(words, words.length - maxWords, words.length));
         }
         return cleaned;
     }
@@ -1653,7 +1657,11 @@ public class FlyerCatalogParser {
     }
 
     public static String tidyProductName(String raw) {
-        return cleanProductName(raw);
+        return tidyProductName(raw, 8);
+    }
+
+    public static String tidyProductName(String raw, int maxWords) {
+        return cleanProductName(raw, maxWords);
     }
 
     public static boolean isJunkProductName(String name) {
