@@ -243,6 +243,28 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void auchanExtractorKeepsPlusSignsAndLongOfferNames() {
+        String page = """
+                SWISS VITAMINOS DOBOZOS ITAL többféle, 250 ml
+                APENTA+ ISOTONIC ITAL többféle, 750 ml, 660 Ft/l, 492 Ft/l + visszaváltási díj 50 Ft
+                *BÁRMELY 2 DB VÁSÁRLÁSA ESETÉN
+                FONTE ACTIVE CITROM-LIME, BOOST EGZOTIKUS VITAMIN VAGY BEAUTY KOLLAGÉN SZÉNSAVMENTES ITAL 0,75 l
+                VITALADE SPORTITAL multivitamin vagy erdei szamóca, 0,7 l
+                *BÁRMELY 2 DB VÁSÁRLÁSA ESETÉN
+                APENTA+ ITAL többféle, 750 ml
+                """;
+
+        List<ParsedProduct> products = new AuchanFlyerExtractor(parser).extractFromPageText(page, 11);
+
+        assertEquals(List.of(
+                "SWISS VITAMINOS DOBOZOS ITAL",
+                "APENTA+ ISOTONIC ITAL",
+                "FONTE ACTIVE CITROM-LIME, BOOST EGZOTIKUS VITAMIN VAGY BEAUTY KOLLAGÉN SZÉNSAVMENTES ITAL",
+                "VITALADE SPORTITAL",
+                "APENTA+ ITAL"), names(products), products.toString());
+    }
+
+    @Test
     void aldiExtractorReadsWholeTextBoxesAndPrefixesBrands() {
         String page = """
                 09.10. CSÜTÖRTÖKTŐL 09.16. SZERDÁIG
