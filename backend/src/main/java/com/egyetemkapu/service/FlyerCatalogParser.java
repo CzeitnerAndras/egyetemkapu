@@ -95,6 +95,13 @@ public class FlyerCatalogParser {
     private static final Pattern PENNY_PRODUCT = Pattern.compile(
             "(?is)<(?:h[1-4]|p|span|div)[^>]*>\\s*([^<]{3,120}?)\\s*</(?:h[1-4]|p|span|div)>\\s*"
                     + "[^<]{0,180}?(\\d[\\d\\s.]{0,8}\\s*Ft)");
+    private static final Pattern COOP_SLIDE_IMAGE = Pattern.compile(
+            "background-image:\\s*url\\('(https://www\\.coop\\.hu/wp-content/uploads/[^']+)'\\)");
+    private static final Pattern COOP_TITLE = Pattern.compile("(?is)<h3 class=\"title\">\\s*([^<]+?)\\s*</h3>");
+    private static final Pattern COOP_LEAFLET_FILE = Pattern.compile(
+            "coop_([a-z0-9-]+)_szorolap_(\\d{8})-(\\d{4})\\.");
+    private static final Pattern COOP_HUNGARIAN_DATE = Pattern.compile(
+            "(\\d{4})\\.\\s*(\\p{L}+)\\s*(\\d{1,2})\\.");
     private static final Pattern AUCHAN_CATALOG = Pattern.compile(
             "https?://reklamujsag\\.auchan\\.hu/(?:online-katalogusok/)?(\\d{4}/[^/\"']+/([^/?#\"'\\s>]+))/?",
             Pattern.CASE_INSENSITIVE);
@@ -272,6 +279,118 @@ public class FlyerCatalogParser {
                     "auchan", "Auchan Szupermarket", szuperUrl, null, "auchan:" + szuperSlug, start, end));
         }
         return papers;
+    }
+
+    public List<ParsedCatalog> parseCoopFlyers(String html, LocalDate today) {
+        List<ParsedCatalog> catalogs = new ArrayList<>();
+        if (html == null || html.isBlank()) {
+            return catalogs;
+        }
+        Map<String, ParsedCatalog> byKey = new LinkedHashMap<>();
+        for (String slide : html.split("swiper-slide")) {
+            Matcher image = COOP_SLIDE_IMAGE.matcher(slide);
+            Matcher title = COOP_TITLE.matcher(slide);
+            if (!image.find() || !title.find()) {
+                continue;
+            }
+            String imageUrl = image.group(1);
+            Matcher file = COOP_LEAFLET_FILE.matcher(imageUrl);
+            if (!file.find()) {
+                continue;
+            }
+            LocalDate[] range = hungarianDateRange(slide);
+            if (range[0] == null || range[1] == null) {
+                continue;
+            }
+            String stamp = range[0].format(DateTimeFormatter.BASIC_ISO_DATE);
+            if (!imageUrl.contains(stamp)) {
+                continue;
+            }
+            if (!isCurrentOrUpcoming(range[0], range[1], today)) {
+                continue;
+            }
+            String cleanTitle = title.group(1).replaceAll("\\s+", " ").trim();
+            String slug = coopCatalogSlug(file.group(1), cleanTitle, range[0].getYear());
+            if (slug == null) {
+                continue;
+            }
+            String sourceKey = "coop:" + slug;
+            DiscoveredPaper paper = new DiscoveredPaper(
+                    "coop",
+                    cleanTitle,
+                    "https://katalogus.coop.hu/" + slug + "/",
+                    null,
+                    sourceKey,
+                    range[0],
+                    range[1]);
+            byKey.putIfAbsent(sourceKey, new ParsedCatalog(paper, List.of(), List.of()));
+        }
+        catalogs.addAll(byKey.values());
+        return catalogs;
+    }
+
+    private static LocalDate[] hungarianDateRange(String text) {
+        LocalDate[] range = new LocalDate[] { null, null };
+        Matcher matcher = COOP_HUNGARIAN_DATE.matcher(text == null ? "" : text);
+        int index = 0;
+        while (matcher.find() && index < 2) {
+            int month = hungarianMonth(matcher.group(2));
+            if (month == 0) {
+                continue;
+            }
+            try {
+                range[index++] = LocalDate.of(
+                        Integer.parseInt(matcher.group(1)),
+                        month,
+                        Integer.parseInt(matcher.group(3)));
+            } catch (Exception ignored) {
+                return new LocalDate[] { null, null };
+            }
+        }
+        return range;
+    }
+
+    static String coopCatalogSlug(String region, String title, int year) {
+        if (region == null || region.isBlank() || title == null) {
+            return null;
+        }
+        Matcher week = Pattern.compile("(?iu)(\\p{L}+)\\s+(\\d+(?:-\\d+)?)\\.\\s*hét\\s*-\\s*(.+)")
+                .matcher(title);
+        if (!week.find()) {
+            return null;
+        }
+        String month = HungarianText.normalize(week.group(1)).replace(' ', '-');
+        if (month.isBlank()) {
+            return null;
+        }
+        String tail = week.group(3).trim();
+        int variantAt = tail.indexOf(" - ");
+        String variant = variantAt < 0
+                ? ""
+                : HungarianText.normalize(tail.substring(variantAt + 3)).replace(' ', '-');
+        String slug = "coop-" + region + "-szorolap-" + year + "-" + month + "-" + week.group(2) + "-het";
+        if (!variant.isBlank()) {
+            slug = slug + "-" + variant;
+        }
+        return slug;
+    }
+
+    private static int hungarianMonth(String word) {
+        return switch (HungarianText.normalize(word)) {
+            case "januar" -> 1;
+            case "februar" -> 2;
+            case "marcius" -> 3;
+            case "aprilis" -> 4;
+            case "majus" -> 5;
+            case "junius" -> 6;
+            case "julius" -> 7;
+            case "augusztus" -> 8;
+            case "szeptember" -> 9;
+            case "oktober" -> 10;
+            case "november" -> 11;
+            case "december" -> 12;
+            default -> 0;
+        };
     }
 
     public ParsedCatalog parseAuchanIpaper(DiscoveredPaper paper, String html) {
@@ -802,6 +921,12 @@ public class FlyerCatalogParser {
     }
 
     public ParsedCatalog parsePublitas(DiscoveredPaper paper, String dataJson, String spreadsJson) {
+        return parsePublitas(paper, dataJson, spreadsJson,
+                List.of("at800", "at600", "at1000", "at1200", "at200", "at1600"));
+    }
+
+    public ParsedCatalog parsePublitas(
+            DiscoveredPaper paper, String dataJson, String spreadsJson, List<String> imageSizes) {
         List<ParsedPage> pages = new ArrayList<>();
         List<ParsedProduct> products = new ArrayList<>();
         String pdfUrl = paper.pdfUrl();
@@ -836,7 +961,7 @@ public class FlyerCatalogParser {
                         if (spreadPages.isArray()) {
                             for (JsonNode page : spreadPages) {
                                 int number = page.path("number").asInt(page.path("pageNumber").asInt(fallbackPage));
-                                String image = firstImage(page, paper.officialUrl());
+                                String image = firstImage(page, paper.officialUrl(), imageSizes);
                                 String text = collectText(page);
                                 pages.add(new ParsedPage(number, image, text));
                                 collectProducts(page, number, products, paper.officialUrl());
@@ -1043,13 +1168,16 @@ public class FlyerCatalogParser {
         }
     }
 
-    private String firstImage(JsonNode page, String officialUrl) {
+    private String firstImage(JsonNode page, String officialUrl, List<String> imageSizes) {
         String direct = resolveAssetUrl(officialUrl, textOr(page.path("image"), textOr(page.path("url"), null)));
         if (direct != null) {
             return direct;
         }
         JsonNode images = page.path("images");
-        for (String key : List.of("at800", "at600", "at1000", "at1200", "at200", "at1600")) {
+        List<String> sizes = imageSizes == null || imageSizes.isEmpty()
+                ? List.of("at800", "at600", "at1000", "at1200", "at200", "at1600")
+                : imageSizes;
+        for (String key : sizes) {
             String found = resolveAssetUrl(officialUrl, textOr(images.path(key), null));
             if (found != null) {
                 return found;

@@ -27,7 +27,10 @@ public final class FlyerUrlPolicy {
             "auchan.hu",
             "www.auchan.hu",
             "reklamujsag.auchan.hu",
-            "cdn.ipaper.io"
+            "cdn.ipaper.io",
+            "coop.hu",
+            "www.coop.hu",
+            "katalogus.coop.hu"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;

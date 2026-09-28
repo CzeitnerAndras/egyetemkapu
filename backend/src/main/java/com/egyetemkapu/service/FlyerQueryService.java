@@ -28,7 +28,7 @@ public class FlyerQueryService {
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
-    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan");
+    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,

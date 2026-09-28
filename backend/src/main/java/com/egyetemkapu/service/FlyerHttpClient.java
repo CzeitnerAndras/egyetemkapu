@@ -48,7 +48,8 @@ public class FlyerHttpClient {
         HttpHeaders headers = new HttpHeaders();
         boolean spar = sparHost(url);
         boolean auchan = auchanHost(url);
-        headers.set(HttpHeaders.USER_AGENT, spar || auchan ? BROWSER_UA : USER_AGENT);
+        boolean coop = coopHost(url);
+        headers.set(HttpHeaders.USER_AGENT, spar || auchan || coop ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.TEXT_HTML, MediaType.APPLICATION_JSON, MediaType.ALL));
         if (spar) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
@@ -56,6 +57,9 @@ public class FlyerHttpClient {
         } else if (auchan) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
             headers.set(HttpHeaders.REFERER, "https://auchan.hu/");
+        } else if (coop) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.REFERER, "https://www.coop.hu/");
         }
         ResponseEntity<String> response = getFollowingRedirects(
                 url, new HttpEntity<>(headers), String.class);
@@ -103,7 +107,8 @@ public class FlyerHttpClient {
         boolean tesco = tescoHost(url) || tescoHost(referer);
         boolean spar = sparHost(url) || sparHost(referer);
         boolean auchan = auchanHost(url) || auchanHost(referer);
-        headers.set(HttpHeaders.USER_AGENT, tesco || spar || auchan ? BROWSER_UA : USER_AGENT);
+        boolean coop = coopHost(url) || coopHost(referer);
+        headers.set(HttpHeaders.USER_AGENT, tesco || spar || auchan || coop ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.APPLICATION_PDF, MediaType.ALL));
         if (tesco) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
@@ -120,6 +125,8 @@ public class FlyerHttpClient {
             headers.set(HttpHeaders.REFERER, "https://www.spar.hu/ajanlatok");
         } else if (auchan) {
             headers.set(HttpHeaders.REFERER, "https://auchan.hu/");
+        } else if (coop) {
+            headers.set(HttpHeaders.REFERER, "https://www.coop.hu/ajanlatkereso/");
         }
         ResponseEntity<byte[]> response = getFollowingRedirects(url, new HttpEntity<>(headers), byte[].class);
         if (!response.getStatusCode().is2xxSuccessful()) {
@@ -169,6 +176,14 @@ public class FlyerHttpClient {
         }
         String lower = value.toLowerCase();
         return lower.contains("spar.hu");
+    }
+
+    private static boolean coopHost(String value) {
+        if (value == null) {
+            return false;
+        }
+        String lower = value.toLowerCase();
+        return lower.contains("coop.hu");
     }
 
     private static boolean auchanHost(String value) {

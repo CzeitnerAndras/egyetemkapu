@@ -8,6 +8,8 @@ import com.egyetemkapu.service.FlyerCatalogParser.DiscoveredPaper;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedCatalog;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedPage;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedProduct;
+import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
+import com.egyetemkapu.service.flyer.CoopPageOcr;
 import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import com.egyetemkapu.service.flyer.FlyerProductExtractor;
 import org.slf4j.Logger;
@@ -30,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
-    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco", "auchan");
+    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco", "auchan", "coop");
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
 
@@ -40,6 +42,7 @@ public class FlyerSyncService {
     private final FlyerCatalogParser parser;
     private final FlyerPdfExtractor pdfExtractor;
     private final FlyerExtractorRegistry extractors;
+    private final CoopPageOcr coopPageOcr;
     private final Clock clock;
     private final AtomicBoolean syncing = new AtomicBoolean(false);
     private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
@@ -52,6 +55,7 @@ public class FlyerSyncService {
             FlyerCatalogParser parser,
             FlyerPdfExtractor pdfExtractor,
             FlyerExtractorRegistry extractors,
+            CoopPageOcr coopPageOcr,
             Clock clock) {
         this.flyerRepository = flyerRepository;
         this.flyerPersistenceService = flyerPersistenceService;
@@ -59,6 +63,7 @@ public class FlyerSyncService {
         this.parser = parser;
         this.pdfExtractor = pdfExtractor;
         this.extractors = extractors;
+        this.coopPageOcr = coopPageOcr;
         this.clock = clock;
     }
 
@@ -83,6 +88,7 @@ public class FlyerSyncService {
             syncPenny(today);
             syncTesco(today);
             syncAuchan(today);
+            syncCoop(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -100,6 +106,9 @@ public class FlyerSyncService {
                 ParsedCatalog catalog = parser.parsePublitas(paper, dataJson, spreadsJson);
                 if (catalog.pages().isEmpty() && catalog.paper().pdfUrl() != null) {
                     catalog = withPdfPages(catalog, extractors.forStore("aldi"));
+                }
+                if (catalog.products().isEmpty()) {
+                    catalog = withAldiLayoutProducts(catalog);
                 }
                 catalog = extractors.forStore("aldi").fillProducts(catalog);
                 if (keepCatalog(catalog, today)) {
@@ -245,6 +254,68 @@ public class FlyerSyncService {
         }
     }
 
+    public void syncCoop(LocalDate today) {
+        try {
+            String html = safeText("https://www.coop.hu/ajanlatkereso/");
+            List<ParsedCatalog> discovered = parser.parseCoopFlyers(html, today);
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            FlyerProductExtractor extractor = extractors.forStore("coop");
+            for (ParsedCatalog leaflet : discovered) {
+                String base = trimUrl(leaflet.paper().officialUrl());
+                ParsedCatalog catalog = parser.parsePublitas(
+                        leaflet.paper(),
+                        safeText(base + "data.json"),
+                        safeText(base + "spreads.json"),
+                        List.of("at1200", "at1000", "at1600", "at800", "at600"));
+                if (catalog.pages().isEmpty()) {
+                    log.warn("Coop catalog has no pages: {}", leaflet.paper().sourceKey());
+                    continue;
+                }
+                if (catalog.products().isEmpty()) {
+                    catalog = withCoopOcrProducts(catalog, extractor);
+                }
+                catalog = extractor.fillProducts(catalog);
+                if (keepCatalog(catalog, today)) {
+                    catalogs.add(catalog);
+                }
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("coop", catalogs, LocalDateTime.now(clock));
+            }
+        } catch (Exception e) {
+            log.warn("Coop flyer sync failed: {}", e.getMessage());
+        }
+    }
+
+    private ParsedCatalog withCoopOcrProducts(ParsedCatalog catalog, FlyerProductExtractor extractor) {
+        List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
+        for (ParsedPage page : catalog.pages()) {
+            byte[] image = page.imageUrl() == null
+                    ? new byte[0]
+                    : safeBytes(page.imageUrl(), catalog.paper().officialUrl());
+            List<TextRun> runs = image.length == 0 ? List.of() : coopPageOcr.read(image);
+            String text = joinRuns(runs);
+            pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), text));
+            products.addAll(extractor.extractFromLayout(runs, page.pageNumber()));
+        }
+        return new ParsedCatalog(catalog.paper(), pages, products);
+    }
+
+    private static String joinRuns(List<TextRun> runs) {
+        StringBuilder text = new StringBuilder();
+        for (TextRun run : runs) {
+            if (run == null || run.text() == null || run.text().isBlank()) {
+                continue;
+            }
+            if (!text.isEmpty()) {
+                text.append('\n');
+            }
+            text.append(run.text().trim());
+        }
+        return text.toString();
+    }
+
     private static boolean keepCatalogPaper(DiscoveredPaper paper, LocalDate today) {
         if (paper == null) {
             return false;
@@ -276,6 +347,7 @@ public class FlyerSyncService {
         }
         return flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
                 || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts)
+                || flyers.stream().anyMatch(FlyerSyncService::coopCatalogIsCoverOnly)
                 || pendingLayoutResync();
     }
 
@@ -355,7 +427,8 @@ public class FlyerSyncService {
                 || missingWeeklySpar(flyers, today)
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
                 || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
-                || flyers.stream().noneMatch(flyer -> "auchan".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "auchan".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "coop".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
@@ -367,6 +440,19 @@ public class FlyerSyncService {
         return flyers.stream().noneMatch(flyer -> ("spar:spar:" + date).equals(flyer.getSourceKey()))
                 || flyers.stream().noneMatch(flyer -> ("spar:interspar:" + date).equals(flyer.getSourceKey()))
                 || flyers.stream().noneMatch(flyer -> ("spar:spar-market:" + date).equals(flyer.getSourceKey()));
+    }
+
+    private ParsedCatalog withAldiLayoutProducts(ParsedCatalog catalog) {
+        byte[] pdf = safeBytes(catalog.paper().pdfUrl(), catalog.paper().officialUrl());
+        if (pdf == null || pdf.length == 0) {
+            return catalog;
+        }
+        FlyerProductExtractor extractor = extractors.forStore("aldi");
+        FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf, extractor);
+        if (extracted.products().isEmpty()) {
+            return catalog;
+        }
+        return new ParsedCatalog(catalog.paper(), catalog.pages(), extracted.products());
     }
 
     private ParsedCatalog tescoWithProducts(ParsedCatalog catalog) {
@@ -578,6 +664,13 @@ public class FlyerSyncService {
 
     private static boolean isPennyReweFlyer(Flyer flyer) {
         return "penny".equals(flyer.getStore()) && FlyerCatalogParser.isPennyReweUrl(flyer.getOfficialUrl());
+    }
+
+    private static boolean coopCatalogIsCoverOnly(Flyer flyer) {
+        if (!"coop".equals(flyer.getStore()) || flyer.getPages() == null) {
+            return false;
+        }
+        return flyer.getPages().size() < 2;
     }
 
     private static boolean aldiPagesMissingProducts(Flyer flyer) {
