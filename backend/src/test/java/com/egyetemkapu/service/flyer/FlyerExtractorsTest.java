@@ -2,6 +2,7 @@ package com.egyetemkapu.service.flyer;
 
 import com.egyetemkapu.service.FlyerCatalogParser;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedProduct;
+import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
 import com.egyetemkapu.service.FlyerPdfExtractor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -265,6 +266,30 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void aldiLayoutJoinsABrandStackedAboveItsProduct() {
+        List<TextRun> runs = List.of(
+                run(163f, 46.9f, "BÉCSI VIRSLI"),
+                run(39f, 235.9f, "09.26. SZOMBATTÓL 09.27. VASÁRNAPIG"),
+                run(163f, 243.8f, "HÚSMESTER"),
+                run(311.8f, 249.4f, "ÉDES-"),
+                run(163f, 256.8f, "FRISS CSIRKECOMB"),
+                run(311.8f, 262.4f, "BURGONYA"),
+                run(29.8f, 266.8f, "DR. OETKER"),
+                run(29.8f, 279.8f, "RISTORANTE PIZZA"),
+                run(163f, 380.9f, "KOKÁRDÁS"),
+                run(163f, 393.9f, "UHT TEJ"));
+
+        List<ParsedProduct> products = aldi.extractFromLayout(runs, 1);
+
+        assertEquals(List.of(
+                "BÉCSI VIRSLI",
+                "HÚSMESTER FRISS CSIRKECOMB",
+                "ÉDESBURGONYA",
+                "DR. OETKER RISTORANTE PIZZA",
+                "KOKÁRDÁS UHT TEJ"), names(products), products.toString());
+    }
+
+    @Test
     void aldiExtractorReadsWholeTextBoxesAndPrefixesBrands() {
         String page = """
                 09.10. CSÜTÖRTÖKTŐL 09.16. SZERDÁIG
@@ -433,6 +458,10 @@ class FlyerExtractorsTest {
         return pdfExtractor.extractDocument(pdf, extractor).products();
     }
 
+    private static TextRun run(float x, float y, String text) {
+        return new TextRun(x, y, 90f, 11f, text, "Bold", 12f);
+    }
+
     private static List<String> names(List<ParsedProduct> products) {
         return products.stream().map(ParsedProduct::name).toList();
     }
@@ -449,6 +478,27 @@ class FlyerExtractorsTest {
                 throw new IllegalStateException(e);
             }
         }
+    }
+
+    @Test
+    void coopExtractorStacksABrandAboveItsProductAndSkipsPrices() {
+        CoopFlyerExtractor extractor = new CoopFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(20, 30, 80, 16, "FRISSEN"),
+                new TextRun(20, 120, 36, 16, "Pick"),
+                new TextRun(60, 120, 70, 16, "párizsi"),
+                new TextRun(20, 150, 30, 16, "289"),
+                new TextRun(54, 150, 18, 16, "Ft"),
+                new TextRun(320, 118, 52, 16, "Kinga"),
+                new TextRun(320, 138, 80, 16, "Formázott"),
+                new TextRun(320, 158, 58, 16, "pulyka"),
+                new TextRun(384, 158, 48, 16, "szelet")
+        );
+        List<String> names = extractor.extractFromLayout(runs, 2).stream().map(ParsedProduct::name).toList();
+        assertTrue(names.stream().anyMatch(name -> name.equalsIgnoreCase("Pick párizsi")));
+        assertTrue(names.stream().anyMatch(name -> name.toLowerCase().contains("kinga")
+                && name.toLowerCase().contains("pulyka")));
+        assertTrue(names.stream().noneMatch(name -> name.toLowerCase().contains("frissen") || name.contains("289")));
     }
 
     private static byte[] pdf(Line... lines) throws Exception {

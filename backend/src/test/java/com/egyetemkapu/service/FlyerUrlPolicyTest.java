@@ -21,6 +21,10 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://auchan.hu/"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://reklamujsag.auchan.hu/online-katalogusok/x/"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://cdn.ipaper.io/iPaper/Papers/x/Pages/1/Zoom.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.coop.hu/ajanlatkereso/"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://katalogus.coop.hu/coop-alfold-szorolap-2026-szeptember-4-het/"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://www.coop.hu/wp-content/uploads/2026/09/coop_nyirzem_szorolap_20260924-0930.jpg"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

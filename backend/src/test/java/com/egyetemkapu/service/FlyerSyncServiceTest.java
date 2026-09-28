@@ -52,6 +52,7 @@ class FlyerSyncServiceTest {
                 parser,
                 pdfExtractor,
                 new FlyerExtractorRegistry(parser),
+                image -> List.of(),
                 clock);
     }
 
@@ -316,6 +317,58 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void syncCoopPersistsTheCurrentRegionalLeaflet() {
+        service = new FlyerSyncService(
+                flyerRepository,
+                flyerPersistenceService,
+                httpClient,
+                parser,
+                pdfExtractor,
+                new FlyerExtractorRegistry(parser),
+                image -> List.of(new FlyerCatalogParser.TextRun(20, 80, 40, 16, "Pick"),
+                        new FlyerCatalogParser.TextRun(64, 80, 70, 16, "párizsi"),
+                        new FlyerCatalogParser.TextRun(20, 110, 40, 16, "289"),
+                        new FlyerCatalogParser.TextRun(20, 130, 24, 16, "Ft")),
+                Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest")));
+        when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
+            String url = invocation.getArgument(0);
+            if (url.contains("ajanlatkereso")) {
+                return """
+                        <div class="swiper-slide">
+                            <a style="background-image: url('https://www.coop.hu/wp-content/uploads/2026/09/coop_mecsek_szorolap_20260924-0930.jpg');"></a>
+                            <h3 class="title">Coop regionális szórólap szeptember 4. hét - Mecsek</h3>
+                            <p>2026. szeptember 24. - 2026. szeptember 30.</p>
+                        </div>
+                        """;
+            }
+            if (url.endsWith("data.json")) {
+                return "{\"config\":{\"publicationTitle\":\"Coop Mecsek\"}}";
+            }
+            if (url.endsWith("spreads.json")) {
+                return """
+                        {"spreads":[{"pages":[
+                          {"number":1,"images":{"at1200":"https://katalogus.coop.hu/pages/1.jpg"}},
+                          {"number":2,"images":{"at1200":"https://katalogus.coop.hu/pages/2.jpg"}}
+                        ]}]}
+                        """;
+            }
+            return "";
+        });
+        when(httpClient.getBytes(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new byte[] {1, 2, 3});
+
+        service.syncCoop(LocalDate.of(2026, 9, 28));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("coop"), captor.capture(), any());
+        assertEquals("coop:coop-mecsek-szorolap-2026-szeptember-4-het", captor.getValue().getFirst().paper().sourceKey());
+        assertEquals(2, captor.getValue().getFirst().pages().size());
+        assertTrue(captor.getValue().getFirst().products().stream()
+                .anyMatch(product -> product.name().toLowerCase().contains("párizsi")));
+    }
+
+    @Test
     void isStaleDoesNotRetriggerRightAfterASyncAttempt() {
         Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
         Flyer penny = storeFlyer("penny", "penny:rewe:202636",
@@ -328,7 +381,10 @@ class FlyerSyncServiceTest {
                 "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar");
         Flyer auchan = storeFlyer("auchan", "auchan:2026-09-03-09-09-heti-hipermarket-ajanlataink",
                 "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr36/x/");
-        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan));
+        Flyer coop = storeFlyer("coop", "coop:nyirzem:2026-09-03", "https://katalogus.coop.hu/coop-nyirzem/");
+        coop.addPage(new FlyerPage());
+        coop.addPage(new FlyerPage());
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
