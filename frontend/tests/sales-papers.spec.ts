@@ -57,12 +57,12 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await expect(page).toHaveURL(/\/akcios-ujsag$/);
   });
 
-  test('négy bolt tab jelenik meg, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
+  test('a bolt tabok megjelennek, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
     await page.getByRole('button', { name: /Értem|Got it/i }).click();
 
     await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
-    await expect(page.locator('[data-store]')).toHaveCount(4);
+    await expect(page.locator('[data-store]')).toHaveCount(6);
     await expect(page.locator('[data-store="spar"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SPAR szórólap')).toBeVisible();
   });

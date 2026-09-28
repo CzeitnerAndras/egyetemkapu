@@ -17,7 +17,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop';
 
 interface FlyerSummary {
     id: number;
@@ -56,7 +56,7 @@ interface FlyerDetail {
     products?: FlyerProduct[];
 }
 
-const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan'];
+const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
 
 const PAPER_CARD =
     'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
