@@ -213,6 +213,27 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void sparExtractorDropsBadgesAndKeepsTheTwoLetterBrand() {
+        SparFlyerExtractor extractor = new SparFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(339.6f, 566f, 32.3f, 11f, "napig", "ELFGPK+Poppins-Bold", 11f),
+                new TextRun(493.7f, 392.7f, 82.4f, 13f, "kereskedője", "ELFGPK+Poppins-SemiBold", 13f),
+                new TextRun(265.7f, 787.9f, 63.8f, 9f, "www.spar.hu", "FBUMDI+Poppins-Bold", 9f),
+                new TextRun(207.9f, 213.8f, 10.8f, 8f, "BB", "FBUMDI+Poppins-Bold", 8f),
+                new TextRun(482.5f, 517.9f, 21.3f, 8f, "KEDV", "FBUMDI+Poppins-Bold", 8f),
+                new TextRun(503.8f, 514.1f, 16.5f, 8f, "EZM", "FBUMDI+Poppins-Bold", 8f),
+                new TextRun(520.3f, 511.2f, 10.4f, 8f, "ÉN", "FBUMDI+Poppins-Bold", 8f),
+                new TextRun(530.7f, 509.3f, 5.4f, 8f, "Y", "FBUMDI+Poppins-Bold", 8f),
+                new TextRun(148.9f, 63.2f, 13.7f, 13f, "IN", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(162.7f, 61.5f, 9.8f, 13f, "G", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(172.0f, 60.4f, 8.7f, 13f, "Y", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(180.6f, 59.3f, 16.9f, 13f, "EN", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(19.8f, 591f, 46.7f, 8f, "Borsodi sör", "FBUMDI+Poppins-Bold", 8f));
+
+        assertEquals(List.of("BB", "Borsodi sör"), names(extractor.extractFromLayout(runs, 15)), runs.toString());
+    }
+
+    @Test
     void pdfExtractorsIgnoreFlatPageTextSoAFailedDownloadKeepsStoredProducts() {
         String text = "Magyar\ntrappista\nsajtkorong\n1890 Ft/kg";
         assertTrue(new TescoFlyerExtractor(parser).extractFromPageText(text, 1).isEmpty());
