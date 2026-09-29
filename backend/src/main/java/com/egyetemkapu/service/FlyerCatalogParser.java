@@ -1726,7 +1726,7 @@ public class FlyerCatalogParser {
     }
 
     private static boolean looksLikeProductName(String name) {
-        return !isWeakProductName(name) && name.matches(".*\\p{L}{3,}.*");
+        return !isWeakProductName(name) && (name.matches(".*\\p{L}{3,}.*") || name.matches("[A-Z]{2}"));
     }
 
     private static String cleanProductName(String name) {
@@ -1802,7 +1802,8 @@ public class FlyerCatalogParser {
             return true;
         }
         String trimmed = name.replaceAll("\\s+", " ").trim();
-        if (trimmed.length() < 3 || trimmed.contains("http")) {
+        if ((trimmed.length() < 3 && !trimmed.matches("[A-Z]{2}")) || trimmed.contains("http")
+                || trimmed.toLowerCase(Locale.ROOT).contains("www.")) {
             return true;
         }
         if (trimmed.startsWith("%")) {
@@ -1820,9 +1821,14 @@ public class FlyerCatalogParser {
                 || lower.contains("db/cs")
                 || lower.startsWith("frissen sütve")
                 || lower.startsWith("ft/")
+                || lower.matches("(?iu)^(?:\\d+\\s+)?(?:napig|hétig|óráig)$")
+                || lower.contains("kereskedő")
                 || isSloganName(trimmed)
                 || isDescriptionFragment(trimmed)) {
             return true;
+        }
+        if (trimmed.matches("[A-Z]{2}")) {
+            return false;
         }
         return lower.matches("^[\\d ./%gkgmlcsdbáéíóöőúüű-]+$");
     }
@@ -1846,7 +1852,9 @@ public class FlyerCatalogParser {
                 || lower.contains("appot")
                 || lower.matches("(?iu)^ft[/ ].*")
                 || lower.equals("bbq")
-                || lower.contains("nagybevásárlás");
+                || lower.contains("nagybevásárlás")
+                || lower.contains("kedvezmény")
+                || lower.contains("ingyen");
     }
 
     public static List<ParsedProduct> keepPresentableProducts(List<ParsedProduct> products) {
