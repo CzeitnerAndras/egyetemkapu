@@ -71,7 +71,7 @@ final class FlyerProductNames {
                 || TRAILING_STOPWORDS.contains(HungarianText.normalize(words[words.length - 1]))) {
             return true;
         }
-        if (words.length == 1 && name.length() < 4) {
+        if (words.length == 1 && name.length() < 4 && !name.matches("[A-Z]{2}")) {
             return true;
         }
         int singles = 0;
