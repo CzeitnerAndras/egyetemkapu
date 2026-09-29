@@ -183,6 +183,36 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void sparExtractorKeepsCoverHeroNamesAndDropsBleedAndPackCounts() {
+        SparFlyerExtractor extractor = new SparFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(-79.2f, 184f, 79.2f, 8f, "S-BUDGET", "FBUMDI+Poppins-Bold", 8f),
+                new TextRun(-79.2f, 193f, 79.2f, 8f, "csirkemellfilé", "FJPMDI+Poppins-Bold", 8f),
+                new TextRun(476.5f, 315f, 59f, 13f, "Regnum", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(476.5f, 330f, 80f, 13f, "sertéscomb", "FJPMDI+Poppins-Bold", 13f),
+                new TextRun(396f, 399f, 70f, 8f, "Tento Family", "ELFGPK+Poppins-Bold", 8f),
+                new TextRun(396f, 409f, 130f, 8f, "toalettpapír megapack", "ELFGPK+Poppins-Bold", 8f),
+                new TextRun(396f, 435f, 90f, 8f, "30 tekercs/csomag", "ELFGPK+Poppins-SemiBold", 8f),
+                new TextRun(31f, 505f, 145f, 13f, "Regnum lecsókolbász", "FJPMDI+Poppins-Bold", 13f),
+                new TextRun(358f, 538f, 72f, 13f, "Gála alma", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(25f, 576f, 84f, 9f, "Vágott sulizsemle", "FBUMDI+Poppins-Bold", 9f),
+                new TextRun(302f, 576f, 44f, 9f, "Apenta+", "FBUMDI+Poppins-Bold", 9f),
+                new TextRun(302f, 587f, 75f, 9f, "funkcionális ital", "FJPMDI+Poppins-Bold", 9f),
+                new TextRun(208f, 640f, 120f, 8f, "48 pack macskaeledel", "ELFGPK+Poppins-Bold", 8f),
+                new TextRun(50f, 715f, 33f, 13f, "69 Ft", "FBUMDI+Poppins-Bold", 13f),
+                new TextRun(383f, 383f, 157f, 14f, "minden vásárlás után", "FBUMDI+Poppins-Bold", 14f));
+
+        assertEquals(List.of(
+                "Regnum sertéscomb",
+                "Tento Family toalettpapír megapack",
+                "Regnum lecsókolbász",
+                "Gála alma",
+                "Vágott sulizsemle",
+                "Apenta+ funkcionális ital",
+                "48 pack macskaeledel"), names(extractor.extractFromLayout(runs, 1)), runs.toString());
+    }
+
+    @Test
     void pdfExtractorsIgnoreFlatPageTextSoAFailedDownloadKeepsStoredProducts() {
         String text = "Magyar\ntrappista\nsajtkorong\n1890 Ft/kg";
         assertTrue(new TescoFlyerExtractor(parser).extractFromPageText(text, 1).isEmpty());
@@ -448,9 +478,10 @@ class FlyerExtractorsTest {
     void detachedPackNotesAreNotOfferedAsProducts() {
         List<String> blocks = List.of(
                 "Csomagolt", "szeletelt, csomagolt", "natúr, pikáns", "többféle 1 db", "2 doboztól",
-                "Rosé szőlő", "Egész csirke");
+                "30 tekercs/csomag", "16 db/csomag",
+                "Rosé szőlő", "Egész csirke", "Pedigree 40 pack alutasakos kutyaeledel");
 
-        assertEquals(List.of("Rosé szőlő", "Egész csirke"),
+        assertEquals(List.of("Rosé szőlő", "Egész csirke", "Pedigree 40 pack alutasakos kutyaeledel"),
                 names(FlyerProductNames.fromBlocks(blocks, 1)));
     }
 
@@ -499,6 +530,58 @@ class FlyerExtractorsTest {
         assertTrue(names.stream().anyMatch(name -> name.toLowerCase().contains("kinga")
                 && name.toLowerCase().contains("pulyka")));
         assertTrue(names.stream().noneMatch(name -> name.toLowerCase().contains("frissen") || name.contains("289")));
+        assertTrue(extractor.extractFromPageText("Anni\nPanni\nBull", 1).isEmpty());
+    }
+
+    @Test
+    void coopCoverKeepsOfferTitlesAndDropsPackageAndFootnotes() {
+        CoopFlyerExtractor extractor = new CoopFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(560, 269, 23, 5, "etel"),
+                new TextRun(501, 385, 25, 14, "Pidk"),
+                new TextRun(448, 405, 33, 14, "Fresh"),
+                new TextRun(484, 405, 42, 14, "Comer"),
+                new TextRun(422, 413, 53, 35, "Hot-dog"),
+                new TextRun(479, 413, 51, 35, "kolbász"),
+                new TextRun(169, 481, 45, 9, "HOT-DOG"),
+                new TextRun(302, 532, 80, 18, "HOT-DOGKOLBÁSZ"),
+                new TextRun(439, 465, 53, 13, "Klasszikus,"),
+                new TextRun(495, 465, 31, 14, "Sajtos"),
+                new TextRun(487, 482, 38, 18, "plusz:"),
+                new TextRun(462, 502, 64, 12, "Mozzarellás-"),
+                new TextRun(410, 520, 43, 12, "szárított"),
+                new TextRun(456, 520, 70, 15, "paradicsomos"),
+                new TextRun(695, 438, 54, 34, "Panni"),
+                new TextRun(634, 467, 59, 39, "Jögös"),
+                new TextRun(841, 451, 31, 14, "Anni"),
+                new TextRun(876, 451, 38, 14, "Panni"),
+                new TextRun(841, 475, 48, 14, "rögös"),
+                new TextRun(894, 475, 40, 14, "túró"),
+                new TextRun(871, 491, 44, 12, "Félzsíros"),
+                new TextRun(859, 837, 24, 14, "Red"),
+                new TextRun(886, 837, 28, 14, "Bull"),
+                new TextRun(859, 856, 70, 16, "jiaital"),
+                new TextRun(859, 876, 36, 14, "több"),
+                new TextRun(900, 876, 40, 14, "ízben"),
+                new TextRun(836, 914, 75, 14, "Kókusz-áfonya"),
+                new TextRun(876, 932, 35, 12, "Ft/liter"),
+                new TextRun(74, 1417, 19, 28, "csak"),
+                new TextRun(102, 1417, 36, 28, "tőkehúst"),
+                new TextRun(141, 1417, 32, 28, "pultban"),
+                new TextRun(176, 1417, 41, 28, "értékesítő"),
+                new TextRun(276, 1417, 36, 28, "érvényes"),
+                new TextRun(578, 1404, 54, 12, "kiszerelés")
+        );
+        List<String> names = extractor.extractFromLayout(runs, 1).stream().map(ParsedProduct::name).toList();
+        assertTrue(names.stream().anyMatch(name -> name.equals("Pick Fresh Corner Hot-dog kolbász")));
+        assertTrue(names.stream().anyMatch(name -> name.equals("Anni Panni rögös túró")));
+        assertTrue(names.stream().anyMatch(name -> name.equals("Red Bull energiaital több ízben")));
+        assertTrue(names.stream().noneMatch(name -> name.toLowerCase().contains("félzsíros")
+                || name.toLowerCase().contains("kókusz")
+                || name.equals("HOT-DOG") || name.equals("HOT-DOGKOLBÁSZ")
+                || name.equals("Panni") || name.equals("Jögös") || name.equals("etel")
+                || name.toLowerCase().contains("pultban") || name.toLowerCase().contains("kiszerelés")
+                || name.toLowerCase().contains("paradicsom")));
     }
 
     private static byte[] pdf(Line... lines) throws Exception {
