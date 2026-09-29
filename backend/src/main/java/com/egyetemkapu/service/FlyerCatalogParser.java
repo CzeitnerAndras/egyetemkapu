@@ -117,7 +117,7 @@ public class FlyerCatalogParser {
     private static final Pattern WEIGHT_TOKEN = Pattern.compile(
             "(?i)\\d+[\\d.,]*\\s*(?:g|kg|dkg|ml|cl|dl|l)\\s*/\\s*(?:csomag|darab|doboz|db)");
     private static final Pattern WEIGHT_LINE = Pattern.compile(
-            "(?i)^(?:\\d+[\\d.,]*)?\\s*(?:g|kg|dkg|ml|cl|dl|l|db|darab|csomag|doboz)(?:\\s*/\\s*\\p{L}+)?$");
+            "(?iu)^(?:\\d+[\\d.,]*)?\\s*(?:g|kg|dkg|ml|cl|dl|l|db|darab|csomag|doboz|tekercs|lap|pack|adag|zsák|karton)(?:\\s*/\\s*\\p{L}+)?$");
     private static final Pattern ARTICLE_NUMBER = Pattern.compile("^\\d{5,8}$");
     private static final Pattern DISCLAIMER = Pattern.compile(
             "(?iu)(?:a\\s+)?term[eé]k\\s+a\\s+\\p{L}+\\s+áruházunkban\\s+nem\\s+kapható\\.?"
