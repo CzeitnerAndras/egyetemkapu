@@ -55,6 +55,7 @@ final class FlyerProductNames {
         }
         String cleaned = FOOTNOTE_MARKS.matcher(raw).replaceAll(" ");
         cleaned = FlyerCatalogParser.tidyProductName(cleaned);
+        cleaned = cleaned.replaceAll("(?iu)(?:^|\\s)/\\s*(?:kg|dkg|g|ml|cl|dl|l|db|darab|csomag|doboz|üveg)\\s*$", "");
         return cleaned.replaceAll("\\s+", " ").trim();
     }
 
