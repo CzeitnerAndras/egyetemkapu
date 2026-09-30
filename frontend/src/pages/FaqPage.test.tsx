@@ -19,11 +19,11 @@ function renderFaq() {
 }
 
 describe('FaqPage Komponens', () => {
-    it('megjeleníti a fejlécet és mind a tíz kérdést', () => {
+    it('megjeleníti a fejlécet és mind a tizenöt kérdést', () => {
         renderFaq();
 
         expect(screen.getByText('faq.title')).toBeInTheDocument();
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= 15; i++) {
             expect(screen.getByText(`faq.q${i}`)).toBeInTheDocument();
         }
     });
