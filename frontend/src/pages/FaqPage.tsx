@@ -4,7 +4,7 @@ import { HelpCircle, ChevronDown, ChevronUp, MessageCircleQuestion } from 'lucid
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
 
-const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 const CALC_ID = 3;
 const DANGER_ID = 10;
 
