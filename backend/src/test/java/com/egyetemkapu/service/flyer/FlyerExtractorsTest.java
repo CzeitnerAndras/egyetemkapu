@@ -469,6 +469,46 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void aldiExtractorJoinsDoctorOetkerWithThePizzaAndDropsTheUnitOnSweetPotato() {
+        String page = """
+                09.24. CSÜTÖRTÖKTŐL 09.30. SZERDÁIG
+                BÉCSI VIRSLI
+                2 x 200 g/csomag
+
+                TÖLTÖTT
+                OSTYA
+
+                09.26. SZOMBATTÓL
+                09.27. VASÁRNAPIG
+                DR. OETKER
+
+                FRISS CSIRKECOMB
+
+                RISTORANTE PIZZA
+                340 g vagy 320 g/doboz
+                2 644,12 / 2 809,38 Ft/kg
+
+                ÉDES-55 %
+                BURGONYA /kg
+                999
+
+                HÚSMESTER
+
+                KOKÁRDÁS
+
+                UHT TEJ
+                """;
+
+        List<String> found = names(aldi.extractFromPageText(page, 1));
+
+        assertTrue(found.contains("DR. OETKER RISTORANTE PIZZA"), found.toString());
+        assertTrue(found.contains("ÉDESBURGONYA"), found.toString());
+        assertTrue(found.stream().noneMatch(name ->
+                name.equals("DR. OETKER") || name.equals("RISTORANTE PIZZA") || name.contains("/kg")),
+                found.toString());
+    }
+
+    @Test
     void aldiExtractorKeepsStandaloneOneWordProducts() {
         String page = """
                 MINIBUREK
