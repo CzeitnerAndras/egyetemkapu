@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -46,6 +47,9 @@ public class FlyerSyncService {
     private final Clock clock;
     private final AtomicBoolean syncing = new AtomicBoolean(false);
     private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
+    private static final int COOP_READ_GENERATION = 4;
+    private final ConcurrentHashMap<Long, Integer> coopReadApplied = new ConcurrentHashMap<>();
+    private final Set<Long> coopRereadQueued = ConcurrentHashMap.newKeySet();
     private volatile LocalDateTime lastLayoutRetryAt;
 
     public FlyerSyncService(
@@ -83,12 +87,12 @@ public class FlyerSyncService {
         }
         try {
             LocalDate today = LocalDate.now(clock);
+            syncCoop(today);
             syncAldi(today);
             syncSpar(today);
             syncPenny(today);
             syncTesco(today);
             syncAuchan(today);
-            syncCoop(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -295,25 +299,177 @@ public class FlyerSyncService {
                     ? new byte[0]
                     : safeBytes(page.imageUrl(), catalog.paper().officialUrl());
             List<TextRun> runs = image.length == 0 ? List.of() : coopPageOcr.read(image);
-            String text = joinRuns(runs);
-            pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), text));
-            products.addAll(extractor.extractFromLayout(runs, page.pageNumber()));
+            List<ParsedProduct> pageProducts = extractor.extractFromLayout(runs, page.pageNumber());
+            pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), joinProductNames(pageProducts)));
+            products.addAll(pageProducts);
         }
         return new ParsedCatalog(catalog.paper(), pages, products);
     }
 
-    private static String joinRuns(List<TextRun> runs) {
+    private static String joinProductNames(List<ParsedProduct> products) {
         StringBuilder text = new StringBuilder();
-        for (TextRun run : runs) {
-            if (run == null || run.text() == null || run.text().isBlank()) {
+        for (ParsedProduct product : products) {
+            if (product == null || product.name() == null || product.name().isBlank()) {
                 continue;
             }
             if (!text.isEmpty()) {
                 text.append('\n');
             }
-            text.append(run.text().trim());
+            text.append(product.name().trim());
         }
         return text.toString();
+    }
+
+    public boolean beginCoopReread(Flyer flyer) {
+        if (flyer == null || flyer.getId() == null || !"coop".equals(flyer.getStore())) {
+            return false;
+        }
+        if (Integer.valueOf(COOP_READ_GENERATION).equals(coopReadApplied.get(flyer.getId()))) {
+            return false;
+        }
+        if (!coopNamesNeedReread(flyer)) {
+            coopReadApplied.put(flyer.getId(), COOP_READ_GENERATION);
+            return false;
+        }
+        return coopRereadQueued.add(flyer.getId());
+    }
+
+    @Async
+    public void rereadCoopAsync(Long id) {
+        try {
+            Flyer flyer = flyerPersistenceService.loadWithPages(id);
+            if (flyer != null) {
+                repairSplitCoopProducts(flyer);
+            }
+        } catch (RuntimeException e) {
+            log.warn("Coop reread failed for {}: {}", id, e.getMessage());
+        } finally {
+            if (id != null && !Integer.valueOf(COOP_READ_GENERATION).equals(coopReadApplied.get(id))) {
+                coopRereadQueued.remove(id);
+            }
+        }
+    }
+
+    public boolean repairSplitCoopProducts(Flyer flyer) {
+        if (flyer == null || flyer.getId() == null || !"coop".equals(flyer.getStore())) {
+            return false;
+        }
+        if (Integer.valueOf(COOP_READ_GENERATION).equals(coopReadApplied.get(flyer.getId()))) {
+            return false;
+        }
+        if (!coopNamesNeedReread(flyer)) {
+            coopReadApplied.put(flyer.getId(), COOP_READ_GENERATION);
+            return false;
+        }
+        try {
+            FlyerProductExtractor extractor = extractors.forStore("coop");
+            List<ParsedProduct> products = new ArrayList<>();
+            boolean readAPage = false;
+            List<FlyerPage> pages = flyer.getPages() == null ? List.of() : flyer.getPages();
+            for (FlyerPage page : pages) {
+                byte[] image = page.getImageUrl() == null
+                        ? new byte[0]
+                        : safeBytes(page.getImageUrl(), flyer.getOfficialUrl());
+                List<TextRun> runs = image.length == 0 ? List.of() : coopPageOcr.read(image);
+                List<ParsedProduct> pageProducts = extractor.extractFromLayout(runs, page.getPageNumber());
+                if (pageProducts.isEmpty()) {
+                    products.addAll(storedProducts(flyer, page.getPageNumber()));
+                    continue;
+                }
+                readAPage = true;
+                page.setPageText(joinProductNames(pageProducts));
+                products.addAll(pageProducts);
+            }
+            if (!readAPage || mostlySingleWords(products)) {
+                log.warn("Coop flyer {} stayed split after reading its pages", flyer.getTitle());
+                return false;
+            }
+            flyer.getProducts().clear();
+            for (ParsedProduct product : products) {
+                FlyerProduct entity = new FlyerProduct();
+                entity.setPageNumber(product.pageNumber());
+                entity.setName(limit(product.name(), 500));
+                entity.setImageUrl(limit(product.imageUrl(), 2000));
+                flyer.addProduct(entity);
+            }
+            flyerRepository.save(flyer);
+            coopReadApplied.put(flyer.getId(), COOP_READ_GENERATION);
+            log.info("Rejoined Coop flyer {} into {} products", flyer.getTitle(), products.size());
+            return true;
+        } catch (RuntimeException e) {
+            log.warn("Coop product rejoin failed for {}: {}", flyer.getTitle(), e.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean coopNamesNeedReread(Flyer flyer) {
+        if (coopNamesAreSplitWords(flyer)) {
+            return true;
+        }
+        if (flyer.getProducts() == null) {
+            return false;
+        }
+        for (FlyerProduct product : flyer.getProducts()) {
+            String name = product.getName();
+            if (name == null || name.isBlank()) {
+                continue;
+            }
+            String key = HungarianText.normalize(name);
+            boolean singleWord = !name.trim().contains(" ");
+            if (key.contains("pultban")
+                    || key.contains("kiszerel")
+                    || key.contains("ft/")
+                    || key.contains("felzsiros")
+                    || key.contains("fekunt")
+                    || key.contains("fekint")
+                    || key.contains("tokehus")
+                    || key.contains("matric")
+                    || key.contains("pidk")
+                    || key.contains("tobbet")
+                    || key.contains("ervenyes")
+                    || key.equals("hot-dog")
+                    || key.equals("hot-dogkolbasz")
+                    || key.equals("jogos")
+                    || key.equals("etel")
+                    || key.equals("panni")
+                    || (singleWord && name.equals(name.toUpperCase(java.util.Locale.ROOT)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<ParsedProduct> storedProducts(Flyer flyer, int pageNumber) {
+        if (flyer.getProducts() == null) {
+            return List.of();
+        }
+        List<ParsedProduct> kept = new ArrayList<>();
+        for (FlyerProduct product : flyer.getProducts()) {
+            if (product.getPageNumber() == pageNumber && product.getName() != null && !product.getName().isBlank()) {
+                kept.add(new ParsedProduct(product.getName(), product.getPageNumber(), product.getImageUrl()));
+            }
+        }
+        return kept;
+    }
+
+    private static boolean mostlySingleWords(List<ParsedProduct> products) {
+        if (products.size() < 8) {
+            return false;
+        }
+        long singles = products.stream()
+                .filter(product -> product.name() != null && product.name().trim().split("\\s+").length == 1)
+                .count();
+        return singles * 5 >= products.size() * 3;
+    }
+
+    private static boolean coopNamesAreSplitWords(Flyer flyer) {
+        if (!"coop".equals(flyer.getStore()) || flyer.getProducts() == null || flyer.getProducts().size() < 8) {
+            return false;
+        }
+        long singles = flyer.getProducts().stream()
+                .filter(product -> product.getName() != null && product.getName().trim().split("\\s+").length == 1)
+                .count();
+        return singles * 5 >= flyer.getProducts().size() * 3;
     }
 
     private static boolean keepCatalogPaper(DiscoveredPaper paper, LocalDate today) {
@@ -348,6 +504,7 @@ public class FlyerSyncService {
         return flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
                 || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts)
                 || flyers.stream().anyMatch(FlyerSyncService::coopCatalogIsCoverOnly)
+                || flyers.stream().anyMatch(FlyerSyncService::coopNamesAreSplitWords)
                 || pendingLayoutResync();
     }
 
@@ -507,7 +664,7 @@ public class FlyerSyncService {
     }
 
     private static boolean usesPdfLayout(String store) {
-        return "spar".equals(store) || "tesco".equals(store);
+        return "spar".equals(store) || "tesco".equals(store) || "aldi".equals(store);
     }
 
     private static String sparBrandFromSourceKey(String sourceKey) {
