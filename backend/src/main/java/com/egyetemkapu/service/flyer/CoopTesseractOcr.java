@@ -41,31 +41,78 @@ public class CoopTesseractOcr implements CoopPageOcr {
             if (engine == null) {
                 return List.of();
             }
-            List<Word> words;
-            synchronized (lock) {
-                words = engine.getWords(buffered, ITessAPI.TessPageIteratorLevel.RIL_WORD);
-            }
+            int width = buffered.getWidth();
+            int height = buffered.getHeight();
+            int mid = width / 2;
+            int overlap = Math.max(40, width / 12);
             List<TextRun> runs = new ArrayList<>();
-            for (Word word : words) {
-                if (word == null || word.getText() == null || word.getConfidence() < 40f) {
-                    continue;
-                }
-                String text = word.getText().trim();
-                if (text.isBlank() || word.getBoundingBox() == null) {
-                    continue;
-                }
-                runs.add(new TextRun(
-                        word.getBoundingBox().x,
-                        word.getBoundingBox().y,
-                        Math.max(1, word.getBoundingBox().width),
-                        Math.max(1, word.getBoundingBox().height),
-                        text));
-            }
-            return runs;
+            runs.addAll(recognize(engine, buffered, 0, 0, mid + overlap, height));
+            runs.addAll(recognize(engine, buffered, Math.max(0, mid - overlap), 0, width - Math.max(0, mid - overlap), height));
+            int lowerTop = (int) (height * 0.48);
+            runs.addAll(recognize(
+                    engine,
+                    buffered,
+                    Math.max(0, mid - overlap),
+                    lowerTop,
+                    width - Math.max(0, mid - overlap),
+                    height - lowerTop));
+            return dedupe(runs);
         } catch (Exception e) {
             log.warn("Coop page OCR failed: {}", e.getMessage());
             return List.of();
         }
+    }
+
+    private List<TextRun> recognize(Tesseract engine, BufferedImage image, int x, int y, int width, int height) {
+        int clippedWidth = Math.min(width, image.getWidth() - x);
+        int clippedHeight = Math.min(height, image.getHeight() - y);
+        if (clippedWidth < 40 || clippedHeight < 40) {
+            return List.of();
+        }
+        BufferedImage tile = image.getSubimage(x, y, clippedWidth, clippedHeight);
+        List<Word> words;
+        synchronized (lock) {
+            words = engine.getWords(tile, ITessAPI.TessPageIteratorLevel.RIL_WORD);
+        }
+        List<TextRun> runs = new ArrayList<>();
+        if (words == null) {
+            return runs;
+        }
+        for (Word word : words) {
+            if (word == null || word.getText() == null || word.getConfidence() < 40f || word.getBoundingBox() == null) {
+                continue;
+            }
+            String text = word.getText().trim();
+            if (text.isBlank()) {
+                continue;
+            }
+            runs.add(new TextRun(
+                    x + word.getBoundingBox().x,
+                    y + word.getBoundingBox().y,
+                    Math.max(1, word.getBoundingBox().width),
+                    Math.max(1, word.getBoundingBox().height),
+                    text));
+        }
+        return runs;
+    }
+
+    private static List<TextRun> dedupe(List<TextRun> runs) {
+        List<TextRun> unique = new ArrayList<>();
+        for (TextRun run : runs) {
+            boolean duplicate = false;
+            for (TextRun kept : unique) {
+                float dx = Math.abs(run.centerX() - kept.centerX());
+                float dy = Math.abs((run.y() + run.bottom()) / 2f - (kept.y() + kept.bottom()) / 2f);
+                if (dx < 18f && dy < 12f && run.text().equalsIgnoreCase(kept.text())) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (!duplicate) {
+                unique.add(run);
+            }
+        }
+        return unique;
     }
 
     private Tesseract engine() {
