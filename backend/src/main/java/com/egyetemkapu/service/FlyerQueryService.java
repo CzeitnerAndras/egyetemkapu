@@ -59,6 +59,9 @@ public class FlyerQueryService {
     public FlyerDetailDto get(Long id) {
         Flyer flyer = flyerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen akciós újság."));
+        if (flyerSyncService.beginCoopReread(flyer)) {
+            flyerSyncService.rereadCoopAsync(flyer.getId());
+        }
         if (!flyerSyncService.refreshStoredLayout(flyer)) {
             reparseProductsFromPageText(flyer);
         }
