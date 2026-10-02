@@ -29,6 +29,11 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Érvénytelen kérés", ex.getMessage());
     }
 
+    @ExceptionHandler(FlashcardAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingFlashcard(FlashcardAccessException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Nem található", ex.getMessage());
+    }
+
     @ExceptionHandler(TokenRefreshException.class)
     public ResponseEntity<Map<String, Object>> handleTokenRefresh(TokenRefreshException ex) {
         return buildErrorResponse(HttpStatus.UNAUTHORIZED, "Érvénytelen token", ex.getMessage());
