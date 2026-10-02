@@ -4,6 +4,8 @@ import com.egyetemkapu.model.Document;
 import com.egyetemkapu.model.Subject;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.DocumentRepository;
+import com.egyetemkapu.repository.FlashcardDeckRepository;
+import com.egyetemkapu.repository.FlashcardRepository;
 import com.egyetemkapu.repository.GradeRepository;
 import com.egyetemkapu.repository.NoteRepository;
 import com.egyetemkapu.repository.PasswordResetTokenRepository;
@@ -34,6 +36,8 @@ class UserAccountServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private TaskRepository taskRepository;
     @Mock private NoteRepository noteRepository;
+    @Mock private FlashcardRepository flashcardRepository;
+    @Mock private FlashcardDeckRepository flashcardDeckRepository;
     @Mock private SettingsRepository settingsRepository;
     @Mock private SuggestionRepository suggestionRepository;
     @Mock private DocumentRepository documentRepository;
@@ -72,6 +76,8 @@ class UserAccountServiceTest {
         verify(subjectRepository).deleteByUser(user);
         verify(taskRepository).deleteByUser(user);
         verify(noteRepository).deleteByUser(user);
+        verify(flashcardRepository).deleteByDeck_User(user);
+        verify(flashcardDeckRepository).deleteByUser(user);
         verify(settingsRepository).deleteByUser(user);
         verify(suggestionRepository).deleteByUser(user);
         verify(documentRepository).deleteByUploader(user);
