@@ -27,6 +27,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/settings': 'settings.title',
     '/linktar': 'links.title',
     '/akcios-ujsag': 'sales.title',
+    '/kartyak': 'cards.title',
 };
 
 const NOINDEX_PATHS = new Set([

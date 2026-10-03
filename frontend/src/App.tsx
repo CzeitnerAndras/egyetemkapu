@@ -21,6 +21,7 @@ import FaqPage from './pages/FaqPage';
 import SettingsPage from './pages/SettingsPage';
 import LinksPage from './pages/LinksPage';
 import SalesPapersPage from './pages/SalesPapersPage';
+import FlashcardsPage from './pages/FlashcardsPage';
 import { LanguageProvider } from './i18n/LanguageContext';
 import DocumentTitle from './components/DocumentTitle';
 import PresenceHeartbeat from './components/PresenceHeartbeat';
@@ -58,10 +59,12 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/linktar" element={<LinksPage />} />
           <Route path="/akcios-ujsag" element={<SalesPapersPage />} />
+          <Route path="/kartyak" element={<FlashcardsPage />} />
           <Route path="/fokusz" element={<Navigate to="/tanuloszoba" replace />} />
           <Route path="/ideabox" element={<Navigate to="/otletlada" replace />} />
           <Route path="/links" element={<Navigate to="/linktar" replace />} />
           <Route path="/flyers" element={<Navigate to="/akcios-ujsag" replace />} />
+          <Route path="/flashcards" element={<Navigate to="/kartyak" replace />} />
         </Routes>
       </div>
     </Router>
