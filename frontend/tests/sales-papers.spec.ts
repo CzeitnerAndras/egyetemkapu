@@ -89,4 +89,19 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await page.getByText('Kakaóscsiga').click();
     await expect(page.getByRole('link', { name: /Hivatalos|Official/i })).toHaveAttribute('href', 'https://szorolap.aldi.hu/x/');
   });
+
+  test('a találat felvehető a listára, és a lista letölthető', async ({ page }) => {
+    await page.goto('/akcios-ujsag');
+    await page.getByRole('button', { name: /Értem|Got it/i }).click();
+    await page.getByLabel(/Keresés az újságokban|Search the flyers/i).fill('kakaóscsiga');
+    await page.getByRole('button', { name: /Keresés|Search/i }).click();
+    await page.getByRole('button', { name: /Hozzáadás|^Add$/ }).click();
+
+    await expect(page.getByRole('heading', { name: /Bevásárlólista|Shopping list/ })).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Lista letöltése|Download list/ }).click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toMatch(/bevasarlolista\.txt|shopping-list\.txt/);
+  });
 });
