@@ -178,4 +178,56 @@ describe('SalesPapersPage Komponens', () => {
             name: 'Kakaós csiga',
         });
     });
+
+    it('txt-ként tölti le a bevásárlólistát', async () => {
+        let downloaded = '';
+        const OriginalBlob = globalThis.Blob;
+        globalThis.Blob = class extends OriginalBlob {
+            constructor(parts?: BlobPart[], options?: BlobPropertyBag) {
+                super(parts, options);
+                downloaded = (parts ?? []).map(String).join('');
+            }
+        };
+        const createObjectURL = jest.fn(() => 'blob:list');
+        const revokeObjectURL = jest.fn();
+        const originalCreate = URL.createObjectURL;
+        const originalRevoke = URL.revokeObjectURL;
+        URL.createObjectURL = createObjectURL;
+        URL.revokeObjectURL = revokeObjectURL;
+        const clicks: HTMLAnchorElement[] = [];
+        const createElement = jest.spyOn(document, 'createElement');
+        createElement.mockImplementation((tagName: string, options?: ElementCreationOptions) => {
+            const element = Document.prototype.createElement.call(document, tagName, options);
+            if (tagName === 'a') {
+                element.click = () => {
+                    clicks.push(element as HTMLAnchorElement);
+                };
+            }
+            return element;
+        });
+
+        try {
+            render(<SalesPapersPage />);
+            await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
+            await screen.findByText('SPAR szórólap');
+            await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
+            await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
+            expect(await screen.findByText('Kakaóscsiga')).toBeInTheDocument();
+            await userEvent.click(screen.getByRole('button', { name: /sales\.listAdd/ }));
+
+            const shoppingList = screen.getByRole('heading', { name: 'sales.listTitle' }).closest('section');
+            expect(shoppingList).not.toBeNull();
+            await userEvent.click(within(shoppingList as HTMLElement).getByRole('button', { name: 'sales.listDownload' }));
+
+            expect(clicks).toHaveLength(1);
+            expect(clicks[0].download).toBe('sales.listDownloadFile');
+            expect(downloaded).toContain('1x Kakaóscsiga');
+            expect(revokeObjectURL).toHaveBeenCalledWith('blob:list');
+        } finally {
+            createElement.mockRestore();
+            globalThis.Blob = OriginalBlob;
+            URL.createObjectURL = originalCreate;
+            URL.revokeObjectURL = originalRevoke;
+        }
+    });
 });
