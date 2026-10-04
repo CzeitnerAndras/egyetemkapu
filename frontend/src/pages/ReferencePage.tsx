@@ -139,7 +139,7 @@ export default function ReferencePage() {
                 </div>
 
                 {/* --- Eredmény --- */}
-                <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#06b6d4] dark:shadow-md flex flex-col secret:rounded-none h-fit">
+                <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#06b6d4] dark:shadow-md flex flex-col secret:rounded-none">
                     <div className="flex items-center justify-between mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <div className="flex items-center">
                             <Sparkles className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -153,8 +153,8 @@ export default function ReferencePage() {
                     </div>
 
                     {generatedRef ? (
-                        <div className="flex flex-col h-full justify-between">
-                            <div className="bg-slate-100 dark:bg-black/40 secret:bg-black border-4 border-black dark:border-dashed dark:border-gray-600 secret:border-[#1cf85d]/50 p-4 mb-4 min-h-[120px] flex items-center justify-center text-center shadow-[4px_4px_0px_#000] dark:shadow-none">
+                        <div className="flex flex-col flex-1 justify-between">
+                            <div className="bg-slate-100 dark:bg-black/40 secret:bg-black border-4 border-black dark:border-dashed dark:border-gray-600 secret:border-[#1cf85d]/50 p-4 mb-4 min-h-[120px] flex-1 flex items-center justify-center text-center shadow-[4px_4px_0px_#000] dark:shadow-none">
                                 <p className="text-lg text-black dark:text-white secret:text-[#1cf85d] font-bold secret:font-mono dark:[text-shadow:0_0_5px_rgba(28,248,93,0.3)]">
                                     {generatedRef}
                                 </p>
