@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { NoticeModal } from '../components/NoticeModal';
 import { PageHeader, PageShell } from '../components/PageLayout';
 import { useNotice } from '../components/useNotice';
 import {
     addItem,
+    formatShoppingListText,
     groupByStore,
     itemKey,
     loadShoppingList,
@@ -414,13 +415,26 @@ export default function SalesPapersPage() {
                                         </ul>
                                     </div>
                                 ))}
-                                <button
-                                    type="button"
-                                    onClick={() => setShoppingList([])}
-                                    className="mt-2 text-xs font-bold uppercase cursor-pointer"
-                                >
-                                    {t('sales.listClear')}
-                                </button>
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => downloadShoppingList(
+                                            formatShoppingListText(shoppingList, (item) => t('sales.page', { page: item.pageNumber })),
+                                            t('sales.listDownloadFile'),
+                                        )}
+                                        className="inline-flex items-center gap-1 text-xs font-black uppercase cursor-pointer border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                                    >
+                                        <Download className="w-3 h-3" />
+                                        {t('sales.listDownload')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShoppingList([])}
+                                        className="text-xs font-bold uppercase cursor-pointer"
+                                    >
+                                        {t('sales.listClear')}
+                                    </button>
+                                </div>
                             </>
                         )}
                     </section>
@@ -680,6 +694,18 @@ function compareFlyers(a: FlyerSummary, b: FlyerSummary, today = localIsoDate())
         return from;
     }
     return a.title.localeCompare(b.title, 'hu');
+}
+
+function downloadShoppingList(text: string, filename: string) {
+    const blob = new Blob([`\uFEFF${text}`], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
 }
 
 function ShoppingListName({
