@@ -59,6 +59,20 @@ export function groupByStore(list: ShoppingListItem[]): { store: ShoppingStoreId
         .filter((group) => group.items.length > 0);
 }
 
+export function formatShoppingListText(
+    list: ShoppingListItem[],
+    pageLabel: (item: ShoppingListItem) => string = (item) => String(item.pageNumber),
+): string {
+    const groups = groupByStore(list);
+    if (groups.length === 0) {
+        return '';
+    }
+    return `${groups.map((group) => {
+        const lines = group.items.map((item) => `${item.quantity}x ${item.name} — ${pageLabel(item)}`);
+        return [group.store.toUpperCase(), ...lines].join('\n');
+    }).join('\n\n')}\n`;
+}
+
 export function loadShoppingList(): ShoppingListItem[] {
     try {
         const raw = localStorage.getItem(SHOPPING_LIST_KEY);
