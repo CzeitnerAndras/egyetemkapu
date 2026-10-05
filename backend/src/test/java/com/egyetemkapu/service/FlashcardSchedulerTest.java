@@ -38,5 +38,14 @@ class FlashcardSchedulerTest {
     void unknownRatingIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> FlashcardScheduler.schedule(1, "easy", now));
         assertThrows(IllegalArgumentException.class, () -> FlashcardScheduler.schedule(1, null, now));
+        assertThrows(IllegalArgumentException.class, () -> FlashcardScheduler.schedule(1, "good", null));
+    }
+
+    @Test
+    void aNegativeIntervalStillStartsAtOneDay() {
+        FlashcardScheduler.NextReview next = FlashcardScheduler.schedule(-3, "good", now);
+
+        assertEquals(1, next.intervalDays());
+        assertEquals(now.plusDays(1), next.dueAt());
     }
 }
