@@ -33,4 +33,13 @@ class GlobalExceptionHandlerTest {
         assertEquals(400, response.getStatusCode().value());
         assertEquals("Ez a forrás nem engedélyezett.", response.getBody().get("message"));
     }
+
+    @Test
+    void missingFlashcardIsNotFound() {
+        ResponseEntity<Map<String, Object>> response = handler.handleMissingFlashcard(new FlashcardAccessException());
+
+        assertEquals(404, response.getStatusCode().value());
+        assertEquals("Nem található", response.getBody().get("error"));
+        assertEquals("A kártya vagy a pakli nem található.", response.getBody().get("message"));
+    }
 }
