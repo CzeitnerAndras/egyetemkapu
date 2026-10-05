@@ -18,11 +18,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -116,6 +119,73 @@ class FlashcardServiceTest {
         assertEquals("Operációkutatás", captor.getValue().getName());
         assertEquals(user, captor.getValue().getUser());
         assertEquals(8L, created.id());
+    }
+
+    @Test
+    void createDeckRejectsABlankNameAndAFullAccount() {
+        when(deckRepository.countByUser(user)).thenReturn(0L);
+        assertThrows(IllegalArgumentException.class, () -> flashcardService.createDeck(user, "  "));
+
+        when(deckRepository.countByUser(user)).thenReturn((long) FlashcardService.MAX_DECKS);
+        assertThrows(IllegalArgumentException.class, () -> flashcardService.createDeck(user, "Új pakli"));
+        verify(deckRepository, never()).save(any());
+    }
+
+    @Test
+    void renameAndDeleteStayOnTheOwnersDeck() {
+        when(deckRepository.findByIdAndUser(3L, user)).thenReturn(Optional.of(deck));
+        when(deckRepository.save(any(FlashcardDeck.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(cardRepository.countByDeck(deck)).thenReturn(2L);
+        when(cardRepository.countByDeckAndDueAtLessThanEqual(deck, NOW)).thenReturn(1L);
+
+        var renamed = flashcardService.renameDeck(user, 3L, "  Algebra  ");
+
+        assertEquals("Algebra", renamed.name());
+        assertEquals(2L, renamed.cardCount());
+        assertEquals(1L, renamed.dueCount());
+
+        flashcardService.deleteDeck(user, 3L);
+        verify(deckRepository).delete(deck);
+        assertThrows(FlashcardAccessException.class, () -> flashcardService.deleteDeck(user, null));
+    }
+
+    @Test
+    void updateAndDeleteCardUseTheOwnersCard() {
+        Flashcard card = card(1);
+        when(cardRepository.findByIdAndDeck_User(5L, user)).thenReturn(Optional.of(card));
+        when(cardRepository.save(any(Flashcard.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        FlashcardDto updated = flashcardService.updateCard(user, 5L, " új kérdés ", " új válasz ");
+
+        assertEquals("új kérdés", updated.front());
+        assertEquals("új válasz", updated.back());
+        assertEquals(1, updated.intervalDays());
+
+        flashcardService.deleteCard(user, 5L);
+        verify(cardRepository).delete(card);
+    }
+
+    @Test
+    void createCardRejectsABlankSide() {
+        when(deckRepository.findByIdAndUser(3L, user)).thenReturn(Optional.of(deck));
+        when(cardRepository.countByDeck(deck)).thenReturn(0L);
+
+        assertThrows(IllegalArgumentException.class, () -> flashcardService.createCard(user, 3L, "kérdés", "  "));
+        verify(cardRepository, never()).save(any());
+    }
+
+    @Test
+    void dueCardsCanCoverEveryDeckOrJustOne() {
+        Flashcard card = card(0);
+        when(cardRepository.findByDeck_UserAndDueAtLessThanEqualOrderByDueAtAsc(user, NOW)).thenReturn(List.of(card));
+
+        assertEquals(List.of(5L), flashcardService.dueCards(user, null).stream().map(FlashcardDto::id).toList());
+
+        when(deckRepository.findByIdAndUser(3L, user)).thenReturn(Optional.of(deck));
+        when(cardRepository.findByDeckAndDueAtLessThanEqualOrderByDueAtAsc(deck, NOW)).thenReturn(List.of());
+
+        assertTrue(flashcardService.dueCards(user, 3L).isEmpty());
+        assertThrows(FlashcardAccessException.class, () -> flashcardService.listCards(user, 99L));
     }
 
     private Flashcard card(int intervalDays) {
