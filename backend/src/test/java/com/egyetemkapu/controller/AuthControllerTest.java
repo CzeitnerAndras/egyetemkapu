@@ -24,12 +24,15 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,12 +72,15 @@ class AuthControllerTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
         assertEquals("Hibás e-mail cím vagy jelszó!", body(result).get("error"));
+        assertEquals(1, user.getFailedLoginAttempts());
+        assertNull(user.getLockoutEndTime());
         assertTrue(response.getHeaders(HttpHeaders.SET_COOKIE).isEmpty());
+        verify(userRepository).save(user);
         verify(refreshTokenService, never()).createRefreshToken(any());
     }
 
     @Test
-    void login_UnverifiedEmail_ReturnsForbiddenWithoutCookies() {
+    void login_UnverifiedEmail_ReturnsSameErrorAsWrongPassword() {
         User user = verifiedUser();
         user.setEmailVerified(false);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
@@ -83,9 +89,62 @@ class AuthControllerTest {
 
         ResponseEntity<?> result = controller.login(Map.of("email", EMAIL, "password", PASSWORD), response);
 
-        assertEquals(HttpStatus.FORBIDDEN, result.getStatusCode());
-        assertEquals("Erősítsd meg az e-mail címed a belépéshez.", body(result).get("error"));
+        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
+        assertEquals("Hibás e-mail cím vagy jelszó!", body(result).get("error"));
+        assertEquals(0, user.getFailedLoginAttempts());
         assertTrue(response.getHeaders(HttpHeaders.SET_COOKIE).isEmpty());
+        verify(refreshTokenService, never()).createRefreshToken(any());
+    }
+
+    @Test
+    void login_FifthFailure_LocksTheAccount() {
+        User user = verifiedUser();
+        user.setFailedLoginAttempts(AuthController.MAX_FAILED_ATTEMPTS - 1);
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("rossz", "hash")).thenReturn(false);
+
+        ResponseEntity<?> result = controller.login(Map.of("email", EMAIL, "password", "rossz"), new MockHttpServletResponse());
+
+        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
+        assertEquals(AuthController.MAX_FAILED_ATTEMPTS, user.getFailedLoginAttempts());
+        assertNotNull(user.getLockoutEndTime());
+        assertTrue(user.getLockoutEndTime().isAfter(LocalDateTime.now().plusMinutes(AuthController.LOCKOUT_MINUTES - 1)));
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void login_LockedAccount_RejectsTheCorrectPassword() {
+        User user = verifiedUser();
+        user.setFailedLoginAttempts(AuthController.MAX_FAILED_ATTEMPTS);
+        user.setLockoutEndTime(LocalDateTime.now().plusMinutes(AuthController.LOCKOUT_MINUTES));
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        ResponseEntity<?> result = controller.login(Map.of("email", EMAIL, "password", PASSWORD), new MockHttpServletResponse());
+
+        assertEquals(HttpStatus.UNAUTHORIZED, result.getStatusCode());
+        assertEquals("Hibás e-mail cím vagy jelszó!", body(result).get("error"));
+        verify(passwordEncoder, never()).matches(any(), any());
+        verify(refreshTokenService, never()).createRefreshToken(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void login_ExpiredLockout_AllowsLoginAndClearsTheCounter() {
+        User user = verifiedUser();
+        user.setFailedLoginAttempts(AuthController.MAX_FAILED_ATTEMPTS);
+        user.setLockoutEndTime(LocalDateTime.now().minusMinutes(1));
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
+        when(refreshTokenService.createRefreshToken(4L))
+                .thenReturn(new RefreshTokenService.IssuedRefreshToken("nyers-refresh"));
+        when(jwtUtil.generateToken("diak")).thenReturn("jwt-access");
+
+        ResponseEntity<?> result = controller.login(Map.of("email", EMAIL, "password", PASSWORD), new MockHttpServletResponse());
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals(0, user.getFailedLoginAttempts());
+        assertNull(user.getLockoutEndTime());
+        verify(userRepository).save(user);
     }
 
     @Test

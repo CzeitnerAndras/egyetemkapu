@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -34,6 +35,8 @@ public class AuthController {
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]{1,64}@[^@\\s]{1,255}$");
     private static final String GENERIC_LOGIN_ERROR = "Hibás e-mail cím vagy jelszó!";
     private static final String GENERIC_REGISTER_ERROR = "A regisztráció nem sikerült.";
+    static final int MAX_FAILED_ATTEMPTS = 5;
+    static final int LOCKOUT_MINUTES = 15;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -104,17 +107,32 @@ public class AuthController {
             HttpServletResponse response) {
         String email = request.get("email");
         String password = request.get("password");
+        if (email == null || email.isBlank()) {
+            return unauthorized();
+        }
         Optional<User> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
-            return ResponseEntity.status(401).body(Map.of("error", GENERIC_LOGIN_ERROR));
+        if (userOpt.isEmpty()) {
+            return unauthorized();
         }
 
         User user = userOpt.get();
+        if (isLocked(user)) {
+            return unauthorized();
+        }
+        clearExpiredLockout(user);
+
+        if (password == null || !passwordEncoder.matches(password, user.getPassword())) {
+            registerFailedLogin(user);
+            return unauthorized();
+        }
 
         if (!user.isEmailVerified()) {
-            return ResponseEntity.status(403).body(Map.of("error", "Erősítsd meg az e-mail címed a belépéshez."));
+            return unauthorized();
         }
+
+        user.setFailedLoginAttempts(0);
+        user.setLockoutEndTime(null);
+        userRepository.save(user);
 
         RefreshTokenService.IssuedRefreshToken refresh = refreshTokenService.createRefreshToken(user.getId());
         AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername()), cookieSecure);
@@ -170,6 +188,32 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", error.get()));
         }
         return ResponseEntity.ok(Map.of("message", EmailVerificationService.VERIFIED_MESSAGE));
+    }
+
+    private ResponseEntity<Map<String, String>> unauthorized() {
+        return ResponseEntity.status(401).body(Map.of("error", GENERIC_LOGIN_ERROR));
+    }
+
+    private boolean isLocked(User user) {
+        LocalDateTime until = user.getLockoutEndTime();
+        return until != null && until.isAfter(LocalDateTime.now());
+    }
+
+    private void clearExpiredLockout(User user) {
+        LocalDateTime until = user.getLockoutEndTime();
+        if (until != null && !until.isAfter(LocalDateTime.now())) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutEndTime(null);
+        }
+    }
+
+    private void registerFailedLogin(User user) {
+        int attempts = user.getFailedLoginAttempts() + 1;
+        user.setFailedLoginAttempts(attempts);
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+            user.setLockoutEndTime(LocalDateTime.now().plusMinutes(LOCKOUT_MINUTES));
+        }
+        userRepository.save(user);
     }
 
     private static String trimToNull(String value) {
