@@ -64,6 +64,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     "Túl sok megerősítési kísérlet. Próbáld újra később.")) {
                 return;
             }
+        } else if ("GET".equalsIgnoreCase(request.getMethod()) && isFlyerPage(path)) {
+            if (!consume(rateLimitingService.resolveFlyerPageBucket(clientIpResolver.resolve(request)), response,
+                    "Túl sok újságoldal-kérés. Próbáld újra később.")) {
+                return;
+            }
         }
         
         boolean isProtectedTool = path.startsWith("/api/ai") || path.startsWith("/api/tools");
@@ -96,6 +101,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         filterChain.doFilter(request, response);
+    }
+
+    private static boolean isFlyerPage(String path) {
+        return path.startsWith("/api/flyers/") && path.contains("/pages/");
     }
 
     private boolean consume(Bucket tokenBucket, HttpServletResponse response, String errorMessage) throws IOException {

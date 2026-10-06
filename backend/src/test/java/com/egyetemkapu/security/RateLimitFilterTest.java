@@ -108,6 +108,23 @@ class RateLimitFilterTest {
     }
 
     @Test
+    void rejectsFlyerPageOverLimit() throws Exception {
+        when(rateLimitingService.resolveFlyerPageBucket("127.0.0.1")).thenReturn(bucket);
+        when(bucket.tryConsume(1)).thenReturn(false);
+
+        MockHttpServletResponse response = callFilter("/api/flyers/4/pages/2");
+
+        assertEquals(429, response.getStatus());
+    }
+
+    @Test
+    void allowsFlyerListWithoutPageLimit() throws Exception {
+        MockHttpServletResponse response = callFilter("/api/flyers");
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
     void ignoresUnrelatedPaths() throws Exception {
         MockHttpServletResponse response = callFilter("/api/events");
 
