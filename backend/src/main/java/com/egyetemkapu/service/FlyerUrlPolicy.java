@@ -1,6 +1,8 @@
 package com.egyetemkapu.service;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Locale;
 import java.util.Set;
 
@@ -73,5 +75,84 @@ public final class FlyerUrlPolicy {
         if (!isAllowed(url)) {
             throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
         }
+    }
+
+    public static void assertResolvesToPublicAddress(String url) {
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+        }
+        String host;
+        try {
+            host = URI.create(url.trim()).getHost();
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+        }
+        if (host == null || host.isBlank()) {
+            throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+        }
+        try {
+            InetAddress[] addresses = InetAddress.getAllByName(host);
+            if (addresses.length == 0) {
+                throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+            }
+            for (InetAddress address : addresses) {
+                if (!isPublicAddress(address)) {
+                    throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+                }
+            }
+        } catch (UnknownHostException ex) {
+            throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+        }
+    }
+
+    static boolean isPublicAddress(InetAddress address) {
+        if (address == null) {
+            return false;
+        }
+        byte[] bytes = address.getAddress();
+        if (bytes.length == 16 && isIpv4Mapped(bytes)) {
+            try {
+                byte[] v4 = new byte[] {bytes[12], bytes[13], bytes[14], bytes[15]};
+                return isPublicAddress(InetAddress.getByAddress(v4));
+            } catch (UnknownHostException ex) {
+                return false;
+            }
+        }
+        if (address.isAnyLocalAddress()
+                || address.isLoopbackAddress()
+                || address.isLinkLocalAddress()
+                || address.isSiteLocalAddress()
+                || address.isMulticastAddress()) {
+            return false;
+        }
+        if (bytes.length == 16) {
+            int first = bytes[0] & 0xff;
+            if ((first & 0xfe) == 0xfc) {
+                return false;
+            }
+        }
+        if (bytes.length == 4) {
+            int first = bytes[0] & 0xff;
+            int second = bytes[1] & 0xff;
+            if (first == 0 || first >= 240) {
+                return false;
+            }
+            if (first == 100 && (second & 0xc0) == 64) {
+                return false;
+            }
+            if (first == 198 && (second == 18 || second == 19)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isIpv4Mapped(byte[] bytes) {
+        for (int i = 0; i < 10; i++) {
+            if (bytes[i] != 0) {
+                return false;
+            }
+        }
+        return bytes[10] == (byte) 0xff && bytes[11] == (byte) 0xff;
     }
 }
