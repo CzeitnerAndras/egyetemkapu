@@ -35,7 +35,7 @@ public class FlyerHttpClient {
             }
         };
         factory.setConnectTimeout(12_000);
-        factory.setReadTimeout(180_000);
+        factory.setReadTimeout(60_000);
         this.restTemplate = new RestTemplate(factory);
         useUtf8ForText(this.restTemplate);
     }
@@ -80,6 +80,7 @@ public class FlyerHttpClient {
 
     public String postJson(String url, String body) {
         FlyerUrlPolicy.assertAllowed(url);
+        FlyerUrlPolicy.assertResolvesToPublicAddress(url);
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.USER_AGENT, USER_AGENT);
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -145,6 +146,9 @@ public class FlyerHttpClient {
     private <T> ResponseEntity<T> getFollowingRedirects(String url, HttpEntity<?> entity, Class<T> type) {
         String current = url;
         for (int hop = 0; hop <= FlyerUrlPolicy.MAX_REDIRECTS; hop++) {
+            if (FlyerUrlPolicy.isAllowed(current)) {
+                FlyerUrlPolicy.assertResolvesToPublicAddress(current);
+            }
             ResponseEntity<T> response = restTemplate.exchange(
                     URI.create(current), HttpMethod.GET, entity, type);
             if (!response.getStatusCode().is3xxRedirection()) {
