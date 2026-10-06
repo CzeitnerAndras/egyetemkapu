@@ -94,12 +94,12 @@ describe('LoginPage Komponens', () => {
         });
     });
 
-    it('megerősítetlen e-mail esetén a szerver üzenetét mutatja, és nem navigál', async () => {
+    it('sikertelen belépéskor a szerver általános hibáját mutatja, és nem navigál', async () => {
         const user = userEvent.setup();
         (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
             ok: false,
-            status: 403,
-            json: async () => ({ error: 'Erősítsd meg az e-mail címed a belépéshez.' }),
+            status: 401,
+            json: async () => ({ error: 'Hibás e-mail cím vagy jelszó!' }),
         });
 
         renderWithRouter();
@@ -109,7 +109,7 @@ describe('LoginPage Komponens', () => {
         await user.click(screen.getByRole('button', { name: 'login.submit' }));
 
         await waitFor(() => {
-            expect(screen.getByText(/> login\.errorPrefix: Erősítsd meg az e-mail címed a belépéshez\./i)).toBeInTheDocument();
+            expect(screen.getByText(/> login\.errorPrefix: Hibás e-mail cím vagy jelszó!/i)).toBeInTheDocument();
             expect(mockNavigate).not.toHaveBeenCalled();
             expect(localStorage.setItem).not.toHaveBeenCalled();
         });
