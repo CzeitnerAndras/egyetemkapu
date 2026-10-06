@@ -112,4 +112,158 @@ describe('FlashcardsPage', () => {
         expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
         expect(screen.queryByText('2x')).not.toBeInTheDocument();
     });
+
+    it('kártyát lehet felvenni a kiválasztott pakliba', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([]))
+            .mockResolvedValueOnce(json(card))
+            .mockResolvedValueOnce(json([card]))
+            .mockResolvedValueOnce(json([deck]));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: /Analízis/ }));
+        expect(await screen.findByText('cards.noCards')).toBeInTheDocument();
+        await user.type(screen.getByLabelText('cards.front'), 'Mi a derivált?');
+        await user.type(screen.getByLabelText('cards.back'), '2x');
+        await user.click(screen.getByRole('button', { name: 'cards.addCard' }));
+
+        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
+        expect(screen.getByText('2x')).toBeInTheDocument();
+        const post = (globalThis.fetch as jest.Mock).mock.calls.find(
+            ([url, options]) => url === '/api/flashcards/decks/1/cards' && options?.method === 'POST'
+        );
+        expect(JSON.parse(post[1].body)).toEqual({ front: 'Mi a derivált?', back: '2x' });
+    });
+
+    it('üres oldalra nem küld mentést', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([]));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: /Analízis/ }));
+        await screen.findByText('cards.noCards');
+        await user.type(screen.getByLabelText('cards.front'), 'Mi a derivált?');
+        await user.type(screen.getByLabelText('cards.back'), '   ');
+        await user.click(screen.getByRole('button', { name: 'cards.addCard' }));
+
+        expect(await screen.findByText('cards.emptySide')).toBeInTheDocument();
+        expect((globalThis.fetch as jest.Mock).mock.calls.some(
+            ([url, options]) => String(url).includes('/cards') && options?.method === 'POST'
+        )).toBe(false);
+    });
+
+    it('a szerkesztés a meglévő kártyát küldi el, a mégse kiüríti az űrlapot', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([card]))
+            .mockResolvedValueOnce(json({ ...card, front: 'Új kérdés' }))
+            .mockResolvedValueOnce(json([{ ...card, front: 'Új kérdés' }]))
+            .mockResolvedValueOnce(json([deck]));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: /Analízis/ }));
+        await user.click(await screen.findByRole('button', { name: 'cards.edit' }));
+        expect(screen.getByLabelText('cards.front')).toHaveValue('Mi a derivált?');
+        await user.clear(screen.getByLabelText('cards.front'));
+        await user.type(screen.getByLabelText('cards.front'), 'Új kérdés');
+        await user.click(screen.getByRole('button', { name: 'cards.save' }));
+
+        expect(await screen.findByText('Új kérdés')).toBeInTheDocument();
+        const put = (globalThis.fetch as jest.Mock).mock.calls.find(
+            ([url, options]) => url === '/api/flashcards/cards/5' && options?.method === 'PUT'
+        );
+        expect(JSON.parse(put[1].body)).toEqual({ front: 'Új kérdés', back: '2x' });
+
+        await user.click(screen.getByRole('button', { name: 'cards.edit' }));
+        await user.click(screen.getByRole('button', { name: 'cards.cancel' }));
+        expect(screen.getByLabelText('cards.front')).toHaveValue('');
+        expect(screen.getByRole('button', { name: 'cards.addCard' })).toBeInTheDocument();
+    });
+
+    it('a kártya és a pakli törlése megerősítés után megy ki', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([card]))
+            .mockResolvedValueOnce(json({}, true, 200))
+            .mockResolvedValueOnce(json([]))
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json({}, true, 200))
+            .mockResolvedValueOnce(json([]));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: /Analízis/ }));
+        await user.click(await screen.findByRole('button', { name: 'cards.delete' }));
+        expect(await screen.findByText('cards.noCards')).toBeInTheDocument();
+        expect((globalThis.fetch as jest.Mock).mock.calls.some(
+            ([url, options]) => url === '/api/flashcards/cards/5' && options?.method === 'DELETE'
+        )).toBe(true);
+
+        await user.click(screen.getByRole('button', { name: 'cards.deleteDeck' }));
+        expect(await screen.findByText('cards.noDecks')).toBeInTheDocument();
+        expect((globalThis.fetch as jest.Mock).mock.calls.some(
+            ([url, options]) => url === '/api/flashcards/decks/1' && options?.method === 'DELETE'
+        )).toBe(true);
+    });
+
+    it('a pakli ismétlése csak annak a paklinak az esedékes kártyáit kéri', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([card]))
+            .mockResolvedValueOnce(json([card]));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: /Analízis/ }));
+        await user.click(await screen.findByRole('button', { name: 'cards.reviewDue:1' }));
+
+        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
+        expect((globalThis.fetch as jest.Mock).mock.calls.some(
+            ([url]) => url === '/api/flashcards/due?deckId=1'
+        )).toBe(true);
+    });
+
+    it('a sikertelen értékelés a kártyán hagy, és hibát ír', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([card]))
+            .mockResolvedValueOnce(json({}, false, 500));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: 'cards.reviewAll:1' }));
+        await user.click(await screen.findByRole('button', { name: 'cards.show' }));
+        await user.click(screen.getByRole('button', { name: 'cards.good' }));
+
+        expect(await screen.findByText('cards.reviewError')).toBeInTheDocument();
+        expect(screen.getByText('Mi a derivált?')).toBeInTheDocument();
+    });
+
+    it('a vissza gomb kilép az ismétlésből', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock)
+            .mockResolvedValueOnce(json([deck]))
+            .mockResolvedValueOnce(json([card]))
+            .mockResolvedValueOnce(json([deck]));
+
+        render(<FlashcardsPage />);
+
+        await user.click(await screen.findByRole('button', { name: 'cards.reviewAll:1' }));
+        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'cards.backToList' }));
+
+        expect(await screen.findByText('cards.pickDeck')).toBeInTheDocument();
+        expect(screen.queryByText('Mi a derivált?')).not.toBeInTheDocument();
+    });
 });
