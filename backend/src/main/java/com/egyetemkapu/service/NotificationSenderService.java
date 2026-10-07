@@ -1,6 +1,7 @@
 package com.egyetemkapu.service;
 
 import com.egyetemkapu.security.DiscordWebhookValidator;
+import com.egyetemkapu.security.TelegramChatIdValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,10 @@ public class NotificationSenderService {
 
     @Async
     public void sendTelegramMessage(String chatId, String message) {
+        if (!TelegramChatIdValidator.isAllowed(chatId)) {
+            System.out.println("Elutasított Telegram chat ID, üzenet nem lett elküldve.");
+            return;
+        }
         if ("nincs_megadva".equals(telegramBotToken)) {
             System.out.println("A Telegram Bot Token hiányzik az application.properties-ből!");
             return;
