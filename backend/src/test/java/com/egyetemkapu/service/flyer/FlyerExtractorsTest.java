@@ -218,7 +218,7 @@ class FlyerExtractorsTest {
         List<TextRun> runs = List.of(
                 new TextRun(20f, 70f, 60f, 11f, "Nescafé", "FBUMDI+Poppins-Bold", 11f),
                 new TextRun(20f, 82f, 90f, 11f, "Dolce Gusto", "FBUMDI+Poppins-Bold", 11f),
-                new TextRun(20f, 94f, 85f, 9f, "kávékapszula", "FJPMDI+Poppins-SemiBold", 9f),
+                new TextRun(20f, 94f, 85f, 9f, "kávékapszula", "AAHTPF+FJPMDI+Poppins-SemiBold", 9f),
                 new TextRun(380f, 70f, 90f, 11f, "Lindt Lindor", "FBUMDI+Poppins-Bold", 11f),
                 new TextRun(380f, 82f, 60f, 9f, "desszert", "FJPMDI+Poppins-SemiBold", 9f),
                 new TextRun(20f, 150f, 90f, 9f, "16 db/doboztól", "FJPMDI+Poppins-SemiBold", 9f));
@@ -228,6 +228,44 @@ class FlyerExtractorsTest {
         assertEquals(List.of("Nescafé Dolce Gusto kávékapszula", "Lindt Lindor desszert"), found, found.toString());
         assertTrue(found.stream().noneMatch(name ->
                 name.equals("kávékapszula") || name.equals("desszert")), found.toString());
+    }
+
+    @Test
+    void sparExtractorJoinsAnAccentedProductLineUnderItsBrand() {
+        SparFlyerExtractor extractor = new SparFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(89.9f, 183.8f, 22.5f, 5.6f, "Mizo", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(89.9f, 193.3f, 65.6f, 5.6f, "Pumpkin Spice", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(89.9f, 202.8f, 36.1f, 5.6f, "túró rudi", "AAHTPF+HMTHAE+Poppins-Bold", 8f),
+                new TextRun(89.9f, 211.3f, 40f, 4.9f, "5×45 g", "AACHGM+Poppins-Regular", 7f),
+                new TextRun(185.7f, 291.2f, 45.8f, 5.6f, "Halloween", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(185.7f, 300.7f, 18.9f, 5.6f, "fánk", "AAHTPF+HMTHAE+Poppins-Bold", 8f),
+                new TextRun(121.7f, 399.3f, 50.3f, 5.6f, "Mr. Brownie", "AAHTPF+HMTHAE+Poppins-Bold", 8f),
+                new TextRun(121.7f, 408.8f, 44.2f, 5.6f, "Halloween", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(220.6f, 624.1f, 28.8f, 5.7f, "Univer", "AAHTPF+HMTHAE+Poppins-Bold", 8f),
+                new TextRun(220.6f, 633.6f, 45.9f, 5.7f, "Halloween", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(220.6f, 643.1f, 36.3f, 5.7f, "majonéz", "AACHGM+Poppins-Bold", 8f));
+
+        assertEquals(List.of(
+                "Mizo Pumpkin Spice túró rudi",
+                "Halloween fánk",
+                "Mr. Brownie Halloween",
+                "Univer Halloween majonéz"), names(extractor.extractFromLayout(runs, 2)), runs.toString());
+    }
+
+    @Test
+    void sparExtractorKeepsTheOfferWhenASloganLineSitsUnderIt() {
+        SparFlyerExtractor extractor = new SparFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(509.5f, 494.2f, 48.6f, 8.5f, "MINDEN", "AACHGM+Poppins-Bold", 12f),
+                new TextRun(515.9f, 503.8f, 39.1f, 5.6f, "MANNER", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(511.4f, 513.4f, 46.4f, 5.6f, "TERMÉK", "AAHTPF+HMTHAE+Poppins-Bold", 8f),
+                new TextRun(515.7f, 523.0f, 36.2f, 5.6f, "ÁRÁBÓL!", "AAHTPF+HMTHAE+Poppins-Bold", 8f),
+                new TextRun(20f, 640f, 70f, 8f, "Jó reggelt!", "AACHGM+Poppins-Bold", 8f),
+                new TextRun(20f, 649.5f, 55f, 5.6f, "félbagett", "AAHTPF+HMTHAE+Poppins-Bold", 8f));
+
+        assertEquals(List.of("MINDEN MANNER TERMÉK", "Jó reggelt! félbagett"),
+                names(extractor.extractFromLayout(runs, 13)), runs.toString());
     }
 
     @Test
