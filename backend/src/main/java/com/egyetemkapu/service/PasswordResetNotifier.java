@@ -4,6 +4,8 @@ import com.egyetemkapu.model.Settings;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.SettingsRepository;
 import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PasswordResetNotifier {
+
+    private static final Logger log = LoggerFactory.getLogger(PasswordResetNotifier.class);
 
     private enum MailKind {
         RESET, VERIFY
@@ -62,10 +66,14 @@ public class PasswordResetNotifier {
 
     private void sendEmail(User user, String url, boolean english, MailKind kind) {
         if (mailHost.isBlank()) {
+            log.warn("Email sending skipped for {}: no SMTP host configured (set MAIL_HOST).",
+                    user.getEmail());
             return;
         }
         JavaMailSender sender = mailSender.getIfAvailable();
         if (sender == null) {
+            log.warn("Email sending skipped for {}: MAIL_HOST is set but no JavaMailSender bean is available.",
+                    user.getEmail());
             return;
         }
         try {
@@ -76,8 +84,9 @@ public class PasswordResetNotifier {
             helper.setSubject(emailSubject(english, kind));
             helper.setText(emailBody(url, english, kind), false);
             sender.send(message);
+            log.info("Sent {} email to {}.", kind, user.getEmail());
         } catch (Exception e) {
-            System.out.println("Hiba az e-mail küldésekor: " + e.getMessage());
+            log.error("Failed to send {} email to {}: {}", kind, user.getEmail(), e.getMessage(), e);
         }
     }
 

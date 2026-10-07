@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FlashcardsPage from './FlashcardsPage';
 
@@ -61,56 +61,28 @@ describe('FlashcardsPage', () => {
         expect(JSON.parse(post[1].body)).toEqual({ name: 'Analízis' });
     });
 
-    it('a tudom gomb kiveszi a kártyát a sorból', async () => {
-        const user = userEvent.setup();
-        (globalThis.fetch as jest.Mock)
-            .mockResolvedValueOnce(json([deck]))
-            .mockResolvedValueOnce(json([card]))
-            .mockResolvedValueOnce(json({ ...card, intervalDays: 1 }))
-            .mockResolvedValueOnce(json([{ ...deck, dueCount: 0 }]));
-
-        render(<FlashcardsPage />);
-
-        await user.click(await screen.findByRole('button', { name: 'cards.reviewAll:1' }));
-        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
-
-        await user.click(screen.getByRole('button', { name: 'cards.show' }));
-        expect(screen.getByText('2x')).toBeInTheDocument();
-
-        await user.click(screen.getByRole('button', { name: 'cards.good' }));
-        expect(await screen.findByText('cards.noneDue')).toBeInTheDocument();
-
-        const review = (globalThis.fetch as jest.Mock).mock.calls.find(
-            ([url]) => url === '/api/flashcards/cards/5/review'
-        );
-        expect(review[1].method).toBe('POST');
-        expect(JSON.parse(review[1].body)).toEqual({ rating: 'good' });
-        expect(review[1].credentials).toBe('include');
-    });
-
-    it('az újra a sor végére teszi a kártyát, és a következő jön', async () => {
+    it('a kártya kattintásra megfordul, a nyíl pedig a következőre visz', async () => {
         const second = { ...card, id: 6, front: 'Mi az integrál?', back: 'terület' };
         const user = userEvent.setup();
         (globalThis.fetch as jest.Mock)
-            .mockResolvedValueOnce(json([{ ...deck, cardCount: 2, dueCount: 2 }]))
-            .mockResolvedValueOnce(json([card, second]))
-            .mockResolvedValueOnce(json({ ...card, intervalDays: 0 }))
-            .mockResolvedValueOnce(json({ ...second, intervalDays: 1 }));
+            .mockResolvedValueOnce(json([{ ...deck, cardCount: 2, dueCount: 0 }]))
+            .mockResolvedValueOnce(json([card, second]));
 
         render(<FlashcardsPage />);
 
         await user.click(await screen.findByRole('button', { name: 'cards.reviewAll:2' }));
-        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
+        const dialog = await screen.findByRole('dialog');
+        await user.click(within(dialog).getByRole('button', { name: 'Mi a derivált?' }));
+        expect(within(dialog).getByRole('button', { name: '2x' })).toBeInTheDocument();
 
-        await user.click(screen.getByRole('button', { name: 'cards.show' }));
-        await user.click(screen.getByRole('button', { name: 'cards.again' }));
-        expect(await screen.findByText('Mi az integrál?')).toBeInTheDocument();
-        expect(screen.queryByText('Mi a derivált?')).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole('button', { name: 'cards.next' }));
+        expect(within(dialog).getByRole('button', { name: 'Mi az integrál?' })).toBeInTheDocument();
+        expect(within(dialog).queryByRole('button', { name: '2x' })).not.toBeInTheDocument();
 
-        await user.click(screen.getByRole('button', { name: 'cards.show' }));
-        await user.click(screen.getByRole('button', { name: 'cards.good' }));
-        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
-        expect(screen.queryByText('2x')).not.toBeInTheDocument();
+        await user.click(within(dialog).getByRole('button', { name: 'Mi az integrál?' }));
+        await user.click(within(dialog).getByRole('button', { name: 'cards.next' }));
+        expect(within(dialog).getByRole('button', { name: 'Mi a derivált?' })).toBeInTheDocument();
+        expect((globalThis.fetch as jest.Mock).mock.calls.some(([url]) => String(url).includes('/due'))).toBe(false);
     });
 
     it('kártyát lehet felvenni a kiválasztott pakliba', async () => {
@@ -215,55 +187,63 @@ describe('FlashcardsPage', () => {
         )).toBe(true);
     });
 
-    it('a pakli ismétlése csak annak a paklinak az esedékes kártyáit kéri', async () => {
+    it('a pakli ismétlése minden kártyát megnyit, akkor is, ha semmi sem esedékes', async () => {
         const user = userEvent.setup();
-        (globalThis.fetch as jest.Mock)
-            .mockResolvedValueOnce(json([deck]))
-            .mockResolvedValueOnce(json([card]))
-            .mockResolvedValueOnce(json([card]));
+        (globalThis.fetch as jest.Mock).mockImplementation((url: string) => {
+            if (url === '/api/flashcards/decks') {
+                return Promise.resolve(json([{ ...deck, dueCount: 0, cardCount: 1 }]));
+            }
+            if (url === '/api/flashcards/decks/1/cards') {
+                return Promise.resolve(json([card]));
+            }
+            return Promise.resolve(json({}, false, 404));
+        });
 
         render(<FlashcardsPage />);
 
         await user.click(await screen.findByRole('button', { name: /Analízis/ }));
         await user.click(await screen.findByRole('button', { name: 'cards.reviewDue:1' }));
 
-        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
-        expect((globalThis.fetch as jest.Mock).mock.calls.some(
-            ([url]) => url === '/api/flashcards/due?deckId=1'
-        )).toBe(true);
+        const dialog = await screen.findByRole('dialog');
+        expect(within(dialog).getByRole('button', { name: 'Mi a derivált?' })).toBeInTheDocument();
+        expect((globalThis.fetch as jest.Mock).mock.calls.some(([url]) => String(url).includes('/due'))).toBe(false);
+
+        await user.click(within(dialog).getByRole('button', { name: 'cards.close' }));
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'cards.reviewDue:1' }));
+        expect(await screen.findByRole('dialog')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Mi a derivált?' })).toBeInTheDocument();
     });
 
-    it('a sikertelen értékelés a kártyán hagy, és hibát ír', async () => {
+    it('a sikertelen betöltés nem nyit kártyát', async () => {
         const user = userEvent.setup();
         (globalThis.fetch as jest.Mock)
             .mockResolvedValueOnce(json([deck]))
-            .mockResolvedValueOnce(json([card]))
             .mockResolvedValueOnce(json({}, false, 500));
 
         render(<FlashcardsPage />);
 
         await user.click(await screen.findByRole('button', { name: 'cards.reviewAll:1' }));
-        await user.click(await screen.findByRole('button', { name: 'cards.show' }));
-        await user.click(screen.getByRole('button', { name: 'cards.good' }));
 
-        expect(await screen.findByText('cards.reviewError')).toBeInTheDocument();
-        expect(screen.getByText('Mi a derivált?')).toBeInTheDocument();
+        expect(await screen.findByText('cards.loadError')).toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    it('a vissza gomb kilép az ismétlésből', async () => {
+    it('a bezárás kilép az ismétlésből', async () => {
         const user = userEvent.setup();
         (globalThis.fetch as jest.Mock)
             .mockResolvedValueOnce(json([deck]))
-            .mockResolvedValueOnce(json([card]))
-            .mockResolvedValueOnce(json([deck]));
+            .mockResolvedValueOnce(json([card]));
 
         render(<FlashcardsPage />);
 
         await user.click(await screen.findByRole('button', { name: 'cards.reviewAll:1' }));
-        expect(await screen.findByText('Mi a derivált?')).toBeInTheDocument();
-        await user.click(screen.getByRole('button', { name: 'cards.backToList' }));
+        expect(await screen.findByRole('button', { name: 'Mi a derivált?' })).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'cards.close' }));
 
-        expect(await screen.findByText('cards.pickDeck')).toBeInTheDocument();
-        expect(screen.queryByText('Mi a derivált?')).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Mi a derivált?' })).not.toBeInTheDocument();
+        expect(screen.getByText('cards.pickDeck')).toBeInTheDocument();
     });
 });

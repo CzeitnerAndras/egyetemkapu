@@ -5,6 +5,7 @@ import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -52,8 +53,13 @@ final class FlyerLayout {
     }
 
     static List<String> nameBlocks(List<TextRun> runs, Predicate<TextRun> isNameLine) {
+        return nameBlocks(runs, isNameLine, FlyerLayout::sameStyle);
+    }
+
+    static List<String> nameBlocks(List<TextRun> runs, Predicate<TextRun> isNameLine,
+                                   BiPredicate<TextRun, TextRun> blockStyle) {
         List<TextRun> candidates = new ArrayList<>();
-        for (TextRun run : mergeLines(runs)) {
+        for (TextRun run : mergeLines(runs, blockStyle)) {
             if (run.text().isBlank() || isPriceLike(run.text()) || !isNameLine.test(run)) {
                 continue;
             }
@@ -69,8 +75,8 @@ final class FlyerLayout {
             taken[i] = true;
             TextRun current = candidates.get(i);
             StringBuilder name = new StringBuilder(current.text());
-            for (int next = nextLine(candidates, taken, current); next >= 0;
-                 next = nextLine(candidates, taken, current)) {
+            for (int next = nextLine(candidates, taken, current, blockStyle); next >= 0;
+                 next = nextLine(candidates, taken, current, blockStyle)) {
                 taken[next] = true;
                 current = candidates.get(next);
                 name.append(' ').append(current.text());
@@ -80,14 +86,15 @@ final class FlyerLayout {
         return names;
     }
 
-    private static int nextLine(List<TextRun> candidates, boolean[] taken, TextRun current) {
+    private static int nextLine(List<TextRun> candidates, boolean[] taken, TextRun current,
+                                BiPredicate<TextRun, TextRun> blockStyle) {
         int best = -1;
         for (int i = 0; i < candidates.size(); i++) {
             if (taken[i]) {
                 continue;
             }
             TextRun candidate = candidates.get(i);
-            if (candidate.y() <= current.y() || !sameStyle(current, candidate) || !stacked(current, candidate)
+            if (candidate.y() <= current.y() || !blockStyle.test(current, candidate) || !stacked(current, candidate)
                     || !aligned(current, candidate)) {
                 continue;
             }
@@ -98,9 +105,19 @@ final class FlyerLayout {
         return best;
     }
 
-    private static boolean sameStyle(TextRun first, TextRun second) {
+    static boolean sameStyle(TextRun first, TextRun second) {
         return baseFont(first.font()).equals(baseFont(second.font()))
                 && Math.abs(first.fontSize() - second.fontSize()) <= 0.4f;
+    }
+
+    static boolean sameFamily(TextRun first, TextRun second) {
+        return fontFamily(first.font()).equals(fontFamily(second.font()));
+    }
+
+    static String fontFamily(String font) {
+        String base = baseFont(font);
+        int dash = base.indexOf('-');
+        return dash > 0 ? base.substring(0, dash) : base;
     }
 
     private static boolean stacked(TextRun above, TextRun below) {
@@ -116,7 +133,7 @@ final class FlyerLayout {
                 || Math.abs(first.centerX() - second.centerX()) <= tolerance;
     }
 
-    private static List<TextRun> mergeLines(List<TextRun> runs) {
+    private static List<TextRun> mergeLines(List<TextRun> runs, BiPredicate<TextRun, TextRun> blockStyle) {
         if (runs == null || runs.isEmpty()) {
             return List.of();
         }
@@ -125,7 +142,7 @@ final class FlyerLayout {
         List<TextRun> merged = new ArrayList<>();
         for (TextRun run : sorted) {
             TextRun previous = merged.isEmpty() ? null : merged.getLast();
-            if (previous != null && continuesLine(previous, run)) {
+            if (previous != null && continuesLine(previous, run, blockStyle)) {
                 merged.set(merged.size() - 1, join(previous, run));
             } else {
                 merged.add(run);
@@ -134,8 +151,8 @@ final class FlyerLayout {
         return merged;
     }
 
-    private static boolean continuesLine(TextRun left, TextRun right) {
-        if (!sameStyle(left, right)) {
+    private static boolean continuesLine(TextRun left, TextRun right, BiPredicate<TextRun, TextRun> blockStyle) {
+        if (!blockStyle.test(left, right)) {
             return false;
         }
         float size = Math.max(left.fontSize(), 1f);

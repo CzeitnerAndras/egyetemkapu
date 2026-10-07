@@ -345,15 +345,15 @@ export default function Navbar() {
 
   {/* --- Pages --- */}
   const pageLinks = [
+    { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
     { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
     { to: '/ai', label: t('nav.ai'), icon: Bot },
     { to: '/kalkulator', label: t('nav.calculators'), icon: Calculator },
     { to: '/tudastar', label: t('nav.knowledge'), icon: BookOpen },
-    { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
     { to: '/tanuloszoba', label: t('nav.focus'), icon: BrainCircuit },
     { to: '/kartyak', label: t('nav.cards'), icon: Layers },
     { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
-    { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
+    { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
   ];
 
   return (
