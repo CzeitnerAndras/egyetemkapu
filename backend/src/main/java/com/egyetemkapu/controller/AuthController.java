@@ -55,7 +55,7 @@ public class AuthController {
             PasswordResetService passwordResetService,
             EmailVerificationService emailVerificationService,
             @Value("${app.auth.cookie-secure:false}") boolean cookieSecure,
-            @Value("${app.email-verification.enabled:true}") boolean requireEmailVerification) {
+            @Value("${app.email-verification.enabled:false}") boolean requireEmailVerification) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
