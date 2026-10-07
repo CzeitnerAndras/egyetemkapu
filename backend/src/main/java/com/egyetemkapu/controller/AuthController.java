@@ -45,6 +45,7 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
     private final EmailVerificationService emailVerificationService;
     private final boolean cookieSecure;
+    private final boolean requireEmailVerification;
 
     public AuthController(
             UserRepository userRepository,
@@ -53,7 +54,8 @@ public class AuthController {
             RefreshTokenService refreshTokenService,
             PasswordResetService passwordResetService,
             EmailVerificationService emailVerificationService,
-            @Value("${app.auth.cookie-secure:false}") boolean cookieSecure) {
+            @Value("${app.auth.cookie-secure:false}") boolean cookieSecure,
+            @Value("${app.email-verification.enabled:true}") boolean requireEmailVerification) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -61,6 +63,7 @@ public class AuthController {
         this.passwordResetService = passwordResetService;
         this.emailVerificationService = emailVerificationService;
         this.cookieSecure = cookieSecure;
+        this.requireEmailVerification = requireEmailVerification;
     }
 
     // --- Register ---
@@ -80,7 +83,7 @@ public class AuthController {
         }
         Optional<User> existingEmail = userRepository.findByEmail(email);
         if (existingEmail.isPresent()) {
-            if (!existingEmail.get().isEmailVerified()) {
+            if (requireEmailVerification && !existingEmail.get().isEmailVerified()) {
                 emailVerificationService.issueFor(existingEmail.get());
             }
             return ResponseEntity.ok(Map.of("message", EmailVerificationService.ACCEPTED_MESSAGE));
@@ -93,9 +96,11 @@ public class AuthController {
         newUser.setUsername(username);
         newUser.setEmail(email);
         newUser.setPassword(passwordEncoder.encode(password));
-        newUser.setEmailVerified(false);
+        newUser.setEmailVerified(!requireEmailVerification);
         userRepository.save(newUser);
-        emailVerificationService.issueFor(newUser);
+        if (requireEmailVerification) {
+            emailVerificationService.issueFor(newUser);
+        }
 
         return ResponseEntity.ok(Map.of("message", EmailVerificationService.ACCEPTED_MESSAGE));
     }
@@ -128,7 +133,7 @@ public class AuthController {
             return unauthorized();
         }
 
-        if (!user.isEmailVerified()) {
+        if (requireEmailVerification && !user.isEmailVerified()) {
             return unauthorized();
         }
 

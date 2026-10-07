@@ -97,6 +97,24 @@ class AuthControllerTest {
     }
 
     @Test
+    void login_UnverifiedEmail_SucceedsWhenVerificationDisabled() {
+        AuthController noVerify = controller(false, false);
+        User user = verifiedUser();
+        user.setEmailVerified(false);
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(PASSWORD, "hash")).thenReturn(true);
+        when(refreshTokenService.createRefreshToken(4L))
+                .thenReturn(new RefreshTokenService.IssuedRefreshToken("nyers-refresh"));
+        when(jwtUtil.generateToken("diak")).thenReturn("jwt-access");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        ResponseEntity<?> result = noVerify.login(Map.of("email", EMAIL, "password", PASSWORD), response);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertEquals(Boolean.TRUE, body(result).get("ok"));
+    }
+
+    @Test
     void login_FifthFailure_LocksTheAccount() {
         User user = verifiedUser();
         user.setFailedLoginAttempts(AuthController.MAX_FAILED_ATTEMPTS - 1);
@@ -274,6 +292,26 @@ class AuthControllerTest {
     }
 
     @Test
+    void register_NewUser_SavesVerifiedAccountWithoutLinkWhenVerificationDisabled() {
+        AuthController noVerify = controller(false, false);
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("diak")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("hash");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResponseEntity<?> result = noVerify.register(Map.of(
+                "username", "diak",
+                "email", EMAIL,
+                "password", PASSWORD));
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(saved.capture());
+        assertTrue(saved.getValue().isEmailVerified());
+        verify(emailVerificationService, never()).issueFor(any());
+    }
+
+    @Test
     void refresh_RotatesCookies() {
         User user = verifiedUser();
         RefreshToken stored = new RefreshToken();
@@ -337,6 +375,10 @@ class AuthControllerTest {
     }
 
     private AuthController controller(boolean cookieSecure) {
+        return controller(cookieSecure, true);
+    }
+
+    private AuthController controller(boolean cookieSecure, boolean requireEmailVerification) {
         return new AuthController(
                 userRepository,
                 passwordEncoder,
@@ -344,7 +386,8 @@ class AuthControllerTest {
                 refreshTokenService,
                 passwordResetService,
                 emailVerificationService,
-                cookieSecure);
+                cookieSecure,
+                requireEmailVerification);
     }
 
     private static User verifiedUser() {

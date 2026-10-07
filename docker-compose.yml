@@ -31,6 +31,7 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME:-}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
       - MAIL_FROM=${MAIL_FROM:-noreply@egyetemkapu.hu}
+      - EMAIL_VERIFICATION_ENABLED=${EMAIL_VERIFICATION_ENABLED:-true}
       - TZ=Europe/Budapest
     ports:
       - "127.0.0.1:8080:8080"
