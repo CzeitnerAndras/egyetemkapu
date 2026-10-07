@@ -33,6 +33,7 @@ export default function KnowledgeBasePage() {
         fetchDocuments();
     }, [categoryFilter]);
 
+    {/* --- Documents --- */}
     const fetchDocuments = async () => {
         setLoading(true);
         let url = '/api/documents';
@@ -51,6 +52,7 @@ export default function KnowledgeBasePage() {
         }
     };
 
+    {/* --- Upload --- */}
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file) return;
@@ -120,11 +122,11 @@ export default function KnowledgeBasePage() {
                     extra={
                     <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
 
-                        {/* --- Filter Dropdown --- */}
+                        {/* --- Filter dropdown --- */}
                         <div className="relative w-full md:w-auto">
                             <button
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                                className="flex items-center justify-between w-full md:min-w-[220px] bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none hover:-translate-y-1 hover:bg-cyan-400 dark:hover:bg-[#1a1a1a] secret:hover:bg-[#1cf85d]/10 hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-none dark:hover:translate-y-0 transition-all"
+                                className="flex items-center justify-between w-full md:min-w-[220px] bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none hover:-translate-y-1 hover:bg-blue-500 dark:hover:bg-[#1a1a1a] secret:hover:bg-[#1cf85d]/10 hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-none dark:hover:translate-y-0 transition-all"
                             >
                                 <span className="truncate pr-4">{categoryFilter === '' ? t('kb.allCats') : translateCategory(categoryFilter)}</span>
                                 <ChevronDown className={`w-5 h-5 shrink-0 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
@@ -138,7 +140,7 @@ export default function KnowledgeBasePage() {
                                             <button
                                                 key={opt.val}
                                                 onClick={() => { setCategoryFilter(opt.val); setIsFilterOpen(false); }}
-                                                className={`p-3 text-left font-bold text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors uppercase text-sm cursor-pointer ${i !== arr.length - 1 ? 'border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d]/30' : ''}`}
+                                                className={`p-3 text-left font-bold text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-500 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors uppercase text-sm cursor-pointer ${i !== arr.length - 1 ? 'border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d]/30' : ''}`}
                                             >
                                                 {opt.label}
                                             </button>
@@ -150,7 +152,7 @@ export default function KnowledgeBasePage() {
 
                         <button
                             onClick={() => setIsUploadModalOpen(true)}
-                            className="bg-white dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 px-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-fuchsia-400 shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] dark:shadow-none dark:hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase"
+                            className="bg-white dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 px-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-blue-900 shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] dark:shadow-none dark:hover:shadow-lg secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase hover:text-white"
                         >
                             <Upload className="w-5 h-5 mr-2 font-bold" /> {t('kb.submit')}
                         </button>
@@ -160,7 +162,7 @@ export default function KnowledgeBasePage() {
                     {t('kb.title')}
                 </PageHeader>
 
-                {/* --- Dokumentumok Grid --- */}
+                {/* --- Document grid --- */}
                 {loading ? (
                     <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">{t('kb.loading')}</p>
                 ) : documents.length === 0 ? (
@@ -168,10 +170,10 @@ export default function KnowledgeBasePage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {documents.map(doc => (
-                            <div key={doc.id} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black p-5 flex flex-col shadow-[6px_6px_0px_#000] hover:shadow-[10px_10px_0px_#d946ef] dark:shadow-md dark:hover:shadow-lg transition-shadow secret:rounded-none group">
+                            <div key={doc.id} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black p-5 flex flex-col shadow-[6px_6px_0px_#000] hover:shadow-[10px_10px_0px_#020617] dark:shadow-md dark:hover:shadow-lg transition-shadow secret:rounded-none group">
                                 <div className="flex justify-between items-start border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-3 mb-3">
                                     <div>
-                                        <span className="text-xs font-bold bg-cyan-400 dark:bg-[#c084fc] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black px-2 py-1 border-2 border-black dark:border-transparent rounded-sm secret:rounded-none uppercase tracking-wider">{translateCategory(doc.category)}</span>
+                                        <span className="text-xs font-bold bg-blue-500 dark:bg-[#c084fc] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black px-2 py-1 border-2 border-black dark:border-transparent rounded-sm secret:rounded-none uppercase tracking-wider">{translateCategory(doc.category)}</span>
                                         <h3 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] mt-3 secret:font-mono line-clamp-1" title={doc.title}>{doc.title}</h3>
                                     </div>
                                     <FileText className="w-8 h-8 text-black dark:text-gray-500 secret:text-[#1cf85d]/50" />
@@ -182,13 +184,13 @@ export default function KnowledgeBasePage() {
                                 </p>
 
                                 <div className="flex justify-between items-center text-xs font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/60 mb-4 secret:font-mono">
-                                    <span>{t('kb.uploadedBy')} <span className="font-black text-fuchsia-600 dark:text-white">{doc.uploader.username}</span></span>
+                                    <span>{t('kb.uploadedBy')} <span className="font-black text-blue-950 dark:text-white">{doc.uploader.username}</span></span>
                                     <span>{new Date(doc.createdAt).toLocaleDateString(locale)}</span>
                                 </div>
 
                                 <button
                                     onClick={() => handleDownload(doc.id, doc.fileName)}
-                                    className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black dark:hover:text-white secret:hover:text-black transition-all flex items-center justify-center cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] hover:-translate-y-1 dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0"
+                                    className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold py-2 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-500 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black dark:hover:text-white secret:hover:text-black transition-all flex items-center justify-center cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] hover:shadow-[6px_6px_0px_#000] hover:-translate-y-1 dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0"
                                 >
                                     <Download className="w-5 h-5 mr-2 font-bold" /> {t('kb.download')}
                                 </button>
@@ -198,7 +200,7 @@ export default function KnowledgeBasePage() {
                 )}
             </PageShell>
 
-            {/* --- Feltöltés Modal --- */}
+            {/* --- Upload modal --- */}
             {isUploadModalOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg p-6 relative shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] secret:rounded-none">
@@ -208,25 +210,25 @@ export default function KnowledgeBasePage() {
 
                         <h2 className="text-2xl font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-2 secret:font-mono uppercase">{t('kb.uploadTitle')}</h2>
 
-                        {uploadMsg && <p className="mb-4 font-bold text-center text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {uploadMsg}</p>}
+                        {uploadMsg && <p className="mb-4 font-bold text-center text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {uploadMsg}</p>}
 
                         <form onSubmit={handleUpload} className="space-y-5">
                             <div className="flex flex-col">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldTitle')}</label>
-                                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors" />
                             </div>
                             <div className="flex flex-col">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldDesc')}</label>
-                                <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold resize-none shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors"></textarea>
+                                <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold resize-none shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors"></textarea>
                             </div>
 
-                            {/* --- Category Dropdown --- */}
+                            {/* --- Category dropdown --- */}
                             <div className={`flex flex-col relative ${isUploadCatOpen ? 'z-50' : 'z-10'}`}>
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldCat')}</label>
                                 <button
                                     type="button"
                                     onClick={() => setIsUploadCatOpen(!isUploadCatOpen)}
-                                    className="flex items-center justify-between w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold shadow-[4px_4px_0px_#000] dark:shadow-none cursor-pointer hover:bg-cyan-400 dark:hover:bg-[#1a1a1a] secret:hover:bg-[#1cf85d]/10 focus:border-fuchsia-500 transition-colors"
+                                    className="flex items-center justify-between w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold shadow-[4px_4px_0px_#000] dark:shadow-none cursor-pointer hover:bg-blue-500 dark:hover:bg-[#1a1a1a] secret:hover:bg-[#1cf85d]/10 focus:border-blue-800 transition-colors"
                                 >
                                     <span>{translateCategory(category)}</span>
                                     <ChevronDown className={`w-5 h-5 ml-2 transition-transform ${isUploadCatOpen ? 'rotate-180' : ''}`} />
@@ -241,7 +243,7 @@ export default function KnowledgeBasePage() {
                                                     type="button"
                                                     key={opt.val}
                                                     onClick={() => { setCategory(opt.val); setIsUploadCatOpen(false); }}
-                                                    className={`p-3 text-left font-bold text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors uppercase text-sm cursor-pointer ${i !== arr.length - 1 ? 'border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d]/30' : ''}`}
+                                                    className={`p-3 text-left font-bold text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-900 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors uppercase text-sm cursor-pointer ${i !== arr.length - 1 ? 'border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d]/30' : ''}`}
                                                 >
                                                     {opt.label}
                                                 </button>
@@ -251,15 +253,15 @@ export default function KnowledgeBasePage() {
                                 )}
                             </div>
 
-                            {/* --- Fájl Gomb --- */}
+                            {/* --- File button --- */}
                             <div className="flex flex-col z-10 relative pt-1">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldFile')}</label>
-                                <div className="relative border-4 border-dashed border-black dark:border-gray-600 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-transparent p-4 flex items-center justify-between shadow-[4px_4px_0px_#000] dark:shadow-none group transition-colors focus-within:border-fuchsia-500">
+                                <div className="relative border-4 border-dashed border-black dark:border-gray-600 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-transparent p-4 flex items-center justify-between shadow-[4px_4px_0px_#000] dark:shadow-none group transition-colors focus-within:border-blue-800">
                                     <span className="truncate text-black dark:text-gray-300 secret:text-[#1cf85d] font-bold mr-4 text-sm secret:font-mono">
                                         {file ? file.name : (language === 'en' ? 'No file selected' : 'Nincs fájl kiválasztva...')}
                                     </span>
 
-                                    <label className="shrink-0 bg-cyan-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-2 px-4 font-bold uppercase cursor-pointer hover:-translate-y-1 hover:bg-fuchsia-400 dark:hover:bg-[#c084fc] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-none transition-all shadow-[2px_2px_0px_#000] dark:shadow-none text-sm secret:font-mono">
+                                    <label className="shrink-0 bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-2 px-4 font-bold uppercase cursor-pointer hover:-translate-y-1 hover:bg-blue-900 dark:hover:bg-[#c084fc] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-none transition-all shadow-[2px_2px_0px_#000] dark:shadow-none text-sm secret:font-mono hover:text-white">
                                         {language === 'en' ? 'Browse' : 'Tallózás'}
                                         <input
                                             type="file"
@@ -271,7 +273,7 @@ export default function KnowledgeBasePage() {
                                 </div>
                             </div>
 
-                            <button type="submit" className="w-full bg-fuchsia-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#b91c1c] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0">
+                            <button type="submit" className="w-full bg-blue-900 dark:bg-[#a855f7] secret:bg-transparent text-white dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:bg-blue-500 dark:hover:bg-[#b91c1c] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0 hover:text-black">
                                 {t('kb.uploadBtn')}
                             </button>
                         </form>

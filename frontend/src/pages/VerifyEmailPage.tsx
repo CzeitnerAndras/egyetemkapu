@@ -10,6 +10,7 @@ export function readEmailVerifyToken(hash: string): string {
 
 const verifyRequests = new Map<string, Promise<{ ok: boolean; error?: string }>>();
 
+{/* --- Verify --- */}
 function verifyEmailRequest(token: string): Promise<{ ok: boolean; error?: string }> {
     const cached = verifyRequests.get(token);
     if (cached) {
@@ -82,9 +83,10 @@ export default function VerifyEmailPage() {
                 {t('verify.title')}
             </AuthHeader>
 
+            {/* --- Status --- */}
             <div className="p-6 sm:p-8">
                 {working && (
-                    <div className="bg-cyan-200 dark:bg-purple-900/40 secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
+                    <div className="bg-blue-200 dark:bg-purple-900/40 secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
                         &gt; {t('verify.working')}
                     </div>
                 )}
@@ -108,7 +110,7 @@ export default function VerifyEmailPage() {
                 )}
 
                 <div className="text-center">
-                    <Link to="/login" className="text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] font-black hover:underline hover:text-black dark:hover:text-[#e879f9] secret:hover:text-white transition-colors secret:font-mono uppercase">
+                    <Link to="/login" className="text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] font-black hover:underline hover:text-black dark:hover:text-[#e879f9] secret:hover:text-white transition-colors secret:font-mono uppercase">
                         {t('verify.backToLogin')}
                     </Link>
                 </div>

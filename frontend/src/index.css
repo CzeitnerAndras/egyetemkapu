@@ -2,11 +2,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant secret (&:is(.secret, .secret *));
 
+/* --- Base --- */
 html,
 body {
     min-height: 100vh;
     overflow-x: clip;
-    background-color: #a4a3a4;
+    background-color: #c5d4e6;
     transition: background-color 0.3s ease;
 }
 
@@ -15,6 +16,20 @@ html.dark body {
     background-color: #121212 !important;
 }
 
+html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950).text-black,
+html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950) .text-black,
+html:not(.dark):not(.secret) .hover\:bg-blue-900:hover,
+html:not(.dark):not(.secret) .hover\:bg-blue-900:hover .text-black,
+html:not(.dark):not(.secret) .hover\:bg-blue-950:hover,
+html:not(.dark):not(.secret) .hover\:bg-blue-950:hover .text-black {
+    color: #fff;
+}
+
+html:not(.dark):not(.secret) .bg-blue-900.hover\:bg-blue-500:hover {
+    color: #000;
+}
+
+/* --- Nav scroll --- */
 html.flyer-open nav {
     display: none !important;
 }
@@ -44,6 +59,7 @@ html.flyer-open nav {
     user-select: none;
 }
 
+/* --- Notes --- */
 .notepad-lines {
     line-height: 32px;
     font-size: 16px;
@@ -56,7 +72,7 @@ html.dark .notepad-lines {
     background-image: linear-gradient(transparent, transparent 31px, #4b5563 31px, #4b5563 32px);
 }
 
-/* --- SECRET MODE GLOBÁLIS BEÁLLÍTÁSOK --- */
+/* --- Secret mode --- */
 html.secret {
     color-scheme: dark;
 }
@@ -121,7 +137,7 @@ html.secret nav button.w-11 div {
     top: 3px !important; 
 }
 
-/* --- CRT ANIMÁCIÓK --- */
+/* --- CRT animations --- */
 .crt-overlay {
     position: fixed;
     top: 0;
@@ -168,7 +184,7 @@ html.secret nav button.w-11 div {
     animation: crtTurnOn 0.6s ease-in forwards;
 }
 
-/* --- Lassan mozgó háttér animáció --- */
+/* --- Background animation --- */
 @keyframes gradient-pan {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }

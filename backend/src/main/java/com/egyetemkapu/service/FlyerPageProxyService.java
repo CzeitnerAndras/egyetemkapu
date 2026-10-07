@@ -23,6 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FlyerPageProxyService {
 
     private static final int MAX_CACHE = 96;
+    private static final byte[] JPEG_MAGIC = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+    private static final byte[] PNG_MAGIC = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+    private static final byte[] GIF_MAGIC = {0x47, 0x49, 0x46, 0x38};
 
     private record CachedImage(MediaType type, byte[] body) {
     }
@@ -50,6 +53,7 @@ public class FlyerPageProxyService {
     }
 
     @Transactional(readOnly = true)
+    // --- Page image ---
     public ResponseEntity<byte[]> pageImage(Long flyerId, int pageNumber) {
         Flyer flyer = flyerRepository.findById(flyerId)
                 .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen akciós újság."));
@@ -193,8 +197,7 @@ public class FlyerPageProxyService {
         if (body.length < 32) {
             throw new IllegalArgumentException("Az oldal nem jeleníthető meg.");
         }
-        MediaType type = remote.getHeaders().getContentType();
-        return new CachedImage(type == null ? MediaType.IMAGE_JPEG : type, body);
+        return new CachedImage(imageMediaType(body), body);
     }
 
     private byte[] fetchAllowedBytes(String url) {
@@ -224,8 +227,44 @@ public class FlyerPageProxyService {
     private static ResponseEntity<byte[]> respond(CachedImage image) {
         return ResponseEntity.ok()
                 .contentType(image.type())
+                .header("X-Content-Type-Options", "nosniff")
                 .cacheControl(CacheControl.maxAge(Duration.ofHours(1)).cachePublic())
                 .body(image.body());
+    }
+
+    static MediaType imageMediaType(byte[] body) {
+        if (startsWith(body, JPEG_MAGIC)) {
+            return MediaType.IMAGE_JPEG;
+        }
+        if (startsWith(body, PNG_MAGIC)) {
+            return MediaType.IMAGE_PNG;
+        }
+        if (startsWith(body, GIF_MAGIC)) {
+            return MediaType.IMAGE_GIF;
+        }
+        if (isWebp(body)) {
+            return MediaType.parseMediaType("image/webp");
+        }
+        throw new IllegalArgumentException("Az oldal nem jeleníthető meg.");
+    }
+
+    private static boolean startsWith(byte[] body, byte[] magic) {
+        if (body == null || body.length < magic.length) {
+            return false;
+        }
+        for (int i = 0; i < magic.length; i++) {
+            if (body[i] != magic[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isWebp(byte[] body) {
+        return body != null
+                && body.length >= 12
+                && body[0] == 'R' && body[1] == 'I' && body[2] == 'F' && body[3] == 'F'
+                && body[8] == 'W' && body[9] == 'E' && body[10] == 'B' && body[11] == 'P';
     }
 
     private static boolean tooLarge(BufferedImage image) {

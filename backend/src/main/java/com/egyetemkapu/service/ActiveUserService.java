@@ -22,6 +22,7 @@ public class ActiveUserService {
         this.clock = clock;
     }
 
+    // --- Heartbeat ---
     public void heartbeat(String visitorId) {
         if (!isValidVisitorId(visitorId)) return;
 

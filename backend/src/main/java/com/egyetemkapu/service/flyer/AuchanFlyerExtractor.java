@@ -14,9 +14,13 @@ public class AuchanFlyerExtractor extends GenericFlyerExtractor {
 
     private static final float MIN_SIZE = 7.2f;
     private static final float MAX_SIZE = 14.5f;
+    private static final int MAX_NAME_WORDS = 16;
+    private static final Pattern SOFT_HYPHEN = Pattern.compile("\u00ad[ \\t]?");
+    private static final Pattern MULTI_BUY = Pattern.compile(
+            "(?iu)\\*+\\s*bármely\\s+\\d+\\s+db\\s+vásárlása\\s+esetén");
     private static final Pattern OFFER_NAME = Pattern.compile(
-            "(?u)(?<!\\p{L})([A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'-]{3,}"
-                    + "(?:(?:[ \\t]+|-)[A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'.-]{0,}){0,8})(?!\\p{L})");
+            "(?u)(?<!\\p{L})([A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'+-]{3,}"
+                    + "(?:(?:[ \\t]+|-|,\\s+)[A-ZÁÉÍÓÖŐÚÜŰ][A-ZÁÉÍÓÖŐÚÜŰ0-9*.’'.+-]{0,}){0,14})(?!\\p{L})");
 
     public AuchanFlyerExtractor(FlyerCatalogParser parser) {
         super(parser);
@@ -45,11 +49,17 @@ public class AuchanFlyerExtractor extends GenericFlyerExtractor {
         return super.extractFromPageText(text, pageNumber);
     }
 
+    private static String normalizeOfferText(String text) {
+        String normalized = SOFT_HYPHEN.matcher(text.replace('\u00a0', ' ')).replaceAll("");
+        return MULTI_BUY.matcher(normalized).replaceAll(" ");
+    }
+
     private List<ParsedProduct> extractOffers(String text, int pageNumber) {
-        Matcher matcher = OFFER_NAME.matcher(text.replace('\u00a0', ' '));
+        Matcher matcher = OFFER_NAME.matcher(normalizeOfferText(text));
         List<ParsedProduct> products = new ArrayList<>();
         while (matcher.find()) {
-            String name = FlyerCatalogParser.tidyProductName(matcher.group(1).replace('*', ' '));
+            String name = FlyerCatalogParser.tidyProductName(
+                    matcher.group(1).replace('*', ' '), MAX_NAME_WORDS);
             if (name.isBlank() || skipName(name)) {
                 continue;
             }
@@ -78,6 +88,10 @@ public class AuchanFlyerExtractor extends GenericFlyerExtractor {
                 || normalized.contains("gyujtsd")
                 || normalized.contains("tovabbi reszletek")
                 || normalized.contains("okauchan")
+                || normalized.equals("barmely")
+                || normalized.equals("vasarlasa")
+                || normalized.equals("vasarlasa eseten")
+                || normalized.equals("eseten")
                 || name.length() < 5;
     }
 

@@ -4,7 +4,7 @@ import { HelpCircle, ChevronDown, ChevronUp, MessageCircleQuestion } from 'lucid
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
 
-const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 const CALC_ID = 3;
 const DANGER_ID = 10;
 
@@ -41,8 +41,8 @@ export default function FaqPage() {
         <PageShell>
             <PageHeader icon={HelpCircle}>{t('faq.title')}</PageHeader>
 
-            {/* --- Tartalom --- */}
-            <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none">
+            {/* --- Content --- */}
+            <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none">
 
                 <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                     <MessageCircleQuestion className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -53,11 +53,12 @@ export default function FaqPage() {
 
                 <p className="mb-6 text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-medium secret:font-mono">
                     {t('faq.intro')}{' '}
-                    <Link to="/otletlada" className="font-black text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] underline hover:text-black dark:hover:text-white">
+                    <Link to="/otletlada" className="font-black text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] underline hover:text-black dark:hover:text-white">
                         {t('faq.introLink')}
                     </Link>
                 </p>
 
+                {/* --- Questions --- */}
                 <div className="space-y-4">
                     {FAQ_IDS.map((id) => (
                         <div
@@ -66,13 +67,13 @@ export default function FaqPage() {
                         >
                             <button
                                 onClick={() => toggleFaq(id)}
-                                className="w-full text-left p-4 flex justify-between items-center hover:bg-cyan-400 dark:hover:bg-gray-800/50 secret:hover:bg-[#1cf85d]/10 transition-colors cursor-pointer"
+                                className="w-full text-left p-4 flex justify-between items-center hover:bg-blue-500 dark:hover:bg-gray-800/50 secret:hover:bg-[#1cf85d]/10 transition-colors cursor-pointer"
                             >
-                                <span className={`font-bold text-base sm:text-lg pr-4 secret:font-mono break-words ${openId === id ? 'text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d]' : 'text-black dark:text-white secret:text-[#1cf85d]'}`}>
+                                <span className={`font-bold text-base sm:text-lg pr-4 secret:font-mono break-words ${openId === id ? 'text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d]' : 'text-black dark:text-white secret:text-[#1cf85d]'}`}>
                                     {t(`faq.q${id}`)}
                                 </span>
                                 {openId === id ? (
-                                    <ChevronUp className="w-6 h-6 font-bold text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] shrink-0" />
+                                    <ChevronUp className="w-6 h-6 font-bold text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] shrink-0" />
                                 ) : (
                                     <ChevronDown className="w-6 h-6 font-bold text-black dark:text-gray-400 secret:text-[#1cf85d] shrink-0" />
                                 )}

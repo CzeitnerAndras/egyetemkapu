@@ -55,6 +55,7 @@ describe('Navbar Komponens', () => {
         'nav.knowledge': '/tudastar',
         'nav.reference': '/hivatkozas',
         'nav.focus': '/tanuloszoba',
+        'nav.cards': '/kartyak',
         'nav.links': '/linktar',
         'nav.sales': '/akcios-ujsag',
     };

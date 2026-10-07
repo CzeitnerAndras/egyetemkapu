@@ -4,6 +4,8 @@ import com.egyetemkapu.model.Document;
 import com.egyetemkapu.model.Subject;
 import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.DocumentRepository;
+import com.egyetemkapu.repository.FlashcardDeckRepository;
+import com.egyetemkapu.repository.FlashcardRepository;
 import com.egyetemkapu.repository.GradeRepository;
 import com.egyetemkapu.repository.NoteRepository;
 import com.egyetemkapu.repository.PasswordResetTokenRepository;
@@ -26,6 +28,8 @@ public class UserAccountService {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
     private final NoteRepository noteRepository;
+    private final FlashcardRepository flashcardRepository;
+    private final FlashcardDeckRepository flashcardDeckRepository;
     private final SettingsRepository settingsRepository;
     private final SuggestionRepository suggestionRepository;
     private final DocumentRepository documentRepository;
@@ -38,6 +42,8 @@ public class UserAccountService {
             UserRepository userRepository,
             TaskRepository taskRepository,
             NoteRepository noteRepository,
+            FlashcardRepository flashcardRepository,
+            FlashcardDeckRepository flashcardDeckRepository,
             SettingsRepository settingsRepository,
             SuggestionRepository suggestionRepository,
             DocumentRepository documentRepository,
@@ -48,6 +54,8 @@ public class UserAccountService {
         this.userRepository = userRepository;
         this.taskRepository = taskRepository;
         this.noteRepository = noteRepository;
+        this.flashcardRepository = flashcardRepository;
+        this.flashcardDeckRepository = flashcardDeckRepository;
         this.settingsRepository = settingsRepository;
         this.suggestionRepository = suggestionRepository;
         this.documentRepository = documentRepository;
@@ -58,6 +66,7 @@ public class UserAccountService {
     }
 
     @Transactional
+    // --- Delete ---
     public void deleteAccount(User user) {
         List<Document> documents = documentRepository.findByUploader(user);
         List<Path> filesToDelete = documents.stream()
@@ -73,6 +82,8 @@ public class UserAccountService {
         subjectRepository.deleteByUser(user);
         taskRepository.deleteByUser(user);
         noteRepository.deleteByUser(user);
+        flashcardRepository.deleteByDeck_User(user);
+        flashcardDeckRepository.deleteByUser(user);
         settingsRepository.deleteByUser(user);
         suggestionRepository.deleteByUser(user);
         documentRepository.deleteByUploader(user);

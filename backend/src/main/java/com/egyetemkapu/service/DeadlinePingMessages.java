@@ -9,6 +9,7 @@ final class DeadlinePingMessages {
         return language != null && language.equalsIgnoreCase("en");
     }
 
+    // --- Messages ---
     static String atDeadline(String language, String title, String type) {
         if (isEnglish(language)) {
             return "Reminder: **" + title + "** (" + type + ") is due now.";

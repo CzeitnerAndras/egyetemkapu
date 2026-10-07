@@ -49,6 +49,7 @@ public class SecurityConfig {
         this.allowedOrigins = allowedOrigins;
     }
 
+    // --- Beans ---
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -61,6 +62,7 @@ public class SecurityConfig {
         };
     }
 
+    // --- Filter chain ---
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         List<String> publicMatchers = new ArrayList<>(List.of(
@@ -105,6 +107,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // --- CORS ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

@@ -364,6 +364,57 @@ class FlyerCatalogParserTest {
     }
 
     @Test
+    void parsesCurrentCoopRegionalLeafletsAndSkipsPlaceholderImages() {
+        String html = """
+                <div class="swiper-slide">
+                    <a class="image" style="background-image: url('https://www.coop.hu/wp-content/uploads/2026/09/coop_nyirzem_szorolap_20260924-0930.jpg');"></a>
+                    <h3 class="title">Coop regionális szórólap szeptember 4. hét - Nyírzem/Szabolcs Coop</h3>
+                    <p class="desc">Érvényes:<br/>2026. szeptember 24. - 2026. szeptember 30.</p>
+                </div>
+                <div class="swiper-slide">
+                    <a class="image" style="background-image: url('https://www.coop.hu/wp-content/uploads/2022/05/bianko_ujsag_2022maj.jpg');"></a>
+                    <h3 class="title">Coop regionális szórólap szeptember 3-4. hét - Mini</h3>
+                    <p class="desc">Érvényes:<br/>2026. szeptember 17. - 2026. szeptember 30.</p>
+                </div>
+                <div class="swiper-slide">
+                    <a class="image" style="background-image: url('https://www.coop.hu/wp-content/uploads/2026/08/coop_alfold_szorolap_20260801-0807.jpg');"></a>
+                    <h3 class="title">Coop regionális szórólap - Alföld</h3>
+                    <p class="desc">Érvényes:<br/>2026. augusztus 1. - 2026. augusztus 7.</p>
+                </div>
+                """;
+
+        List<FlyerCatalogParser.ParsedCatalog> catalogs = parser.parseCoopFlyers(html, LocalDate.of(2026, 9, 28));
+
+        assertEquals(1, catalogs.size());
+        FlyerCatalogParser.ParsedCatalog leaflet = catalogs.getFirst();
+        assertEquals("coop:coop-nyirzem-szorolap-2026-szeptember-4-het", leaflet.paper().sourceKey());
+        assertEquals("Coop regionális szórólap szeptember 4. hét - Nyírzem/Szabolcs Coop", leaflet.paper().title());
+        assertEquals(LocalDate.of(2026, 9, 24), leaflet.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 9, 30), leaflet.paper().validTo());
+        assertEquals(
+                "https://katalogus.coop.hu/coop-nyirzem-szorolap-2026-szeptember-4-het/",
+                leaflet.paper().officialUrl());
+        assertTrue(leaflet.pages().isEmpty());
+        assertTrue(leaflet.products().isEmpty());
+    }
+
+    @Test
+    void coopCatalogSlugKeepsTheStoreVariant() {
+        assertEquals(
+                "coop-tisza-szorolap-2026-szeptember-4-het-abc-szuper",
+                FlyerCatalogParser.coopCatalogSlug(
+                        "tisza",
+                        "Coop regionális szórólap szeptember 4. hét - Tisza - Abc-Szuper",
+                        2026));
+        assertEquals(
+                "coop-hetforras-szorolap-2026-szeptember-3-4-het",
+                FlyerCatalogParser.coopCatalogSlug(
+                        "hetforras",
+                        "Coop regionális szórólap szeptember 3-4. hét - Hétforrás",
+                        2026));
+    }
+
+    @Test
     void discoversAuchanCatalogsFromHomepageLinksAndEscapedJson() {
         String html = """
                 <a href="https://reklamujsag.auchan.hu/online-katalogusok/2026/tr37/2026-09-10-09-16-heti-hipermarket-ajanlataink/?page=6">hiper</a>

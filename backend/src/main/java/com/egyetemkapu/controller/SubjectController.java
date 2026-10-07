@@ -30,6 +30,7 @@ public class SubjectController {
         return userRepository.findByUsername(principal.getName());
     }
 
+    // --- Create ---
     @PostMapping
     @LogAction("Új tantárgy rögzítése")
     @Transactional
@@ -42,6 +43,7 @@ public class SubjectController {
         return ResponseEntity.ok(subjectRepository.save(subject));
     }
 
+    // --- List ---
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<Subject>> getAllSubjects(Principal principal) {

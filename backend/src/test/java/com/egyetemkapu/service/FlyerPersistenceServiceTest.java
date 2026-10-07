@@ -1,6 +1,8 @@
 package com.egyetemkapu.service;
 
 import com.egyetemkapu.model.Flyer;
+import com.egyetemkapu.model.FlyerPage;
+import com.egyetemkapu.model.FlyerProduct;
 import com.egyetemkapu.repository.FlyerRepository;
 import com.egyetemkapu.service.FlyerCatalogParser.DiscoveredPaper;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedCatalog;
@@ -16,8 +18,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
@@ -71,5 +75,23 @@ class FlyerPersistenceServiceTest {
         verify(flyerRepository, never()).findByStoreOrderByValidFromDescTitleAsc("aldi");
         verify(flyerRepository, never()).deleteByStore("aldi");
         verify(flyerRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void loadWithPagesReturnsTheFlyerAfterTouchingItsCollections() {
+        Flyer flyer = new Flyer();
+        flyer.setId(4L);
+        flyer.addPage(new FlyerPage());
+        flyer.addProduct(new FlyerProduct());
+        when(flyerRepository.findById(4L)).thenReturn(Optional.of(flyer));
+        when(flyerRepository.findById(9L)).thenReturn(Optional.empty());
+
+        Flyer loaded = service.loadWithPages(4L);
+
+        assertSame(flyer, loaded);
+        assertEquals(1, loaded.getPages().size());
+        assertEquals(1, loaded.getProducts().size());
+        assertNull(service.loadWithPages(null));
+        assertNull(service.loadWithPages(9L));
     }
 }

@@ -55,6 +55,7 @@ final class FlyerProductNames {
         }
         String cleaned = FOOTNOTE_MARKS.matcher(raw).replaceAll(" ");
         cleaned = FlyerCatalogParser.tidyProductName(cleaned);
+        cleaned = cleaned.replaceAll("(?iu)(?:^|\\s)/\\s*(?:kg|dkg|g|ml|cl|dl|l|db|darab|csomag|doboz|üveg)\\s*$", "");
         return cleaned.replaceAll("\\s+", " ").trim();
     }
 
@@ -71,7 +72,7 @@ final class FlyerProductNames {
                 || TRAILING_STOPWORDS.contains(HungarianText.normalize(words[words.length - 1]))) {
             return true;
         }
-        if (words.length == 1 && name.length() < 4) {
+        if (words.length == 1 && name.length() < 4 && !name.matches("[A-Z]{2}")) {
             return true;
         }
         int singles = 0;

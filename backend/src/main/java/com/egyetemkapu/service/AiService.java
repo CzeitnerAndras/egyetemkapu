@@ -23,6 +23,7 @@ public class AiService {
     private final String aiApiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
     @SuppressWarnings("unchecked")
+    // --- Ask ---
     public String askAi(String userPrompt) {
         if ("nincs_megadva".equals(aiApiKey)) {
             System.out.println("AI API kulcs nincs beállítva!");

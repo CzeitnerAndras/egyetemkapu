@@ -4,6 +4,7 @@ import com.egyetemkapu.model.Flyer;
 import com.egyetemkapu.model.FlyerPage;
 import com.egyetemkapu.model.FlyerProduct;
 import com.egyetemkapu.repository.FlyerRepository;
+import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
 import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,7 @@ class FlyerSyncServiceTest {
                 parser,
                 pdfExtractor,
                 new FlyerExtractorRegistry(parser),
+                image -> List.of(),
                 clock);
     }
 
@@ -266,6 +268,39 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void refreshStoredLayoutReplacesMismatchedAldiBrandsFromPdf() {
+        Flyer flyer = new Flyer();
+        flyer.setId(4L);
+        flyer.setStore("aldi");
+        flyer.setTitle("ALDI Online akciós újság");
+        flyer.setPdfUrl("https://view.publitas.com/96383/3368768/pdfs/aldi.pdf");
+        flyer.setOfficialUrl("https://szorolap.aldi.hu/aldi_online_akcios_ujsag_2026_kw39/");
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(3);
+        page.setPageText("MOSER ROTH\n\nMILSANI\n\nKAKAÓS TEJ\n\nTÖLTÖTT CSOKOLÁDÉ");
+        flyer.addPage(page);
+        FlyerProduct swapped = new FlyerProduct();
+        swapped.setName("MOSER ROTH KAKAÓS TEJ");
+        swapped.setPageNumber(3);
+        flyer.addProduct(swapped);
+        when(httpClient.getBytes(eq("https://view.publitas.com/96383/3368768/pdfs/aldi.pdf"), any()))
+                .thenReturn(new byte[] { 1, 2, 3 });
+        when(pdfExtractor.extractDocument(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new FlyerPdfExtractor.ExtractedDocument(
+                        List.of(new FlyerCatalogParser.ParsedPage(3, null, "layout")),
+                        List.of(
+                                new FlyerCatalogParser.ParsedProduct("MILSANI KAKAÓS TEJ", 3, null),
+                                new FlyerCatalogParser.ParsedProduct("MOSER ROTH TÖLTÖTT CSOKOLÁDÉ", 3, null))));
+        when(flyerRepository.save(flyer)).thenReturn(flyer);
+
+        assertTrue(service.refreshStoredLayout(flyer));
+
+        assertEquals(List.of("MILSANI KAKAÓS TEJ", "MOSER ROTH TÖLTÖTT CSOKOLÁDÉ"),
+                flyer.getProducts().stream().map(FlyerProduct::getName).toList());
+        verify(flyerRepository).save(flyer);
+    }
+
+    @Test
     void syncPennyDoesNotFetchPoisonedViewerUrls() {
         when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenReturn(
                 "<a href=\"https://169.254.169.254/publitas/stolen\">x</a>"
@@ -316,6 +351,58 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void syncCoopPersistsTheCurrentRegionalLeaflet() {
+        service = new FlyerSyncService(
+                flyerRepository,
+                flyerPersistenceService,
+                httpClient,
+                parser,
+                pdfExtractor,
+                new FlyerExtractorRegistry(parser),
+                image -> List.of(new FlyerCatalogParser.TextRun(20, 80, 40, 16, "Pick"),
+                        new FlyerCatalogParser.TextRun(64, 80, 70, 16, "párizsi"),
+                        new FlyerCatalogParser.TextRun(20, 110, 40, 16, "289"),
+                        new FlyerCatalogParser.TextRun(20, 130, 24, 16, "Ft")),
+                Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest")));
+        when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
+            String url = invocation.getArgument(0);
+            if (url.contains("ajanlatkereso")) {
+                return """
+                        <div class="swiper-slide">
+                            <a style="background-image: url('https://www.coop.hu/wp-content/uploads/2026/09/coop_mecsek_szorolap_20260924-0930.jpg');"></a>
+                            <h3 class="title">Coop regionális szórólap szeptember 4. hét - Mecsek</h3>
+                            <p>2026. szeptember 24. - 2026. szeptember 30.</p>
+                        </div>
+                        """;
+            }
+            if (url.endsWith("data.json")) {
+                return "{\"config\":{\"publicationTitle\":\"Coop Mecsek\"}}";
+            }
+            if (url.endsWith("spreads.json")) {
+                return """
+                        {"spreads":[{"pages":[
+                          {"number":1,"images":{"at1200":"https://katalogus.coop.hu/pages/1.jpg"}},
+                          {"number":2,"images":{"at1200":"https://katalogus.coop.hu/pages/2.jpg"}}
+                        ]}]}
+                        """;
+            }
+            return "";
+        });
+        when(httpClient.getBytes(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(new byte[] {1, 2, 3});
+
+        service.syncCoop(LocalDate.of(2026, 9, 28));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("coop"), captor.capture(), any());
+        assertEquals("coop:coop-mecsek-szorolap-2026-szeptember-4-het", captor.getValue().getFirst().paper().sourceKey());
+        assertEquals(2, captor.getValue().getFirst().pages().size());
+        assertTrue(captor.getValue().getFirst().products().stream()
+                .anyMatch(product -> product.name().toLowerCase().contains("párizsi")));
+    }
+
+    @Test
     void isStaleDoesNotRetriggerRightAfterASyncAttempt() {
         Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
         Flyer penny = storeFlyer("penny", "penny:rewe:202636",
@@ -328,7 +415,10 @@ class FlyerSyncServiceTest {
                 "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar");
         Flyer auchan = storeFlyer("auchan", "auchan:2026-09-03-09-09-heti-hipermarket-ajanlataink",
                 "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr36/x/");
-        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan));
+        Flyer coop = storeFlyer("coop", "coop:nyirzem:2026-09-03", "https://katalogus.coop.hu/coop-nyirzem/");
+        coop.addPage(new FlyerPage());
+        coop.addPage(new FlyerPage());
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -337,6 +427,88 @@ class FlyerSyncServiceTest {
 
         LocalDateTime now = LocalDateTime.of(2026, 9, 6, 10, 0);
         assertFalse(service.isStale(now));
+    }
+
+    @Test
+    void repairSplitCoopProductsJoinsWordsFromThePageImage() {
+        Clock clock = Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest"));
+        FlyerSyncService rejoining = new FlyerSyncService(
+                flyerRepository,
+                flyerPersistenceService,
+                httpClient,
+                parser,
+                pdfExtractor,
+                new FlyerExtractorRegistry(parser),
+                image -> List.of(
+                        new TextRun(20, 120, 40, 16, "Anni"),
+                        new TextRun(66, 120, 50, 16, "Panni"),
+                        new TextRun(300, 120, 36, 16, "Red"),
+                        new TextRun(342, 120, 40, 16, "Bull")),
+                clock);
+        Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
+        coop.setId(7L);
+        FlyerPage page = new FlyerPage();
+        page.setPageNumber(1);
+        page.setImageUrl("https://katalogus.coop.hu/page.jpg");
+        coop.addPage(page);
+        for (String name : List.of("Anni", "Bull", "Comer", "Csirke", "Csont", "energiaital", "Panni", "bed")) {
+            FlyerProduct product = new FlyerProduct();
+            product.setName(name);
+            product.setPageNumber(1);
+            coop.addProduct(product);
+        }
+        when(httpClient.getBytes("https://katalogus.coop.hu/page.jpg", "https://katalogus.coop.hu/coop-alfold/"))
+                .thenReturn(new byte[] {1, 2, 3});
+        when(flyerRepository.save(coop)).thenReturn(coop);
+
+        assertTrue(rejoining.repairSplitCoopProducts(coop));
+
+        List<String> names = coop.getProducts().stream().map(FlyerProduct::getName).toList();
+        assertTrue(names.contains("Anni Panni"));
+        assertTrue(names.contains("Red Bull"));
+        assertFalse(names.contains("Anni"));
+        assertFalse(names.contains("Panni"));
+    }
+
+    @Test
+    void beginCoopRereadWhenASavedNameStillHasTheFatLabelOrAFootnote() {
+        Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
+        coop.setId(7L);
+        for (String name : List.of("Anni Panni Félzsíros", "Csirke mellfilé", "\"többet\" feküntetett")) {
+            FlyerProduct product = new FlyerProduct();
+            product.setName(name);
+            product.setPageNumber(1);
+            coop.addProduct(product);
+        }
+
+        assertTrue(service.beginCoopReread(coop));
+    }
+
+    @Test
+    void isStaleWhenCoopProductNamesAreSingleWords() {
+        Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
+        Flyer penny = storeFlyer("penny", "penny:rewe:202636",
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/");
+        Flyer spar = storeFlyer("spar", "spar:spar:2026-09-03",
+                "https://www.spar.hu/ajanlatok/spar/260903-1-spar-szorolap");
+        Flyer inter = storeFlyer("spar", "spar:interspar:2026-09-03",
+                "https://www.spar.hu/ajanlatok/interspar/260903-2-interspar-szorolap");
+        Flyer market = storeFlyer("spar", "spar:spar-market:2026-09-03",
+                "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar");
+        Flyer auchan = storeFlyer("auchan", "auchan:2026-09-03-09-09-heti-hipermarket-ajanlataink",
+                "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr36/x/");
+        Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
+        coop.addPage(new FlyerPage());
+        coop.addPage(new FlyerPage());
+        for (String name : List.of("Anni", "Bull", "Comer", "Csirke", "Csont", "energiaital", "Panni", "bed")) {
+            FlyerProduct product = new FlyerProduct();
+            product.setName(name);
+            product.setPageNumber(1);
+            coop.addProduct(product);
+        }
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
+
+        assertTrue(service.isStale(LocalDateTime.of(2026, 9, 6, 10, 0)));
     }
 
     @Test

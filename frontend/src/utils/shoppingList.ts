@@ -1,6 +1,6 @@
 export const SHOPPING_LIST_KEY = 'egyetemkapu.shoppingList';
 
-export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan';
+export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop';
 
 export interface ShoppingListItem {
     id: string;
@@ -15,8 +15,9 @@ export interface ShoppingListItem {
 
 export type ShoppingListDraft = Omit<ShoppingListItem, 'id' | 'quantity'> & { quantity?: number };
 
-const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan'];
+const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
 
+{/* --- Item key --- */}
 export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | 'pageNumber' | 'name'>): string {
     if (item.productId != null) {
         return `p:${item.productId}`;
@@ -24,6 +25,7 @@ export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | '
     return `f:${item.flyerId}:${item.pageNumber}:${item.name}`;
 }
 
+{/* --- List actions --- */}
 export function addItem(list: ShoppingListItem[], draft: ShoppingListDraft): ShoppingListItem[] {
     const id = itemKey(draft);
     const extra = draft.quantity ?? 1;
@@ -59,6 +61,21 @@ export function groupByStore(list: ShoppingListItem[]): { store: ShoppingStoreId
         .filter((group) => group.items.length > 0);
 }
 
+export function formatShoppingListText(
+    list: ShoppingListItem[],
+    pageLabel: (item: ShoppingListItem) => string = (item) => String(item.pageNumber),
+): string {
+    const groups = groupByStore(list);
+    if (groups.length === 0) {
+        return '';
+    }
+    return `${groups.map((group) => {
+        const lines = group.items.map((item) => `${item.quantity}x ${item.name} — ${pageLabel(item)}`);
+        return [group.store.toUpperCase(), ...lines].join('\n');
+    }).join('\n\n')}\n`;
+}
+
+{/* --- Save --- */}
 export function loadShoppingList(): ShoppingListItem[] {
     try {
         const raw = localStorage.getItem(SHOPPING_LIST_KEY);

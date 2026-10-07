@@ -13,7 +13,9 @@ egyetemkapu.hu {
     }
 
     handle /api/* {
-        reverse_proxy backend:8080
+        reverse_proxy backend:8080 {
+            header_up X-Forwarded-For {remote_host}
+        }
     }
 
     handle {

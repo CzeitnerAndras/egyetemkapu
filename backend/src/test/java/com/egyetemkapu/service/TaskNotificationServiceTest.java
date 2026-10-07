@@ -193,6 +193,18 @@ class TaskNotificationServiceTest {
     }
 
     @Test
+    void englishPreference_usesPluralHours() {
+        user.setPreferredLanguage("EN");
+        Task task = taskWith(false, true, 5);
+        when(taskRepository.findAllByCompletedFalse()).thenReturn(List.of(task));
+        when(settingsRepository.findByUser(user)).thenReturn(Optional.of(settings));
+
+        serviceAt(3, 0, 0, 0).checkDeadlinesAndPing();
+
+        verify(notificationSenderService).sendDiscordMessage(eq(WEBHOOK), contains("due in 5 hours"));
+    }
+
+    @Test
     void atDeadline_sendsTelegramPing() {
         Task task = taskWith(false, false, 24);
         task.setPingTelegramOnDay(true);

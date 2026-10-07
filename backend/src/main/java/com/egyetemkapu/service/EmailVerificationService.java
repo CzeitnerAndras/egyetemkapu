@@ -38,6 +38,7 @@ public class EmailVerificationService {
         this.publicAppUrl = trimTrailingSlash(publicAppUrl);
     }
 
+    // --- Issue ---
     @Transactional
     public void issueFor(User user) {
         String rawToken = PasswordResetTokens.newRawToken();
@@ -53,6 +54,7 @@ public class EmailVerificationService {
         notifier.sendVerificationLink(user, publicAppUrl + "/email-megerosites#token=" + rawToken);
     }
 
+    // --- Verify ---
     @Transactional
     public Optional<String> verify(String rawToken) {
         String hash = PasswordResetTokens.hash(rawToken);

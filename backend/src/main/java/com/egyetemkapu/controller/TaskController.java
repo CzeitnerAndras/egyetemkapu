@@ -26,6 +26,7 @@ public class TaskController {
         this.userRepository = userRepository;
     }
 
+    // --- Create ---
     @PostMapping
     @LogAction("Új naptár bejegyzés létrehozása")
     @Transactional
@@ -43,6 +44,7 @@ public class TaskController {
         return ResponseEntity.ok(taskRepository.save(task));
     }
 
+    // --- Delete ---
     @DeleteMapping("/{id}")
     @LogAction("Naptár bejegyzés törlése")
     @Transactional
@@ -61,6 +63,7 @@ public class TaskController {
                 .orElse(ResponseEntity.status(404).build());
     }
 
+    // --- List ---
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<Task>> getAllTasks(Principal principal) {
@@ -72,6 +75,7 @@ public class TaskController {
         return ResponseEntity.ok(taskRepository.findAllByUserAndCompletedFalse(userOpt.get()));
     }
 
+    // --- Update ---
     @PutMapping("/{id}")
     @LogAction("Naptár bejegyzés frissítése")
     @Transactional

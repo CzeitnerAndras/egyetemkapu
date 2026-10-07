@@ -33,6 +33,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         return PUBLIC_PATHS.contains(request.getRequestURI());
     }
 
+    // --- Limits ---
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -62,6 +63,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
         } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/auth/verify-email".equals(path)) {
             if (!consume(rateLimitingService.resolveVerifyEmailBucket(clientIpResolver.resolve(request)), response,
                     "Túl sok megerősítési kísérlet. Próbáld újra később.")) {
+                return;
+            }
+        } else if ("GET".equalsIgnoreCase(request.getMethod()) && isFlyerPage(path)) {
+            if (!consume(rateLimitingService.resolveFlyerPageBucket(clientIpResolver.resolve(request)), response,
+                    "Túl sok újságoldal-kérés. Próbáld újra később.")) {
                 return;
             }
         }
@@ -96,6 +102,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
         
         filterChain.doFilter(request, response);
+    }
+
+    private static boolean isFlyerPage(String path) {
+        return path.startsWith("/api/flyers/") && path.contains("/pages/");
     }
 
     private boolean consume(Bucket tokenBucket, HttpServletResponse response, String errorMessage) throws IOException {

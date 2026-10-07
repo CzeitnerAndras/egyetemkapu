@@ -1,7 +1,8 @@
 package com.egyetemkapu.exception;
 
 import io.swagger.v3.oas.annotations.Hidden;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -15,14 +16,22 @@ import java.util.Map;
 @ControllerAdvice(basePackages = "com.egyetemkapu.controller")
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleAllExceptions(Exception ex) {
-        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Rendszerhiba történt", ex.getMessage());
+        log.error("Kezeletlen kivétel", ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Rendszerhiba történt", "Próbáld újra később.");
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Érvénytelen kérés", ex.getMessage());
+    }
+
+    @ExceptionHandler(FlashcardAccessException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingFlashcard(FlashcardAccessException ex) {
+        return buildErrorResponse(HttpStatus.NOT_FOUND, "Nem található", ex.getMessage());
     }
 
     @ExceptionHandler(TokenRefreshException.class)

@@ -5,6 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 const SITE = 'Egyetemkapu';
 const ORIGIN = 'https://egyetemkapu.hu';
 
+{/* --- Route titles --- */}
 const ROUTE_TITLES: Record<string, string> = {
     '/': 'seo.defaultTitle',
     '/login': 'login.title',
@@ -27,6 +28,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/settings': 'settings.title',
     '/linktar': 'links.title',
     '/akcios-ujsag': 'sales.title',
+    '/kartyak': 'cards.title',
 };
 
 const NOINDEX_PATHS = new Set([
@@ -50,6 +52,7 @@ function setMeta(selector: string, attr: 'name' | 'property', key: string, conte
     el.setAttribute('content', content);
 }
 
+{/* --- Title + meta --- */}
 export default function DocumentTitle() {
     const { pathname } = useLocation();
     const { t, language } = useLanguage();

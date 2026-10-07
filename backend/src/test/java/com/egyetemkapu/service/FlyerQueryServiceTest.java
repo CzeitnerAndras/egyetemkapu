@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -216,6 +217,20 @@ class FlyerQueryServiceTest {
         assertEquals(11L, detail.products().getFirst().id());
         assertEquals("Kakaóscsiga", detail.products().getFirst().name());
         assertEquals(2, detail.products().getFirst().pageNumber());
+        verify(flyerSyncService, never()).rereadCoopAsync(3L);
+    }
+
+    @Test
+    void getQueuesACoopRereadWhenTheStoredNamesNeedIt() {
+        Flyer flyer = flyerWithProduct("TEJ");
+        flyer.setStore("coop");
+        when(flyerRepository.findById(3L)).thenReturn(Optional.of(flyer));
+        when(flyerSyncService.beginCoopReread(flyer)).thenReturn(true);
+        when(flyerSyncService.refreshStoredLayout(flyer)).thenReturn(true);
+
+        service.get(3L);
+
+        verify(flyerSyncService).rereadCoopAsync(3L);
     }
 
     @Test

@@ -93,4 +93,25 @@ describe('LoginPage Komponens', () => {
             expect(mockNavigate).not.toHaveBeenCalled();
         });
     });
+
+    it('sikertelen belépéskor a szerver általános hibáját mutatja, és nem navigál', async () => {
+        const user = userEvent.setup();
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            json: async () => ({ error: 'Hibás e-mail cím vagy jelszó!' }),
+        });
+
+        renderWithRouter();
+
+        await user.type(document.querySelector('input[type="email"]') as HTMLInputElement, 'uj@egyetemkapu.hu');
+        await user.type(document.querySelector('input[type="password"]') as HTMLInputElement, 'Jelszo1!');
+        await user.click(screen.getByRole('button', { name: 'login.submit' }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/> login\.errorPrefix: Hibás e-mail cím vagy jelszó!/i)).toBeInTheDocument();
+            expect(mockNavigate).not.toHaveBeenCalled();
+            expect(localStorage.setItem).not.toHaveBeenCalled();
+        });
+    });
 });

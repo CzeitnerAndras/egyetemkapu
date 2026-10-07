@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableAsync
 public class EgyetemkapuApplication {
 
+    // --- Boot ---
     public static void main(String[] args) {
         SpringApplication.run(EgyetemkapuApplication.class, args);
     }

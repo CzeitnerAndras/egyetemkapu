@@ -14,6 +14,7 @@ public class RateLimitingService {
 
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
+    // --- Buckets ---
     public Bucket resolveBucket(String username) {
         return cache.computeIfAbsent(username, this::newBucket);
     }
@@ -36,6 +37,10 @@ public class RateLimitingService {
 
     public Bucket resolveVerifyEmailBucket(String clientKey) {
         return cache.computeIfAbsent("verify:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+    }
+
+    public Bucket resolveFlyerPageBucket(String clientKey) {
+        return cache.computeIfAbsent("flyer-page:" + clientKey, key -> newFixedBucket(30, Duration.ofMinutes(1)));
     }
 
     private Bucket newBucket(String username) {

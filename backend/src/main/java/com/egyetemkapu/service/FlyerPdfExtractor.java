@@ -27,6 +27,7 @@ public class FlyerPdfExtractor {
             List<FlyerCatalogParser.ParsedProduct> products) {
     }
 
+    // --- Extract ---
     public List<FlyerCatalogParser.ParsedPage> extractPages(byte[] pdfBytes) {
         return extractDocument(pdfBytes, generic).pages();
     }

@@ -8,6 +8,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app
     restart: unless-stopped
 
   backend:
@@ -22,7 +24,8 @@ services:
       - AI_API_KEY=${AI_API_KEY:-nincs_megadva}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-nincs_megadva}
       - APP_PUBLIC_URL=${APP_PUBLIC_URL:-https://egyetemkapu.hu}
-      - APP_TRUSTED_PROXIES=${APP_TRUSTED_PROXIES:-127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+      - APP_TRUSTED_PROXIES=${APP_TRUSTED_PROXIES:-127.0.0.1,::1,172.30.60.10}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://egyetemkapu.hu,https://www.egyetemkapu.hu}
       - MAIL_HOST=${MAIL_HOST:-}
       - MAIL_PORT=${MAIL_PORT:-587}
       - MAIL_USERNAME=${MAIL_USERNAME:-}
@@ -33,6 +36,8 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - ./uploads:/app/uploads
+    networks:
+      - app
     depends_on:
       - db
     restart: unless-stopped
@@ -47,9 +52,18 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      app:
+        ipv4_address: 172.30.60.10
     depends_on:
       - backend
     restart: unless-stopped
+
+networks:
+  app:
+    ipam:
+      config:
+        - subnet: 172.30.60.0/24
 
 volumes:
   pgdata:

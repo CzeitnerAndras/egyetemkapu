@@ -37,6 +37,7 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    // --- Tokens ---
     public String generateToken(String username) {
         return Jwts.builder()
                 .setSubject(username)

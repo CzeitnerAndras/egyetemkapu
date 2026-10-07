@@ -8,6 +8,8 @@ jest.mock('../i18n/LanguageContext', () => ({
     }),
 }));
 
+const renderPage = () => render(<FocusRoomPage />);
+
 describe('FocusRoomPage Komponens', () => {
     beforeEach(() => {
         localStorage.setItem('token', 'test-token');
@@ -21,9 +23,10 @@ describe('FocusRoomPage Komponens', () => {
     });
 
     it('alapértelmezetten 25:00-ról indul fókusz módban', async () => {
-        render(<FocusRoomPage />);
+        renderPage();
 
         expect(screen.getByText('25:00')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'focus.openCards' })).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'focus.start' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'focus.break' }).className)
             .toContain('secret:hover:bg-[#1cf85d]');
@@ -35,7 +38,7 @@ describe('FocusRoomPage Komponens', () => {
 
     it('indításkor visszaszámol, és a gomb feliratot vált', async () => {
         jest.useFakeTimers();
-        render(<FocusRoomPage />);
+        renderPage();
 
         fireEvent.click(screen.getByRole('button', { name: 'focus.start' }));
         expect(screen.getByRole('button', { name: 'focus.pause' })).toBeInTheDocument();
@@ -49,7 +52,7 @@ describe('FocusRoomPage Komponens', () => {
 
     it('a visszaállítás gomb az aktuális módnak megfelelő időre állítja vissza az órát', async () => {
         jest.useFakeTimers();
-        render(<FocusRoomPage />);
+        renderPage();
 
         fireEvent.click(screen.getByRole('button', { name: 'focus.start' }));
         act(() => {
@@ -64,7 +67,7 @@ describe('FocusRoomPage Komponens', () => {
 
     it('a szünet lejártakor riaszt, és visszavált fókusz módba', async () => {
         jest.useFakeTimers();
-        render(<FocusRoomPage />);
+        renderPage();
 
         fireEvent.click(screen.getByRole('button', { name: 'focus.break' }));
         expect(screen.getByText('05:00')).toBeInTheDocument();
@@ -81,7 +84,7 @@ describe('FocusRoomPage Komponens', () => {
     });
 
     it('betöltés után üres listát mutat, ha nincs aktív feladat', async () => {
-        render(<FocusRoomPage />);
+        renderPage();
 
         await waitFor(() => {
             expect(screen.getByText('focus.noTasks')).toBeInTheDocument();
@@ -104,7 +107,7 @@ describe('FocusRoomPage Komponens', () => {
             .mockResolvedValueOnce({ ok: true, json: async () => [] })
             .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
-        render(<FocusRoomPage />);
+        renderPage();
 
         await waitFor(() => {
             expect(screen.getByText('Fontos feladat')).toBeInTheDocument();
@@ -150,7 +153,7 @@ describe('FocusRoomPage Komponens', () => {
                 }),
             });
 
-        const { container } = render(<FocusRoomPage />);
+        const { container } = renderPage();
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
 
         const user = userEvent.setup();
@@ -198,7 +201,7 @@ describe('FocusRoomPage Komponens', () => {
             })
             .mockResolvedValueOnce({ ok: true, json: async () => [] });
 
-        render(<FocusRoomPage />);
+        renderPage();
 
         await waitFor(() => {
             expect(screen.getByText('Beiratkozás')).toBeInTheDocument();
@@ -213,7 +216,7 @@ describe('FocusRoomPage Komponens', () => {
             .mockResolvedValueOnce({ ok: true, json: async () => [] })
             .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 77 }) });
 
-        render(<FocusRoomPage />);
+        renderPage();
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
 
         const user = userEvent.setup();
@@ -236,7 +239,7 @@ describe('FocusRoomPage Komponens', () => {
             .mockResolvedValueOnce({ ok: true, json: async () => [{ id: 7, content: 'Régi jegyzet' }] })
             .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
-        render(<FocusRoomPage />);
+        renderPage();
         await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(2));
 
         const user = userEvent.setup();

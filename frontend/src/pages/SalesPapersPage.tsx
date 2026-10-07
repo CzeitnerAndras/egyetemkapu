@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { NoticeModal } from '../components/NoticeModal';
 import { PageHeader, PageShell } from '../components/PageLayout';
 import { useNotice } from '../components/useNotice';
 import {
     addItem,
+    formatShoppingListText,
     groupByStore,
     itemKey,
     loadShoppingList,
@@ -17,7 +18,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop';
 
 interface FlyerSummary {
     id: number;
@@ -56,10 +57,10 @@ interface FlyerDetail {
     products?: FlyerProduct[];
 }
 
-const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan'];
+const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
 
 const PAPER_CARD =
-    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
+    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-500 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
 
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
@@ -75,6 +76,7 @@ export default function SalesPapersPage() {
     const [pageStatus, setPageStatus] = useState<'loading' | 'ok' | 'error'>('loading');
     const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>(() => loadShoppingList());
 
+    {/* --- Load flyers --- */}
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
@@ -103,6 +105,7 @@ export default function SalesPapersPage() {
         };
     }, [t]);
 
+    {/* --- Save list --- */}
     useEffect(() => {
         saveShoppingList(shoppingList);
     }, [shoppingList]);
@@ -116,6 +119,7 @@ export default function SalesPapersPage() {
         [flyers, activeStore],
     );
 
+    {/* --- Search --- */}
     const handleSearch = async (event: React.FormEvent) => {
         event.preventDefault();
         const q = query.trim();
@@ -138,6 +142,7 @@ export default function SalesPapersPage() {
         }
     };
 
+    {/* --- Open flyer --- */}
     const openFlyer = async (flyerId: number, pageNumber = 1) => {
         try {
             const res = await fetch(`/api/flyers/${flyerId}`, { cache: 'no-store' });
@@ -160,6 +165,7 @@ export default function SalesPapersPage() {
 
     const storeLabel = (store: StoreId) => store.toUpperCase();
 
+    {/* --- Add to list --- */}
     const addToList = (draft: {
         productId?: number | null;
         flyerId: number;
@@ -195,6 +201,7 @@ export default function SalesPapersPage() {
 
     const pageSrc = viewer ? `/api/flyers/${viewer.flyer.id}/pages/${viewer.page}?full=1` : '';
 
+    {/* --- Viewer lock --- */}
     useEffect(() => {
         if (!viewer) {
             return;
@@ -203,6 +210,7 @@ export default function SalesPapersPage() {
         return () => document.documentElement.classList.remove('flyer-open');
     }, [viewer]);
 
+    {/* --- Page prefetch --- */}
     useEffect(() => {
         if (!pageSrc || !viewer) {
             return;
@@ -242,6 +250,7 @@ export default function SalesPapersPage() {
 
     return (
         <PageShell>
+            {/* --- Header --- */}
             <PageHeader
                 icon={Newspaper}
                 extra={
@@ -257,7 +266,7 @@ export default function SalesPapersPage() {
                         />
                         <button
                             type="submit"
-                            className="absolute inset-y-0 right-0 px-2 flex items-center text-fuchsia-600 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
+                            className="absolute inset-y-0 right-0 px-2 flex items-center text-blue-950 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
                             aria-label={t('sales.searchSubmit')}
                         >
                             <Search className="w-4 h-4" />
@@ -273,9 +282,10 @@ export default function SalesPapersPage() {
             )}
 
             {searching && (
-                <p className="mb-6 font-bold uppercase secret:font-mono text-fuchsia-600 dark:text-[#c084fc]">{t('sales.searching')}</p>
+                <p className="mb-6 font-bold uppercase secret:font-mono text-blue-950 dark:text-[#c084fc]">{t('sales.searching')}</p>
             )}
 
+            {/* --- Search results --- */}
             {hits && (
                 <section className="mb-8 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
                     <h2 className="text-xl font-bold uppercase secret:font-mono mb-4 text-black dark:text-white secret:text-[#1cf85d]">
@@ -293,7 +303,7 @@ export default function SalesPapersPage() {
                                         className="w-full text-left cursor-pointer"
                                     >
                                         <div className="flex items-center justify-between gap-3 mb-2">
-                                            <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-[#3b0764]">
+                                            <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-900 dark:bg-[#3b0764]">
                                                 {storeLabel(hit.store)} · {t('sales.page', { page: hit.pageNumber })}
                                             </span>
                                             <span className="text-[11px] font-bold uppercase">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
@@ -318,7 +328,7 @@ export default function SalesPapersPage() {
                                                 pageNumber: hit.pageNumber,
                                                 name: hit.productName ?? hit.title,
                                             })}
-                                            className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black cursor-pointer"
+                                            className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black cursor-pointer"
                                         >
                                             <Plus className="w-3 h-3" />
                                             {shoppingList.some((item) => item.id === listedKey(hit.productId, hit.flyerId, hit.pageNumber, hit.productName))
@@ -334,6 +344,7 @@ export default function SalesPapersPage() {
             )}
 
             <div className="flex flex-col lg:flex-row gap-8">
+                {/* --- Stores --- */}
                 <div className="w-full lg:w-1/4 flex flex-col space-y-2">
                     {STORES.map((store) => (
                         <button
@@ -344,14 +355,15 @@ export default function SalesPapersPage() {
                             onClick={() => setActiveStore(store)}
                             className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer
                                 ${activeStore === store
-                                    ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black'
+                                    ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
                                 }`}
                         >
                             <span className="block text-xl leading-none">{storeLabel(store)}</span>
                         </button>
                     ))}
 
+                    {/* --- Shopping list --- */}
                     <section className="mt-6 bg-slate-100 dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-sm text-black dark:text-white secret:text-[#1cf85d]">
                         <div className="flex items-center gap-2 mb-2">
                             <ShoppingCart className="w-4 h-4" />
@@ -414,18 +426,32 @@ export default function SalesPapersPage() {
                                         </ul>
                                     </div>
                                 ))}
-                                <button
-                                    type="button"
-                                    onClick={() => setShoppingList([])}
-                                    className="mt-2 text-xs font-bold uppercase cursor-pointer"
-                                >
-                                    {t('sales.listClear')}
-                                </button>
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => downloadShoppingList(
+                                            formatShoppingListText(shoppingList, (item) => t('sales.page', { page: item.pageNumber })),
+                                            t('sales.listDownloadFile'),
+                                        )}
+                                        className="inline-flex items-center gap-1 text-xs font-black uppercase cursor-pointer border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 hover:bg-blue-500 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                                    >
+                                        <Download className="w-3 h-3" />
+                                        {t('sales.listDownload')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShoppingList([])}
+                                        className="text-xs font-bold uppercase cursor-pointer"
+                                    >
+                                        {t('sales.listClear')}
+                                    </button>
+                                </div>
                             </>
                         )}
                     </section>
                 </div>
 
+                {/* --- Flyers --- */}
                 <div className="w-full lg:w-3/4">
                     <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
                         <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
@@ -465,6 +491,7 @@ export default function SalesPapersPage() {
                 </div>
             </div>
 
+            {/* --- Dev notice --- */}
             <NoticeModal
                 open={notice.open}
                 onClose={notice.dismiss}
@@ -475,6 +502,7 @@ export default function SalesPapersPage() {
                 {t('sales.devBody')}
             </NoticeModal>
 
+            {/* --- Viewer --- */}
             {viewer && createPortal(
                 <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center p-2 sm:p-4">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1400px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
@@ -493,14 +521,14 @@ export default function SalesPapersPage() {
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-blue-500 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                 >
                                     <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setViewer(null)}
-                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-blue-500 hover:text-black dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                     aria-label={t('sales.closeViewer')}
                                 >
                                     <X className="w-5 h-5" />
@@ -522,6 +550,7 @@ export default function SalesPapersPage() {
                                     className={`block w-full h-auto border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
                                 />
                             </div>
+                            {/* --- Page products --- */}
                             <aside className="lg:w-80 shrink-0 max-h-48 lg:max-h-none overflow-auto border-t-4 lg:border-t-0 lg:border-l-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 text-black dark:text-white secret:text-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black">
                                 <h3 className="text-xs font-black uppercase">{t('sales.listPageProducts')}</h3>
                                 <p className="text-[11px] font-medium opacity-80 mb-3">{t('sales.listPageHint')}</p>
@@ -547,8 +576,8 @@ export default function SalesPapersPage() {
                                                         aria-label={onList ? t('sales.listAdded') : t('sales.listAdd')}
                                                         className={`w-full text-left p-2 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer ${
                                                             onList
-                                                                ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
-                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-fuchsia-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black'
+                                                                ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
+                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-blue-900 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
                                                         }`}
                                                     >
                                                         <p className="font-bold leading-tight">{product.name}</p>
@@ -561,6 +590,7 @@ export default function SalesPapersPage() {
                             </aside>
                         </div>
 
+                        {/* --- Pagination --- */}
                         <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d]">
                             <button
                                 type="button"
@@ -594,6 +624,7 @@ export default function SalesPapersPage() {
     );
 }
 
+{/* --- Date helpers --- */}
 function localIsoDate(date = new Date()): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -624,6 +655,7 @@ export function isCurrentOrUpcomingFlyer(flyer: FlyerSummary, today = localIsoDa
     return !flyer.validFrom || flyer.validFrom <= addIsoDays(today, 8);
 }
 
+{/* --- Sort --- */}
 function flyerKind(flyer: FlyerSummary): number {
     const hay = `${flyer.officialUrl ?? ''} ${flyer.title ?? ''}`.toLowerCase();
     if (flyer.store === 'aldi') {
@@ -680,6 +712,19 @@ function compareFlyers(a: FlyerSummary, b: FlyerSummary, today = localIsoDate())
         return from;
     }
     return a.title.localeCompare(b.title, 'hu');
+}
+
+{/* --- Download list --- */}
+function downloadShoppingList(text: string, filename: string) {
+    const blob = new Blob([`\uFEFF${text}`], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
 }
 
 function ShoppingListName({

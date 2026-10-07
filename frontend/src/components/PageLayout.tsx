@@ -9,6 +9,7 @@ const SHELL_CLASS: Record<PageShellVariant, string> = {
     auth: 'w-full px-4 sm:px-6 lg:px-16 mx-auto mt-8 sm:mt-16 pb-12 relative z-20 flex justify-center',
 };
 
+{/* --- Page shell --- */}
 export function PageShell({
     children,
     className = '',
@@ -25,6 +26,7 @@ export function PageShell({
     );
 }
 
+{/* --- Page header --- */}
 export function PageHeader({
     icon: Icon,
     children,
@@ -35,10 +37,10 @@ export function PageHeader({
     extra?: ReactNode;
 }) {
     return (
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 sm:mb-8 bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-md secret:shadow-[0_0_15px_rgba(28,248,93,0.3)] secret:rounded-none">
             <div className="flex items-center space-x-3 min-w-0">
-                <Icon className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
-                <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase leading-tight">
+                <Icon className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase leading-tight">
                     {children}
                 </h1>
             </div>
@@ -48,10 +50,11 @@ export function PageHeader({
 }
 
 const AUTH_SHADOW = {
-    cyan: 'shadow-[8px_8px_0px_#06b6d4] hover:shadow-[12px_12px_0px_#06b6d4]',
-    fuchsia: 'shadow-[8px_8px_0px_#d946ef] hover:shadow-[12px_12px_0px_#d946ef]',
+    cyan: 'shadow-[8px_8px_0px_#1e3a8a] hover:shadow-[12px_12px_0px_#1e3a8a]',
+    fuchsia: 'shadow-[8px_8px_0px_#020617] hover:shadow-[12px_12px_0px_#020617]',
 };
 
+{/* --- Auth card --- */}
 export function AuthCard({
     children,
     accent = 'cyan',
@@ -66,6 +69,7 @@ export function AuthCard({
     );
 }
 
+{/* --- Auth header --- */}
 export function AuthHeader({
     children,
     tone = 'fuchsia',
@@ -73,7 +77,7 @@ export function AuthHeader({
     children: ReactNode;
     tone?: 'cyan' | 'fuchsia';
 }) {
-    const background = tone === 'cyan' ? 'bg-cyan-400' : 'bg-fuchsia-400';
+    const background = tone === 'cyan' ? 'bg-blue-500' : 'bg-blue-900';
     return (
         <div className={`${background} dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10`}>
             <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase text-center">

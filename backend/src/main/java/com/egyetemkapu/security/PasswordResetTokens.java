@@ -14,6 +14,7 @@ public final class PasswordResetTokens {
     private PasswordResetTokens() {
     }
 
+    // --- Token ---
     public static String newRawToken() {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);

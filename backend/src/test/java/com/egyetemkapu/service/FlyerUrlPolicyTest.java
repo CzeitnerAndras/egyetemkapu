@@ -2,6 +2,8 @@ package com.egyetemkapu.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.net.InetAddress;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,6 +23,10 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://auchan.hu/"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://reklamujsag.auchan.hu/online-katalogusok/x/"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://cdn.ipaper.io/iPaper/Papers/x/Pages/1/Zoom.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.coop.hu/ajanlatkereso/"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://katalogus.coop.hu/coop-alfold-szorolap-2026-szeptember-4-het/"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://www.coop.hu/wp-content/uploads/2026/09/coop_nyirzem_szorolap_20260924-0930.jpg"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }
@@ -36,5 +42,24 @@ class FlyerUrlPolicyTest {
         assertNull(FlyerUrlPolicy.allowedOrNull("https://evil.example/x.jpg"));
         assertThrows(IllegalArgumentException.class,
                 () -> FlyerUrlPolicy.assertAllowed("https://169.254.169.254/latest/meta-data/"));
+    }
+
+    @Test
+    void rejectsPrivateAndLinkLocalAddressesAfterResolution() throws Exception {
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("127.0.0.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("10.1.2.3")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("172.16.0.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("192.168.1.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("169.254.169.254")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("100.64.0.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("::1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("fc00::1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("fe80::1")));
+        assertTrue(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("8.8.8.8")));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlyerUrlPolicy.assertResolvesToPublicAddress("https://127.0.0.1/latest/meta-data/"));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlyerUrlPolicy.assertResolvesToPublicAddress("https://169.254.169.254/"));
+        assertDoesNotThrow(() -> FlyerUrlPolicy.assertResolvesToPublicAddress("https://8.8.8.8/dns"));
     }
 }

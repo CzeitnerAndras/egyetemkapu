@@ -16,6 +16,7 @@ export default function RegistrationPage() {
 
     const navigate = useNavigate();
 
+    {/* --- Register --- */}
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -26,13 +27,7 @@ export default function RegistrationPage() {
             return;
         }
 
-        {/* 
-                    --- Regex cuccok --- 
-            (?=.*[A-Z]) - Legalább egy nagybetű
-            (?=.*\d) - Legalább egy szám
-            (?=.*[?,\-+!@#$%^&*]) - Legalább egy szimbólum
-            .{8,} - Legalább 8 karakter hosszú
-        */}
+        {/* --- Password regex --- */}
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[?,\-+!@#$%^&*]).{8,}$/;
 
         if (!passwordRegex.test(password)) {
@@ -68,14 +63,14 @@ export default function RegistrationPage() {
             </AuthHeader>
 
             <div className="p-6 sm:p-8">
-                {/* --- Hibaüzenet --- */}
+                {/* --- Error --- */}
                 {error && (
                     <div className="bg-red-400 dark:bg-red-900/40 secret:bg-black border-4 border-black dark:border-red-500 secret:border-[#1cf85d] text-black dark:text-red-300 secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
                         &gt; {t('register.errorPrefix')}: {error}
                     </div>
                 )}
 
-                {/* --- Sikeres regisztráció üzenet --- */}
+                {/* --- Success --- */}
                 {success && (
                     <div className="bg-green-400 dark:bg-green-900/40 secret:bg-black border-4 border-black dark:border-green-500 secret:border-[#1cf85d] text-black dark:text-green-300 secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
                         &gt; {t('register.systemPrefix')}: {success}
@@ -83,27 +78,27 @@ export default function RegistrationPage() {
                 )}
 
                 <form onSubmit={handleRegister} className="space-y-4">
-                    {/* --- Felhasználónév --- */}
+                    {/* --- Username --- */}
                     <div className="flex flex-col group">
-                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('register.username')}</label>
+                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('register.username')}</label>
                         <input
                             type="text" required value={username} onChange={(e) => setUsername(e.target.value)}
-                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
+                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                         />
                     </div>
 
-                    {/* --- E-mail cím --- */}
+                    {/* --- Email --- */}
                     <div className="flex flex-col group">
-                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">E-mail cím</label>
+                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">E-mail cím</label>
                         <input
                             type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
+                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                         />
                     </div>
 
-                    {/* --- Jelszó --- */}
+                    {/* --- Password --- */}
                     <div className="flex flex-col group">
-                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase flex items-center">
+                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase flex items-center">
                             {t('register.password')}
                             <button
                                 type="button"
@@ -129,20 +124,20 @@ export default function RegistrationPage() {
                         )}
                         <input
                             type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
+                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                         />
                     </div>
 
-                    {/* --- Jelszó újra --- */}
+                    {/* --- Confirm password --- */}
                     <div className="flex flex-col group">
-                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">Jelszó megint</label>
+                        <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">Jelszó megint</label>
                         <input
                             type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
+                            className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                         />
                     </div>
 
-                    <button type="submit" className="w-full bg-fuchsia-400 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase">
+                    <button type="submit" className="w-full bg-blue-900 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase">
                         Regisztráció
                     </button>
                 </form>

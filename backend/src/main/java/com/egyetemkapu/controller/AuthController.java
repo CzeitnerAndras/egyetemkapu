@@ -8,6 +8,7 @@ import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.AuthCookies;
 import com.egyetemkapu.security.JwtUtil;
 import com.egyetemkapu.security.PasswordPolicy;
+import com.egyetemkapu.security.UsernamePolicy;
 import com.egyetemkapu.service.EmailVerificationService;
 import com.egyetemkapu.service.PasswordResetService;
 import com.egyetemkapu.service.RefreshTokenService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -30,10 +32,11 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private static final Pattern USERNAME = Pattern.compile("^[a-zA-Z0-9._-]{3,32}$");
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]{1,64}@[^@\\s]{1,255}$");
     private static final String GENERIC_LOGIN_ERROR = "Hibás e-mail cím vagy jelszó!";
     private static final String GENERIC_REGISTER_ERROR = "A regisztráció nem sikerült.";
+    static final int MAX_FAILED_ATTEMPTS = 5;
+    static final int LOCKOUT_MINUTES = 15;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -60,6 +63,7 @@ public class AuthController {
         this.cookieSecure = cookieSecure;
     }
 
+    // --- Register ---
     @PostMapping("/register")
     @LogAction("Új felhasználó regisztrációja")
     @Transactional
@@ -71,7 +75,7 @@ public class AuthController {
         if (!PasswordPolicy.isValid(password)) {
             return ResponseEntity.badRequest().body(Map.of("error", PasswordPolicy.WEAK_PASSWORD_MESSAGE));
         }
-        if (username == null || email == null || !USERNAME.matcher(username).matches() || !EMAIL.matcher(email).matches()) {
+        if (username == null || email == null || !UsernamePolicy.isValid(username) || !EMAIL.matcher(email).matches()) {
             return ResponseEntity.badRequest().body(Map.of("error", GENERIC_REGISTER_ERROR));
         }
         Optional<User> existingEmail = userRepository.findByEmail(email);
@@ -96,6 +100,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", EmailVerificationService.ACCEPTED_MESSAGE));
     }
 
+    // --- Login ---
     @PostMapping("/login")
     @LogAction("Felhasználó bejelentkezés (Sikeres)")
     @Transactional
@@ -104,17 +109,32 @@ public class AuthController {
             HttpServletResponse response) {
         String email = request.get("email");
         String password = request.get("password");
+        if (email == null || email.isBlank()) {
+            return unauthorized();
+        }
         Optional<User> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPassword())) {
-            return ResponseEntity.status(401).body(Map.of("error", GENERIC_LOGIN_ERROR));
+        if (userOpt.isEmpty()) {
+            return unauthorized();
         }
 
         User user = userOpt.get();
+        if (isLocked(user)) {
+            return unauthorized();
+        }
+        clearExpiredLockout(user);
+
+        if (password == null || !passwordEncoder.matches(password, user.getPassword())) {
+            registerFailedLogin(user);
+            return unauthorized();
+        }
 
         if (!user.isEmailVerified()) {
-            return ResponseEntity.status(403).body(Map.of("error", "Erősítsd meg az e-mail címed a belépéshez."));
+            return unauthorized();
         }
+
+        user.setFailedLoginAttempts(0);
+        user.setLockoutEndTime(null);
+        userRepository.save(user);
 
         RefreshTokenService.IssuedRefreshToken refresh = refreshTokenService.createRefreshToken(user.getId());
         AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername()), cookieSecure);
@@ -122,6 +142,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    // --- Tokens ---
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String rawToken = AuthCookies.readRefresh(request);
@@ -146,6 +167,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Sikeres kijelentkezés!"));
     }
 
+    // --- Password reset ---
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         passwordResetService.requestReset(request.get("email"));
@@ -163,6 +185,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", PasswordResetService.RESET_SUCCESS_MESSAGE));
     }
 
+    // --- Email verify ---
     @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestBody Map<String, String> request) {
         Optional<String> error = emailVerificationService.verify(request.get("token"));
@@ -170,6 +193,33 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", error.get()));
         }
         return ResponseEntity.ok(Map.of("message", EmailVerificationService.VERIFIED_MESSAGE));
+    }
+
+    // --- Lockout ---
+    private ResponseEntity<Map<String, String>> unauthorized() {
+        return ResponseEntity.status(401).body(Map.of("error", GENERIC_LOGIN_ERROR));
+    }
+
+    private boolean isLocked(User user) {
+        LocalDateTime until = user.getLockoutEndTime();
+        return until != null && until.isAfter(LocalDateTime.now());
+    }
+
+    private void clearExpiredLockout(User user) {
+        LocalDateTime until = user.getLockoutEndTime();
+        if (until != null && !until.isAfter(LocalDateTime.now())) {
+            user.setFailedLoginAttempts(0);
+            user.setLockoutEndTime(null);
+        }
+    }
+
+    private void registerFailedLogin(User user) {
+        int attempts = user.getFailedLoginAttempts() + 1;
+        user.setFailedLoginAttempts(attempts);
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+            user.setLockoutEndTime(LocalDateTime.now().plusMinutes(LOCKOUT_MINUTES));
+        }
+        userRepository.save(user);
     }
 
     private static String trimToNull(String value) {

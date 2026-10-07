@@ -19,6 +19,7 @@ public class GenericFlyerExtractor implements FlyerProductExtractor {
         return "";
     }
 
+    // --- Extract ---
     @Override
     public List<ParsedProduct> extractFromPageText(String text, int pageNumber) {
         return parser.extractProductNames(text, pageNumber);

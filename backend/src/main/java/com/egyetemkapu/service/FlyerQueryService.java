@@ -28,7 +28,7 @@ public class FlyerQueryService {
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
-    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan");
+    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -41,6 +41,7 @@ public class FlyerQueryService {
         this.extractors = extractors;
     }
 
+    // --- List ---
     @Transactional
     public List<FlyerSummaryDto> list(String store) {
         refreshIfStale();
@@ -55,16 +56,21 @@ public class FlyerQueryService {
                 .toList();
     }
 
+    // --- Detail ---
     @Transactional
     public FlyerDetailDto get(Long id) {
         Flyer flyer = flyerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen akciós újság."));
+        if (flyerSyncService.beginCoopReread(flyer)) {
+            flyerSyncService.rereadCoopAsync(flyer.getId());
+        }
         if (!flyerSyncService.refreshStoredLayout(flyer)) {
             reparseProductsFromPageText(flyer);
         }
         return FlyerDetailDto.from(flyer);
     }
 
+    // --- Search ---
     @Transactional
     public List<FlyerSearchHitDto> search(String query) {
         refreshIfStale();

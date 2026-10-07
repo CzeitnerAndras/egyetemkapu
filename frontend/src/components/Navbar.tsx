@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Link as LinkIcon, Newspaper } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, Newspaper } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
@@ -24,6 +24,7 @@ export default function Navbar() {
   const [navOverflow, setNavOverflow] = useState({ left: false, right: false });
   const navigate = useNavigate();
 
+  {/* --- Scroll overflow --- */}
   const updateNavOverflow = useCallback(() => {
     const el = navScrollRef.current;
     if (!el) {
@@ -68,6 +69,7 @@ export default function Navbar() {
     };
   }, [updateNavOverflow, language]);
 
+  {/* --- User --- */}
   const loadCurrentUser = useCallback(async () => {
     try {
       const res = await fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false });
@@ -142,6 +144,7 @@ export default function Navbar() {
     return () => window.removeEventListener('authChanged', loadCurrentUser);
   }, [loadCurrentUser]);
 
+  {/* --- Theme / easter egg --- */}
   const handleThemeToggle = () => {
     clickCountRef.current = (clickCountRef.current || 0) + 1;
 
@@ -177,6 +180,7 @@ export default function Navbar() {
     }
   };
 
+  {/* --- Secret effect --- */}
   const triggerSecretEffect = () => {
     setIsMenuOpen(false);
     setIsProfileMenuOpen(false);
@@ -263,6 +267,7 @@ export default function Navbar() {
     }
   };
 
+  {/* --- Logout --- */}
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', {
@@ -338,6 +343,7 @@ export default function Navbar() {
     }
   };
 
+  {/* --- Pages --- */}
   const pageLinks = [
     { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
     { to: '/ai', label: t('nav.ai'), icon: Bot },
@@ -345,26 +351,28 @@ export default function Navbar() {
     { to: '/tudastar', label: t('nav.knowledge'), icon: BookOpen },
     { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
     { to: '/tanuloszoba', label: t('nav.focus'), icon: BrainCircuit },
+    { to: '/kartyak', label: t('nav.cards'), icon: Layers },
     { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
     { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
   ];
 
   return (
     <>
-      <nav ref={navRef} className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-black dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
+      {/* --- Nav --- */}
+      <nav ref={navRef} className="bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
 
         <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group shrink-0">
-          <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-cyan-400 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
+          <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-blue-300 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
             ƎK
           </span>
         </Link>
 
         <div className="hidden md:block relative min-w-0 flex-1 md:ml-6 lg:ml-10">
           {navOverflow.left && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-cyan-400 to-transparent dark:from-[#1e1e1e] secret:from-black"></div>
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-blue-600 to-transparent dark:from-[#1e1e1e] secret:from-black"></div>
           )}
           {navOverflow.right && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-fuchsia-400 to-transparent dark:from-[#3b0764] secret:from-black"></div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-blue-950 to-transparent dark:from-[#3b0764] secret:from-black"></div>
           )}
           <div
             ref={navScrollRef}
@@ -390,7 +398,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* --- Jobb oldal: Ikonok --- */}
+        {/* --- Right icons --- */}
         <div className="flex items-center space-x-2 sm:space-x-4 shrink-0 ml-auto">
 
           <button
@@ -418,16 +426,16 @@ export default function Navbar() {
           />
         </div>
 
-        {/* --- Fő Dropdown Menü --- */}
+        {/* --- Main dropdown --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#d946ef] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-[60] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#020617] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-[60] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
-            <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50 bg-cyan-400 dark:bg-transparent secret:bg-transparent">
+            <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50 bg-blue-500 dark:bg-transparent secret:bg-transparent">
               <div className="flex items-center space-x-2">
                 {isDarkMode ? (
                   <Moon className="w-5 h-5 text-indigo-300 drop-shadow-[0_0_5px_rgba(165,180,252,0.8)] secret:text-[#1cf85d] secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 ) : (
-                  <Sun className="w-5 h-5 text-fuchsia-600 drop-shadow-[1px_1px_0px_#000] secret:text-[#1cf85d] secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
+                  <Sun className="w-5 h-5 text-blue-950 drop-shadow-[1px_1px_0px_#000] secret:text-[#1cf85d] secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                 )}
                 <span className="font-bold text-sm text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
                   {isDarkMode ? t('nav.dark') : t('nav.light')}
@@ -437,7 +445,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={handleThemeToggle}
-                className={`w-11 h-6 rounded-full relative z-10 transition-colors duration-300 cursor-pointer shadow-inner border-2 border-black dark:border-transparent secret:border-[#1cf85d] ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-fuchsia-500 shadow-[2px_2px_0px_#000] secret:bg-transparent secret:shadow-none'
+                className={`w-11 h-6 rounded-full relative z-10 transition-colors duration-300 cursor-pointer shadow-inner border-2 border-black dark:border-transparent secret:border-[#1cf85d] ${isDarkMode ? 'bg-[#a855f7] secret:bg-[#1cf85d] shadow-[0_0_10px_rgba(168,85,247,0.6)] secret:shadow-[0_0_10px_rgba(28,248,93,0.6)]' : 'bg-blue-950 shadow-[2px_2px_0px_#000] secret:bg-transparent secret:shadow-none'
                   }`}
               >
                 <div className={`w-4 h-4 rounded-full border-2 border-black dark:border-transparent secret:border-transparent absolute top-0.5 pointer-events-none transition-transform duration-300 shadow-md ${isDarkMode ? 'bg-slate-100 secret:bg-black translate-x-5' : 'bg-slate-100 secret:bg-[#1cf85d] translate-x-1'
@@ -454,7 +462,7 @@ export default function Navbar() {
                     key={item.to}
                     to={item.to}
                     onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-cyan-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm"
+                    className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-blue-500 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm"
                   >
                     <Icon className="w-4 h-4 mr-3 text-black dark:text-white" /> {item.label}
                   </Link>
@@ -464,14 +472,14 @@ export default function Navbar() {
 
             <div className="flex flex-col py-2">
               <span className="px-4 py-2 text-xs font-black text-black dark:text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.system')}</span>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-fuchsia-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+              <Link to="/about" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-blue-900 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm hover:text-white">
                 <Info className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.about')}
               </Link>
-              <Link to="/faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-fuchsia-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+              <Link to="/faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-blue-900 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm hover:text-white">
                 <HelpCircle className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.faq')}
               </Link>
 
-              <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-fuchsia-400 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm">
+              <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-blue-900 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm hover:text-white">
                 <Settings className="w-4 h-4 mr-3 text-black dark:text-white" /> {t('nav.settings')}
               </Link>
 
@@ -488,11 +496,11 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* --- Profil Dropdown Menü --- */}
+        {/* --- Profile dropdown --- */}
         {isProfileMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-56 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#06b6d4] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-56 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#1e3a8a] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
-            <div className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-black/20 secret:bg-transparent cursor-default">
+            <div className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d] bg-blue-900 dark:bg-black/20 secret:bg-transparent cursor-default">
               <span className="block text-xs text-black dark:text-white/70 secret:text-[#1cf85d]/70 font-bold uppercase tracking-wider mb-0.5 secret:font-mono">{t('nav.loggedInAs')}</span>
               <span className="font-bold text-xl text-black dark:text-white secret:text-[#1cf85d] drop-shadow-md secret:drop-shadow-none truncate block secret:font-mono">{username || t('nav.userFallback')}</span>
             </div>
@@ -500,7 +508,7 @@ export default function Navbar() {
             <Link
               to="/profile"
               onClick={() => setIsProfileMenuOpen(false)}
-              className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/20 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] font-bold hover:bg-cyan-400 hover:text-black dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors flex items-center secret:font-mono uppercase border-l-4 border-transparent hover:border-l-black"
+              className="px-4 py-3 border-b-4 border-black dark:border-[#a855f7]/20 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] font-bold hover:bg-blue-500 hover:text-black dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors flex items-center secret:font-mono uppercase border-l-4 border-transparent hover:border-l-black"
             >
               <User className="w-4 h-4 mr-2 text-black dark:text-white" /> {t('nav.myProfile')}
             </Link>
@@ -515,12 +523,12 @@ export default function Navbar() {
 
       </nav>
 
-      {/* --- Teljes képernyős TV effekt --- */}
+      {/* --- Fullscreen TV effect --- */}
       {isAnimating && (
         <div className={`crt-overlay ${crtClass}`}></div>
       )}
 
-      {/* --- Végleges Fatal Error Képernyő --- */}
+      {/* --- Fatal error screen --- */}
       {isFatalError && (
         <div className="fixed inset-0 bg-[#0a1a0f] z-[99990] flex flex-col items-center justify-center text-[#1cf85d] font-mono p-6 text-center selection:bg-[#1cf85d] selection:text-black">
 

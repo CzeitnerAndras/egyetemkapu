@@ -57,12 +57,12 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await expect(page).toHaveURL(/\/akcios-ujsag$/);
   });
 
-  test('négy bolt tab jelenik meg, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
+  test('a bolt tabok megjelennek, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
     await page.getByRole('button', { name: /Értem|Got it/i }).click();
 
     await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
-    await expect(page.locator('[data-store]')).toHaveCount(4);
+    await expect(page.locator('[data-store]')).toHaveCount(6);
     await expect(page.locator('[data-store="spar"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SPAR szórólap')).toBeVisible();
   });
@@ -88,5 +88,20 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await expect(page.getByText('Kakaóscsiga')).toBeVisible();
     await page.getByText('Kakaóscsiga').click();
     await expect(page.getByRole('link', { name: /Hivatalos|Official/i })).toHaveAttribute('href', 'https://szorolap.aldi.hu/x/');
+  });
+
+  test('a találat felvehető a listára, és a lista letölthető', async ({ page }) => {
+    await page.goto('/akcios-ujsag');
+    await page.getByRole('button', { name: /Értem|Got it/i }).click();
+    await page.getByLabel(/Keresés az újságokban|Search the flyers/i).fill('kakaóscsiga');
+    await page.getByRole('button', { name: /Keresés|Search/i }).click();
+    await page.getByRole('button', { name: /Hozzáadás|^Add$/ }).click();
+
+    await expect(page.getByRole('heading', { name: /Bevásárlólista|Shopping list/ })).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Lista letöltése|Download list/ }).click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toMatch(/bevasarlolista\.txt|shopping-list\.txt/);
   });
 });

@@ -26,6 +26,6 @@ test.describe('Egyetemkapu E2E - About', () => {
 
     await expect(page.locator('main section')).toHaveCount(4);
 
-    await expect(page.locator('main section').nth(2).locator('li')).toHaveCount(9);
+    await expect(page.locator('main section').nth(2).locator('li')).toHaveCount(11);
   });
 });

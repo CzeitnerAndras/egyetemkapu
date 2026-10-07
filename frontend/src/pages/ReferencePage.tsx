@@ -23,6 +23,7 @@ export default function ReferencePage() {
         { id: 'HARVARD', label: 'Harvard' },
     ];
 
+    {/* --- Generate --- */}
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -64,8 +65,8 @@ export default function ReferencePage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                {/* --- Űrlap --- */}
-                <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none">
+                {/* --- Form --- */}
+                <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none">
                     <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <PenTool className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('ref.source')}</h2>
@@ -74,18 +75,18 @@ export default function ReferencePage() {
                     <form onSubmit={handleGenerate} className="space-y-4">
                         <div className="flex flex-col">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.author')}</label>
-                            <input type="text" placeholder={language === 'en' ? 'e.g. John Doe' : 'pl. John Doe'} value={author} onChange={e => setAuthor(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                            <input type="text" placeholder={language === 'en' ? 'e.g. John Doe' : 'pl. John Doe'} value={author} onChange={e => setAuthor(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors" />
                         </div>
 
                         <div className="flex flex-col">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.fieldTitle')}</label>
-                            <input required type="text" placeholder={t('ref.titlePlaceholder')} value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                            <input required type="text" placeholder={t('ref.titlePlaceholder')} value={title} onChange={e => setTitle(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.year')}</label>
-                                <input type="text" placeholder={language === 'en' ? 'e.g. 2024' : 'pl. 2024'} value={year} onChange={e => setYear(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                                <input type="text" placeholder={language === 'en' ? 'e.g. 2024' : 'pl. 2024'} value={year} onChange={e => setYear(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors" />
                             </div>
                             <div className={`flex flex-col relative ${isStyleOpen ? 'z-50' : 'z-10'}`}>
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.style')}</label>
@@ -95,7 +96,7 @@ export default function ReferencePage() {
                                     aria-expanded={isStyleOpen}
                                     aria-label={t('ref.style')}
                                     onClick={() => setIsStyleOpen(!isStyleOpen)}
-                                    className="flex items-center justify-between w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors"
+                                    className="flex items-center justify-between w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase font-bold cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors"
                                 >
                                     <span>{styles.find((item) => item.id === style)?.label}</span>
                                     <ChevronDown className={`w-5 h-5 ml-2 transition-transform ${isStyleOpen ? 'rotate-180' : ''}`} />
@@ -115,8 +116,8 @@ export default function ReferencePage() {
                                                         setIsStyleOpen(false);
                                                     }}
                                                     className={`text-left p-2 font-bold cursor-pointer transition-colors secret:font-mono uppercase ${style === item.id
-                                                        ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black'
-                                                        : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                                        ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black'
+                                                        : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-900 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20 hover:text-white'}`}
                                                 >
                                                     {item.label}
                                                 </button>
@@ -129,32 +130,32 @@ export default function ReferencePage() {
 
                         <div className="flex flex-col">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('ref.publisher')}</label>
-                            <input type="text" placeholder={t('ref.publisherPlaceholder')} value={publisher} onChange={e => setPublisher(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-fuchsia-500 transition-colors" />
+                            <input type="text" placeholder={t('ref.publisherPlaceholder')} value={publisher} onChange={e => setPublisher(e.target.value)} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-black/20 secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-500 dark:placeholder-gray-500 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors" />
                         </div>
 
-                        <button type="submit" disabled={isLoading} className="w-full bg-fuchsia-400 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-cyan-400 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#000]">
+                        <button type="submit" disabled={isLoading} className="w-full bg-blue-900 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white dark:text-white secret:text-[#1cf85d] font-bold py-3 mt-4 border-4 border-black dark:border-transparent secret:border-[#1cf85d] hover:-translate-y-1 hover:bg-blue-500 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#000] hover:text-black">
                             {isLoading ? t('ref.generating') : t('ref.generate')}
                         </button>
                     </form>
                 </div>
 
-                {/* --- Eredmény --- */}
-                <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#06b6d4] dark:shadow-md flex flex-col secret:rounded-none h-fit">
+                {/* --- Result --- */}
+                <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md flex flex-col secret:rounded-none">
                     <div className="flex items-center justify-between mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <div className="flex items-center">
                             <Sparkles className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
                             <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('ref.result')}</h2>
                         </div>
                         {generatedRef && (
-                            <span className="text-xs font-bold border-2 border-black dark:border-transparent bg-cyan-400 dark:bg-gray-700 secret:bg-[#1cf85d]/20 text-black dark:text-gray-200 secret:text-[#1cf85d] px-2 py-1 rounded-sm secret:rounded-none uppercase tracking-wider">
+                            <span className="text-xs font-bold border-2 border-black dark:border-transparent bg-blue-500 dark:bg-gray-700 secret:bg-[#1cf85d]/20 text-black dark:text-gray-200 secret:text-[#1cf85d] px-2 py-1 rounded-sm secret:rounded-none uppercase tracking-wider">
                                 {style}
                             </span>
                         )}
                     </div>
 
                     {generatedRef ? (
-                        <div className="flex flex-col h-full justify-between">
-                            <div className="bg-slate-100 dark:bg-black/40 secret:bg-black border-4 border-black dark:border-dashed dark:border-gray-600 secret:border-[#1cf85d]/50 p-4 mb-4 min-h-[120px] flex items-center justify-center text-center shadow-[4px_4px_0px_#000] dark:shadow-none">
+                        <div className="flex flex-col flex-1 justify-between">
+                            <div className="bg-slate-100 dark:bg-black/40 secret:bg-black border-4 border-black dark:border-dashed dark:border-gray-600 secret:border-[#1cf85d]/50 p-4 mb-4 min-h-[120px] flex-1 flex items-center justify-center text-center shadow-[4px_4px_0px_#000] dark:shadow-none">
                                 <p className="text-lg text-black dark:text-white secret:text-[#1cf85d] font-bold secret:font-mono dark:[text-shadow:0_0_5px_rgba(28,248,93,0.3)]">
                                     {generatedRef}
                                 </p>
@@ -165,7 +166,7 @@ export default function ReferencePage() {
                                 className={`w-full font-bold py-3 border-4 transition-all flex items-center justify-center cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] dark:shadow-none hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:hover:shadow-none
                                     ${isCopied
                                         ? 'bg-green-400 dark:bg-green-600 border-black dark:border-transparent text-black dark:text-white secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d]'
-                                        : 'bg-cyan-400 dark:bg-[#121212] secret:bg-transparent text-black dark:text-[#c084fc] secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black dark:hover:text-white secret:hover:text-black'
+                                        : 'bg-blue-500 dark:bg-[#121212] secret:bg-transparent text-black dark:text-[#c084fc] secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-white dark:hover:text-white secret:hover:text-black'
                                     }`}
                             >
                                 {isCopied ? (

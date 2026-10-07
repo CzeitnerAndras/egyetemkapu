@@ -12,6 +12,7 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
+{/* --- Language storage --- */}
 function readStoredLanguage(): Lang {
   const saved = localStorage.getItem('language');
   return saved === 'en' ? 'en' : 'hu';
@@ -25,6 +26,7 @@ function persistLanguageToServer(language: Lang) {
   }, { redirectOnAuthFailure: false, retryOn401: false }).catch(() => {});
 }
 
+{/* --- Provider --- */}
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Lang>(readStoredLanguage);
 

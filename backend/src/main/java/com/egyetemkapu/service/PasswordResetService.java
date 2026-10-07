@@ -48,6 +48,7 @@ public class PasswordResetService {
         this.publicAppUrl = trimTrailingSlash(publicAppUrl);
     }
 
+    // --- Request ---
     @Transactional
     public void requestReset(String email) {
         if (email == null || email.isBlank()) {
@@ -76,6 +77,7 @@ public class PasswordResetService {
         passwordResetNotifier.sendResetLink(user, publicAppUrl + "/uj-jelszo#token=" + rawToken);
     }
 
+    // --- Reset ---
     @Transactional
     public Optional<String> resetPassword(String rawToken, String newPassword) {
         if (!PasswordPolicy.isValid(newPassword)) {

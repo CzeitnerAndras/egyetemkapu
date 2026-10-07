@@ -18,6 +18,7 @@ public class EventController {
         this.eventRepository = eventRepository;
     }
 
+    // --- CRUD ---
     @GetMapping
     @Transactional(readOnly = true)
     public List<Event> getAllEvents() {

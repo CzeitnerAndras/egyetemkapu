@@ -6,6 +6,7 @@ import com.egyetemkapu.model.User;
 import com.egyetemkapu.repository.SettingsRepository;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.security.DiscordWebhookValidator;
+import com.egyetemkapu.security.TelegramChatIdValidator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class SettingsController {
         this.userRepository = userRepository;
     }
 
+    // --- Load ---
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<?> getSettings(Principal principal) {
@@ -42,6 +44,7 @@ public class SettingsController {
         }
     }
 
+    // --- Save ---
     @PutMapping
     @LogAction("Értesítési beállítások módosítása")
     @Transactional
@@ -59,10 +62,15 @@ public class SettingsController {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Csak hivatalos Discord webhook URL menthető (https://discord.com/api/webhooks/...)."));
         }
+        String telegramChatId = payload.get("telegramChatId");
+        if (!TelegramChatIdValidator.isBlankOrAllowed(telegramChatId)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "A Telegram chat ID csak szám lehet."));
+        }
 
         settings.setUser(user);
         settings.setDiscordWebhook(webhook == null || webhook.isBlank() ? null : webhook.trim());
-        settings.setTelegramChatId(payload.get("telegramChatId"));
+        settings.setTelegramChatId(TelegramChatIdValidator.normalize(telegramChatId));
         
         settingsRepository.save(settings);
         

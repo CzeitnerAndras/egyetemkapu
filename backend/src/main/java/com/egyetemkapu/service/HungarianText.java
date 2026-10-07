@@ -8,6 +8,7 @@ public final class HungarianText {
     private HungarianText() {
     }
 
+    // --- Normalize ---
     public static String normalize(String value) {
         if (value == null) {
             return "";

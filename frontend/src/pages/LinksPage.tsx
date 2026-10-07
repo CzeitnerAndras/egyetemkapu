@@ -24,6 +24,7 @@ export default function LinksPage() {
     const isEn = language === 'en';
     const l = (hu: string, en: string) => isEn ? en : hu;
 
+    {/* --- Data --- */}
     const universities = [
         { id: 'DE', name: l('Debreceni Egyetem (DE)', 'University of Debrecen (DE)') },
         { id: 'BME', name: l('Műegyetem (BME)', 'Budapest Univ. of Technology (BME)') },
@@ -59,7 +60,7 @@ export default function LinksPage() {
                     { title: l("Záróvizsga", "Final Examination"), url: "https://inf.unideb.hu/informaciok-zarovizsgazoknak" },
                     { title: l("Képzések / Tantervi Háló", "Programs / Curricula"), url: "https://inf.unideb.hu/2026-szeptembertol-meghirdetett-kepzesek" },
                     { title: l("Syllabus", "Syllabus"), url: "https://www.ik.unideb.hu/syllabi/" },
-                    { title: l("Órarend", "timetable"), url: "https://levelezo.inf.unideb.hu/orarend/#/?order=date,program,instructor,subject,room&program=PTI-MSC-21-1" },
+                    { title: l("Órarend", "Timetable"), url: "https://levelezo.inf.unideb.hu/orarend/#/?order=date,program,instructor,subject,room&program=PTI-MSC-26-1" },
                 ]
             },
             {
@@ -450,7 +451,7 @@ export default function LinksPage() {
 
             <div className="flex flex-col lg:flex-row gap-8">
 
-                {/* --- Bal Oldal: Egyetemek Tabs --- */}
+                {/* --- University tabs --- */}
                 <div className="w-full lg:w-1/4 flex flex-col space-y-2">
                     {universities.map(uni => (
                         <button
@@ -458,8 +459,8 @@ export default function LinksPage() {
                             onClick={() => setActiveTab(uni.id)}
                             className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer shrink-0
                                 ${activeTab === uni.id
-                                    ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2 shadow-[6px_6px_0px_#000] dark:shadow-md'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black'
+                                    ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2 shadow-[6px_6px_0px_#000] dark:shadow-md'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
                                 }`}
                         >
                             {uni.name}
@@ -467,7 +468,7 @@ export default function LinksPage() {
                     ))}
                 </div>
 
-                {/* --- Jobb Oldal: Linkek Kategóriánként --- */}
+                {/* --- Links by category --- */}
                 <div className="w-full lg:w-3/4 flex flex-col space-y-6">
                     {activeLinks.map((section, idx) => (
                         <div key={idx} className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md secret:rounded-none">
@@ -484,7 +485,7 @@ export default function LinksPage() {
                                         href={link.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center p-3 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:border-black hover:bg-cyan-400 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all group shadow-[2px_2px_0px_#000] dark:shadow-sm secret:font-mono font-bold"
+                                        className="flex items-center p-3 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:border-black hover:bg-blue-500 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all group shadow-[2px_2px_0px_#000] dark:shadow-sm secret:font-mono font-bold"
                                     >
                                         <ExternalLink className="w-5 h-5 mr-3 text-black dark:text-gray-400 group-hover:text-black dark:group-hover:text-[#a855f7] secret:group-hover:text-black transition-colors shrink-0" />
                                         <span className="truncate">{link.title}</span>

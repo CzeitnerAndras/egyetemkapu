@@ -20,6 +20,7 @@ public class AuditAspect {
         this.auditLogRepository = auditLogRepository;
     }
 
+    // --- Log ---
     @AfterReturning("@annotation(logAction)")
     public void logMethodCall(JoinPoint joinPoint, LogAction logAction) {
         String username = "ismeretlen";

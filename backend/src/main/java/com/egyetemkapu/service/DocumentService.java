@@ -54,6 +54,7 @@ public class DocumentService {
         return name;
     }
 
+    // --- Upload ---
     @Transactional(rollbackFor = Exception.class)
     public Document uploadDocument(MultipartFile file, String title, String description, String category, String username) throws IOException {
         User uploader = userRepository.findByUsername(username)
@@ -134,6 +135,7 @@ public class DocumentService {
     }
 
     @Transactional(readOnly = true)
+    // --- Query ---
     public List<Document> getApprovedDocuments(String category) {
         if (category != null && !category.isEmpty()) {
             return documentRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, DocumentStatus.APPROVED);
@@ -147,6 +149,7 @@ public class DocumentService {
     }
 
     @Transactional
+    // --- Admin ---
     public Document approveDocument(Long id) {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dokumentum nem található"));

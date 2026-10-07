@@ -6,8 +6,10 @@ import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
 import com.egyetemkapu.service.HungarianText;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
@@ -16,6 +18,10 @@ A box holds the product name on its own first lines, in caps, followed by the pa
 Reading line by line therefore splits "FÜSTÖLT / BACON" into two products, so whole boxes are read here instead.
 Own-brand labels sit in a separate box from the product name. Publitas does not keep visual order, so a brand may
 arrive immediately before its product, in a brand run followed by a product run, or after the product names of that row.
+The PDF keeps each label above its product in the same column, which the text blob interleaves, so layout reading
+stacks those lines instead of pairing boxes by arrival order.
+A manufacturer line such as DR. OETKER is still the label of its offer when another product is written between them.
+A discount or a bare unit such as /kg glued onto a name is not part of the product.
  */
 public class AldiFlyerExtractor extends GenericFlyerExtractor {
 
@@ -29,6 +35,12 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
     private static final Set<String> BRAND_SUFFIXES = Set.of(
             "bio", "crown", "family", "force", "fun", "gourmet", "line", "mark", "nobile",
             "oro", "premium", "roth", "seasons", "stone", "zentrale");
+    private static final Pattern GLUED_DISCOUNT = Pattern.compile("(?iu)^(.*?\\p{L})-\\d{1,3}\\s*%\\s*$");
+    private static final Pattern TRAILING_UNIT = Pattern.compile(
+            "(?iu)(?:^|\\s)/\\s*(?:kg|dkg|g|ml|cl|dl|l|db|darab|csomag|doboz|üveg)\\s*$");
+    private static final Pattern MANUFACTURER = Pattern.compile("(?iu)^dr\\.?\\s+\\p{L}[\\p{L}.]*$");
+    private static final Set<String> LEADING_DESCRIPTORS = Set.of(
+            "friss", "hutott", "gyorsfagyasztott", "csomagolt", "szeletelt", "egesz");
     private static final Set<String> HOUSE_BRANDS = Set.of(
             "adventuridge", "all seasons", "almare seafood", "almat", "alpenmark", "back family", "barissimo",
             "bbq", "bellasan", "biozentrale", "casalucci", "choceur", "csaszar", "cucina nobile", "delikato",
@@ -59,12 +71,124 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
                 names.add(name);
             }
         }
-        return FlyerProductNames.fromBlocks(pairBrands(names), pageNumber);
+        return FlyerProductNames.fromBlocks(pairBrands(attachManufacturers(names)), pageNumber);
     }
 
     @Override
     public List<ParsedProduct> extractFromLayout(List<TextRun> runs, int pageNumber) {
-        return List.of();
+        if (runs == null || runs.isEmpty()) {
+            return List.of();
+        }
+        List<TextRun> names = new ArrayList<>();
+        for (TextRun run : runs) {
+            if (run == null || run.text() == null || run.text().isBlank()) {
+                continue;
+            }
+            String line = run.text().trim();
+            if (VALIDITY_LINE.matcher(line).find() || MARKETING.matcher(line).find()
+                    || FlyerLayout.isPriceLike(line) || !isNameLine(line, false)) {
+                continue;
+            }
+            names.add(run);
+        }
+        names.sort(Comparator.comparingDouble(TextRun::x).thenComparingDouble(TextRun::y));
+        List<List<TextRun>> columns = new ArrayList<>();
+        for (TextRun run : names) {
+            List<TextRun> column = null;
+            for (List<TextRun> existing : columns) {
+                if (sameColumn(existing.getFirst(), run)) {
+                    column = existing;
+                    break;
+                }
+            }
+            if (column == null) {
+                column = new ArrayList<>();
+                columns.add(column);
+            }
+            column.add(run);
+        }
+        List<TextRun> anchors = new ArrayList<>();
+        List<String> blocks = new ArrayList<>();
+        for (List<TextRun> column : columns) {
+            column.sort(Comparator.comparingDouble(TextRun::y));
+            List<TextRun> stack = new ArrayList<>();
+            for (TextRun run : column) {
+                if (!stack.isEmpty() && !stacked(stack.getLast(), run)) {
+                    anchors.add(stack.getFirst());
+                    blocks.add(joinStack(stack));
+                    stack = new ArrayList<>();
+                }
+                stack.add(run);
+            }
+            if (!stack.isEmpty()) {
+                anchors.add(stack.getFirst());
+                blocks.add(joinStack(stack));
+            }
+        }
+        List<Integer> order = new ArrayList<>();
+        for (int i = 0; i < blocks.size(); i++) {
+            order.add(i);
+        }
+        order.sort(Comparator
+                .comparingDouble((Integer index) -> anchors.get(index).y())
+                .thenComparingDouble(index -> anchors.get(index).x()));
+        List<String> sorted = new ArrayList<>();
+        for (int index : order) {
+            sorted.add(blocks.get(index));
+        }
+        return FlyerProductNames.fromBlocks(sorted, pageNumber);
+    }
+
+    private static List<String> attachManufacturers(List<String> names) {
+        String[] merged = names.toArray(String[]::new);
+        boolean[] drop = new boolean[merged.length];
+        for (int index = 0; index < merged.length; index++) {
+            if (drop[index] || !isManufacturer(merged[index])) {
+                continue;
+            }
+            int target = manufacturerTarget(merged, drop, index);
+            if (target < 0) {
+                continue;
+            }
+            merged[target] = join(merged[index], merged[target]);
+            drop[index] = true;
+        }
+        List<String> attached = new ArrayList<>();
+        for (int index = 0; index < merged.length; index++) {
+            if (!drop[index]) {
+                attached.add(merged[index]);
+            }
+        }
+        return attached;
+    }
+
+    private static int manufacturerTarget(String[] names, boolean[] drop, int index) {
+        int fallback = -1;
+        for (int candidate = index + 1; candidate < names.length && candidate <= index + 2; candidate++) {
+            if (drop[candidate] || isKnownBrand(names[candidate]) || isManufacturer(names[candidate])) {
+                break;
+            }
+            if (fallback < 0) {
+                fallback = candidate;
+            }
+            if (!startsWithDescriptor(names[candidate])) {
+                return candidate;
+            }
+        }
+        return fallback;
+    }
+
+    private static boolean isManufacturer(String name) {
+        return MANUFACTURER.matcher(name.trim()).matches();
+    }
+
+    private static boolean startsWithDescriptor(String name) {
+        String[] words = name.trim().split("\\s+");
+        if (words.length == 0 || words[0].isEmpty()) {
+            return false;
+        }
+        String key = HungarianText.normalize(words[0]).replaceAll("[^a-z0-9]+", "");
+        return LEADING_DESCRIPTORS.contains(key);
     }
 
     private static List<String> pairBrands(List<String> names) {
@@ -119,6 +243,33 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
         }
     }
 
+    private static boolean sameColumn(TextRun first, TextRun second) {
+        float size = Math.max(first.fontSize(), 8f);
+        return Math.abs(first.x() - second.x()) <= Math.max(8f, 0.45f * size);
+    }
+
+    private static boolean stacked(TextRun above, TextRun below) {
+        float size = Math.max(above.fontSize(), 8f);
+        float gap = below.y() - above.y();
+        return gap >= 0f && gap <= 1.8f * size;
+    }
+
+    private static String joinStack(List<TextRun> stack) {
+        StringBuilder name = new StringBuilder();
+        for (TextRun run : stack) {
+            String line = run.text().trim();
+            if (name.isEmpty()) {
+                name.append(line);
+            } else if (name.charAt(name.length() - 1) == '-') {
+                name.setLength(name.length() - 1);
+                name.append(line);
+            } else {
+                name.append(' ').append(line);
+            }
+        }
+        return name.toString();
+    }
+
     private static String join(String brand, String product) {
         String brandKey = HungarianText.normalize(brand);
         String productKey = HungarianText.normalize(product);
@@ -164,6 +315,10 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
             if (MARKETING.matcher(line).find()) {
                 return null;
             }
+            line = stripOfferNoise(line);
+            if (line.isEmpty()) {
+                continue;
+            }
             if (isNameLine(line, !parts.isEmpty())) {
                 parts.add(line);
             } else if (!parts.isEmpty()) {
@@ -173,7 +328,30 @@ public class AldiFlyerExtractor extends GenericFlyerExtractor {
         if (parts.isEmpty()) {
             return null;
         }
-        return String.join(" ", parts);
+        return joinLines(parts);
+    }
+
+    private static String stripOfferNoise(String line) {
+        Matcher glued = GLUED_DISCOUNT.matcher(line);
+        if (glued.matches()) {
+            return glued.group(1) + "-";
+        }
+        return TRAILING_UNIT.matcher(line).replaceAll("").trim();
+    }
+
+    private static String joinLines(List<String> parts) {
+        StringBuilder name = new StringBuilder();
+        for (String line : parts) {
+            if (name.isEmpty()) {
+                name.append(line);
+            } else if (name.charAt(name.length() - 1) == '-') {
+                name.setLength(name.length() - 1);
+                name.append(line);
+            } else {
+                name.append(' ').append(line);
+            }
+        }
+        return name.toString();
     }
 
     private static boolean isHouseBrand(String name) {

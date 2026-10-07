@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
+{/* --- Theme --- */}
 const savedTheme = localStorage.getItem('theme');
 
 if (window.location.pathname === '/S3CR3T') {
@@ -13,6 +14,7 @@ if (window.location.pathname === '/S3CR3T') {
   document.documentElement.classList.remove('dark');
 }
 
+{/* --- App --- */}
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

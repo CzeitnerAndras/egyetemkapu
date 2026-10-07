@@ -40,6 +40,14 @@ describe('DocumentTitle', () => {
         expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe('noindex, nofollow');
     });
 
+    it('a kártyák oldalának címe a cards.title kulcs', () => {
+        renderAt('/kartyak');
+
+        expect(document.title).toBe('cards.title | Egyetemkapu');
+        expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href'))
+            .toBe('https://egyetemkapu.hu/kartyak');
+    });
+
     it('a jelszó-visszaállító oldalakat is noindexre állítja', () => {
         renderAt('/elfelejtett-jelszo');
 

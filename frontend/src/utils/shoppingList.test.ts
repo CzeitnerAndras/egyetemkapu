@@ -1,5 +1,6 @@
 import {
     addItem,
+    formatShoppingListText,
     groupByStore,
     itemKey,
     loadShoppingList,
@@ -84,6 +85,16 @@ describe('shoppingList', () => {
             item({ id: 'p:22', productId: 22, store: 'tesco', name: 'Tej' }),
         ]);
         expect(grouped.map((group) => group.store)).toEqual(['tesco', 'auchan']);
+    });
+
+    it('txt-be rendezi a listát boltonként, mennyiséggel és oldallal', () => {
+        const text = formatShoppingListText([
+            item(),
+            item({ id: 'p:22', productId: 22, store: 'tesco', name: 'Tej', quantity: 2, pageNumber: 1, flyerTitle: 'Tesco Hipermarket' }),
+        ], (entry) => `${entry.pageNumber}. oldal`);
+
+        expect(text).toBe('TESCO\n2x Tej — 1. oldal\n\nALDI\n1x Kakaóscsiga — 2. oldal\n');
+        expect(formatShoppingListText([])).toBe('');
     });
 
     it('mentés után visszatölti a listát, hibás JSON-nál üreset ad', () => {

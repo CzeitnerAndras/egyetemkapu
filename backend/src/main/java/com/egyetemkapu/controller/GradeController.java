@@ -38,6 +38,7 @@ public class GradeController {
         return subject.getUser() != null && user.getId() != null && user.getId().equals(subject.getUser().getId());
     }
 
+    // --- Add grade ---
     @PostMapping("/{subjectId}")
     @LogAction("Új érdemjegy rögzítése")
     @Transactional
@@ -57,6 +58,7 @@ public class GradeController {
         return ResponseEntity.ok(gradeRepository.save(newGrade));
     }
 
+    // --- List grades ---
     @GetMapping("/subject/{subjectId}")
     @Transactional(readOnly = true)
     public ResponseEntity<List<Grade>> getGradesForSubject(@PathVariable Long subjectId, Principal principal) {
