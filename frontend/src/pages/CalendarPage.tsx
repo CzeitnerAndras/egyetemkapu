@@ -178,8 +178,8 @@ export default function CalendarPage() {
         <PageShell className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
 
             {/* --- BAL OLDAL: NAPTÁR --- */}
-            <div className="lg:col-span-2 flex flex-col h-full border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
-                <div className="bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10 text-black dark:text-white secret:text-[#1cf85d]">
+            <div className="lg:col-span-2 flex flex-col h-full border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10 text-white dark:text-white secret:text-[#1cf85d]">
                     <button onClick={prevMonth} className="p-2 hover:bg-white/20 secret:hover:bg-[#1cf85d] secret:hover:text-black rounded-full secret:rounded-none transition-colors cursor-pointer">
                         <ChevronLeft className="w-6 h-6" />
                     </button>
@@ -221,13 +221,13 @@ export default function CalendarPage() {
                                     onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
                                     className={`min-h-12 sm:min-h-16 lg:min-h-24 h-full relative cursor-pointer border-2 transition-all duration-300 flex flex-col items-center justify-center secret:font-mono
                                         ${isSelected
-                                            ? 'border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-cyan-400 dark:bg-[#121212] secret:bg-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] secret:shadow-[0_0_15px_rgba(28,248,93,0.5)] scale-105 z-10'
+                                            ? 'border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-500 dark:bg-[#121212] secret:bg-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_0_20px_rgba(168,85,247,0.5)] secret:shadow-[0_0_15px_rgba(28,248,93,0.5)] scale-105 z-10'
                                             : 'border-transparent secret:border-[#1cf85d]/30 bg-white/50 dark:bg-[#121212]/50 secret:bg-transparent hover:border-black dark:hover:border-[#a855f7]/50 secret:hover:border-[#1cf85d] hover:bg-white dark:hover:bg-[#121212] secret:hover:bg-[#1cf85d] secret:hover:text-black shadow-sm group'
                                         }
                                     `}
                                 >
                                     <span className={`text-lg sm:text-2xl lg:text-3xl font-bold 
-                                        ${isToday ? 'text-fuchsia-600 dark:text-[#e879f9] secret:text-white' : 'text-black dark:text-gray-200 secret:text-[#1cf85d]'} 
+                                        ${isToday ? 'text-blue-950 dark:text-[#e879f9] secret:text-white' : 'text-black dark:text-gray-200 secret:text-[#1cf85d]'} 
                                         ${isSelected ? 'secret:text-black' : 'group-hover:secret:text-black'}
                                     `}>
                                         {day}
@@ -235,7 +235,7 @@ export default function CalendarPage() {
 
                                     {hasTask && (
                                         <div className={`absolute bottom-1 w-2.5 h-2.5 rounded-full secret:rounded-none animate-pulse shadow-[2px_2px_0px_#000] dark:shadow-[0_0_8px_rgba(168,85,247,0.8)] secret:shadow-[0_0_8px_rgba(28,248,93,1)]
-                                            ${isSelected ? 'bg-fuchsia-600 dark:bg-[#a855f7] secret:bg-black' : 'bg-fuchsia-600 dark:bg-[#a855f7] secret:bg-[#1cf85d] group-hover:secret:bg-black'}
+                                            ${isSelected ? 'bg-black dark:bg-[#a855f7] secret:bg-black' : 'bg-black dark:bg-[#a855f7] secret:bg-[#1cf85d] group-hover:secret:bg-black'}
                                         `}></div>
                                     )}
                                 </div>
@@ -247,8 +247,8 @@ export default function CalendarPage() {
 
             {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
             <div className="lg:col-span-1 flex flex-col space-y-4 h-full">
-                <div className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[6px_6px_0px_#d946ef] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
-                    <div className="bg-cyan-400 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
+                <div className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[6px_6px_0px_#020617] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
+                    <div className="bg-blue-500 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {t('cal.tasksOf', { date: selectedDate.toLocaleDateString(locale) })}
                     </div>
 
@@ -259,8 +259,8 @@ export default function CalendarPage() {
                             <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium mt-6 text-sm secret:font-mono uppercase">&gt; <span>{t('cal.noTasks')}</span></p>
                         ) : (
                             getTasksForSelectedDate().map(task => (
-                                <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#06b6d4] dark:hover:shadow-md transition-shadow relative group">
-                                    <h3 className="font-bold text-sm text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
+                                <div key={task.id} className="bg-white dark:bg-[#121212] secret:bg-black border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#1e3a8a] dark:hover:shadow-md transition-shadow relative group">
+                                    <h3 className="font-bold text-sm text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] pr-6 truncate secret:font-mono">&gt; {task.title}</h3>
                                     <div className="flex justify-between items-center mt-1 text-xs text-gray-600 dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
                                         <span className="bg-gray-200 dark:bg-gray-800 secret:bg-[#1cf85d] secret:text-black px-2 py-0.5 rounded secret:rounded-none font-medium uppercase border-black dark:border-transparent border-2">
                                             {task.taskType}
@@ -269,13 +269,13 @@ export default function CalendarPage() {
                                     </div>
 
                                     {(task.pingDayBefore || task.pingOnDay) && (
-                                        <div className="absolute top-2 right-12 text-indigo-500 dark:text-indigo-400 secret:text-[#1cf85d]" title={t('cal.discordSet')}>
+                                        <div className="absolute top-2 right-12 text-blue-700 dark:text-indigo-400 secret:text-[#1cf85d]" title={t('cal.discordSet')}>
                                             <Bell className="w-4 h-4" />
                                         </div>
                                     )}
 
                                     {(task.pingTelegramDayBefore || task.pingTelegramOnDay) && (
-                                        <div className="absolute top-2 right-8 text-cyan-500 dark:text-cyan-400 secret:text-[#1cf85d]" title="Telegram értesítés beállítva">
+                                        <div className="absolute top-2 right-8 text-blue-700 dark:text-cyan-400 secret:text-[#1cf85d]" title="Telegram értesítés beállítva">
                                             <Send className="w-4 h-4" />
                                         </div>
                                     )}
@@ -293,8 +293,8 @@ export default function CalendarPage() {
                 </div>
 
                 {/* --- Új teendő hozzáadása --- */}
-                <form onSubmit={handleSaveTask} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[6px_6px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] flex flex-col">
-                    <div className="bg-fuchsia-400 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
+                <form onSubmit={handleSaveTask} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[6px_6px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] flex flex-col">
+                    <div className="bg-blue-900 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-white dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {t('cal.newEntry')}
                     </div>
 
@@ -312,7 +312,7 @@ export default function CalendarPage() {
                         <div className="flex flex-col group">
                             <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.eventName')}</label>
                             <input required type="text" value={title} onChange={e => setTitle(e.target.value)}
-                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
+                                className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                             />
                         </div>
 
@@ -321,7 +321,7 @@ export default function CalendarPage() {
                                 <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.type')}</label>
                                 <input required type="text" value={taskType} onChange={e => setTaskType(e.target.value)}
                                     placeholder={t('cal.typePlaceholder')}
-                                    className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
+                                    className="border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] transition-colors text-sm secret:font-mono"
                                 />
                             </div>
 
@@ -331,7 +331,7 @@ export default function CalendarPage() {
                                 <button
                                     type="button"
                                     onClick={() => setIsTimeOpen(!isTimeOpen)}
-                                    className="flex items-center justify-between w-full border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono cursor-pointer transition-colors hover:border-fuchsia-500 focus:border-fuchsia-500"
+                                    className="flex items-center justify-between w-full border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-1.5 outline-none bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] text-sm secret:font-mono cursor-pointer transition-colors hover:border-blue-800 focus:border-blue-800"
                                 >
                                     <span>{time}</span>
                                     <Clock className="w-4 h-4 ml-1" />
@@ -352,7 +352,7 @@ export default function CalendarPage() {
                                                                 key={`h-${h}`}
                                                                 type="button"
                                                                 onClick={() => setTime(`${h}:${time.split(':')[1] || '00'}`)}
-                                                                className={`w-full p-2 text-center font-bold text-sm cursor-pointer transition-colors secret:font-mono ${currentHour === h ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                                                className={`w-full p-2 text-center font-bold text-sm cursor-pointer transition-colors secret:font-mono ${currentHour === h ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-900 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20 hover:text-white'}`}
                                                             >
                                                                 {h}
                                                             </button>
@@ -369,7 +369,7 @@ export default function CalendarPage() {
                                                                 key={`m-${m}`}
                                                                 type="button"
                                                                 onClick={() => setTime(`${time.split(':')[0] || '08'}:${m}`)}
-                                                                className={`w-full p-2 text-center font-bold text-sm cursor-pointer transition-colors secret:font-mono ${currentMinute === m ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20'}`}
+                                                                className={`w-full p-2 text-center font-bold text-sm cursor-pointer transition-colors secret:font-mono ${currentMinute === m ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white' : 'text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-900 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d]/20 hover:text-white'}`}
                                                             >
                                                                 {m}
                                                             </button>
@@ -380,7 +380,7 @@ export default function CalendarPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setIsTimeOpen(false)}
-                                                className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold p-2 hover:bg-cyan-400 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black transition-colors uppercase text-sm secret:font-mono cursor-pointer"
+                                                className="w-full bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold p-2 hover:bg-blue-500 dark:hover:bg-[#a855f7] secret:hover:bg-[#1cf85d] hover:text-black transition-colors uppercase text-sm secret:font-mono cursor-pointer"
                                             >
                                                 OK
                                             </button>
@@ -392,15 +392,15 @@ export default function CalendarPage() {
 
                         {/* --- Discord ping beállítások --- */}
                         <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
-                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
+                            <p className="text-xs font-bold text-blue-900 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
                                 <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
                             </p>
                             <label className="flex items-center space-x-2 cursor-pointer group">
-                                <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <input type="checkbox" checked={pingOnDay} onChange={e => setPingOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-blue-700 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
                                 <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingAtDeadline')}</span>
                             </label>
                             <div className="flex items-center space-x-2">
-                                <input id="discord-hours-before" type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <input id="discord-hours-before" type="checkbox" checked={pingDayBefore} onChange={e => setPingDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-blue-700 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
                                 <input
                                     type="number"
                                     min={1}
@@ -408,7 +408,7 @@ export default function CalendarPage() {
                                     value={Number.isFinite(pingHoursBefore) ? pingHoursBefore : ''}
                                     onChange={e => setPingHoursBefore(Number(e.target.value))}
                                     onBlur={() => setPingHoursBefore(hours => clampPingHours(hours))}
-                                    className="w-14 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-0.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] text-center text-xs secret:font-mono"
+                                    className="w-14 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-0.5 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] text-center text-xs secret:font-mono"
                                     aria-label={t('cal.pingHoursBefore')}
                                 />
                                 <label htmlFor="discord-hours-before" className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase cursor-pointer">{t('cal.pingHoursBefore')}</label>
@@ -417,15 +417,15 @@ export default function CalendarPage() {
 
                         {/* --- Telegram ping beállítások --- */}
                         <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-cyan-900 secret:border-[#1cf85d] space-y-1 mt-1">
-                            <p className="text-xs font-bold text-cyan-700 dark:text-cyan-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
+                            <p className="text-xs font-bold text-blue-900 dark:text-cyan-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
                                 <Send className="w-3.5 h-3.5 mr-1" /> Telegram
                             </p>
                             <label className="flex items-center space-x-2 cursor-pointer group">
-                                <input type="checkbox" checked={pingTelegramOnDay} onChange={e => setPingTelegramOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <input type="checkbox" checked={pingTelegramOnDay} onChange={e => setPingTelegramOnDay(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-blue-700 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
                                 <span className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cal.pingAtDeadline')}</span>
                             </label>
                             <div className="flex items-center space-x-2">
-                                <input id="telegram-hours-before" type="checkbox" checked={pingTelegramDayBefore} onChange={e => setPingTelegramDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-cyan-500 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
+                                <input id="telegram-hours-before" type="checkbox" checked={pingTelegramDayBefore} onChange={e => setPingTelegramDayBefore(e.target.checked)} className="w-3.5 h-3.5 cursor-pointer accent-blue-700 dark:accent-[#a855f7] secret:accent-[#1cf85d]" />
                                 <input
                                     type="number"
                                     min={1}
@@ -433,7 +433,7 @@ export default function CalendarPage() {
                                     value={Number.isFinite(pingHoursBefore) ? pingHoursBefore : ''}
                                     onChange={e => setPingHoursBefore(Number(e.target.value))}
                                     onBlur={() => setPingHoursBefore(hours => clampPingHours(hours))}
-                                    className="w-14 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-0.5 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] text-center text-xs secret:font-mono"
+                                    className="w-14 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] p-0.5 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black dark:text-white secret:text-[#1cf85d] text-center text-xs secret:font-mono"
                                     aria-label={t('cal.pingHoursBefore')}
                                 />
                                 <label htmlFor="telegram-hours-before" className="text-xs font-bold dark:font-normal text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase cursor-pointer">{t('cal.pingHoursBefore')}</label>
@@ -444,7 +444,7 @@ export default function CalendarPage() {
                             {t('cal.pingLangHint')}
                         </p>
 
-                        <button type="submit" className="w-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
+                        <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white dark:text-white secret:text-[#1cf85d] font-bold py-2 mt-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] dark:hover:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black flex items-center justify-center cursor-pointer text-sm secret:font-mono uppercase">
                             <Plus className="w-5 h-5 mr-1 font-bold" />
                             {t('cal.save')}
                         </button>

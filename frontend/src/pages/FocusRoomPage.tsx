@@ -239,13 +239,13 @@ export default function FocusRoomPage() {
                 <div className="lg:col-span-1 flex flex-col space-y-6 lg:min-h-[500px]">
 
                     {/* --- Pomodoro --- */}
-                    <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none flex flex-col items-center justify-center shrink-0">
+                    <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col items-center justify-center shrink-0">
                         <div className="flex w-full border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black rounded-full secret:rounded-none overflow-hidden mb-6 shadow-[4px_4px_0px_#000] dark:shadow-none">
                             <button
                                 onClick={() => handleSetMode(true)}
                                 className={`flex-1 py-2 font-bold flex items-center justify-center transition-colors secret:font-mono uppercase cursor-pointer border-r-4 border-black dark:border-gray-700 secret:border-[#1cf85d]
                                     ${isFocusMode
-                                        ? 'bg-fuchsia-400 dark:bg-[#a855f7] text-black dark:text-white secret:bg-[#1cf85d] secret:text-black'
+                                        ? 'bg-blue-900 dark:bg-[#a855f7] text-white dark:text-white secret:bg-[#1cf85d] secret:text-black'
                                         : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black'
                                     }`}
                             >
@@ -255,7 +255,7 @@ export default function FocusRoomPage() {
                                 onClick={() => handleSetMode(false)}
                                 className={`flex-1 py-2 font-bold flex items-center justify-center transition-colors secret:font-mono uppercase cursor-pointer
                                     ${!isFocusMode
-                                        ? 'bg-cyan-400 dark:bg-blue-500 text-black dark:text-white secret:bg-[#1cf85d] secret:text-black'
+                                        ? 'bg-blue-500 dark:bg-blue-500 text-black dark:text-white secret:bg-[#1cf85d] secret:text-black'
                                         : 'bg-white dark:bg-[#121212] text-black dark:text-gray-400 secret:bg-black secret:text-[#1cf85d] hover:bg-gray-100 dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black'
                                     }`}
                             >
@@ -264,7 +264,7 @@ export default function FocusRoomPage() {
                         </div>
 
                         <div className={`text-6xl xl:text-7xl font-black tracking-wider mb-8 tabular-nums secret:font-mono dark:drop-shadow-md secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)]
-                            ${isFocusMode ? 'text-fuchsia-600 dark:text-[#c084fc] secret:text-[#1cf85d]' : 'text-cyan-600 dark:text-blue-400 secret:text-[#1cf85d]'}`}>
+                            ${isFocusMode ? 'text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d]' : 'text-blue-800 dark:text-blue-400 secret:text-[#1cf85d]'}`}>
                             {formatTime(timeLeft)}
                         </div>
 
@@ -273,14 +273,14 @@ export default function FocusRoomPage() {
                                 onClick={toggleTimer}
                                 className={`flex-1 py-3 font-bold text-black dark:text-white secret:text-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] transition-transform hover:-translate-y-1 shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] flex items-center justify-center cursor-pointer secret:font-mono uppercase
                                     ${isActive
-                                        ? 'bg-fuchsia-400 dark:bg-orange-500 secret:bg-orange-500 secret:text-black secret:border-orange-500'
-                                        : 'bg-cyan-400 dark:bg-green-600 secret:bg-[#1cf85d]'}`}
+                                        ? 'bg-blue-900 dark:bg-orange-500 secret:bg-orange-500 secret:text-black secret:border-orange-500'
+                                        : 'bg-blue-500 dark:bg-green-600 secret:bg-[#1cf85d]'}`}
                             >
                                 {isActive ? <><Pause className="w-6 h-6 mr-1" /> {t('focus.pause')}</> : <><Play className="w-6 h-6 mr-1" /> {t('focus.start')}</>}
                             </button>
                             <button
                                 onClick={resetTimer}
-                                className="p-3 bg-white dark:bg-gray-700 secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-gray-600 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-md"
+                                className="p-3 bg-white dark:bg-gray-700 secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] hover:bg-blue-500 dark:hover:bg-gray-600 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-md"
                                 title={t('focus.reset')}
                             >
                                 <RotateCcw className="w-6 h-6" />
@@ -289,7 +289,7 @@ export default function FocusRoomPage() {
                     </div>
 
                     {/* --- Notes --- */}
-                    <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[6px_6px_0px_#06b6d4] dark:shadow-md secret:rounded-none flex flex-col flex-1 min-h-0">
+                    <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[6px_6px_0px_#1e3a8a] dark:shadow-md secret:rounded-none flex flex-col flex-1 min-h-0">
                         <div className="flex items-center justify-between mb-3 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                             <div className="flex items-center">
                                 <FileText className="w-5 h-5 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -300,7 +300,7 @@ export default function FocusRoomPage() {
                             <button
                                 onClick={saveNote}
                                 disabled={isSavingNote}
-                                className="text-black dark:text-gray-400 secret:text-[#1cf85d] hover:text-fuchsia-600 dark:hover:text-[#c084fc] secret:hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                                className="text-black dark:text-gray-400 secret:text-[#1cf85d] hover:text-blue-950 dark:hover:text-[#c084fc] secret:hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                                 title={t('focus.save')}
                             >
                                 <Save className="w-6 h-6" />
@@ -316,7 +316,7 @@ export default function FocusRoomPage() {
                 </div>
 
                 {/* --- Naptár Feladatai --- */}
-                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
+                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                         {t('focus.activeTasks')}
                     </h2>
@@ -331,7 +331,7 @@ export default function FocusRoomPage() {
                                 <div
                                     key={task.id}
                                     onClick={() => toggleTask(task.id)}
-                                    className="flex items-center p-3 border-4 mb-3 cursor-pointer transition-all secret:rounded-none bg-white dark:bg-[#2a2a2a] secret:bg-transparent border-black dark:border-[#a855f7]/50 secret:border-[#1cf85d] hover:shadow-[4px_4px_0px_#06b6d4] hover:-translate-y-1 shadow-[2px_2px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] secret:hover:bg-[#1cf85d]/10"
+                                    className="flex items-center p-3 border-4 mb-3 cursor-pointer transition-all secret:rounded-none bg-white dark:bg-[#2a2a2a] secret:bg-transparent border-black dark:border-[#a855f7]/50 secret:border-[#1cf85d] hover:shadow-[4px_4px_0px_#1e3a8a] hover:-translate-y-1 shadow-[2px_2px_0px_#000] dark:shadow-none dark:hover:shadow-none dark:hover:translate-y-0 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] secret:hover:bg-[#1cf85d]/10"
                                 >
                                     <div className="mr-3">
                                         <Circle className="w-5 h-5 text-black dark:text-gray-500 secret:text-[#1cf85d]/70 hover:text-green-600 secret:hover:text-[#1cf85d]" />
@@ -361,7 +361,7 @@ export default function FocusRoomPage() {
                             <button
                                 type="submit"
                                 aria-label={t('focus.addTask')}
-                                className="bg-cyan-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center shadow-[4px_4px_0px_#000] dark:shadow-none"
+                                className="bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center shadow-[4px_4px_0px_#000] dark:shadow-none hover:text-white"
                             >
                                 <Plus className="w-6 h-6 font-bold" />
                             </button>
@@ -375,7 +375,7 @@ export default function FocusRoomPage() {
                 </div>
 
                 {/* --- Lo-Fi lejátszó --- */}
-                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
+                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Headphones className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">

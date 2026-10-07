@@ -277,7 +277,7 @@ export default function FlashcardsPage() {
                 <p className="font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cards.loading')}</p>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <section className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#d946ef] dark:shadow-md secret:rounded-none flex flex-col">
+                    <section className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col">
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                             {t('cards.decks')}
                         </h2>
@@ -295,7 +295,7 @@ export default function FlashcardsPage() {
                                 type="submit"
                                 disabled={saving}
                                 aria-label={t('cards.addDeck')}
-                                className="bg-cyan-400 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none disabled:opacity-50"
+                                className="bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none disabled:opacity-50"
                             >
                                 <Plus className="w-6 h-6" />
                             </button>
@@ -312,7 +312,7 @@ export default function FlashcardsPage() {
                                         type="button"
                                         onClick={() => selectDeck(deck.id)}
                                         className={`flex-1 text-left p-3 border-4 font-bold cursor-pointer secret:font-mono ${selectedId === deck.id
-                                            ? 'bg-fuchsia-400 dark:bg-[#a855f7] text-black dark:text-white border-black secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d]'
+                                            ? 'bg-blue-900 dark:bg-[#a855f7] text-white dark:text-white border-black secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d]'
                                             : 'bg-white dark:bg-[#2a2a2a] text-black dark:text-white border-black dark:border-[#a855f7]/50 secret:bg-transparent secret:text-[#1cf85d] secret:border-[#1cf85d]'
                                             }`}
                                     >
@@ -334,13 +334,13 @@ export default function FlashcardsPage() {
                         <button
                             type="button"
                             onClick={() => startReview()}
-                            className="mt-4 py-3 font-bold border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] dark:shadow-none"
+                            className="mt-4 py-3 font-bold border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] dark:shadow-none"
                         >
                             {t('cards.reviewAll', { count: dueTotal })}
                         </button>
                     </section>
 
-                    <section className="lg:col-span-2 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#06b6d4] dark:shadow-md secret:rounded-none">
+                    <section className="lg:col-span-2 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md secret:rounded-none">
                         {error && (
                             <p className="mb-4 font-bold text-red-600 dark:text-red-400 secret:text-[#1cf85d] secret:font-mono uppercase">{error}</p>
                         )}
@@ -364,14 +364,14 @@ export default function FlashcardsPage() {
                                         <div className="min-h-40 border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black p-6 shadow-[4px_4px_0px_#000] dark:shadow-none mb-4">
                                             <p className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{current.front}</p>
                                             {flipped && (
-                                                <p className="mt-4 text-xl font-bold text-fuchsia-700 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono">{current.back}</p>
+                                                <p className="mt-4 text-xl font-bold text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono">{current.back}</p>
                                             )}
                                         </div>
                                         {!flipped ? (
                                             <button
                                                 type="button"
                                                 onClick={() => setFlipped(true)}
-                                                className="w-full py-3 font-bold border-4 border-black bg-fuchsia-400 dark:bg-[#a855f7] dark:border-transparent dark:text-white secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
+                                                className="w-full py-3 font-bold border-4 border-black bg-blue-900 dark:bg-[#a855f7] dark:border-transparent dark:text-white secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
                                             >
                                                 {t('cards.show')}
                                             </button>
@@ -389,7 +389,7 @@ export default function FlashcardsPage() {
                                                     type="button"
                                                     disabled={rating}
                                                     onClick={() => rateCard('good')}
-                                                    className="py-3 font-bold border-4 border-black bg-cyan-400 dark:bg-green-600 dark:text-white dark:border-transparent secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50"
+                                                    className="py-3 font-bold border-4 border-black bg-blue-500 dark:bg-green-600 dark:text-white dark:border-transparent secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50"
                                                 >
                                                     <Check className="w-5 h-5 mr-2" /> {t('cards.good')}
                                                 </button>
@@ -408,7 +408,7 @@ export default function FlashcardsPage() {
                                     <button
                                         type="button"
                                         onClick={() => startReview(selectedDeck.id)}
-                                        className="px-4 py-2 font-bold border-4 border-black bg-cyan-400 dark:bg-[#a855f7] dark:text-white dark:border-[#a855f7] secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
+                                        className="px-4 py-2 font-bold border-4 border-black bg-blue-500 dark:bg-[#a855f7] dark:text-white dark:border-[#a855f7] secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
                                     >
                                         {t('cards.reviewDue', { count: selectedDeck.dueCount })}
                                     </button>
@@ -482,7 +482,7 @@ export default function FlashcardsPage() {
                                         <button
                                             type="submit"
                                             disabled={saving}
-                                            className="px-4 py-3 font-bold border-4 border-black bg-fuchsia-400 dark:bg-[#a855f7] dark:text-white dark:border-transparent secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase disabled:opacity-50"
+                                            className="px-4 py-3 font-bold border-4 border-black bg-blue-900 dark:bg-[#a855f7] dark:text-white dark:border-transparent secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase disabled:opacity-50"
                                         >
                                             {editingCardId ? t('cards.save') : t('cards.addCard')}
                                         </button>

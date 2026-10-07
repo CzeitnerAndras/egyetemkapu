@@ -62,7 +62,7 @@ export default function SettingsPage() {
             <PageHeader icon={Settings}>{t('settings.title')}</PageHeader>
 
             {/* --- Értesítési Beállítások Szekció --- */}
-            <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#06b6d4] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] secret:rounded-none flex flex-col">
+            <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] secret:rounded-none flex flex-col">
 
                 <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                     <BellRing className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -88,7 +88,7 @@ export default function SettingsPage() {
                     {/* --- Discord Webhook --- */}
                     <div className="bg-white dark:bg-[#121212] secret:bg-transparent p-5 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[4px_4px_0px_#000] dark:shadow-none">
                         <div className="flex flex-col group">
-                            <label className="flex items-center text-base font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 group-focus-within:text-fuchsia-600 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
+                            <label className="flex items-center text-base font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
                                 <MessageSquare className="w-5 h-5 mr-2" /> Discord Webhook URL
                             </label>
                             <input
@@ -96,7 +96,7 @@ export default function SettingsPage() {
                                 value={discordWebhook}
                                 onChange={(e) => setDiscordWebhook(e.target.value)}
                                 placeholder="https://discord.com/api/webhooks/..."
-                                className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-fuchsia-500 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#1a1a1a] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none text-base font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/30 transition-colors"
+                                className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#1a1a1a] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none text-base font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/30 transition-colors"
                             />
                             <p className="text-xs font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/60 mt-2 secret:font-mono uppercase">
                                 {t('settings.discordHint')}
@@ -107,7 +107,7 @@ export default function SettingsPage() {
                     {/* --- Telegram Chat ID --- */}
                     <div className="bg-white dark:bg-[#121212] secret:bg-transparent p-5 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[4px_4px_0px_#000] dark:shadow-none">
                         <div className="flex flex-col group">
-                            <label className="flex items-center text-base font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 group-focus-within:text-cyan-600 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
+                            <label className="flex items-center text-base font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 group-focus-within:text-blue-800 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
                                 <Send className="w-5 h-5 mr-2" /> Telegram Chat ID
                             </label>
                             <input
@@ -115,7 +115,7 @@ export default function SettingsPage() {
                                 value={telegramChatId}
                                 onChange={(e) => setTelegramChatId(e.target.value)}
                                 placeholder={t('settings.telegramPlaceholder')}
-                                className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-cyan-400 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#1a1a1a] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none text-base font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/30 transition-colors"
+                                className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-blue-600 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#1a1a1a] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none text-base font-bold secret:font-mono placeholder:secret:text-[#1cf85d]/30 transition-colors"
                             />
                             <p className="text-xs font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/60 mt-2 secret:font-mono uppercase">
                                 {t('settings.telegramHint')}
@@ -128,7 +128,7 @@ export default function SettingsPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-cyan-400 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#000]"
+                            className="w-full bg-blue-500 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-[0_0_20px_rgba(168,85,247,0.6)] secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#000]"
                         >
                             <Save className="w-6 h-6 mr-2 font-bold" />
                             {isLoading ? t('settings.saving') : t('settings.save')}

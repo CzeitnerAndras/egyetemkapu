@@ -36,7 +36,7 @@ export function NoticeModal({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="p-1 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                        className="p-1 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-blue-500 hover:text-black dark:hover:bg-gray-800 secret:hover:bg-[#1cf85d] secret:hover:text-black"
                         aria-label={closeLabel}
                     >
                         <X className="w-5 h-5" />
@@ -48,7 +48,7 @@ export function NoticeModal({
                 <button
                     type="button"
                     onClick={onClose}
-                    className="w-full bg-fuchsia-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black font-bold uppercase py-3 border-4 border-black dark:border-transparent secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md cursor-pointer hover:-translate-y-0.5 secret:font-mono"
+                    className="w-full bg-blue-900 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-white dark:text-white secret:text-black font-bold uppercase py-3 border-4 border-black dark:border-transparent secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md cursor-pointer hover:-translate-y-0.5 secret:font-mono"
                 >
                     {confirmLabel}
                 </button>

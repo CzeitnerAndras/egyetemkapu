@@ -6,13 +6,27 @@ html,
 body {
     min-height: 100vh;
     overflow-x: clip;
-    background-color: #a4a3a4;
+    background-color: #c5d4e6;
     transition: background-color 0.3s ease;
 }
 
 html.dark,
 html.dark body {
     background-color: #121212 !important;
+}
+
+/* Light mode keeps black type on bright blue, and switches to white on navy fills. */
+html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950).text-black,
+html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950) .text-black,
+html:not(.dark):not(.secret) .hover\:bg-blue-900:hover,
+html:not(.dark):not(.secret) .hover\:bg-blue-900:hover .text-black,
+html:not(.dark):not(.secret) .hover\:bg-blue-950:hover,
+html:not(.dark):not(.secret) .hover\:bg-blue-950:hover .text-black {
+    color: #fff;
+}
+
+html:not(.dark):not(.secret) .bg-blue-900.hover\:bg-blue-500:hover {
+    color: #000;
 }
 
 html.flyer-open nav {

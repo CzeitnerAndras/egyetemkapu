@@ -60,7 +60,7 @@ interface FlyerDetail {
 const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
 
 const PAPER_CARD =
-    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-cyan-400 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
+    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-500 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
 
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
@@ -258,7 +258,7 @@ export default function SalesPapersPage() {
                         />
                         <button
                             type="submit"
-                            className="absolute inset-y-0 right-0 px-2 flex items-center text-fuchsia-600 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
+                            className="absolute inset-y-0 right-0 px-2 flex items-center text-blue-950 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
                             aria-label={t('sales.searchSubmit')}
                         >
                             <Search className="w-4 h-4" />
@@ -274,7 +274,7 @@ export default function SalesPapersPage() {
             )}
 
             {searching && (
-                <p className="mb-6 font-bold uppercase secret:font-mono text-fuchsia-600 dark:text-[#c084fc]">{t('sales.searching')}</p>
+                <p className="mb-6 font-bold uppercase secret:font-mono text-blue-950 dark:text-[#c084fc]">{t('sales.searching')}</p>
             )}
 
             {hits && (
@@ -294,7 +294,7 @@ export default function SalesPapersPage() {
                                         className="w-full text-left cursor-pointer"
                                     >
                                         <div className="flex items-center justify-between gap-3 mb-2">
-                                            <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-fuchsia-400 dark:bg-[#3b0764]">
+                                            <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-900 dark:bg-[#3b0764]">
                                                 {storeLabel(hit.store)} · {t('sales.page', { page: hit.pageNumber })}
                                             </span>
                                             <span className="text-[11px] font-bold uppercase">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
@@ -319,7 +319,7 @@ export default function SalesPapersPage() {
                                                 pageNumber: hit.pageNumber,
                                                 name: hit.productName ?? hit.title,
                                             })}
-                                            className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black cursor-pointer"
+                                            className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black cursor-pointer"
                                         >
                                             <Plus className="w-3 h-3" />
                                             {shoppingList.some((item) => item.id === listedKey(hit.productId, hit.flyerId, hit.pageNumber, hit.productName))
@@ -345,8 +345,8 @@ export default function SalesPapersPage() {
                             onClick={() => setActiveStore(store)}
                             className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer
                                 ${activeStore === store
-                                    ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-fuchsia-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black'
+                                    ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
+                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
                                 }`}
                         >
                             <span className="block text-xl leading-none">{storeLabel(store)}</span>
@@ -422,7 +422,7 @@ export default function SalesPapersPage() {
                                             formatShoppingListText(shoppingList, (item) => t('sales.page', { page: item.pageNumber })),
                                             t('sales.listDownloadFile'),
                                         )}
-                                        className="inline-flex items-center gap-1 text-xs font-black uppercase cursor-pointer border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
+                                        className="inline-flex items-center gap-1 text-xs font-black uppercase cursor-pointer border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 hover:bg-blue-500 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
                                     >
                                         <Download className="w-3 h-3" />
                                         {t('sales.listDownload')}
@@ -507,14 +507,14 @@ export default function SalesPapersPage() {
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-cyan-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-blue-500 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                 >
                                     <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setViewer(null)}
-                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-cyan-400 hover:text-black dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-blue-500 hover:text-black dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                     aria-label={t('sales.closeViewer')}
                                 >
                                     <X className="w-5 h-5" />
@@ -561,8 +561,8 @@ export default function SalesPapersPage() {
                                                         aria-label={onList ? t('sales.listAdded') : t('sales.listAdd')}
                                                         className={`w-full text-left p-2 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer ${
                                                             onList
-                                                                ? 'bg-cyan-400 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
-                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-fuchsia-400 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black'
+                                                                ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
+                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-blue-900 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
                                                         }`}
                                                     >
                                                         <p className="font-bold leading-tight">{product.name}</p>
