@@ -33,6 +33,7 @@ export default function KnowledgeBasePage() {
         fetchDocuments();
     }, [categoryFilter]);
 
+    {/* --- Documents --- */}
     const fetchDocuments = async () => {
         setLoading(true);
         let url = '/api/documents';
@@ -51,6 +52,7 @@ export default function KnowledgeBasePage() {
         }
     };
 
+    {/* --- Upload --- */}
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file) return;
@@ -120,7 +122,7 @@ export default function KnowledgeBasePage() {
                     extra={
                     <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
 
-                        {/* --- Filter Dropdown --- */}
+                        {/* --- Filter dropdown --- */}
                         <div className="relative w-full md:w-auto">
                             <button
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -160,7 +162,7 @@ export default function KnowledgeBasePage() {
                     {t('kb.title')}
                 </PageHeader>
 
-                {/* --- Dokumentumok Grid --- */}
+                {/* --- Document grid --- */}
                 {loading ? (
                     <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">{t('kb.loading')}</p>
                 ) : documents.length === 0 ? (
@@ -198,7 +200,7 @@ export default function KnowledgeBasePage() {
                 )}
             </PageShell>
 
-            {/* --- Feltöltés Modal --- */}
+            {/* --- Upload modal --- */}
             {isUploadModalOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg p-6 relative shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] secret:rounded-none">
@@ -220,7 +222,7 @@ export default function KnowledgeBasePage() {
                                 <textarea required value={description} onChange={e => setDescription(e.target.value)} rows={3} className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold resize-none shadow-[4px_4px_0px_#000] dark:shadow-none focus:border-blue-800 transition-colors"></textarea>
                             </div>
 
-                            {/* --- Category Dropdown --- */}
+                            {/* --- Category dropdown --- */}
                             <div className={`flex flex-col relative ${isUploadCatOpen ? 'z-50' : 'z-10'}`}>
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldCat')}</label>
                                 <button
@@ -251,7 +253,7 @@ export default function KnowledgeBasePage() {
                                 )}
                             </div>
 
-                            {/* --- Fájl Gomb --- */}
+                            {/* --- File button --- */}
                             <div className="flex flex-col z-10 relative pt-1">
                                 <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 secret:font-mono uppercase">{t('kb.fieldFile')}</label>
                                 <div className="relative border-4 border-dashed border-black dark:border-gray-600 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-transparent p-4 flex items-center justify-between shadow-[4px_4px_0px_#000] dark:shadow-none group transition-colors focus-within:border-blue-800">

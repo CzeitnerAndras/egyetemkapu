@@ -76,6 +76,7 @@ export default function SalesPapersPage() {
     const [pageStatus, setPageStatus] = useState<'loading' | 'ok' | 'error'>('loading');
     const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>(() => loadShoppingList());
 
+    {/* --- Load flyers --- */}
     useEffect(() => {
         let cancelled = false;
         setLoading(true);
@@ -104,6 +105,7 @@ export default function SalesPapersPage() {
         };
     }, [t]);
 
+    {/* --- Save list --- */}
     useEffect(() => {
         saveShoppingList(shoppingList);
     }, [shoppingList]);
@@ -117,6 +119,7 @@ export default function SalesPapersPage() {
         [flyers, activeStore],
     );
 
+    {/* --- Search --- */}
     const handleSearch = async (event: React.FormEvent) => {
         event.preventDefault();
         const q = query.trim();
@@ -139,6 +142,7 @@ export default function SalesPapersPage() {
         }
     };
 
+    {/* --- Open flyer --- */}
     const openFlyer = async (flyerId: number, pageNumber = 1) => {
         try {
             const res = await fetch(`/api/flyers/${flyerId}`, { cache: 'no-store' });
@@ -161,6 +165,7 @@ export default function SalesPapersPage() {
 
     const storeLabel = (store: StoreId) => store.toUpperCase();
 
+    {/* --- Add to list --- */}
     const addToList = (draft: {
         productId?: number | null;
         flyerId: number;
@@ -196,6 +201,7 @@ export default function SalesPapersPage() {
 
     const pageSrc = viewer ? `/api/flyers/${viewer.flyer.id}/pages/${viewer.page}?full=1` : '';
 
+    {/* --- Viewer lock --- */}
     useEffect(() => {
         if (!viewer) {
             return;
@@ -204,6 +210,7 @@ export default function SalesPapersPage() {
         return () => document.documentElement.classList.remove('flyer-open');
     }, [viewer]);
 
+    {/* --- Page prefetch --- */}
     useEffect(() => {
         if (!pageSrc || !viewer) {
             return;
@@ -243,6 +250,7 @@ export default function SalesPapersPage() {
 
     return (
         <PageShell>
+            {/* --- Header --- */}
             <PageHeader
                 icon={Newspaper}
                 extra={
@@ -277,6 +285,7 @@ export default function SalesPapersPage() {
                 <p className="mb-6 font-bold uppercase secret:font-mono text-blue-950 dark:text-[#c084fc]">{t('sales.searching')}</p>
             )}
 
+            {/* --- Search results --- */}
             {hits && (
                 <section className="mb-8 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
                     <h2 className="text-xl font-bold uppercase secret:font-mono mb-4 text-black dark:text-white secret:text-[#1cf85d]">
@@ -335,6 +344,7 @@ export default function SalesPapersPage() {
             )}
 
             <div className="flex flex-col lg:flex-row gap-8">
+                {/* --- Stores --- */}
                 <div className="w-full lg:w-1/4 flex flex-col space-y-2">
                     {STORES.map((store) => (
                         <button
@@ -353,6 +363,7 @@ export default function SalesPapersPage() {
                         </button>
                     ))}
 
+                    {/* --- Shopping list --- */}
                     <section className="mt-6 bg-slate-100 dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-sm text-black dark:text-white secret:text-[#1cf85d]">
                         <div className="flex items-center gap-2 mb-2">
                             <ShoppingCart className="w-4 h-4" />
@@ -440,6 +451,7 @@ export default function SalesPapersPage() {
                     </section>
                 </div>
 
+                {/* --- Flyers --- */}
                 <div className="w-full lg:w-3/4">
                     <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
                         <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
@@ -479,6 +491,7 @@ export default function SalesPapersPage() {
                 </div>
             </div>
 
+            {/* --- Dev notice --- */}
             <NoticeModal
                 open={notice.open}
                 onClose={notice.dismiss}
@@ -489,6 +502,7 @@ export default function SalesPapersPage() {
                 {t('sales.devBody')}
             </NoticeModal>
 
+            {/* --- Viewer --- */}
             {viewer && createPortal(
                 <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center p-2 sm:p-4">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1400px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
@@ -536,6 +550,7 @@ export default function SalesPapersPage() {
                                     className={`block w-full h-auto border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
                                 />
                             </div>
+                            {/* --- Page products --- */}
                             <aside className="lg:w-80 shrink-0 max-h-48 lg:max-h-none overflow-auto border-t-4 lg:border-t-0 lg:border-l-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 text-black dark:text-white secret:text-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black">
                                 <h3 className="text-xs font-black uppercase">{t('sales.listPageProducts')}</h3>
                                 <p className="text-[11px] font-medium opacity-80 mb-3">{t('sales.listPageHint')}</p>
@@ -575,6 +590,7 @@ export default function SalesPapersPage() {
                             </aside>
                         </div>
 
+                        {/* --- Pagination --- */}
                         <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d]">
                             <button
                                 type="button"
@@ -608,6 +624,7 @@ export default function SalesPapersPage() {
     );
 }
 
+{/* --- Date helpers --- */}
 function localIsoDate(date = new Date()): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -638,6 +655,7 @@ export function isCurrentOrUpcomingFlyer(flyer: FlyerSummary, today = localIsoDa
     return !flyer.validFrom || flyer.validFrom <= addIsoDays(today, 8);
 }
 
+{/* --- Sort --- */}
 function flyerKind(flyer: FlyerSummary): number {
     const hay = `${flyer.officialUrl ?? ''} ${flyer.title ?? ''}`.toLowerCase();
     if (flyer.store === 'aldi') {
@@ -696,6 +714,7 @@ function compareFlyers(a: FlyerSummary, b: FlyerSummary, today = localIsoDate())
     return a.title.localeCompare(b.title, 'hu');
 }
 
+{/* --- Download list --- */}
 function downloadShoppingList(text: string, filename: string) {
     const blob = new Blob([`\uFEFF${text}`], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);

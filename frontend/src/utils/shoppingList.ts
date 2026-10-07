@@ -17,6 +17,7 @@ export type ShoppingListDraft = Omit<ShoppingListItem, 'id' | 'quantity'> & { qu
 
 const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
 
+{/* --- Item key --- */}
 export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | 'pageNumber' | 'name'>): string {
     if (item.productId != null) {
         return `p:${item.productId}`;
@@ -24,6 +25,7 @@ export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | '
     return `f:${item.flyerId}:${item.pageNumber}:${item.name}`;
 }
 
+{/* --- List actions --- */}
 export function addItem(list: ShoppingListItem[], draft: ShoppingListDraft): ShoppingListItem[] {
     const id = itemKey(draft);
     const extra = draft.quantity ?? 1;
@@ -73,6 +75,7 @@ export function formatShoppingListText(
     }).join('\n\n')}\n`;
 }
 
+{/* --- Save --- */}
 export function loadShoppingList(): ShoppingListItem[] {
     try {
         const raw = localStorage.getItem(SHOPPING_LIST_KEY);

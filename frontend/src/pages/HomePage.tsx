@@ -48,7 +48,7 @@ const tips = [
   { hu: "A mozgás javítja az agy vérellátását. Egy 15 perces séta tanulás előtt vagy a szünetekben csodákat tehet a memóriáddal.", en: "Exercise improves blood flow to the brain. A 15-minute walk before studying or during breaks can do wonders for your memory." }
 ];
 
-{/* --- Számláló animáció Hook --- */ }
+{/* --- Counter animation --- */}
 function useCountUp(endValue: number, startAnim: boolean, duration: number = 2000) {
   const [count, setCount] = useState(0);
 
@@ -96,7 +96,7 @@ export default function HomePage() {
   const [calcCount, setCalcCount] = useState(0);
 
   useEffect(() => {
-    {/* --- Admin jog ellenőrzése --- */ }
+    {/* --- Admin check --- */}
     fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false, retryOn401: false })
       .then(res => res.ok ? res.json() : null)
         .then(data => {
@@ -109,7 +109,7 @@ export default function HomePage() {
         })
         .catch(err => console.error("Hiba a felhasználó lekérésekor:", err));
 
-    {/* --- Hírek lekérése (GET) --- */ }
+    {/* --- Load news --- */}
     fetch('/api/events')
       .then((res) => {
         if (!res.ok) throw new Error('Hiba a hírek lekérésekor');
@@ -129,7 +129,7 @@ export default function HomePage() {
         setLoading(false);
       });
 
-    {/* --- Jelenleg aktív felhasználók száma --- */ }
+    {/* --- Active users --- */}
     sendPresenceHeartbeat()
       .then((count) => {
         if (typeof count === 'number') {
@@ -137,7 +137,7 @@ export default function HomePage() {
         }
       });
 
-    {/* --- Feltöltött dokumentumok száma --- */ }
+    {/* --- Document count --- */}
     fetch('/api/documents')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
@@ -147,7 +147,7 @@ export default function HomePage() {
       })
       .catch((err) => console.error('Hiba a dokumentumszám lekérésekor:', err));
 
-    {/* --- Megoldott egyenletek száma --- */ }
+    {/* --- Equation count --- */}
     fetch('/api/tools/calculator/count')
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
@@ -169,7 +169,7 @@ export default function HomePage() {
     };
   }, [selectedNews]);
 
-  {/* --- Intersection Observer a statisztikához --- */ }
+  {/* --- Stats observer --- */}
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -214,12 +214,12 @@ export default function HomePage() {
     }
   };
 
-  {/* --- Napi vicc és tipp kiválasztása --- */ }
+  {/* --- Daily joke and tip --- */}
   const dayOfYear = Math.floor(Date.now() / 86400000);
   const dailyJoke = language === 'en' ? jokes[dayOfYear % jokes.length].en : jokes[dayOfYear % jokes.length].hu;
   const dailyTip = language === 'en' ? tips[dayOfYear % tips.length].en : tips[dayOfYear % tips.length].hu;
 
-  {/* --- Animált Statisztika Adatok --- */ }
+  {/* --- Animated stats --- */}
   const animatedUsers = useCountUp(usersCount, statsVisible);
   const animatedMath = useCountUp(calcCount, statsVisible);
   const animatedDocs = useCountUp(docsCount, statsVisible);
@@ -227,7 +227,7 @@ export default function HomePage() {
   return (
     <PageShell>
 
-      {/* --- Üdvözlő Szekció & Mini AI --- */}
+      {/* --- Welcome and mini AI --- */}
       <div className="w-full bg-gradient-to-r from-blue-600 via-blue-800 to-blue-950 dark:from-[#2e1065] dark:via-[#3b0764] dark:to-[#2e1065] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 sm:p-8 md:p-12 mb-8 shadow-[8px_8px_0px_#020617] dark:shadow-[0_0_40px_rgba(168,85,247,0.3)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] relative overflow-hidden group">
 
         <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-30 dark:opacity-30 secret:opacity-10 pointer-events-none group-hover:scale-110 transition-transform duration-700">
@@ -264,7 +264,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* --- Napi Vicc és Tipp Szekció --- */}
+      {/* --- Daily joke and tip --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
         <div className="w-full bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[6px_6px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] flex items-center group transition-all duration-300 secret:rounded-none hover:-translate-y-1 hover:shadow-[10px_10px_0px_#1e3a8a] dark:hover:shadow-[0_0_40px_rgba(168,85,247,0.3)]">
@@ -291,7 +291,7 @@ export default function HomePage() {
 
       </div>
 
-      {/* --- Rendszerstatisztika --- */}
+      {/* --- System stats --- */}
       <div ref={statsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="flex items-center p-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-transparent shadow-[4px_4px_0px_#1e3a8a] dark:shadow-[4px_4px_0px_rgba(168,85,247,1)] secret:shadow-[4px_4px_0px_rgba(28,248,93,1)] secret:rounded-none transition-transform hover:-translate-y-1 cursor-default">
           <Users className="w-10 h-10 text-blue-900 dark:text-[#a855f7] secret:text-[#1cf85d] mr-4" />
@@ -316,7 +316,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* --- Hírek Szekció Cím --- */}
+      {/* --- News heading --- */}
       <div className="flex items-center space-x-3 mb-8 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-4">
         <Megaphone className="w-8 h-8 text-blue-700 dark:text-[#c084fc] secret:text-[#1cf85d] drop-shadow-[2px_2px_0px_#000] dark:drop-shadow-none secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
         <h2 className="text-3xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase tracking-wide">
@@ -324,7 +324,7 @@ export default function HomePage() {
         </h2>
       </div>
 
-      {/* --- Hírek Grid--- */}
+      {/* --- News grid --- */}
       <div className="w-full">
         {loading ? (
           <div className="flex justify-center items-center h-40">
@@ -393,7 +393,7 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* --- Felugró Modal --- */}
+      {/* --- Modal --- */}
       {selectedNews && (
         <div className="fixed inset-0 bg-black/60 dark:bg-black/80 flex items-center justify-center z-50 p-4 md:p-10 backdrop-blur-sm">
           <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-5xl p-0 relative shadow-[10px_10px_0px_#020617] dark:shadow-[0_0_50px_rgba(168,85,247,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.4)] flex flex-col md:flex-row max-h-full md:max-h-[85vh] overflow-hidden transition-colors">
@@ -412,7 +412,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* --- Modal Tartalom --- */}
+            {/* --- Modal content --- */}
             <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar flex-1 relative">
               <h1 className="text-3xl md:text-5xl font-bold text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 secret:font-mono uppercase leading-tight pr-10">
                 {selectedNews.title}

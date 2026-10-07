@@ -10,6 +10,7 @@ export default function ForgotPasswordPage() {
     const [success, setSuccess] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
+    {/* --- Submit --- */}
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -70,6 +71,7 @@ export default function ForgotPasswordPage() {
                     {t('forgot.intro')}
                 </p>
 
+                {/* --- Form --- */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-800 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('forgot.email')}</label>
@@ -91,6 +93,7 @@ export default function ForgotPasswordPage() {
                     </button>
                 </form>
 
+                {/* --- Back --- */}
                 <div className="mt-6 text-center">
                     <Link to="/login" className="text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] font-black hover:underline hover:text-black dark:hover:text-[#e879f9] secret:hover:text-white transition-colors secret:font-mono uppercase">
                         {t('forgot.backToLogin')}

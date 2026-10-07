@@ -15,6 +15,7 @@ export default function SecretPage() {
     const [isLoadingNote, setIsLoadingNote] = useState(false);
     const [isSavingNote, setIsSavingNote] = useState(false);
 
+    {/* --- User --- */}
     useEffect(() => {
         fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false, retryOn401: false })
             .then(res => res.ok ? res.json() : null)
@@ -30,6 +31,7 @@ export default function SecretPage() {
         window.dispatchEvent(new Event('triggerLogoffEffect'));
     };
 
+    {/* --- Notes --- */}
     const openNotes = async () => {
         setShowNotes(true);
         setIsLoadingNote(true);
@@ -139,17 +141,17 @@ export default function SecretPage() {
     return (
         <main className="min-h-[calc(100vh-80px)] bg-transparent text-[#1cf85d] font-mono p-8 relative flex flex-col items-center justify-center selection:bg-[#1cf85d] selection:text-black z-20">
 
-            {/* --- Terminál tartalom --- */}
+            {/* --- Terminal --- */}
             <div className="w-full max-w-4xl z-20 relative text-lg md:text-xl leading-relaxed [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
 
-                {/* --- Fejléc --- */}
+                {/* --- Header --- */}
                 <div className="text-center mb-8">
                     <p className="w-full">{renderText(text1)}</p>
                     <p className="w-full">{renderText(text2)}</p>
                     <p className="w-full">{renderText(text3)}</p>
                 </div>
 
-                {/* --- Alfejléc --- */}
+                {/* --- Subheader --- */}
                 <div className="mb-6">
                     <p className="w-full">{renderText(text4)}</p>
                     <p className="w-full">{renderText(text5)}</p>
@@ -157,7 +159,7 @@ export default function SecretPage() {
                     <p className="w-full">{renderText(text6)}</p>
                 </div>
 
-                {/* --- Log adatok --- */}
+                {/* --- Log data --- */}
                 <div className="mb-6 space-y-1">
                     <p className="w-full">{renderText(text7)}</p>
                     <p className="w-full">{renderText(text8)}</p>
@@ -165,7 +167,7 @@ export default function SecretPage() {
                     <p className="w-full">{renderText(text10)}</p>
                 </div>
 
-                {/* --- Interaktív rész --- */}
+                {/* --- Interactive --- */}
                 <div className="mt-8 space-y-2">
                     <div className="pt-6 flex flex-col space-y-2">
                         <button
@@ -191,7 +193,7 @@ export default function SecretPage() {
                 </div>
             </div>
 
-            {/* --- Jegyzet Modal --- */}
+            {/* --- Notes modal --- */}
             {showNotes && (
                 <div
                     className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"

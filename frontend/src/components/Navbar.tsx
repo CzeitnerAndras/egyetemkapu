@@ -24,6 +24,7 @@ export default function Navbar() {
   const [navOverflow, setNavOverflow] = useState({ left: false, right: false });
   const navigate = useNavigate();
 
+  {/* --- Scroll overflow --- */}
   const updateNavOverflow = useCallback(() => {
     const el = navScrollRef.current;
     if (!el) {
@@ -68,6 +69,7 @@ export default function Navbar() {
     };
   }, [updateNavOverflow, language]);
 
+  {/* --- User --- */}
   const loadCurrentUser = useCallback(async () => {
     try {
       const res = await fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false });
@@ -142,6 +144,7 @@ export default function Navbar() {
     return () => window.removeEventListener('authChanged', loadCurrentUser);
   }, [loadCurrentUser]);
 
+  {/* --- Theme / easter egg --- */}
   const handleThemeToggle = () => {
     clickCountRef.current = (clickCountRef.current || 0) + 1;
 
@@ -177,6 +180,7 @@ export default function Navbar() {
     }
   };
 
+  {/* --- Secret effect --- */}
   const triggerSecretEffect = () => {
     setIsMenuOpen(false);
     setIsProfileMenuOpen(false);
@@ -263,6 +267,7 @@ export default function Navbar() {
     }
   };
 
+  {/* --- Logout --- */}
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', {
@@ -338,6 +343,7 @@ export default function Navbar() {
     }
   };
 
+  {/* --- Pages --- */}
   const pageLinks = [
     { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
     { to: '/ai', label: t('nav.ai'), icon: Bot },
@@ -352,6 +358,7 @@ export default function Navbar() {
 
   return (
     <>
+      {/* --- Nav --- */}
       <nav ref={navRef} className="bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
 
         <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group shrink-0">
@@ -391,7 +398,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* --- Jobb oldal: Ikonok --- */}
+        {/* --- Right icons --- */}
         <div className="flex items-center space-x-2 sm:space-x-4 shrink-0 ml-auto">
 
           <button
@@ -419,7 +426,7 @@ export default function Navbar() {
           />
         </div>
 
-        {/* --- Fő Dropdown Menü --- */}
+        {/* --- Main dropdown --- */}
         {isMenuOpen && (
           <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#020617] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-[60] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
@@ -489,7 +496,7 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* --- Profil Dropdown Menü --- */}
+        {/* --- Profile dropdown --- */}
         {isProfileMenuOpen && (
           <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-56 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#1e3a8a] dark:shadow-[0_10px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-50 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
@@ -516,12 +523,12 @@ export default function Navbar() {
 
       </nav>
 
-      {/* --- Teljes képernyős TV effekt --- */}
+      {/* --- Fullscreen TV effect --- */}
       {isAnimating && (
         <div className={`crt-overlay ${crtClass}`}></div>
       )}
 
-      {/* --- Végleges Fatal Error Képernyő --- */}
+      {/* --- Fatal error screen --- */}
       {isFatalError && (
         <div className="fixed inset-0 bg-[#0a1a0f] z-[99990] flex flex-col items-center justify-center text-[#1cf85d] font-mono p-6 text-center selection:bg-[#1cf85d] selection:text-black">
 

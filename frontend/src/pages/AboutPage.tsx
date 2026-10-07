@@ -19,7 +19,7 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                {/* --- BAL FELSŐ--- */}
+                {/* --- Top left --- */}
                 <section className="lg:col-span-2 flex flex-col bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_#020617] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <GraduationCap className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -31,7 +31,7 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                {/* --- JOBB FELSŐ --- */}
+                {/* --- Top right --- */}
                 <section className="lg:col-span-1 flex flex-col bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md secret:rounded-none transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_#1e3a8a] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <User className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -46,7 +46,7 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                {/* --- BAL ALSÓ --- */}
+                {/* --- Bottom left --- */}
                 <section className="lg:col-span-2 flex flex-col bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md secret:rounded-none transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_#1e3a8a] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <CheckCircle className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -61,7 +61,7 @@ export default function AboutPage() {
                     </ul>
                 </section>
 
-                {/* --- JOBB ALSÓ --- */}
+                {/* --- Bottom right --- */}
                 <section className="lg:col-span-1 flex flex-col bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_#020617] dark:hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Code className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />

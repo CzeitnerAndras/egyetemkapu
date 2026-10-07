@@ -23,6 +23,7 @@ export default function ReferencePage() {
         { id: 'HARVARD', label: 'Harvard' },
     ];
 
+    {/* --- Generate --- */}
     const handleGenerate = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -64,7 +65,7 @@ export default function ReferencePage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                {/* --- Űrlap --- */}
+                {/* --- Form --- */}
                 <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none">
                     <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <PenTool className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -138,7 +139,7 @@ export default function ReferencePage() {
                     </form>
                 </div>
 
-                {/* --- Eredmény --- */}
+                {/* --- Result --- */}
                 <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md flex flex-col secret:rounded-none">
                     <div className="flex items-center justify-between mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <div className="flex items-center">

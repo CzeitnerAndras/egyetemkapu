@@ -34,7 +34,7 @@ export default function CalendarPage() {
     const [isTimeOpen, setIsTimeOpen] = useState(false);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-    {/* --- Adatok lekérése JWT tokennel --- */ }
+    {/* --- Load tasks --- */}
     useEffect(() => {
         fetchWithAuth('/api/tasks', {}, { redirectOnAuthFailure: false, retryOn401: false })
             .then(res => {
@@ -55,7 +55,7 @@ export default function CalendarPage() {
             });
     }, []);
 
-    {/* --- Naptár logikák --- */ }
+    {/* --- Calendar logic --- */}
     const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
     const getFirstDayOfMonth = (year: number, month: number) => {
         let day = new Date(year, month, 1).getDay();
@@ -79,7 +79,7 @@ export default function CalendarPage() {
     const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
 
-    {/* --- Dátum formázó segédek --- */ }
+    {/* --- Date helpers --- */}
     const clampPingHours = (hours: number) => {
         if (!Number.isFinite(hours) || hours < 1) return 24;
         return Math.min(168, Math.floor(hours));
@@ -110,7 +110,7 @@ export default function CalendarPage() {
         return tasks.some(task => isSameDay(new Date(task.deadline), checkDate));
     };
 
-    {/* --- Mentés JWT tokennel --- */ }
+    {/* --- Save --- */}
     const handleSaveTask = (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
@@ -154,7 +154,7 @@ export default function CalendarPage() {
             });
     };
 
-    {/* --- Törlés JWT tokennel --- */ }
+    {/* --- Delete --- */}
     const handleDeleteTask = (id: number) => {
         fetchWithAuth(`/api/tasks/${id}`, { method: 'DELETE' }, { redirectOnAuthFailure: false })
             .then(res => {
@@ -177,7 +177,7 @@ export default function CalendarPage() {
     return (
         <PageShell className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-stretch">
 
-            {/* --- BAL OLDAL: NAPTÁR --- */}
+            {/* --- Left: calendar --- */}
             <div className="lg:col-span-2 flex flex-col h-full border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm">
                 <div className="bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center justify-between border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10 text-white dark:text-white secret:text-[#1cf85d]">
                     <button onClick={prevMonth} className="p-2 hover:bg-white/20 secret:hover:bg-[#1cf85d] secret:hover:text-black rounded-full secret:rounded-none transition-colors cursor-pointer">
@@ -245,7 +245,7 @@ export default function CalendarPage() {
                 </div>
             </div>
 
-            {/* --- JOBB OLDAL: TENNIVALÓK ÉS ŰRLAP --- */}
+            {/* --- Right: tasks and form --- */}
             <div className="lg:col-span-1 flex flex-col space-y-4 h-full">
                 <div className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[6px_6px_0px_#020617] dark:shadow-[0_0_20px_rgba(168,85,247,0.15)] flex flex-col flex-1 min-h-[260px]">
                     <div className="bg-blue-500 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
@@ -292,7 +292,7 @@ export default function CalendarPage() {
                     </div>
                 </div>
 
-                {/* --- Új teendő hozzáadása --- */}
+                {/* --- New task --- */}
                 <form onSubmit={handleSaveTask} className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[6px_6px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] flex flex-col">
                     <div className="bg-blue-900 dark:bg-[#3b0764] secret:bg-[#1cf85d] text-white dark:text-white secret:text-black p-2 font-bold text-center border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] uppercase secret:font-mono">
                         {t('cal.newEntry')}
@@ -325,7 +325,7 @@ export default function CalendarPage() {
                                 />
                             </div>
 
-                            {/* --- Időválasztó --- */}
+                            {/* --- Time picker --- */}
                             <div className={`flex flex-col w-1/3 relative ${isTimeOpen ? 'z-50' : 'z-10'}`}>
                                 <label className="text-xs font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] mb-1 uppercase secret:font-mono">{t('cal.time')}</label>
                                 <button
@@ -342,7 +342,7 @@ export default function CalendarPage() {
                                         <div className="fixed inset-0 z-40" onClick={() => setIsTimeOpen(false)}></div>
                                         <div className="absolute top-full mt-1 right-0 w-48 bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-lg z-50 flex flex-col">
                                             <div className="flex h-40 border-b-4 border-black dark:border-gray-600 secret:border-[#1cf85d]">
-                                                {/* --- Óra --- */}
+                                                {/* --- Hour --- */}
                                                 <div className="flex-1 overflow-y-auto custom-scrollbar border-r-4 border-black dark:border-gray-600 secret:border-[#1cf85d]">
                                                     {Array.from({ length: 24 }).map((_, i) => {
                                                         const h = i.toString().padStart(2, '0');
@@ -359,7 +359,7 @@ export default function CalendarPage() {
                                                         );
                                                     })}
                                                 </div>
-                                                {/* --- Perc --- */}
+                                                {/* --- Minute --- */}
                                                 <div className="flex-1 overflow-y-auto custom-scrollbar">
                                                     {Array.from({ length: 60 }).map((_, i) => {
                                                         const m = i.toString().padStart(2, '0');
@@ -390,7 +390,7 @@ export default function CalendarPage() {
                             </div>
                         </div>
 
-                        {/* --- Discord ping beállítások --- */}
+                        {/* --- Discord ping --- */}
                         <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-indigo-900 secret:border-[#1cf85d] space-y-1 mt-1">
                             <p className="text-xs font-bold text-blue-900 dark:text-indigo-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
                                 <Bell className="w-3.5 h-3.5 mr-1" /> {t('cal.discord')}
@@ -415,7 +415,7 @@ export default function CalendarPage() {
                             </div>
                         </div>
 
-                        {/* --- Telegram ping beállítások --- */}
+                        {/* --- Telegram ping --- */}
                         <div className="bg-white dark:bg-[#1a1a1a] secret:bg-transparent p-2 border-2 border-black dark:border-cyan-900 secret:border-[#1cf85d] space-y-1 mt-1">
                             <p className="text-xs font-bold text-blue-900 dark:text-cyan-400 secret:text-[#1cf85d] flex items-center mb-1.5 uppercase secret:font-mono">
                                 <Send className="w-3.5 h-3.5 mr-1" /> Telegram

@@ -16,6 +16,7 @@ export default function RegistrationPage() {
 
     const navigate = useNavigate();
 
+    {/* --- Register --- */}
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -26,13 +27,7 @@ export default function RegistrationPage() {
             return;
         }
 
-        {/* 
-                    --- Regex cuccok --- 
-            (?=.*[A-Z]) - Legalább egy nagybetű
-            (?=.*\d) - Legalább egy szám
-            (?=.*[?,\-+!@#$%^&*]) - Legalább egy szimbólum
-            .{8,} - Legalább 8 karakter hosszú
-        */}
+        {/* --- Password regex --- */}
         const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[?,\-+!@#$%^&*]).{8,}$/;
 
         if (!passwordRegex.test(password)) {
@@ -68,14 +63,14 @@ export default function RegistrationPage() {
             </AuthHeader>
 
             <div className="p-6 sm:p-8">
-                {/* --- Hibaüzenet --- */}
+                {/* --- Error --- */}
                 {error && (
                     <div className="bg-red-400 dark:bg-red-900/40 secret:bg-black border-4 border-black dark:border-red-500 secret:border-[#1cf85d] text-black dark:text-red-300 secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
                         &gt; {t('register.errorPrefix')}: {error}
                     </div>
                 )}
 
-                {/* --- Sikeres regisztráció üzenet --- */}
+                {/* --- Success --- */}
                 {success && (
                     <div className="bg-green-400 dark:bg-green-900/40 secret:bg-black border-4 border-black dark:border-green-500 secret:border-[#1cf85d] text-black dark:text-green-300 secret:text-[#1cf85d] p-3 mb-6 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:shadow-none secret:font-mono uppercase">
                         &gt; {t('register.systemPrefix')}: {success}
@@ -83,7 +78,7 @@ export default function RegistrationPage() {
                 )}
 
                 <form onSubmit={handleRegister} className="space-y-4">
-                    {/* --- Felhasználónév --- */}
+                    {/* --- Username --- */}
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('register.username')}</label>
                         <input
@@ -92,7 +87,7 @@ export default function RegistrationPage() {
                         />
                     </div>
 
-                    {/* --- E-mail cím --- */}
+                    {/* --- Email --- */}
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">E-mail cím</label>
                         <input
@@ -101,7 +96,7 @@ export default function RegistrationPage() {
                         />
                     </div>
 
-                    {/* --- Jelszó --- */}
+                    {/* --- Password --- */}
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase flex items-center">
                             {t('register.password')}
@@ -133,7 +128,7 @@ export default function RegistrationPage() {
                         />
                     </div>
 
-                    {/* --- Jelszó újra --- */}
+                    {/* --- Confirm password --- */}
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">Jelszó megint</label>
                         <input

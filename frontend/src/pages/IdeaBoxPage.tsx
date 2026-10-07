@@ -11,6 +11,7 @@ export default function IdeaBoxPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+    {/* --- Submit --- */}
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -45,6 +46,7 @@ export default function IdeaBoxPage() {
         <PageShell>
             <PageHeader icon={Mail}>{t('idea.title')}</PageHeader>
 
+            {/* --- Form --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] secret:rounded-none flex flex-col">
                 <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                     <Lightbulb className="w-6 h-6 mr-2 text-black dark:text-white secret:text-[#1cf85d]" />

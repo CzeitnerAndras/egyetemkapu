@@ -11,6 +11,7 @@ export default function LoginPage() {
 
     const navigate = useNavigate();
 
+    {/* --- Login --- */}
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -74,7 +75,7 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    {/* --- Jelszó --- */}
+                    {/* --- Password --- */}
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-800 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('login.password')}</label>
                         <input
@@ -86,7 +87,7 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    {/* --- Bejelentkezés gomb --- */}
+                    {/* --- Login button --- */}
                     <button
                         type="submit"
                         className="w-full bg-blue-500 dark:bg-gradient-to-r dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] font-bold py-3 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#000] shadow-[4px_4px_0px_#000] dark:shadow-md secret:hover:shadow-[0_0_15px_rgba(28,248,93,0.5)] secret:hover:bg-[#1cf85d] secret:hover:text-black transition-all duration-300 border-4 border-black dark:border-transparent secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
@@ -95,7 +96,7 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                {/* --- Átirányítás a regisztrációra --- */}
+                {/* --- Register link --- */}
                 <div className="mt-6 text-center">
                     <span className="text-gray-800 dark:text-gray-400 secret:text-[#1cf85d]/70 font-bold transition-colors secret:font-mono uppercase">{t('login.noAccount')}</span>
                     <Link to="/register" className="text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] font-black hover:underline hover:text-black dark:hover:text-[#e879f9] secret:hover:text-white transition-colors secret:font-mono uppercase ml-2">

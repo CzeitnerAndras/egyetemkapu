@@ -18,6 +18,7 @@ export default function ResetPasswordPage() {
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
 
+    {/* --- New password --- */}
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
@@ -83,6 +84,7 @@ export default function ResetPasswordPage() {
                     </div>
                 )}
 
+                {/* --- Missing token --- */}
                 {!token ? (
                     <>
                         <p className="text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-bold text-sm mb-6 secret:font-mono">
@@ -99,6 +101,7 @@ export default function ResetPasswordPage() {
                         <p className="text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-bold text-sm mb-6 secret:font-mono">
                             {t('reset.intro')}
                         </p>
+                        {/* --- Form --- */}
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="flex flex-col group">
                                 <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-800 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('reset.newPassword')}</label>

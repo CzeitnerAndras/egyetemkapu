@@ -11,6 +11,7 @@ export default function SettingsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+    {/* --- Load --- */}
     useEffect(() => {
         const fetchSettings = async () => {
             try {
@@ -28,6 +29,7 @@ export default function SettingsPage() {
         fetchSettings();
     }, []);
 
+    {/* --- Save --- */}
     const handleSaveSettings = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -61,7 +63,7 @@ export default function SettingsPage() {
         <PageShell>
             <PageHeader icon={Settings}>{t('settings.title')}</PageHeader>
 
-            {/* --- Értesítési Beállítások Szekció --- */}
+            {/* --- Notification settings --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] secret:rounded-none flex flex-col">
 
                 <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
@@ -85,7 +87,7 @@ export default function SettingsPage() {
 
                 <form onSubmit={handleSaveSettings} className="space-y-8">
 
-                    {/* --- Discord Webhook --- */}
+                    {/* --- Discord webhook --- */}
                     <div className="bg-white dark:bg-[#121212] secret:bg-transparent p-5 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[4px_4px_0px_#000] dark:shadow-none">
                         <div className="flex flex-col group">
                             <label className="flex items-center text-base font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
@@ -104,7 +106,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    {/* --- Telegram Chat ID --- */}
+                    {/* --- Telegram chat ID --- */}
                     <div className="bg-white dark:bg-[#121212] secret:bg-transparent p-5 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[4px_4px_0px_#000] dark:shadow-none">
                         <div className="flex flex-col group">
                             <label className="flex items-center text-base font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-2 group-focus-within:text-blue-800 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
@@ -123,7 +125,7 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
-                    {/* --- Mentés Gomb --- */}
+                    {/* --- Save button --- */}
                     <div className="pt-4">
                         <button
                             type="submit"

@@ -1,6 +1,7 @@
 export type Lang = 'hu' | 'en';
 
 export const translations: Record<Lang, Record<string, string>> = {
+  // --- Hungarian ---
   hu: {
     'nav.calendar': 'Naptár',
     'nav.ai': 'AI Asszisztens',
@@ -474,6 +475,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'admin.newsSuccess': 'Hír sikeresen közzétéve!',
     'admin.newsError': 'Hiba történt a hír feltöltésekor.',
   },
+  // --- English ---
   en: {
     'nav.calendar': 'Calendar',
     'nav.ai': 'AI Assistant',

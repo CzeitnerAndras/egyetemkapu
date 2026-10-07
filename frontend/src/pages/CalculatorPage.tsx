@@ -60,6 +60,7 @@ export default function CalculatorPage() {
         setSubjects(subjects.map(s => s.id === id ? { ...s, [field]: value } : s));
     };
 
+    {/* --- Weighted average --- */}
     const handleCalculateAverage = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -93,6 +94,7 @@ export default function CalculatorPage() {
         }
     };
 
+    {/* --- Smart calculator --- */}
     const handleCalculateMath = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!expression.trim()) return;
@@ -127,10 +129,10 @@ export default function CalculatorPage() {
 
     return (
         <PageShell className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 lg:items-start">
-            {/* --- BAL OLDAL: SÚLYOZOTT ÁTLAG / KREDITINDEX --- */}
+            {/* --- Left: weighted average --- */}
             <div className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm secret:rounded-none h-fit">
 
-                {/* --- Fejléc --- */}
+                {/* --- Header --- */}
                 <div className="bg-blue-500 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <Sigma className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
@@ -141,7 +143,7 @@ export default function CalculatorPage() {
                 <div className="p-6 flex flex-col">
                     <form onSubmit={handleCalculateAverage} className="flex flex-col">
 
-                        {/* --- Tárgyak listája --- */}
+                        {/* --- Subjects --- */}
                         <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar w-full">
                             {subjects.map((subject, index) => (
                                 <div key={subject.id} className="flex flex-col sm:flex-row w-full min-w-0 gap-2 sm:space-x-2 sm:items-center bg-white dark:bg-[#121212] secret:bg-transparent p-2 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#1e3a8a] dark:hover:shadow-md transition-shadow">
@@ -214,7 +216,7 @@ export default function CalculatorPage() {
                         </div>
                     </form>
 
-                    {/* --- Eredmény --- */}
+                    {/* --- Result --- */}
                     {averageResult !== null && (
                         <div className="mt-6 p-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-black flex flex-col items-center justify-center shadow-[6px_6px_0px_#1e3a8a] dark:shadow-inner animate-[fadeIn_0.5s_ease-out]">
                             <span className="text-black dark:text-gray-400 secret:text-[#1cf85d]/70 font-bold uppercase tracking-wider text-sm secret:font-mono">
@@ -228,10 +230,10 @@ export default function CalculatorPage() {
                 </div>
             </div>
 
-            {/* --- JOBB OLDAL: OKOS SZÁMOLÓGÉP --- */}
+            {/* --- Right: smart calculator --- */}
             <div className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#020617] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 rounded-sm secret:rounded-none h-fit w-full">
 
-                {/* --- Fejléc --- */}
+                {/* --- Header --- */}
                 <div className="bg-blue-900 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <FunctionSquare className="w-8 h-8 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
@@ -242,7 +244,7 @@ export default function CalculatorPage() {
                 <div className="p-5.5 flex flex-col">
                     <form onSubmit={handleCalculateMath} className="flex flex-col space-y-5">
 
-                        {/* --- Művelet kiválasztása --- */}
+                        {/* --- Operation --- */}
                         <div className={`flex flex-col group relative ${isOpOpen ? 'z-50' : 'z-10'}`}>
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
                                 {t('calc.operation')}
@@ -279,7 +281,7 @@ export default function CalculatorPage() {
                             )}
                         </div>
 
-                        {/* --- Kifejezés megadása --- */}
+                        {/* --- Expression --- */}
                         <div className="flex flex-col group">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">
                                 {t('calc.expression')}
@@ -305,14 +307,14 @@ export default function CalculatorPage() {
                         </div>
                     </form>
 
-                    {/* --- Hibaüzenet --- */}
+                    {/* --- Error --- */}
                     {mathError && (
                         <div className="mt-4 bg-blue-900 dark:bg-red-900/40 secret:bg-black border-4 border-black dark:border-red-500 secret:border-[#1cf85d] text-white dark:text-red-300 secret:text-[#1cf85d] p-4 font-bold text-sm transition-colors shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase">
                             &gt; {mathError}
                         </div>
                     )}
 
-                    {/* --- Eredmény --- */}
+                    {/* --- Result --- */}
                     {mathResult !== null && !mathError && (
                         <div className="mt-4 p-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#1e1e1e] secret:bg-black shadow-[6px_6px_0px_#020617] dark:shadow-inner animate-[fadeIn_0.5s_ease-out]">
                             <div className="flex flex-col">

@@ -35,6 +35,7 @@ function App() {
       <div className="min-h-screen overflow-x-clip bg-gradient-to-br from-blue-100 via-slate-50 to-blue-200 animate-gradient dark:from-[#121212] dark:via-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-[#031e08] secret:text-[#1cf85d] transition-colors duration-500">
         <Navbar />
 
+        {/* --- Routes --- */}
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />

@@ -15,6 +15,7 @@ export default function ProfilePage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const navigate = useNavigate();
 
+    {/* --- Load profile --- */}
     useEffect(() => {
         fetchWithAuth('/api/users/me', {}, { redirectOnAuthFailure: false })
             .then(res => {
@@ -50,6 +51,7 @@ export default function ProfilePage() {
         }, 5000);
     };
 
+    {/* --- Username --- */}
     const handleUsernameUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newUsername.trim()) return;
@@ -77,6 +79,7 @@ export default function ProfilePage() {
         }
     };
 
+    {/* --- Password --- */}
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -112,6 +115,7 @@ export default function ProfilePage() {
         }
     };
 
+    {/* --- Delete account --- */}
     const handleDeleteAccount = async () => {
         try {
             const response = await fetchWithAuth('/api/users/me', {
@@ -148,6 +152,7 @@ export default function ProfilePage() {
                 </div>
             )}
 
+            {/* --- Username --- */}
             <section className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300 overflow-hidden">
                 <div className="bg-blue-500 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <User className="w-6 h-6 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
@@ -174,6 +179,7 @@ export default function ProfilePage() {
                 </div>
             </section>
 
+            {/* --- Password --- */}
             <section className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#020617] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300 overflow-hidden">
                 <div className="bg-blue-900 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <Key className="w-6 h-6 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
@@ -209,6 +215,7 @@ export default function ProfilePage() {
                 </div>
             </section>
 
+            {/* --- Account --- */}
             <section className="flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.2)] secret:shadow-[0_0_20px_rgba(28,248,93,0.1)] rounded-sm secret:rounded-none transition-all duration-300 overflow-hidden">
                 <div className="bg-blue-500 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <AlertTriangle className="w-6 h-6 text-black dark:text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
@@ -228,6 +235,7 @@ export default function ProfilePage() {
                 </div>
             </section>
 
+            {/* --- Delete modal --- */}
             {isDeleteModalOpen && (
                 <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-red-600 secret:border-[#1cf85d] w-full max-w-md p-8 relative shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(220,38,38,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] flex flex-col items-center text-center rounded-sm secret:rounded-none">

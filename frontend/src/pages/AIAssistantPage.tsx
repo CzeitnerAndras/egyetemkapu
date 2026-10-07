@@ -57,6 +57,7 @@ export default function AIAssistantPage() {
         };
     }, []);
 
+    {/* --- Send message --- */}
     const handleSendMessage = async (e?: React.FormEvent, overrideText?: string) => {
         if (e) e.preventDefault();
 
@@ -126,10 +127,10 @@ export default function AIAssistantPage() {
     return (
         <PageShell variant="fill">
 
-            {/* --- Fő Konténer --- */}
+            {/* --- Main container --- */}
             <div className="flex-1 min-h-0 flex flex-col border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-slate-100 dark:bg-[#121212] secret:bg-transparent shadow-[8px_8px_0px_#020617] dark:shadow-[0_0_40px_rgba(168,85,247,0.25)] secret:shadow-[0_0_20px_rgba(28,248,93,0.2)] transition-all duration-300 overflow-hidden relative rounded-sm secret:rounded-none">
 
-                {/* --- Fejléc --- */}
+                {/* --- Header --- */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black p-4 flex items-center space-x-3 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors shadow-[4px_4px_0px_#000] dark:shadow-md z-10">
                     <Bot className="w-8 h-8 text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)]" />
                     <h1 className="text-2xl font-bold text-white secret:text-[#1cf85d] dark:drop-shadow-md secret:drop-shadow-[0_0_5px_rgba(28,248,93,0.8)] secret:font-mono uppercase">
@@ -137,7 +138,7 @@ export default function AIAssistantPage() {
                     </h1>
                 </div>
 
-                {/* --- Chat Ablak --- */}
+                {/* --- Chat --- */}
                 <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 bg-slate-100 dark:bg-gradient-to-b dark:from-[#121212] dark:to-[#1a1a1a] secret:bg-none secret:bg-transparent transition-colors custom-scrollbar">
                     {messages.map((msg) => (
                         <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}>
@@ -180,7 +181,7 @@ export default function AIAssistantPage() {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* --- Input Szekció --- */}
+                {/* --- Input --- */}
                 <div className="p-4 bg-slate-100 dark:bg-gradient-to-r dark:from-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-transparent border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors z-10 shadow-none dark:shadow-none">
                     <form onSubmit={handleSendMessage} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <input

@@ -9,6 +9,7 @@ const SHELL_CLASS: Record<PageShellVariant, string> = {
     auth: 'w-full px-4 sm:px-6 lg:px-16 mx-auto mt-8 sm:mt-16 pb-12 relative z-20 flex justify-center',
 };
 
+{/* --- Page shell --- */}
 export function PageShell({
     children,
     className = '',
@@ -25,6 +26,7 @@ export function PageShell({
     );
 }
 
+{/* --- Page header --- */}
 export function PageHeader({
     icon: Icon,
     children,
@@ -52,6 +54,7 @@ const AUTH_SHADOW = {
     fuchsia: 'shadow-[8px_8px_0px_#020617] hover:shadow-[12px_12px_0px_#020617]',
 };
 
+{/* --- Auth card --- */}
 export function AuthCard({
     children,
     accent = 'cyan',
@@ -66,6 +69,7 @@ export function AuthCard({
     );
 }
 
+{/* --- Auth header --- */}
 export function AuthHeader({
     children,
     tone = 'fuchsia',

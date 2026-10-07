@@ -3,6 +3,7 @@ type AuthFetchOptions = {
     retryOn401?: boolean;
 };
 
+{/* --- Session --- */}
 export const clearSession = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
@@ -12,6 +13,7 @@ clearSession();
 
 let refreshPromise: Promise<boolean> | null = null;
 
+{/* --- Token refresh --- */}
 const refreshAccessToken = (): Promise<boolean> => {
     if (refreshPromise) return refreshPromise;
 
@@ -32,6 +34,7 @@ const refreshAccessToken = (): Promise<boolean> => {
     return pending;
 };
 
+{/* --- Auth fetch --- */}
 export const fetchWithAuth = async (
     url: string,
     options: RequestInit = {},

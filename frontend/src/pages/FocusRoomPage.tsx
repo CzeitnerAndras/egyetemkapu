@@ -41,7 +41,7 @@ export default function FocusRoomPage() {
     const [isSavingNote, setIsSavingNote] = useState(false);
     const [taskError, setTaskError] = useState('');
 
-    {/* --- Időzítő logikája --- */ }
+    {/* --- Timer --- */}
     useEffect(() => {
         let interval: ReturnType<typeof setInterval> | null = null;
         if (isActive && timeLeft > 0) {
@@ -63,9 +63,9 @@ export default function FocusRoomPage() {
         };
     }, [isActive, timeLeft, isFocusMode, t]);
 
-        {/* --- Feladatok és Jegyzet lekérése betöltéskor --- */ }
+    {/* --- Load on mount --- */}
     useEffect(() => {
-        {/* --- Feladatok lekérése --- */ }
+        {/* --- Load tasks --- */}
         const fetchTasks = async () => {
             try {
                 const res = await fetchWithAuth('/api/tasks', {}, { redirectOnAuthFailure: false });
@@ -80,7 +80,7 @@ export default function FocusRoomPage() {
             }
         };
 
-        {/* --- Jegyzet lekérése --- */ }
+        {/* --- Load notes --- */}
         const fetchNote = async () => {
             try {
                 const res = await fetchWithAuth('/api/notes', {}, { redirectOnAuthFailure: false });
@@ -119,7 +119,7 @@ export default function FocusRoomPage() {
         setTimeLeft(focus ? 25 * 60 : 5 * 60);
     };
 
-    {/* --- Backend: Feladat Hozzáadása --- */ }
+    {/* --- Add task --- */}
     const addTask = async (e: React.FormEvent) => {
         e.preventDefault();
         const title = newTaskTitle.trim();
@@ -167,7 +167,7 @@ export default function FocusRoomPage() {
         }
     };
 
-    {/* --- Backend: Feladat Kész --- */ }
+    {/* --- Complete task --- */}
     const toggleTask = async (id: number) => {
         const taskToUpdate = tasks.find(t => t.id === id);
         if (!taskToUpdate) return;
@@ -198,7 +198,7 @@ export default function FocusRoomPage() {
         }
     };
 
-    {/* --- Backend: Jegyzet Mentése --- */ }
+    {/* --- Save notes --- */}
     const saveNote = async () => {
         setIsSavingNote(true);
         try {
@@ -235,7 +235,7 @@ export default function FocusRoomPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                {/* --- Pomodoro Időzítő és Notes --- */}
+                {/* --- Pomodoro and notes --- */}
                 <div className="lg:col-span-1 flex flex-col space-y-6 lg:min-h-[500px]">
 
                     {/* --- Pomodoro --- */}
@@ -315,7 +315,7 @@ export default function FocusRoomPage() {
                     </div>
                 </div>
 
-                {/* --- Naptár Feladatai --- */}
+                {/* --- Calendar tasks --- */}
                 <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                         {t('focus.activeTasks')}
@@ -374,7 +374,7 @@ export default function FocusRoomPage() {
                     </form>
                 </div>
 
-                {/* --- Lo-Fi lejátszó --- */}
+                {/* --- Lo-fi player --- */}
                 <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Headphones className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />

@@ -24,6 +24,7 @@ export default function LinksPage() {
     const isEn = language === 'en';
     const l = (hu: string, en: string) => isEn ? en : hu;
 
+    {/* --- Data --- */}
     const universities = [
         { id: 'DE', name: l('Debreceni Egyetem (DE)', 'University of Debrecen (DE)') },
         { id: 'BME', name: l('Műegyetem (BME)', 'Budapest Univ. of Technology (BME)') },
@@ -450,7 +451,7 @@ export default function LinksPage() {
 
             <div className="flex flex-col lg:flex-row gap-8">
 
-                {/* --- Bal Oldal: Egyetemek Tabs --- */}
+                {/* --- University tabs --- */}
                 <div className="w-full lg:w-1/4 flex flex-col space-y-2">
                     {universities.map(uni => (
                         <button
@@ -467,7 +468,7 @@ export default function LinksPage() {
                     ))}
                 </div>
 
-                {/* --- Jobb Oldal: Linkek Kategóriánként --- */}
+                {/* --- Links by category --- */}
                 <div className="w-full lg:w-3/4 flex flex-col space-y-6">
                     {activeLinks.map((section, idx) => (
                         <div key={idx} className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md secret:rounded-none">

@@ -26,6 +26,7 @@ export function NoticeModal({
                 aria-labelledby="notice-modal-title"
                 className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg p-6 shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)]"
             >
+                {/* --- Header --- */}
                 <div className="flex items-start justify-between gap-3 mb-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-3">
                     <div className="flex items-center gap-3 min-w-0">
                         <AlertTriangle className="w-7 h-7 shrink-0 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -42,6 +43,7 @@ export function NoticeModal({
                         <X className="w-5 h-5" />
                     </button>
                 </div>
+                {/* --- Content --- */}
                 <div className="text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-medium text-base leading-relaxed secret:font-mono mb-6">
                     {children}
                 </div>

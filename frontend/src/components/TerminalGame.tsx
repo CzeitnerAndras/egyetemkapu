@@ -20,6 +20,7 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
     const [bootStep, setBootStep] = useState(0);
     const [bootStart, setBootStart] = useState(false);
 
+    {/* --- Boot --- */}
     useEffect(() => {
         const style = document.createElement('style');
         style.innerHTML = `nav { display: none !important; }`;
@@ -210,17 +211,17 @@ export default function TerminalHack({ onSuccess }: TerminalHackProps) {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
-                    {/* --- Bal --- */}
+                    {/* --- Left --- */}
                     <div className="flex flex-col text-sm md:text-lg">
                         {lines.slice(0, 16).map((line, i) => renderLine(line, i))}
                     </div>
 
-                    {/* --- Jobb --- */}
+                    {/* --- Right --- */}
                     <div className="flex flex-col text-sm md:text-lg">
                         {lines.slice(16, 32).map((line, i) => renderLine(line, i + 16))}
                     </div>
 
-                    {/* --- Előzmények és Terminál kimenet --- */}
+                    {/* --- History --- */}
                     <div className="flex flex-col flex-1 mt-4 lg:mt-0 self-end h-full justify-end text-sm md:text-lg min-h-[150px]">
                         {history.map((h, i) => (
                             <p key={i} className="mb-1">{h}</p>

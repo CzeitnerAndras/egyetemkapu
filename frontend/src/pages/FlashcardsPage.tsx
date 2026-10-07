@@ -58,6 +58,7 @@ export default function FlashcardsPage() {
         return res.json();
     };
 
+    {/* --- Load decks --- */}
     const loadDecks = async () => {
         try {
             const res = await fetchWithAuth('/api/flashcards/decks', {}, auth);
@@ -72,6 +73,7 @@ export default function FlashcardsPage() {
         }
     };
 
+    {/* --- Load cards --- */}
     const loadCards = async (deckId: number) => {
         try {
             const res = await fetchWithAuth(`/api/flashcards/decks/${deckId}/cards`, {}, auth);
@@ -119,6 +121,7 @@ export default function FlashcardsPage() {
         await loadCards(deckId);
     };
 
+    {/* --- New deck --- */}
     const createDeck = async (event: React.FormEvent) => {
         event.preventDefault();
         const name = deckName.trim();
@@ -143,6 +146,7 @@ export default function FlashcardsPage() {
         }
     };
 
+    {/* --- Delete deck --- */}
     const deleteDeck = async (deckId: number) => {
         if (!window.confirm(t('cards.confirmDeleteDeck'))) return;
         const res = await fetchWithAuth(`/api/flashcards/decks/${deckId}`, { method: 'DELETE' }, auth);
@@ -162,6 +166,7 @@ export default function FlashcardsPage() {
         await loadDecks();
     };
 
+    {/* --- Save card --- */}
     const saveCard = async (event: React.FormEvent) => {
         event.preventDefault();
         if (!selectedId) return;
@@ -211,6 +216,7 @@ export default function FlashcardsPage() {
         }
     };
 
+    {/* --- Review --- */}
     const startReview = async (deckId?: number) => {
         setError('');
         const url = deckId == null ? '/api/flashcards/due' : `/api/flashcards/due?deckId=${deckId}`;
@@ -277,6 +283,7 @@ export default function FlashcardsPage() {
                 <p className="font-bold text-black dark:text-gray-300 secret:text-[#1cf85d] secret:font-mono uppercase">{t('cards.loading')}</p>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* --- Decks --- */}
                     <section className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col">
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                             {t('cards.decks')}
@@ -340,6 +347,7 @@ export default function FlashcardsPage() {
                         </button>
                     </section>
 
+                    {/* --- Right panel --- */}
                     <section className="lg:col-span-2 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md secret:rounded-none">
                         {error && (
                             <p className="mb-4 font-bold text-red-600 dark:text-red-400 secret:text-[#1cf85d] secret:font-mono uppercase">{error}</p>
@@ -347,6 +355,7 @@ export default function FlashcardsPage() {
 
                         {reviewing ? (
                             <div>
+                                {/* --- Review view --- */}
                                 <div className="flex items-center justify-between border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4">
                                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
                                         {current ? current.deckName : t('cards.done')}
@@ -414,6 +423,7 @@ export default function FlashcardsPage() {
                                     </button>
                                 </div>
 
+                                {/* --- Cards --- */}
                                 {cards.length === 0 ? (
                                     <p className="mb-4 font-bold text-gray-500 secret:text-[#1cf85d]/60 secret:font-mono uppercase">{t('cards.noCards')}</p>
                                 ) : (
@@ -451,6 +461,7 @@ export default function FlashcardsPage() {
                                     </ul>
                                 )}
 
+                                {/* --- Card form --- */}
                                 <form onSubmit={saveCard} className="space-y-3">
                                     <div>
                                         <label htmlFor="card-front" className="block text-sm font-bold mb-1 secret:font-mono uppercase">{t('cards.front')}</label>

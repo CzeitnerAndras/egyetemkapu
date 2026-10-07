@@ -41,7 +41,7 @@ export default function FaqPage() {
         <PageShell>
             <PageHeader icon={HelpCircle}>{t('faq.title')}</PageHeader>
 
-            {/* --- Tartalom --- */}
+            {/* --- Content --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none">
 
                 <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
@@ -58,6 +58,7 @@ export default function FaqPage() {
                     </Link>
                 </p>
 
+                {/* --- Questions --- */}
                 <div className="space-y-4">
                     {FAQ_IDS.map((id) => (
                         <div

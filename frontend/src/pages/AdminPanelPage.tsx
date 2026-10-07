@@ -39,6 +39,7 @@ export default function AdminPanelPage() {
         fetchSuggestions();
     }, []);
 
+    {/* --- Documents --- */}
     const fetchPending = async () => {
         try {
             const res = await fetchWithAuth('/api/documents/admin/pending', {}, { redirectOnAuthFailure: false });
@@ -50,6 +51,7 @@ export default function AdminPanelPage() {
         }
     };
 
+    {/* --- Ideas --- */}
     const fetchSuggestions = async () => {
         try {
             const res = await fetchWithAuth('/api/suggestions', {}, { redirectOnAuthFailure: false });
@@ -61,6 +63,7 @@ export default function AdminPanelPage() {
         }
     };
 
+    {/* --- Approve --- */}
     const handleAction = async (id: number, action: 'approve' | 'reject') => {
         try {
             const res = await fetchWithAuth(`/api/documents/admin/${id}/${action}`, {
@@ -89,6 +92,7 @@ export default function AdminPanelPage() {
         }
     };
 
+    {/* --- Upload news --- */}
     const handleNewsSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsUploadingNews(true);
@@ -129,7 +133,7 @@ export default function AdminPanelPage() {
         <PageShell>
             <PageHeader icon={ShieldAlert}>{t('admin.title')}</PageHeader>
 
-            {/* --- ÚJ HÍR FELTÖLTÉSE --- */}
+            {/* --- New news --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#020617] dark:shadow-[0_0_30px_rgba(168,85,247,0.15)] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 mb-8 secret:rounded-none">
                 <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                     <Megaphone className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -202,7 +206,7 @@ export default function AdminPanelPage() {
                 </form>
             </div>
 
-            {/* --- VÁRAKOZÓ DOKUMENTUMOK --- */}
+            {/* --- Pending documents --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#1e3a8a] dark:shadow-[0_0_30px_rgba(168,85,247,0.15)] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 mb-8 secret:rounded-none">
                 <h2 className="flex items-center text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-6 secret:font-mono uppercase">
                     <FileText className="w-6 h-6 mr-2" />
@@ -241,7 +245,7 @@ export default function AdminPanelPage() {
                 )}
             </div>
 
-            {/* --- BEÉRKEZETT ÖTLETEK --- */}
+            {/* --- Incoming ideas --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#000] dark:shadow-[0_0_30px_rgba(168,85,247,0.15)] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 secret:rounded-none">
                 <div className="flex items-center mb-6 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                     <Lightbulb className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
