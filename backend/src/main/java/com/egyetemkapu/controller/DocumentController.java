@@ -4,6 +4,8 @@ import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.dto.DocumentResponseDto;
 import com.egyetemkapu.model.Document;
 import com.egyetemkapu.service.DocumentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/documents")
 public class DocumentController {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
 
     private final DocumentService documentService;
 
@@ -42,8 +46,11 @@ public class DocumentController {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             documentService.uploadDocument(file, title, description, category, username);
             return ResponseEntity.ok(Map.of("message", "Sikeres feltöltés! Az admin jóváhagyása után lesz látható."));
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Dokumentum feltöltése sikertelen", e);
+            return ResponseEntity.badRequest().body(Map.of("error", "A feltöltés nem sikerült."));
         }
     }
 
