@@ -391,6 +391,7 @@ export default function FocusRoomPage() {
                             title="lofi hip hop radio"
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            referrerPolicy="strict-origin-when-cross-origin"
                             allowFullScreen
                             className="absolute inset-0"
                         ></iframe>
