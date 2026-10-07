@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 final class FlyerLayout {
 
-    private static final Pattern SUBSET_PREFIX = Pattern.compile("^[A-Z]{6}\\+");
+    private static final Pattern SUBSET_PREFIX = Pattern.compile("^(?:[A-Z]{6}\\+)+");
     private static final Pattern PRICE = Pattern.compile("(?iu)\\d[\\d\\s.,/]*\\s*Ft\\b");
     private static final Pattern DISCOUNT = Pattern.compile("^[-+\u2013\u2014]?\\s*\\d{1,3}\\s*%$");
     private static final Pattern UNIT_ONLY = Pattern.compile(
@@ -77,6 +77,9 @@ final class FlyerLayout {
             StringBuilder name = new StringBuilder(current.text());
             for (int next = nextLine(candidates, taken, current, blockStyle); next >= 0;
                  next = nextLine(candidates, taken, current, blockStyle)) {
+                if (closesName(candidates.get(next))) {
+                    break;
+                }
                 taken[next] = true;
                 current = candidates.get(next);
                 name.append(' ').append(current.text());
@@ -118,6 +121,11 @@ final class FlyerLayout {
         String base = baseFont(font);
         int dash = base.indexOf('-');
         return dash > 0 ? base.substring(0, dash) : base;
+    }
+
+    private static boolean closesName(TextRun run) {
+        String text = run.text() == null ? "" : run.text().trim();
+        return text.endsWith("!") || text.endsWith("?");
     }
 
     private static boolean stacked(TextRun above, TextRun below) {

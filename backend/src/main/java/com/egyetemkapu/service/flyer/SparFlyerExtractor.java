@@ -147,12 +147,8 @@ public class SparFlyerExtractor extends GenericFlyerExtractor {
     }
 
     private static boolean sameFace(TextRun left, TextRun right) {
-        return baseFont(left.font()).equals(baseFont(right.font()))
+        return FlyerLayout.baseFont(left.font()).equals(FlyerLayout.baseFont(right.font()))
                 && Math.abs(left.fontSize() - right.fontSize()) <= 0.4f;
-    }
-
-    private static String baseFont(String font) {
-        return font == null ? "" : font.replaceFirst("^[A-Z]{6}\\+", "");
     }
 
     private static TextRun joinFragments(TextRun left, TextRun right) {
