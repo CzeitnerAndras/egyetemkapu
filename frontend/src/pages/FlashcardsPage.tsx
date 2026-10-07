@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Layers, Plus, Trash2, Pencil, RotateCcw, Check } from 'lucide-react';
+import { ChevronRight, Layers, Plus, Trash2, Pencil, X } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
 import { fetchWithAuth } from '../utils/authApi';
@@ -37,12 +37,12 @@ export default function FlashcardsPage() {
     const [saving, setSaving] = useState(false);
     const [reviewing, setReviewing] = useState(false);
     const [queue, setQueue] = useState<Card[]>([]);
+    const [index, setIndex] = useState(0);
     const [flipped, setFlipped] = useState(false);
-    const [rating, setRating] = useState(false);
 
     const selectedDeck = decks.find(deck => deck.id === selectedId) ?? null;
-    const current = queue[0];
-    const dueTotal = decks.reduce((sum, deck) => sum + deck.dueCount, 0);
+    const current = queue.length === 0 ? undefined : queue[index % queue.length];
+    const cardTotal = decks.reduce((sum, deck) => sum + deck.cardCount, 0);
 
     const readJson = async (res: Response, failureKey = 'cards.saveError') => {
         if (res.status === 401) {
@@ -219,12 +219,17 @@ export default function FlashcardsPage() {
     {/* --- Review --- */}
     const startReview = async (deckId?: number) => {
         setError('');
-        const url = deckId == null ? '/api/flashcards/due' : `/api/flashcards/due?deckId=${deckId}`;
+        const ids = deckId == null ? decks.map(deck => deck.id) : [deckId];
         try {
-            const res = await fetchWithAuth(url, {}, auth);
-            const data = await readJson(res, 'cards.loadError');
-            if (!Array.isArray(data)) return;
-            setQueue(data);
+            const session: Card[] = [];
+            for (const id of ids) {
+                const res = await fetchWithAuth(`/api/flashcards/decks/${id}/cards`, {}, auth);
+                const data = await readJson(res, 'cards.loadError');
+                if (!Array.isArray(data)) return;
+                session.push(...data);
+            }
+            setQueue(session);
+            setIndex(0);
             setFlipped(false);
             setReviewing(true);
         } catch {
@@ -232,45 +237,17 @@ export default function FlashcardsPage() {
         }
     };
 
-    const rateCard = async (nextRating: 'again' | 'good') => {
-        if (!current || rating) return;
-        setRating(true);
-        try {
-            const res = await fetchWithAuth(`/api/flashcards/cards/${current.id}/review`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rating: nextRating }),
-            }, auth);
-            if (res.status === 401) {
-                setNeedsLogin(true);
-                return;
-            }
-            if (!res.ok) {
-                setError(t('cards.reviewError'));
-                return;
-            }
-            const next = nextRating === 'good' ? queue.slice(1) : [...queue.slice(1), current];
-            setQueue(next);
-            setFlipped(false);
-            setError('');
-            if (next.length === 0) {
-                await loadDecks();
-            }
-        } catch {
-            setError(t('cards.reviewError'));
-        } finally {
-            setRating(false);
-        }
+    const showNext = () => {
+        if (queue.length === 0) return;
+        setFlipped(false);
+        setIndex(value => (value + 1) % queue.length);
     };
 
     const leaveReview = () => {
         setReviewing(false);
         setQueue([]);
+        setIndex(0);
         setFlipped(false);
-        loadDecks();
-        if (selectedId) {
-            loadCards(selectedId);
-        }
     };
 
     return (
@@ -324,7 +301,7 @@ export default function FlashcardsPage() {
                                             }`}
                                     >
                                         <span className="block">{deck.name}</span>
-                                        <span className="block text-xs uppercase mt-1">{t('cards.due', { count: deck.dueCount })}</span>
+                                        <span className="block text-xs uppercase mt-1">{t('cards.count', { count: deck.cardCount })}</span>
                                     </button>
                                     <button
                                         type="button"
@@ -343,7 +320,7 @@ export default function FlashcardsPage() {
                             onClick={() => startReview()}
                             className="mt-4 py-3 font-bold border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black cursor-pointer secret:font-mono uppercase shadow-[4px_4px_0px_#000] dark:shadow-none"
                         >
-                            {t('cards.reviewAll', { count: dueTotal })}
+                            {t('cards.reviewAll', { count: cardTotal })}
                         </button>
                     </section>
 
@@ -353,62 +330,7 @@ export default function FlashcardsPage() {
                             <p className="mb-4 font-bold text-red-600 dark:text-red-400 secret:text-[#1cf85d] secret:font-mono uppercase">{error}</p>
                         )}
 
-                        {reviewing ? (
-                            <div>
-                                {/* --- Review view --- */}
-                                <div className="flex items-center justify-between border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4">
-                                    <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
-                                        {current ? current.deckName : t('cards.done')}
-                                    </h2>
-                                    <button type="button" onClick={leaveReview} className="font-bold underline cursor-pointer secret:font-mono uppercase">
-                                        {t('cards.backToList')}
-                                    </button>
-                                </div>
-
-                                {!current ? (
-                                    <p className="font-bold text-black dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">{t('cards.noneDue')}</p>
-                                ) : (
-                                    <div>
-                                        <p className="text-sm font-bold uppercase mb-3 secret:font-mono">{t('cards.remaining', { count: queue.length })}</p>
-                                        <div className="min-h-40 border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black p-6 shadow-[4px_4px_0px_#000] dark:shadow-none mb-4">
-                                            <p className="text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{current.front}</p>
-                                            {flipped && (
-                                                <p className="mt-4 text-xl font-bold text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono">{current.back}</p>
-                                            )}
-                                        </div>
-                                        {!flipped ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => setFlipped(true)}
-                                                className="w-full py-3 font-bold border-4 border-black bg-blue-900 dark:bg-[#a855f7] dark:border-transparent dark:text-white secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
-                                            >
-                                                {t('cards.show')}
-                                            </button>
-                                        ) : (
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <button
-                                                    type="button"
-                                                    disabled={rating}
-                                                    onClick={() => rateCard('again')}
-                                                    className="py-3 font-bold border-4 border-black bg-white dark:bg-transparent dark:text-white secret:bg-transparent secret:text-[#1cf85d] secret:border-[#1cf85d] cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50"
-                                                >
-                                                    <RotateCcw className="w-5 h-5 mr-2" /> {t('cards.again')}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    disabled={rating}
-                                                    onClick={() => rateCard('good')}
-                                                    className="py-3 font-bold border-4 border-black bg-blue-500 dark:bg-green-600 dark:text-white dark:border-transparent secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer flex items-center justify-center secret:font-mono uppercase disabled:opacity-50"
-                                                >
-                                                    <Check className="w-5 h-5 mr-2" /> {t('cards.good')}
-                                                </button>
-                                            </div>
-                                        )}
-                                        <p className="mt-4 text-sm font-bold text-gray-700 dark:text-gray-300 secret:text-[#1cf85d]/70 secret:font-mono">{t('cards.schedule')}</p>
-                                    </div>
-                                )}
-                            </div>
-                        ) : !selectedDeck ? (
+                        {!selectedDeck ? (
                             <p className="font-bold text-black dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">{t('cards.pickDeck')}</p>
                         ) : (
                             <div>
@@ -419,7 +341,7 @@ export default function FlashcardsPage() {
                                         onClick={() => startReview(selectedDeck.id)}
                                         className="px-4 py-2 font-bold border-4 border-black bg-blue-500 dark:bg-[#a855f7] dark:text-white dark:border-[#a855f7] secret:bg-[#1cf85d] secret:text-black secret:border-[#1cf85d] cursor-pointer secret:font-mono uppercase"
                                     >
-                                        {t('cards.reviewDue', { count: selectedDeck.dueCount })}
+                                        {t('cards.reviewDue', { count: selectedDeck.cardCount })}
                                     </button>
                                 </div>
 
@@ -515,6 +437,92 @@ export default function FlashcardsPage() {
                             </div>
                         )}
                     </section>
+                </div>
+            )}
+
+            {reviewing && (
+                <div
+                    className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm"
+                    onClick={leaveReview}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="flashcard-review-title"
+                        className="flex items-center gap-3 sm:gap-5 w-full max-w-3xl"
+                        onClick={event => event.stopPropagation()}
+                        onKeyDown={event => {
+                            if (event.key === 'Escape') leaveReview();
+                            if (event.key === 'ArrowRight') {
+                                event.preventDefault();
+                                showNext();
+                            }
+                        }}
+                    >
+                        <div className="relative flex-1 min-w-0">
+                            <button
+                                type="button"
+                                onClick={leaveReview}
+                                aria-label={t('cards.close')}
+                                className="absolute -top-3 -right-3 z-10 p-2 bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+
+                            {!current ? (
+                                <p
+                                    id="flashcard-review-title"
+                                    className="bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-8 text-center font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono shadow-[8px_8px_0px_#020617] dark:shadow-md"
+                                >
+                                    {t('cards.noCards')}
+                                </p>
+                            ) : (
+                                <>
+                                    <p id="flashcard-review-title" className="sr-only">{current.deckName}</p>
+                                    <button
+                                        type="button"
+                                        autoFocus
+                                        aria-label={flipped ? current.back : current.front}
+                                        onClick={() => setFlipped(value => !value)}
+                                        className="block w-full text-left cursor-pointer [perspective:1200px]"
+                                    >
+                                        <span
+                                            className={`relative grid min-h-72 w-full transition-transform duration-500 [transform-style:preserve-3d] ${flipped ? '[transform:rotateY(180deg)]' : ''}`}
+                                        >
+                                            <span
+                                                aria-hidden={flipped}
+                                                className="col-start-1 row-start-1 flex min-h-72 flex-col items-center justify-center border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black p-8 shadow-[8px_8px_0px_#020617] dark:shadow-md [backface-visibility:hidden]"
+                                            >
+                                                <span className="mb-4 text-xs font-bold uppercase text-gray-500 secret:text-[#1cf85d]/60 secret:font-mono">{t('cards.front')}</span>
+                                                <span className="text-center text-2xl font-black text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{current.front}</span>
+                                            </span>
+                                            <span
+                                                aria-hidden={!flipped}
+                                                className="col-start-1 row-start-1 flex min-h-72 flex-col items-center justify-center border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-50 dark:bg-[#2b184a] secret:bg-black p-8 shadow-[8px_8px_0px_#1e3a8a] dark:shadow-md [transform:rotateY(180deg)] [backface-visibility:hidden]"
+                                            >
+                                                <span className="mb-4 text-xs font-bold uppercase text-blue-900 dark:text-[#c084fc] secret:text-[#1cf85d]/60 secret:font-mono">{t('cards.back')}</span>
+                                                <span className="text-center text-2xl font-black text-blue-950 dark:text-white secret:text-[#1cf85d] secret:font-mono">{current.back}</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                    <p className="mt-3 text-center text-sm font-bold uppercase secret:font-mono text-white">
+                                        {t('cards.progress', { current: (index % queue.length) + 1, total: queue.length })}
+                                    </p>
+                                </>
+                            )}
+                        </div>
+
+                        {current && (
+                            <button
+                                type="button"
+                                onClick={showNext}
+                                aria-label={t('cards.next')}
+                                className="shrink-0 w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none"
+                            >
+                                <ChevronRight className="w-8 h-8" />
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
         </PageShell>

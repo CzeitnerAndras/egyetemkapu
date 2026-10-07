@@ -31,7 +31,7 @@ test.describe('Egyetemkapu E2E - Kártyák', () => {
     await expect(page.getByText('A kártyákhoz be kell jelentkezned.')).toBeVisible();
   });
 
-  test('paklit és kártyát lehet felvenni, majd a tudom kiveszi a sorból', async ({ page }) => {
+  test('paklit és kártyát lehet felvenni, a kártya megfordul, és újra lehet kezdeni', async ({ page }) => {
     const decks: Deck[] = [];
     const cards: Card[] = [];
 
@@ -96,9 +96,15 @@ test.describe('Egyetemkapu E2E - Kártyák', () => {
     await expect(page.getByText('Mi a derivált?', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: 'Ismétlés (1)' }).click();
-    await page.getByRole('button', { name: 'Válasz mutatása' }).click();
-    await expect(page.getByText('2x')).toBeVisible();
-    await page.getByRole('button', { name: 'Tudom' }).click();
-    await expect(page.getByText(/Nincs esedékes kártya/)).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Mi a derivált?' }).click();
+    await expect(dialog.getByRole('button', { name: '2x' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Következő kérdés' }).click();
+    await expect(dialog.getByRole('button', { name: 'Mi a derivált?' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Bezárás' }).click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByRole('button', { name: 'Ismétlés (1)' }).click();
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Mi a derivált?' })).toBeVisible();
   });
 });
