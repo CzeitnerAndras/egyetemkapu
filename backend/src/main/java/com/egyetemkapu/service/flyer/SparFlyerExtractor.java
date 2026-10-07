@@ -40,7 +40,9 @@ public class SparFlyerExtractor extends GenericFlyerExtractor {
             }
         }
         return FlyerProductNames.fromBlocks(
-                FlyerLayout.nameBlocks(joinCurvedLabels(visible), SparFlyerExtractor::isNameLine), pageNumber);
+                FlyerLayout.nameBlocks(joinCurvedLabels(visible), SparFlyerExtractor::isNameLine,
+                        FlyerLayout::sameFamily),
+                pageNumber);
     }
 
     @Override

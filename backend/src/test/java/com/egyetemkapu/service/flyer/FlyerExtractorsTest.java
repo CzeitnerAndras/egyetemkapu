@@ -213,6 +213,24 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void sparExtractorKeepsTheProductLineAttachedToABrandSetInADifferentCut() {
+        SparFlyerExtractor extractor = new SparFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(20f, 70f, 60f, 11f, "Nescafé", "FBUMDI+Poppins-Bold", 11f),
+                new TextRun(20f, 82f, 90f, 11f, "Dolce Gusto", "FBUMDI+Poppins-Bold", 11f),
+                new TextRun(20f, 94f, 85f, 9f, "kávékapszula", "FJPMDI+Poppins-SemiBold", 9f),
+                new TextRun(380f, 70f, 90f, 11f, "Lindt Lindor", "FBUMDI+Poppins-Bold", 11f),
+                new TextRun(380f, 82f, 60f, 9f, "desszert", "FJPMDI+Poppins-SemiBold", 9f),
+                new TextRun(20f, 150f, 90f, 9f, "16 db/doboztól", "FJPMDI+Poppins-SemiBold", 9f));
+
+        List<String> found = names(extractor.extractFromLayout(runs, 7));
+
+        assertEquals(List.of("Nescafé Dolce Gusto kávékapszula", "Lindt Lindor desszert"), found, found.toString());
+        assertTrue(found.stream().noneMatch(name ->
+                name.equals("kávékapszula") || name.equals("desszert")), found.toString());
+    }
+
+    @Test
     void sparExtractorDropsBadgesAndKeepsTheTwoLetterBrand() {
         SparFlyerExtractor extractor = new SparFlyerExtractor(parser);
         List<TextRun> runs = List.of(
