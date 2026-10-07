@@ -2,6 +2,8 @@ package com.egyetemkapu.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.net.InetAddress;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -40,5 +42,24 @@ class FlyerUrlPolicyTest {
         assertNull(FlyerUrlPolicy.allowedOrNull("https://evil.example/x.jpg"));
         assertThrows(IllegalArgumentException.class,
                 () -> FlyerUrlPolicy.assertAllowed("https://169.254.169.254/latest/meta-data/"));
+    }
+
+    @Test
+    void rejectsPrivateAndLinkLocalAddressesAfterResolution() throws Exception {
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("127.0.0.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("10.1.2.3")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("172.16.0.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("192.168.1.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("169.254.169.254")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("100.64.0.1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("::1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("fc00::1")));
+        assertFalse(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("fe80::1")));
+        assertTrue(FlyerUrlPolicy.isPublicAddress(InetAddress.getByName("8.8.8.8")));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlyerUrlPolicy.assertResolvesToPublicAddress("https://127.0.0.1/latest/meta-data/"));
+        assertThrows(IllegalArgumentException.class,
+                () -> FlyerUrlPolicy.assertResolvesToPublicAddress("https://169.254.169.254/"));
+        assertDoesNotThrow(() -> FlyerUrlPolicy.assertResolvesToPublicAddress("https://8.8.8.8/dns"));
     }
 }
