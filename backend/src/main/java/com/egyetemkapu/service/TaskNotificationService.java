@@ -32,6 +32,7 @@ public class TaskNotificationService {
         this.clock = clock;
     }
 
+    // --- Deadline pings ---
     @Scheduled(cron = "0 * * * * *")
     public void checkDeadlinesAndPing() {
         LocalDateTime nowMinute = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MINUTES);

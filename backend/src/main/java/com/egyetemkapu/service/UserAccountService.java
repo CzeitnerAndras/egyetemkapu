@@ -66,6 +66,7 @@ public class UserAccountService {
     }
 
     @Transactional
+    // --- Delete ---
     public void deleteAccount(User user) {
         List<Document> documents = documentRepository.findByUploader(user);
         List<Path> filesToDelete = documents.stream()

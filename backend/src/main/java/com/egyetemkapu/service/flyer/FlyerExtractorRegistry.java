@@ -23,6 +23,7 @@ public class FlyerExtractorRegistry {
         );
     }
 
+    // --- Lookup ---
     public FlyerProductExtractor forStore(String store) {
         if (store == null || store.isBlank()) {
             return generic;

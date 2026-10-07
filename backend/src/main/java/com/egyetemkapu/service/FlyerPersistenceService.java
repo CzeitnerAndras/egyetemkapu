@@ -25,6 +25,7 @@ public class FlyerPersistenceService {
         this.flyerRepository = flyerRepository;
     }
 
+    // --- Load ---
     @Transactional(readOnly = true)
     public Flyer loadWithPages(Long id) {
         if (id == null) {
@@ -41,6 +42,7 @@ public class FlyerPersistenceService {
         }).orElse(null);
     }
 
+    // --- Save ---
     @Transactional
     public void replaceStore(String store, java.util.List<ParsedCatalog> catalogs, LocalDateTime synced) {
         if (catalogs == null || catalogs.isEmpty()) {

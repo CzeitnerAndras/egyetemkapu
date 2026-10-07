@@ -32,7 +32,7 @@ public class DocumentController {
         this.documentService = documentService;
     }
 
-    // --- FELHASZNÁLÓI VÉGPONTOK ---
+    // --- User endpoints ---
 
     @PostMapping("/upload")
     @LogAction("Új dokumentum feltöltése jóváhagyásra")
@@ -71,7 +71,7 @@ public class DocumentController {
         }
     }
 
-    // --- ADMIN VÉGPONTOK ---
+    // --- Admin endpoints ---
 
     @GetMapping("/admin/pending")
     public ResponseEntity<List<DocumentResponseDto>> getPendingDocuments() {

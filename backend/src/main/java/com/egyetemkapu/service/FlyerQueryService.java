@@ -41,6 +41,7 @@ public class FlyerQueryService {
         this.extractors = extractors;
     }
 
+    // --- List ---
     @Transactional
     public List<FlyerSummaryDto> list(String store) {
         refreshIfStale();
@@ -55,6 +56,7 @@ public class FlyerQueryService {
                 .toList();
     }
 
+    // --- Detail ---
     @Transactional
     public FlyerDetailDto get(Long id) {
         Flyer flyer = flyerRepository.findById(id)
@@ -68,6 +70,7 @@ public class FlyerQueryService {
         return FlyerDetailDto.from(flyer);
     }
 
+    // --- Search ---
     @Transactional
     public List<FlyerSearchHitDto> search(String query) {
         refreshIfStale();

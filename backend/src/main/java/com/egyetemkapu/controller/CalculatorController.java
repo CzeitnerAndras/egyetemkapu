@@ -23,12 +23,14 @@ public class CalculatorController {
         this.auditLogRepository = auditLogRepository;
     }
 
+    // --- Stats ---
     @GetMapping("/count")
     public ResponseEntity<Map<String, Object>> getSolvedCount() {
         long count = auditLogRepository.countByAction(CALCULATOR_ACTION);
         return ResponseEntity.ok(Map.of("count", count));
     }
 
+    // --- Calculate ---
     @GetMapping("/{operation}/{expression}")
     @LogAction(CALCULATOR_ACTION)
     public ResponseEntity<Map<String, Object>> calculateExternal(

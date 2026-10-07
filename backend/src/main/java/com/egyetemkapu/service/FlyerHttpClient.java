@@ -44,6 +44,7 @@ public class FlyerHttpClient {
         this.restTemplate = restTemplate;
     }
 
+    // --- Fetch ---
     public String getText(String url) {
         HttpHeaders headers = new HttpHeaders();
         boolean spar = sparHost(url);

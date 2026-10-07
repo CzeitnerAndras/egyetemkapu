@@ -37,6 +37,7 @@ public class FlashcardService {
         this.clock = clock;
     }
 
+    // --- Decks ---
     @Transactional(readOnly = true)
     public List<FlashcardDeckDto> listDecks(User user) {
         LocalDateTime now = now();
@@ -66,6 +67,7 @@ public class FlashcardService {
     }
 
     @Transactional(readOnly = true)
+    // --- Cards ---
     public List<FlashcardDto> listCards(User user, Long deckId) {
         FlashcardDeck deck = requireDeck(user, deckId);
         return cardRepository.findAllByDeckOrderByCreatedAtAsc(deck).stream()
@@ -99,6 +101,7 @@ public class FlashcardService {
     }
 
     @Transactional(readOnly = true)
+    // --- Review ---
     public List<FlashcardDto> dueCards(User user, Long deckId) {
         LocalDateTime now = now();
         List<Flashcard> cards = deckId == null

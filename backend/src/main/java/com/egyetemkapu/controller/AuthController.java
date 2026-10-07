@@ -63,6 +63,7 @@ public class AuthController {
         this.cookieSecure = cookieSecure;
     }
 
+    // --- Register ---
     @PostMapping("/register")
     @LogAction("Új felhasználó regisztrációja")
     @Transactional
@@ -99,6 +100,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", EmailVerificationService.ACCEPTED_MESSAGE));
     }
 
+    // --- Login ---
     @PostMapping("/login")
     @LogAction("Felhasználó bejelentkezés (Sikeres)")
     @Transactional
@@ -140,6 +142,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("ok", true));
     }
 
+    // --- Tokens ---
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String rawToken = AuthCookies.readRefresh(request);
@@ -164,6 +167,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Sikeres kijelentkezés!"));
     }
 
+    // --- Password reset ---
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
         passwordResetService.requestReset(request.get("email"));
@@ -181,6 +185,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", PasswordResetService.RESET_SUCCESS_MESSAGE));
     }
 
+    // --- Email verify ---
     @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestBody Map<String, String> request) {
         Optional<String> error = emailVerificationService.verify(request.get("token"));
@@ -190,6 +195,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", EmailVerificationService.VERIFIED_MESSAGE));
     }
 
+    // --- Lockout ---
     private ResponseEntity<Map<String, String>> unauthorized() {
         return ResponseEntity.status(401).body(Map.of("error", GENERIC_LOGIN_ERROR));
     }

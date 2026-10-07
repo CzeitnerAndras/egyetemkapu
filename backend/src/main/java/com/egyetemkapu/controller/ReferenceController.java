@@ -16,6 +16,7 @@ public class ReferenceController {
         this.referenceService = referenceService;
     }
 
+    // --- Generate ---
     @PostMapping("/generate")
     public Map<String, String> generate(@RequestBody ReferenceRequestDto request) {
         String formattedReference = referenceService.generateReference(request);

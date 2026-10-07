@@ -42,6 +42,7 @@ public class FlashcardController {
     public record ReviewRequest(String rating) {
     }
 
+    // --- Decks ---
     @GetMapping("/decks")
     public ResponseEntity<List<FlashcardDeckDto>> listDecks(Principal principal) {
         Optional<User> user = resolve(principal);
@@ -85,6 +86,7 @@ public class FlashcardController {
         return ResponseEntity.ok().build();
     }
 
+    // --- Cards ---
     @GetMapping("/decks/{id}/cards")
     public ResponseEntity<List<FlashcardDto>> listCards(@PathVariable Long id, Principal principal) {
         Optional<User> user = resolve(principal);
@@ -135,6 +137,7 @@ public class FlashcardController {
         return ResponseEntity.ok().build();
     }
 
+    // --- Review ---
     @GetMapping("/due")
     public ResponseEntity<List<FlashcardDto>> dueCards(
             @RequestParam(required = false) Long deckId,

@@ -55,6 +55,7 @@ public class UserController {
         return userRepository.findByUsername(username);
     }
 
+    // --- Presence ---
     @GetMapping("/count")
     public ResponseEntity<?> getActiveUserCount() {
         return ResponseEntity.ok(Map.of("count", activeUserService.countActive()));
@@ -67,6 +68,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of("count", activeUserService.countActive()));
     }
 
+    // --- Profile ---
     @GetMapping("/me")
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUserInfo() {
@@ -157,6 +159,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of("message", "Jelszó sikeresen frissítve!"));
     }
 
+    // --- Delete account ---
     @DeleteMapping("/me")
     @LogAction("Felhasználói fiók törlése")
     @Transactional

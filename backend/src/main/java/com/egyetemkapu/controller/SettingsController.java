@@ -27,6 +27,7 @@ public class SettingsController {
         this.userRepository = userRepository;
     }
 
+    // --- Load ---
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<?> getSettings(Principal principal) {
@@ -43,6 +44,7 @@ public class SettingsController {
         }
     }
 
+    // --- Save ---
     @PutMapping
     @LogAction("Értesítési beállítások módosítása")
     @Transactional

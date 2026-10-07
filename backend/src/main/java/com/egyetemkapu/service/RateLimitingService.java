@@ -14,6 +14,7 @@ public class RateLimitingService {
 
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
+    // --- Buckets ---
     public Bucket resolveBucket(String username) {
         return cache.computeIfAbsent(username, this::newBucket);
     }

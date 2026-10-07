@@ -18,6 +18,7 @@ public final class AuthCookies {
     private AuthCookies() {
     }
 
+    // --- Write ---
     public static void setAccess(HttpServletResponse response, String jwt, boolean secure) {
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie(jwt, ACCESS_TTL, secure).toString());
     }
@@ -35,6 +36,7 @@ public final class AuthCookies {
         clearSession(response, secure);
     }
 
+    // --- Read ---
     public static String readAccess(HttpServletRequest request) {
         return read(request, ACCESS);
     }

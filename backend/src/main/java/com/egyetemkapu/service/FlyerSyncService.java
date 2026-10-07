@@ -71,6 +71,7 @@ public class FlyerSyncService {
         this.clock = clock;
     }
 
+    // --- Sync ---
     @Scheduled(cron = "0 30 6 * * *", zone = "Europe/Budapest")
     public void scheduledSync() {
         syncAll();
@@ -99,6 +100,7 @@ public class FlyerSyncService {
         }
     }
 
+    // --- Stores ---
     public void syncAldi(LocalDate today) {
         try {
             String html = httpClient.getText("https://www.aldi.hu/online-akcios-ujsag");
@@ -320,6 +322,7 @@ public class FlyerSyncService {
         return text.toString();
     }
 
+    // --- Coop reread ---
     public boolean beginCoopReread(Flyer flyer) {
         if (flyer == null || flyer.getId() == null || !"coop".equals(flyer.getStore())) {
             return false;

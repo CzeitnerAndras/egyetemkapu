@@ -27,6 +27,7 @@ public class RefreshTokenService {
         this.userRepository = userRepository;
     }
 
+    // --- Create ---
     @Transactional
     public IssuedRefreshToken createRefreshToken(Long userId) {
         User user = userRepository.findById(userId)
@@ -62,6 +63,7 @@ public class RefreshTokenService {
         return token;
     }
 
+    // --- Rotate ---
     @Transactional
     public IssuedRefreshToken rotate(RefreshToken current) {
         verifyExpiration(current);

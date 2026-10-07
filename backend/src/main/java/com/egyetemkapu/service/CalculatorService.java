@@ -20,6 +20,7 @@ public class CalculatorService {
     }
 
     @SuppressWarnings("unchecked")
+    // --- Newton API ---
     public Map<String, Object> calculateComplex(String operation, String expression, String username) {
         Bucket bucket = rateLimitingService.resolveBucket("math_" + username);
 

@@ -11,6 +11,7 @@ public class TimeConfig {
 
     public static final ZoneId APP_ZONE = ZoneId.of("Europe/Budapest");
 
+    // --- Clock ---
     @Bean
     public Clock clock() {
         return Clock.system(APP_ZONE);

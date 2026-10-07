@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ReferenceService {
 
+    // --- Format ---
     public String generateReference(ReferenceRequestDto dto) {
         String author = dto.getAuthor() != null ? dto.getAuthor() : "Ismeretlen szerző";
         String title = dto.getTitle() != null ? dto.getTitle() : "Cím nélkül";

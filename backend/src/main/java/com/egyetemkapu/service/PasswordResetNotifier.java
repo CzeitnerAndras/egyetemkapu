@@ -41,6 +41,7 @@ public class PasswordResetNotifier {
         this.mailFrom = mailFrom;
     }
 
+    // --- Send ---
     public void sendResetLink(User user, String resetUrl) {
         send(user, resetUrl, MailKind.RESET);
     }

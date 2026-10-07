@@ -14,6 +14,7 @@ public final class FlashcardScheduler {
     public record NextReview(int intervalDays, LocalDateTime dueAt) {
     }
 
+    // --- Schedule ---
     public static NextReview schedule(int intervalDays, String rating, LocalDateTime now) {
         if (now == null) {
             throw new IllegalArgumentException("Hiányzik az idő.");

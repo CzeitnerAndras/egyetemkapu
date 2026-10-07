@@ -44,6 +44,7 @@ public final class FlyerUrlPolicy {
     private FlyerUrlPolicy() {
     }
 
+    // --- Allowlist ---
     public static boolean isAllowed(String url) {
         if (url == null || url.isBlank()) {
             return false;

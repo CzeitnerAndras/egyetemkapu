@@ -27,6 +27,7 @@ public class FlyerController {
         this.flyerPageProxyService = flyerPageProxyService;
     }
 
+    // --- List / search ---
     @GetMapping
     public List<FlyerSummaryDto> list(@RequestParam(required = false) String store) {
         return flyerQueryService.list(store);
@@ -37,6 +38,7 @@ public class FlyerController {
         return flyerQueryService.search(q);
     }
 
+    // --- Detail / page image ---
     @GetMapping("/{id}")
     public ResponseEntity<FlyerDetailDto> get(@PathVariable Long id) {
         return ResponseEntity.ok()

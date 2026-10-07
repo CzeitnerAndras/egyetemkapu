@@ -53,6 +53,7 @@ public class FlyerPageProxyService {
     }
 
     @Transactional(readOnly = true)
+    // --- Page image ---
     public ResponseEntity<byte[]> pageImage(Long flyerId, int pageNumber) {
         Flyer flyer = flyerRepository.findById(flyerId)
                 .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen akciós újság."));

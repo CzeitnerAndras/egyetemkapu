@@ -24,12 +24,14 @@ public class SuggestionController {
         this.userRepository = userRepository;
     }
 
+    // --- List ---
     @GetMapping
     @Transactional(readOnly = true)
     public List<Suggestion> getAllSuggestions() {
         return suggestionRepository.findAll();
     }
 
+    // --- Create ---
     @PostMapping
     @LogAction("Új ötlet/javaslat beküldése az ötletládába")
     @Transactional
@@ -44,6 +46,7 @@ public class SuggestionController {
         return suggestionRepository.save(suggestion);
     }
 
+    // --- Delete ---
     @DeleteMapping("/{id}")
     @LogAction("Ötlet/javaslat törlése")
     public void deleteSuggestion(@PathVariable Long id) {

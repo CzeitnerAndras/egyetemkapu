@@ -151,6 +151,7 @@ public class FlyerCatalogParser {
         this.objectMapper = objectMapper;
     }
 
+    // --- Discover ---
     public List<DiscoveredPaper> discoverAldiPublications(String html, LocalDate today) {
         Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
         if (html != null) {
@@ -281,6 +282,7 @@ public class FlyerCatalogParser {
         return papers;
     }
 
+    // --- Parse ---
     public List<ParsedCatalog> parseCoopFlyers(String html, LocalDate today) {
         List<ParsedCatalog> catalogs = new ArrayList<>();
         if (html == null || html.isBlank()) {
@@ -979,6 +981,7 @@ public class FlyerCatalogParser {
         return new ParsedCatalog(resolved, pages, products);
     }
 
+    // --- Products ---
     public List<ParsedProduct> extractHtmlProducts(String html) {
         Map<String, ParsedProduct> products = new LinkedHashMap<>();
         if (html == null) {

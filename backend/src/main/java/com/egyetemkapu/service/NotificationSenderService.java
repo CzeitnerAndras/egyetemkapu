@@ -21,6 +21,7 @@ public class NotificationSenderService {
     private String telegramBotToken;
 
     @Async
+    // --- Discord ---
     public void sendDiscordMessage(String webhookUrl, String message) {
         if (!DiscordWebhookValidator.isAllowed(webhookUrl)) {
             System.out.println("Elutasított Discord webhook URL, üzenet nem lett elküldve.");
@@ -36,6 +37,7 @@ public class NotificationSenderService {
     }
 
     @Async
+    // --- Telegram ---
     public void sendTelegramMessage(String chatId, String message) {
         if (!TelegramChatIdValidator.isAllowed(chatId)) {
             System.out.println("Elutasított Telegram chat ID, üzenet nem lett elküldve.");

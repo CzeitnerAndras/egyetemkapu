@@ -8,6 +8,7 @@ import java.util.List;
 @Service
 public class CreditCalculatorService {
 
+    // --- Weighted average ---
     public double calculateWeightedAverage(List<SubjectResultDto> subjects) {
         if (subjects == null || subjects.isEmpty()) {
             return 0.0;

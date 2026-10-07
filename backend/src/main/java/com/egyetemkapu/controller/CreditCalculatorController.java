@@ -17,6 +17,7 @@ public class CreditCalculatorController {
         this.calculatorService = calculatorService;
     }
 
+    // --- Weighted average ---
     @PostMapping("/weighted-average")
     public Map<String, Object> calculate(@RequestBody List<SubjectResultDto> subjects) {
         double average = calculatorService.calculateWeightedAverage(subjects);

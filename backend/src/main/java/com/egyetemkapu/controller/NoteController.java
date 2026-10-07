@@ -34,6 +34,7 @@ public class NoteController {
         return note.getUser() != null && user.getId() != null && user.getId().equals(note.getUser().getId());
     }
 
+    // --- CRUD ---
     @GetMapping
     @Transactional(readOnly = true)
     public ResponseEntity<List<Note>> getAllNotes(Principal principal) {

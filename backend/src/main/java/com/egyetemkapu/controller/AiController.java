@@ -16,6 +16,7 @@ public class AiController {
         this.aiService = aiService;
     }
 
+    // --- Ask ---
     @PostMapping("/ask")
     @LogAction("AI asszisztens használata")
     public Map<String, String> askAi(@RequestBody Map<String, String> request) {
