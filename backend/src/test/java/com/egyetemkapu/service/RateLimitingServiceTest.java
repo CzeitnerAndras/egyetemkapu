@@ -42,6 +42,16 @@ class RateLimitingServiceTest {
     }
 
     @Test
+    void flyerPageBucketAllowsThirtyRequestsThenRejects() {
+        Bucket bucket = service.resolveFlyerPageBucket("203.0.113.8");
+        for (int i = 0; i < 30; i++) {
+            assertTrue(bucket.tryConsume(1));
+        }
+        assertFalse(bucket.tryConsume(1));
+        assertNotSame(bucket, service.resolveBucket("203.0.113.8"));
+    }
+
+    @Test
     void mathBucketAllowsFiveRequestsThenRejects() {
         Bucket bucket = service.resolveBucket("diak");
         for (int i = 0; i < 5; i++) {
