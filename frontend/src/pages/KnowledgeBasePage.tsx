@@ -15,6 +15,22 @@ interface Document {
     createdAt: string;
 }
 
+const KNOWLEDGE_CATEGORIES = [
+    { value: 'Informatika', labelKey: 'kb.cat.it' },
+    { value: 'Matematika', labelKey: 'kb.cat.math' },
+    { value: 'Fizika', labelKey: 'kb.cat.physics' },
+    { value: 'Kémia', labelKey: 'kb.cat.chemistry' },
+    { value: 'Biológia', labelKey: 'kb.cat.biology' },
+    { value: 'Gazdaság', labelKey: 'kb.cat.econ' },
+    { value: 'Jog', labelKey: 'kb.cat.law' },
+    { value: 'Orvostudomány', labelKey: 'kb.cat.medicine' },
+    { value: 'Műszaki', labelKey: 'kb.cat.engineering' },
+    { value: 'Bölcsészet', labelKey: 'kb.cat.humanities' },
+    { value: 'Társadalomtudomány', labelKey: 'kb.cat.social' },
+    { value: 'Nyelv', labelKey: 'kb.cat.language' },
+    { value: 'Egyéb', labelKey: 'kb.cat.other' },
+] as const;
+
 export default function KnowledgeBasePage() {
     const { t, locale, language } = useLanguage();
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -26,12 +42,29 @@ export default function KnowledgeBasePage() {
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('Informatika');
     const [uploadMsg, setUploadMsg] = useState('');
+    const [downloadMsg, setDownloadMsg] = useState('');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isUploadCatOpen, setIsUploadCatOpen] = useState(false);
 
     useEffect(() => {
         fetchDocuments();
     }, [categoryFilter]);
+
+    useEffect(() => {
+        if (!isUploadModalOpen) {
+            return;
+        }
+        const html = document.documentElement;
+        const body = document.body;
+        const previousHtmlOverflow = html.style.overflow;
+        const previousBodyOverflow = body.style.overflow;
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+        };
+    }, [isUploadModalOpen]);
 
     {/* --- Documents --- */}
     const fetchDocuments = async () => {
@@ -55,7 +88,11 @@ export default function KnowledgeBasePage() {
     {/* --- Upload --- */}
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!file) return;
+        setUploadMsg('');
+        if (!file) {
+            setUploadMsg(t('kb.fileRequired'));
+            return;
+        }
 
         const formData = new FormData();
         formData.append('file', file);
@@ -67,52 +104,54 @@ export default function KnowledgeBasePage() {
             const res = await fetchWithAuth('/api/documents/upload', {
                 method: 'POST',
                 body: formData
-            }, { redirectOnAuthFailure: false });
+            }, { redirectOnAuthFailure: false, retryOn401: false });
 
-            const data = await res.json();
+            if (res.status === 401 || res.status === 403) {
+                setUploadMsg(t('kb.needLogin'));
+                return;
+            }
+
+            let data: { message?: string; error?: string } = {};
+            try {
+                data = await res.json();
+            } catch {
+                data = {};
+            }
+
             if (res.ok) {
-                setUploadMsg(data.message);
+                setUploadMsg(data.message || '');
                 setTimeout(() => {
                     setIsUploadModalOpen(false);
                     setUploadMsg('');
                     setTitle(''); setDescription(''); setFile(null);
                 }, 3000);
             } else {
-                setUploadMsg(data.error);
+                setUploadMsg(data.error || t('kb.networkError'));
             }
-        } catch (error) {
+        } catch {
             setUploadMsg(t('kb.networkError'));
         }
     };
 
-    const handleDownload = (id: number, fileName: string) => {
-        void downloadAuthenticatedFile(`/api/documents/download/${id}`, fileName);
+    const handleDownload = async (id: number, fileName: string) => {
+        setDownloadMsg('');
+        const saved = await downloadAuthenticatedFile(`/api/documents/download/${id}`, fileName);
+        if (!saved) {
+            setDownloadMsg(t('kb.downloadError'));
+        }
     };
 
     const translateCategory = (cat: string) => {
-        switch (cat) {
-            case 'Informatika': return t('kb.cat.it');
-            case 'Gazdaság': return t('kb.cat.econ');
-            case 'Matematika': return t('kb.cat.math');
-            case 'Egyéb': return t('kb.cat.other');
-            default: return cat;
-        }
+        const match = KNOWLEDGE_CATEGORIES.find((item) => item.value === cat);
+        return match ? t(match.labelKey) : cat;
     };
 
     const filterOptions = [
         { val: '', label: t('kb.allCats') },
-        { val: 'Informatika', label: t('kb.cat.it') },
-        { val: 'Gazdaság', label: t('kb.cat.econ') },
-        { val: 'Matematika', label: t('kb.cat.math') },
-        { val: 'Egyéb', label: t('kb.cat.other') }
+        ...KNOWLEDGE_CATEGORIES.map((item) => ({ val: item.value, label: t(item.labelKey) })),
     ];
 
-    const uploadOptions = [
-        { val: 'Informatika', label: t('kb.cat.it') },
-        { val: 'Gazdaság', label: t('kb.cat.econ') },
-        { val: 'Matematika', label: t('kb.cat.math') },
-        { val: 'Egyéb', label: t('kb.cat.other') }
-    ];
+    const uploadOptions = KNOWLEDGE_CATEGORIES.map((item) => ({ val: item.value, label: t(item.labelKey) }));
 
     return (
         <>
@@ -135,7 +174,7 @@ export default function KnowledgeBasePage() {
                             {isFilterOpen && (
                                 <>
                                     <div className="fixed inset-0 z-40" onClick={() => setIsFilterOpen(false)}></div>
-                                    <div className="absolute top-full mt-2 right-0 w-full md:min-w-[220px] bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[6px_6px_0px_#000] dark:shadow-lg z-50 flex flex-col">
+                                    <div className="absolute top-full mt-2 right-0 w-full md:min-w-[220px] max-h-72 overflow-y-auto custom-scrollbar bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[6px_6px_0px_#000] dark:shadow-lg z-50 flex flex-col">
                                         {filterOptions.map((opt, i, arr) => (
                                             <button
                                                 key={opt.val}
@@ -161,6 +200,10 @@ export default function KnowledgeBasePage() {
                 >
                     {t('kb.title')}
                 </PageHeader>
+
+                {downloadMsg && (
+                    <p className="mb-4 text-center font-bold text-red-700 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {downloadMsg}</p>
+                )}
 
                 {/* --- Document grid --- */}
                 {loading ? (
@@ -202,8 +245,9 @@ export default function KnowledgeBasePage() {
 
             {/* --- Upload modal --- */}
             {isUploadModalOpen && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg p-6 relative shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] secret:rounded-none">
+                <div className="fixed inset-0 z-50 overflow-y-auto overscroll-none bg-black/60 p-4 backdrop-blur-sm">
+                    <div className="flex min-h-full items-center justify-center">
+                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-lg my-auto p-6 relative shadow-[10px_10px_0px_#000] dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] secret:shadow-[0_0_30px_rgba(28,248,93,0.3)] secret:rounded-none">
                         <button onClick={() => setIsUploadModalOpen(false)} className="absolute top-4 right-4 p-1 text-black hover:text-white dark:text-gray-500 dark:hover:text-red-500 secret:text-[#1cf85d]/50 secret:hover:text-[#1cf85d] cursor-pointer hover:bg-red-500 border-4 border-transparent hover:border-black rounded-full dark:border-transparent dark:hover:border-transparent transition-colors">
                             <X className="w-6 h-6" />
                         </button>
@@ -237,7 +281,7 @@ export default function KnowledgeBasePage() {
                                 {isUploadCatOpen && (
                                     <>
                                         <div className="fixed inset-0 z-40" onClick={() => setIsUploadCatOpen(false)}></div>
-                                        <div className="absolute top-[72px] left-0 w-full bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[6px_6px_0px_#000] dark:shadow-lg z-50 flex flex-col">
+                                        <div className="absolute top-[72px] left-0 w-full max-h-60 overflow-y-auto custom-scrollbar bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] shadow-[6px_6px_0px_#000] dark:shadow-lg z-50 flex flex-col">
                                             {uploadOptions.map((opt, i, arr) => (
                                                 <button
                                                     type="button"
@@ -277,6 +321,7 @@ export default function KnowledgeBasePage() {
                                 {t('kb.uploadBtn')}
                             </button>
                         </form>
+                    </div>
                     </div>
                 </div>
             )}
