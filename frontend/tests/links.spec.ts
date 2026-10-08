@@ -12,7 +12,7 @@ test.describe('Egyetemkapu E2E - Links', () => {
     await expect(page.locator('.lucide-link').first()).toBeVisible();
 
     const uniButtons = page.locator('main div.space-y-2 > button');
-    await expect(uniButtons).toHaveCount(11);
+    await expect(uniButtons).toHaveCount(42);
 
     await expect(uniButtons.first()).toHaveClass(/translate-x-2/);
 
