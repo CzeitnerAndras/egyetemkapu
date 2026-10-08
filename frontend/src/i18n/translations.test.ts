@@ -9,5 +9,7 @@ describe('translations', () => {
         expect(translate('hu', 'home.dateLabel', { date: '2026-09-21' })).toBe('Dátum: 2026-09-21');
         expect(translate('en', 'home.dateLabel', { date: '2026-09-21' })).toBe('Date: 2026-09-21');
         expect(translate('en', 'missing.key')).toBe('missing.key');
+        expect(translate('hu', 'register.passwordAgain')).toBe('Jelszó mégegyszer');
+        expect(translate('hu', 'calc.expression')).toBe('Kifejezés');
     });
 });
