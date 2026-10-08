@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, Key, Trash2, AlertTriangle, Save } from 'lucide-react';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import PasswordInput from '../components/PasswordInput';
 
 export default function ProfilePage() {
     const [currentUsername, setCurrentUsername] = useState('');
@@ -192,19 +193,19 @@ export default function ProfilePage() {
                     <form onSubmit={handlePasswordUpdate} className="space-y-4 max-w-md">
                         <div className="flex flex-col group">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Jelenlegi Jelszó</label>
-                            <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
+                            <PasswordInput required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
                                 className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                             />
                         </div>
                         <div className="flex flex-col group">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Jelszó</label>
-                            <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                            <PasswordInput required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
                                 className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                             />
                         </div>
                         <div className="flex flex-col group">
                             <label className="text-sm font-bold text-black dark:text-[#c084fc] secret:text-[#1cf85d] mb-1 group-focus-within:text-blue-950 dark:group-focus-within:text-white secret:group-focus-within:text-white transition-colors secret:font-mono uppercase">Új Jelszó Megerősítése</label>
-                            <input type="password" required value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            <PasswordInput required value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)}
                                 className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                             />
                         </div>
