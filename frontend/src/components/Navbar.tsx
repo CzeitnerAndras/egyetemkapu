@@ -359,7 +359,7 @@ export default function Navbar() {
   return (
     <>
       {/* --- Nav --- */}
-      <nav ref={navRef} className="bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] relative z-40 transition-all duration-300">
+      <nav ref={navRef} className="fixed inset-x-0 top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] md:relative md:inset-auto md:top-auto transition-all duration-300">
 
         <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group shrink-0">
           <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-blue-300 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
@@ -522,6 +522,7 @@ export default function Navbar() {
         )}
 
       </nav>
+      <div className="h-[4.25rem] sm:h-[4.75rem] md:hidden" aria-hidden="true" />
 
       {/* --- Fullscreen TV effect --- */}
       {isAnimating && (

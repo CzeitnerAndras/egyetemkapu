@@ -49,6 +49,22 @@ describe('RegistrationPage Komponens', () => {
         render(<RegistrationPage />);
 
         expect(screen.getByRole('button', { name: 'Regisztráció' })).toBeInTheDocument();
+        expect(screen.getByText('register.passwordAgain')).toBeInTheDocument();
+    });
+
+    it('a szem ikon megmutatja, majd elrejti a beírt jelszót', async () => {
+        const user = userEvent.setup();
+        const { container } = render(<RegistrationPage />);
+
+        const passwordInput = container.querySelector('input[type="password"]') as HTMLInputElement;
+        await user.type(passwordInput, 'Password1!');
+        await user.click(screen.getAllByRole('button', { name: 'password.show' })[0]);
+
+        expect(passwordInput).toHaveAttribute('type', 'text');
+        expect(passwordInput).toHaveValue('Password1!');
+
+        await user.click(screen.getByRole('button', { name: 'password.hide' }));
+        expect(passwordInput).toHaveAttribute('type', 'password');
     });
 
     it('a jelszó mellett infóikonon mutatja a jelszó követelményeit', async () => {
