@@ -30,6 +30,8 @@ function formatTaskType(taskType: string, t: (key: string) => string): string {
 
 export default function FocusRoomPage() {
     const { t } = useLanguage();
+    const [focusMinutes, setFocusMinutes] = useState(25);
+    const [breakMinutes, setBreakMinutes] = useState(5);
     const [timeLeft, setTimeLeft] = useState(25 * 60);
     const [isActive, setIsActive] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(true);
@@ -108,15 +110,40 @@ export default function FocusRoomPage() {
 
     const toggleTimer = () => setIsActive(!isActive);
 
+    const secondsFor = (focus: boolean, focusValue = focusMinutes, breakValue = breakMinutes) => {
+        const minutes = Math.min(180, Math.max(1, focus ? focusValue : breakValue));
+        return minutes * 60;
+    };
+
     const resetTimer = () => {
         setIsActive(false);
-        setTimeLeft(isFocusMode ? 25 * 60 : 5 * 60);
+        setTimeLeft(secondsFor(isFocusMode));
     };
 
     const handleSetMode = (focus: boolean) => {
         setIsActive(false);
         setIsFocusMode(focus);
-        setTimeLeft(focus ? 25 * 60 : 5 * 60);
+        setTimeLeft(secondsFor(focus));
+    };
+
+    const updateMinutes = (focus: boolean, raw: string) => {
+        if (raw !== '' && !/^\d+$/.test(raw)) return;
+        const next = raw === '' ? 0 : Math.min(180, Number(raw));
+        if (focus) setFocusMinutes(next);
+        else setBreakMinutes(next);
+        if (focus === isFocusMode && !isActive && next > 0) {
+            setTimeLeft(next * 60);
+        }
+    };
+
+    const commitMinutes = (focus: boolean) => {
+        const current = focus ? focusMinutes : breakMinutes;
+        const next = Math.min(180, Math.max(1, current || 1));
+        if (focus) setFocusMinutes(next);
+        else setBreakMinutes(next);
+        if (focus === isFocusMode && !isActive) {
+            setTimeLeft(next * 60);
+        }
     };
 
     {/* --- Add task --- */}
@@ -233,10 +260,10 @@ export default function FocusRoomPage() {
                 <span className="hidden secret:inline">Neural Link Active</span>
             </PageHeader>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
 
                 {/* --- Pomodoro and notes --- */}
-                <div className="lg:col-span-1 flex flex-col space-y-6 lg:min-h-[500px]">
+                <div className="lg:col-span-1 flex flex-col gap-6 h-full">
 
                     {/* --- Pomodoro --- */}
                     <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col items-center justify-center shrink-0">
@@ -261,6 +288,37 @@ export default function FocusRoomPage() {
                             >
                                 <Coffee className="w-5 h-5 mr-2" /> {t('focus.break')}
                             </button>
+                        </div>
+
+                        <div className="flex w-full gap-3 mb-6">
+                            <label className="flex-1 flex flex-col text-xs font-bold uppercase text-black dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono">
+                                {t('focus.focusMinutes')}
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={180}
+                                    inputMode="numeric"
+                                    disabled={isActive}
+                                    value={focusMinutes || ''}
+                                    onChange={(e) => updateMinutes(true, e.target.value)}
+                                    onBlur={() => commitMinutes(true)}
+                                    className="mt-1 w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] p-2 text-center text-base font-bold outline-none disabled:opacity-60 secret:font-mono"
+                                />
+                            </label>
+                            <label className="flex-1 flex flex-col text-xs font-bold uppercase text-black dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono">
+                                {t('focus.breakMinutes')}
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={180}
+                                    inputMode="numeric"
+                                    disabled={isActive}
+                                    value={breakMinutes || ''}
+                                    onChange={(e) => updateMinutes(false, e.target.value)}
+                                    onBlur={() => commitMinutes(false)}
+                                    className="mt-1 w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] p-2 text-center text-base font-bold outline-none disabled:opacity-60 secret:font-mono"
+                                />
+                            </label>
                         </div>
 
                         <div className={`text-6xl xl:text-7xl font-black tracking-wider mb-8 tabular-nums secret:font-mono dark:drop-shadow-md secret:drop-shadow-[0_0_10px_rgba(28,248,93,0.8)]
@@ -289,7 +347,7 @@ export default function FocusRoomPage() {
                     </div>
 
                     {/* --- Notes --- */}
-                    <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[6px_6px_0px_#1e3a8a] dark:shadow-md secret:rounded-none flex flex-col flex-1 min-h-0">
+                    <div className="bg-white dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[6px_6px_0px_#1e3a8a] dark:shadow-md secret:rounded-none flex flex-col flex-1 min-h-40">
                         <div className="flex items-center justify-between mb-3 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                             <div className="flex items-center">
                                 <FileText className="w-5 h-5 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
@@ -310,18 +368,18 @@ export default function FocusRoomPage() {
                             value={noteContent}
                             onChange={(e) => setNoteContent(e.target.value)}
                             placeholder={t('focus.notePlaceholder')}
-                            className="flex-1 w-full resize-none outline-none bg-slate-50 border-4 border-black p-2 shadow-inner dark:bg-transparent dark:border-transparent dark:shadow-none secret:bg-black secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-600 secret:placeholder-[#1cf85d]/30 font-medium"
+                            className="flex-1 min-h-24 w-full resize-none outline-none bg-slate-50 border-4 border-black p-2 shadow-inner dark:bg-transparent dark:border-transparent dark:shadow-none secret:bg-black secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 dark:placeholder-gray-600 secret:placeholder-[#1cf85d]/30 font-medium"
                         />
                     </div>
                 </div>
 
                 {/* --- Calendar tasks --- */}
-                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
+                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-full min-h-80 lg:min-h-0">
                     <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                         {t('focus.activeTasks')}
                     </h2>
 
-                    <div className="flex-1 overflow-y-auto space-y-2 px-1 pt-2 pb-1 scrollbar-thin">
+                    <div className="flex-1 min-h-0 overflow-y-auto space-y-2 px-1 pt-2 pb-1 scrollbar-thin">
                         {isLoadingTasks ? (
                             <p className="text-center text-gray-500 secret:text-[#1cf85d]/50 secret:font-mono uppercase font-bold">{t('focus.loading')}</p>
                         ) : tasks.length === 0 ? (
@@ -350,20 +408,20 @@ export default function FocusRoomPage() {
                     </div>
 
                     <form onSubmit={addTask} className="mt-4 pt-4 border-t-4 border-black dark:border-gray-700 secret:border-[#1cf85d] flex flex-col">
-                        <div className="flex">
+                        <div className="flex items-stretch gap-2 min-w-0 pr-2 pb-2">
                             <input
                                 type="text"
                                 value={newTaskTitle}
                                 onChange={e => setNewTaskTitle(e.target.value)}
                                 placeholder={t('focus.addTask')}
-                                className="flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] mr-2 p-2 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
+                                className="min-w-0 flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono placeholder-gray-400 secret:placeholder-[#1cf85d]/30 font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
                             />
                             <button
                                 type="submit"
                                 aria-label={t('focus.addTask')}
-                                className="bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center shadow-[4px_4px_0px_#000] dark:shadow-none hover:text-white"
+                                className="shrink-0 size-12 self-center overflow-hidden bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 secret:hover:bg-[#1cf85d] secret:hover:text-black transition-colors cursor-pointer flex items-center justify-center shadow-[4px_4px_0px_#000] dark:shadow-none hover:text-white"
                             >
-                                <Plus className="w-6 h-6 font-bold" />
+                                <Plus className="w-5 h-5 shrink-0" />
                             </button>
                         </div>
                         {taskError && (
@@ -375,7 +433,7 @@ export default function FocusRoomPage() {
                 </div>
 
                 {/* --- Lo-fi player --- */}
-                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-[500px]">
+                <div className="lg:col-span-1 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#020617] dark:shadow-md secret:rounded-none flex flex-col h-full min-h-80 lg:min-h-0">
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Headphones className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
@@ -383,7 +441,7 @@ export default function FocusRoomPage() {
                         </h2>
                     </div>
 
-                    <div className="flex-1 border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-black relative shadow-[4px_4px_0px_#000] dark:shadow-none">
+                    <div className="flex-1 min-h-48 lg:min-h-0 border-4 border-black dark:border-gray-700 secret:border-[#1cf85d] bg-black relative shadow-[4px_4px_0px_#000] dark:shadow-none">
                         <iframe
                             width="100%"
                             height="100%"
