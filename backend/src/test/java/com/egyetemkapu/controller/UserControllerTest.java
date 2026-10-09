@@ -171,6 +171,16 @@ class UserControllerTest {
     }
 
     @Test
+    void updatePreferredLanguage_withoutASessionDoesNotSave() throws Exception {
+        mockMvc.perform(put("/api/users/me/language")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"language\":\"en\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void updatePassword_wrongCurrentPasswordKeepsTheSession() throws Exception {
         User current = user("anna");
         current.setPassword("old-hash");
