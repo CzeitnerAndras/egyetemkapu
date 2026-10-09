@@ -418,6 +418,10 @@ class FlyerSyncServiceTest {
         Flyer coop = storeFlyer("coop", "coop:nyirzem:2026-09-03", "https://katalogus.coop.hu/coop-nyirzem/");
         coop.addPage(new FlyerPage());
         coop.addPage(new FlyerPage());
+        FlyerProduct sonka = new FlyerProduct();
+        sonka.setName("Pápai extra sonka");
+        sonka.setPageNumber(1);
+        coop.addProduct(sonka);
         when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
@@ -506,6 +510,67 @@ class FlyerSyncServiceTest {
             product.setPageNumber(1);
             coop.addProduct(product);
         }
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
+
+        assertTrue(service.isStale(LocalDateTime.of(2026, 9, 6, 10, 0)));
+    }
+
+    @Test
+    void syncCoopReadsNamesFromThePublitasTextWhenThePageHasNoOcr() {
+        when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
+            String url = invocation.getArgument(0);
+            if (url.contains("ajanlatkereso")) {
+                return """
+                        <div class="swiper-slide">
+                            <a style="background-image: url('https://www.coop.hu/wp-content/uploads/2026/09/coop_alfold_szorolap_20260903-0909.jpg');"></a>
+                            <h3 class="title">Coop regionális szórólap szeptember 2. hét - Alföld</h3>
+                            <p>2026. szeptember 3. - 2026. szeptember 9.</p>
+                        </div>
+                        """;
+            }
+            if (url.endsWith("data.json")) {
+                return "{\"config\":{\"publicationTitle\":\"Coop Alföld\"}}";
+            }
+            if (url.endsWith("spreads.json")) {
+                return """
+                        {"spreads":[{"pages":[
+                          {"number":1,"images":{"at1200":"https://katalogus.coop.hu/pages/1.jpg"},
+                           "text":"Pápai extra sonka\\n399 Ft\\nPepsi\\n2 l, 385 Ft/l"}
+                        ]}]}
+                        """;
+            }
+            return "";
+        });
+
+        service.syncCoop(LocalDate.of(2026, 9, 6));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("coop"), captor.capture(), any());
+        List<String> names = captor.getValue().getFirst().products().stream()
+                .map(FlyerCatalogParser.ParsedProduct::name)
+                .toList();
+        assertTrue(names.contains("Pápai extra sonka"), names.toString());
+        assertTrue(names.contains("Pepsi"), names.toString());
+        verify(httpClient, never()).getBytes(any(), any());
+    }
+
+    @Test
+    void isStaleWhenCoopPagesHaveNoProducts() {
+        Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
+        Flyer penny = storeFlyer("penny", "penny:rewe:202636",
+                "https://files.rewe.co.at/PennyIntLeaflet/HU/202636/");
+        Flyer spar = storeFlyer("spar", "spar:spar:2026-09-03",
+                "https://www.spar.hu/ajanlatok/spar/260903-1-spar-szorolap");
+        Flyer inter = storeFlyer("spar", "spar:interspar:2026-09-03",
+                "https://www.spar.hu/ajanlatok/interspar/260903-2-interspar-szorolap");
+        Flyer market = storeFlyer("spar", "spar:spar-market:2026-09-03",
+                "https://www.spar.hu/ajanlatok/spar-market/260903-3-spar-market-city-spar");
+        Flyer auchan = storeFlyer("auchan", "auchan:2026-09-03-09-09-heti-hipermarket-ajanlataink",
+                "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr36/x/");
+        Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
+        coop.addPage(new FlyerPage());
+        coop.addPage(new FlyerPage());
         when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
 
         assertTrue(service.isStale(LocalDateTime.of(2026, 9, 6, 10, 0)));
