@@ -8,6 +8,43 @@ const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 const CALC_ID = 3;
 const DANGER_ID = 10;
 
+const PAGE_LINKS: Record<string, string> = {
+    idea: '/otletlada',
+    links: '/linktar',
+    flyers: '/akcios-ujsag',
+    kb: '/tudastar',
+    calendar: '/naptar',
+    ai: '/ai',
+    reference: '/hivatkozas',
+    calculator: '/kalkulator',
+    cards: '/kartyak',
+    settings: '/settings',
+    login: '/login',
+    forgot: '/elfelejtett-jelszo',
+    profile: '/profile',
+    focus: '/tanuloszoba',
+    home: '/',
+};
+
+const faqLinkClass = 'font-black text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] underline hover:text-black dark:hover:text-white';
+
+function renderFaqText(text: string) {
+    const parts = text.split(/(\[\[[a-z]+:[^\]]+\]\])/);
+    if (parts.length === 1) return text;
+
+    return parts.map((part, index) => {
+        const match = /^\[\[([a-z]+):([^\]]+)\]\]$/.exec(part);
+        if (!match) return part;
+        const to = PAGE_LINKS[match[1]];
+        if (!to) return match[2];
+        return (
+            <Link key={index} to={to} className={faqLinkClass}>
+                {match[2]}
+            </Link>
+        );
+    });
+}
+
 export default function FaqPage() {
     const { t } = useLanguage();
     const [openId, setOpenId] = useState<number | null>(1);
@@ -20,7 +57,7 @@ export default function FaqPage() {
         if (id === CALC_ID) {
             return (
                 <div className="space-y-2">
-                    <p>{t('faq.a3p')}</p>
+                    <p>{renderFaqText(t('faq.a3p'))}</p>
                     <ul className="list-disc list-inside ml-4 space-y-1">
                         <li><strong>{t('faq.a3pow')}</strong> {t('faq.a3powText')}</li>
                         <li><strong>{t('faq.a3mul')}</strong> {t('faq.a3mulText')}</li>
@@ -32,7 +69,7 @@ export default function FaqPage() {
 
         return (
             <p className={id === DANGER_ID ? 'text-red-700 dark:text-red-400 secret:text-[#1cf85d]' : undefined}>
-                {t(`faq.a${id}`)}
+                {renderFaqText(t(`faq.a${id}`))}
             </p>
         );
     };
@@ -52,10 +89,7 @@ export default function FaqPage() {
                 </div>
 
                 <p className="mb-6 text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-medium secret:font-mono">
-                    {t('faq.intro')}{' '}
-                    <Link to="/otletlada" className="font-black text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] underline hover:text-black dark:hover:text-white">
-                        {t('faq.introLink')}
-                    </Link>
+                    {renderFaqText(t('faq.intro'))}
                 </p>
 
                 {/* --- Questions --- */}

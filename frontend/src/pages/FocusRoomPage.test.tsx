@@ -65,6 +65,20 @@ describe('FocusRoomPage Komponens', () => {
         expect(screen.getByRole('button', { name: 'focus.start' })).toBeInTheDocument();
     });
 
+    it('a megadott percből számolja a fókusz és a szünet hosszát', () => {
+        renderPage();
+
+        fireEvent.change(screen.getByLabelText('focus.focusMinutes'), { target: { value: '10' } });
+        expect(screen.getByText('10:00')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'focus.break' }));
+        fireEvent.change(screen.getByLabelText('focus.breakMinutes'), { target: { value: '2' } });
+        expect(screen.getByText('02:00')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'focus.focus' }));
+        expect(screen.getByText('10:00')).toBeInTheDocument();
+    });
+
     it('a szünet lejártakor riaszt, és visszavált fókusz módba', async () => {
         jest.useFakeTimers();
         renderPage();

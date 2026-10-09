@@ -2,7 +2,22 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Egyetemkapu E2E - Ötletláda', () => {
   test('Új ötlet beküldése sikeresen', async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { grecaptcha: unknown }).grecaptcha = {
+        ready: (callback: () => void) => callback(),
+        render: () => 1,
+        getResponse: () => 'test-token',
+        reset: () => {},
+      };
+    });
+    await page.route('**/api/suggestions/captcha', async route => {
+      await route.fulfill({ status: 200, json: { siteKey: 'test-site-key' } });
+    });
     await page.route('**/api/suggestions', async route => {
+      if (route.request().url().includes('/captcha')) {
+        await route.fallback();
+        return;
+      }
       await route.fulfill({ status: 200, json: {} });
     });
 

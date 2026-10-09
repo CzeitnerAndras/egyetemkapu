@@ -17,46 +17,26 @@ html.dark body {
 }
 
 html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950).text-black,
-html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950) .text-black,
-html:not(.dark):not(.secret) .hover\:bg-blue-900:hover,
-html:not(.dark):not(.secret) .hover\:bg-blue-900:hover .text-black,
-html:not(.dark):not(.secret) .hover\:bg-blue-950:hover,
-html:not(.dark):not(.secret) .hover\:bg-blue-950:hover .text-black {
+html:not(.dark):not(.secret) :is(.bg-blue-900, .bg-blue-950) .text-black {
     color: #fff;
 }
 
-html:not(.dark):not(.secret) .bg-blue-900.hover\:bg-blue-500:hover {
-    color: #000;
+@media (hover: hover) {
+    html:not(.dark):not(.secret) .hover\:bg-blue-900:hover,
+    html:not(.dark):not(.secret) .hover\:bg-blue-900:hover .text-black,
+    html:not(.dark):not(.secret) .hover\:bg-blue-950:hover,
+    html:not(.dark):not(.secret) .hover\:bg-blue-950:hover .text-black {
+        color: #fff;
+    }
+
+    html:not(.dark):not(.secret) .bg-blue-900.hover\:bg-blue-500:hover {
+        color: #000;
+    }
 }
 
-/* --- Nav scroll --- */
+/* --- Nav --- */
 html.flyer-open nav {
     display: none !important;
-}
-
-.nav-scroll {
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    cursor: grab;
-    user-select: none;
-    touch-action: pan-x;
-}
-
-.nav-scroll.is-dragging {
-    cursor: grabbing;
-}
-
-.nav-scroll::-webkit-scrollbar {
-    display: none;
-}
-
-.nav-scroll a,
-.nav-scroll a * {
-    -webkit-user-drag: none;
-    user-select: none;
 }
 
 /* --- Notes --- */

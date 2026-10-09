@@ -43,6 +43,10 @@ public class RateLimitingService {
         return cache.computeIfAbsent("flyer-page:" + clientKey, key -> newFixedBucket(30, Duration.ofMinutes(1)));
     }
 
+    public Bucket resolveSuggestionBucket(String clientKey) {
+        return cache.computeIfAbsent("suggestion:" + clientKey, key -> newFixedBucket(8, Duration.ofMinutes(15)));
+    }
+
     private Bucket newBucket(String username) {
         return newFixedBucket(5, Duration.ofMinutes(1));
     }

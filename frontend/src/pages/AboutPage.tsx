@@ -66,6 +66,7 @@ export default function AboutPage() {
                     <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
                         <Code className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">{t('about.stack')}</h2>
+                        <p className="ml-auto text-xs font-black uppercase tracking-wide text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] secret:font-mono">{t('about.version')}</p>
                     </div>
 
                     <div className="space-y-4 flex-1 flex flex-col justify-center">

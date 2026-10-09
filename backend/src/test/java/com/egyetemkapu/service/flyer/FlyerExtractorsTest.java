@@ -651,6 +651,61 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void coopTextLayerKeepsOfferNamesAndDropsPricesAndSlogans() {
+        CoopFlyerExtractor extractor = new CoopFlyerExtractor(parser);
+        String page = """
+                A jó szomszéd
+                2026. 10. 08. csütörtöktől 10. 14. szerdáig
+                ALFÖLD PRO-COOP ZRT. AJÁNLATA
+                Knorr alap
+                Gyros fokhagymás öntettel
+                40 g,
+                Bolognai spagetti
+                59 g, 7610 Ft/kg,
+                Mexikói chilis bab
+                Marry Me csirkés tészta 48 g
+                Ft
+                Pápai extra sonka*
+                399
+                Ft
+                /10 dkg
+                SPÓROLJON TÖBBET!
+                Pepsi
+                D.E. őröltpörkölt kávé
+                Paloma Classic, Karaván
+                225 g, 5773 Ft/kg
+                COOP KLUB ÁR!
+                Hétvégi ajánlat
+                Pecsenye kacsa**
+                Pulyka felsőcomb filé**
+                Sertés bőrös csülökhús***
+                Csont nélkül
+                * Ajánlatunk csak a csemegepultos üzleteinkben érvényes.
+                www.coop.hu
+                coop üzletlánc
+                """;
+
+        List<String> names = extractor.extractFromPageText(page, 1).stream().map(ParsedProduct::name).toList();
+
+        assertTrue(names.contains("Pápai extra sonka"), names.toString());
+        assertTrue(names.contains("Bolognai spagetti"), names.toString());
+        assertTrue(names.contains("Marry Me csirkés tészta"), names.toString());
+        assertTrue(names.contains("Pepsi"), names.toString());
+        assertTrue(names.contains("D.E. őröltpörkölt kávé"), names.toString());
+        assertTrue(names.contains("Paloma Classic, Karaván"), names.toString());
+        assertTrue(names.contains("Pecsenye kacsa"), names.toString());
+        assertTrue(names.contains("Pulyka felsőcomb filé"), names.toString());
+        assertTrue(names.contains("Sertés bőrös csülökhús"), names.toString());
+        assertTrue(names.stream().noneMatch(name -> name.toLowerCase().contains("spóroljon")
+                || name.contains("399")
+                || name.toLowerCase().contains("szomszéd")
+                || name.toLowerCase().contains("ajánlat")
+                || name.toLowerCase().contains("csont")
+                || name.toLowerCase().contains("pultban")
+                || name.toLowerCase().contains("üzletlánc")), names.toString());
+    }
+
+    @Test
     void coopCoverKeepsOfferTitlesAndDropsPackageAndFootnotes() {
         CoopFlyerExtractor extractor = new CoopFlyerExtractor(parser);
         List<TextRun> runs = List.of(

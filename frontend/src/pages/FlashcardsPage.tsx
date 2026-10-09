@@ -265,7 +265,7 @@ export default function FlashcardsPage() {
                         <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2 mb-4 secret:font-mono uppercase">
                             {t('cards.decks')}
                         </h2>
-                        <form onSubmit={createDeck} className="flex mb-4">
+                        <form onSubmit={createDeck} className="flex items-stretch gap-2 min-w-0 pr-2 pb-2 mb-4">
                             <label className="sr-only" htmlFor="deck-name">{t('cards.deckName')}</label>
                             <input
                                 id="deck-name"
@@ -273,15 +273,15 @@ export default function FlashcardsPage() {
                                 onChange={event => setDeckName(event.target.value)}
                                 placeholder={t('cards.deckPlaceholder')}
                                 maxLength={80}
-                                className="flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] mr-2 p-2 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
+                                className="min-w-0 flex-1 border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-2 outline-none bg-white dark:bg-transparent secret:bg-black dark:text-white secret:text-[#1cf85d] secret:font-mono font-bold shadow-[4px_4px_0px_#000] dark:shadow-none"
                             />
                             <button
                                 type="submit"
                                 disabled={saving}
                                 aria-label={t('cards.addDeck')}
-                                className="bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] px-4 border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none disabled:opacity-50"
+                                className="shrink-0 size-12 self-center overflow-hidden flex items-center justify-center bg-blue-500 dark:bg-[#a855f7] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer shadow-[4px_4px_0px_#000] dark:shadow-none disabled:opacity-50"
                             >
-                                <Plus className="w-6 h-6" />
+                                <Plus className="w-5 h-5 shrink-0" />
                             </button>
                         </form>
 

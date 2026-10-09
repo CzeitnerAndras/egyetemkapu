@@ -162,6 +162,29 @@ describe('HomePage Komponens', () => {
         });
     });
 
+    it('a hírben lévő link kattintható', async () => {
+        mockFetchByUrl({
+            '/api/events': {
+                ok: true,
+                json: async () => [
+                    {
+                        id: 1,
+                        title: 'Nyílt nap',
+                        description: 'Részletek: https://example.edu/nyilt-nap.',
+                        eventDate: '2026-10-05T10:00:00',
+                    },
+                ],
+            },
+        });
+
+        render(<HomePage />);
+        await waitFor(() => expect(screen.getByRole('link', { name: 'https://example.edu/nyilt-nap' })).toBeInTheDocument());
+
+        const link = screen.getByRole('link', { name: 'https://example.edu/nyilt-nap' });
+        expect(link).toHaveAttribute('href', 'https://example.edu/nyilt-nap');
+        expect(link).toHaveAttribute('target', '_blank');
+    });
+
     it('kattintásra megnyitja a hír részleteit tartalmazó modalt, majd bezárja', async () => {
         mockFetchByUrl({
             '/api/events': {

@@ -52,7 +52,22 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
 
     @Override
     public List<ParsedProduct> extractFromPageText(String text, int pageNumber) {
-        return List.of();
+        if (text == null || !HungarianText.normalize(text).contains("ft")) {
+            return List.of();
+        }
+        List<String> blocks = new ArrayList<>();
+        for (String rawLine : text.split("\\R")) {
+            String line = rawLine.replaceAll("\\s+", " ").trim();
+            if (line.isBlank() || isTextLayerNoise(line)) {
+                continue;
+            }
+            String name = FlyerCatalogParser.tidyProductName(line);
+            if (name.isBlank() || isTextLayerNoise(name) || FlyerCatalogParser.isJunkProductName(name)) {
+                continue;
+            }
+            blocks.add(name);
+        }
+        return FlyerProductNames.fromBlocks(blocks, pageNumber);
     }
 
     @Override
@@ -348,6 +363,43 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
         }
         parent[rightRoot] = leftRoot;
         size[leftRoot] += size[rightRoot];
+    }
+
+    private static boolean isTextLayerNoise(String raw) {
+        String text = raw == null ? "" : raw.replaceAll("\\s+", " ").trim();
+        if (text.isBlank() || isNoise(text.replace(",", " ")) || isUnitPhrase(text) || isShouted(text)) {
+            return true;
+        }
+        String key = HungarianText.normalize(text);
+        return key.contains("jo szomszed") || key.contains("uzletlanc");
+    }
+
+    private static boolean isUnitPhrase(String text) {
+        String key = HungarianText.normalize(text).replaceAll("[^\\p{L}\\s]", " ").replaceAll("\\s+", " ").trim();
+        if (key.isBlank()) {
+            return true;
+        }
+        for (String word : key.split(" ")) {
+            if (!word.matches("ft|dkg|kg|db|ml|g|l|szuper")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isShouted(String text) {
+        boolean letter = false;
+        for (int i = 0; i < text.length(); i++) {
+            char character = text.charAt(i);
+            if (!Character.isLetter(character)) {
+                continue;
+            }
+            letter = true;
+            if (Character.isLowerCase(character)) {
+                return false;
+            }
+        }
+        return letter;
     }
 
     static boolean isNoise(String raw) {

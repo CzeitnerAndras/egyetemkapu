@@ -144,7 +144,7 @@ export default function CalculatorPage() {
                     <form onSubmit={handleCalculateAverage} className="flex flex-col">
 
                         {/* --- Subjects --- */}
-                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar w-full">
+                        <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar w-full pb-2 pr-2">
                             {subjects.map((subject, index) => (
                                 <div key={subject.id} className="flex flex-col sm:flex-row w-full min-w-0 gap-2 sm:space-x-2 sm:items-center bg-white dark:bg-[#121212] secret:bg-transparent p-2 border-2 border-black dark:border-gray-600 secret:border-[#1cf85d] secret:border-dashed shadow-[2px_2px_0px_#000] dark:shadow-sm hover:shadow-[4px_4px_0px_#1e3a8a] dark:hover:shadow-md transition-shadow">
                                     <div className="hidden sm:block w-6 text-center font-bold text-black dark:text-gray-500 secret:text-[#1cf85d] secret:font-mono">{index + 1}.</div>

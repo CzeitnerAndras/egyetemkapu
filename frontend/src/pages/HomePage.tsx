@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Megaphone, Zap, Calendar, Bot, Send, Users, Calculator, FileText, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import LinkifiedText from '../components/LinkifiedText';
 import { sendPresenceHeartbeat } from '../utils/presence';
 import { fetchWithAuth } from '../utils/authApi';
 
@@ -40,7 +41,7 @@ const tips = [
   { hu: "A hivatkozás generátort használva pillanatok alatt elkészítheted a szakdolgozatod irodalomjegyzékét.", en: "Using the citation generator, you can create your thesis bibliography in seconds." },
   { hu: "Ha a Naptárban beállítod a Discord értesítést, a rendszer vizsga előtt emlékeztetőt küld a szerveredre.", en: "If you set up Discord notifications in the Calendar, the system will send a reminder to your server before exams." },
   { hu: "Tanulás közben használd az 'aktív felidézés' (active recall) módszert: olvasás után csukd be a könyvet, és próbáld meg saját szavaiddal összefoglalni a lényeget.", en: "Use the 'active recall' method while studying: close the book after reading and try to summarize the main points in your own words." },
-  { hu: "A Kártyák oldalon paklit készíthetsz. Ismétléskor a kérdés egy kártyán jelenik meg középen, rákattintva megfordul, a nyíl pedig a következőre visz. A kört bármikor újrakezdheted.", en: "On the Flashcards page you can make a deck. Review shows the question on a card in the middle; click it to turn it over, and the arrow moves to the next one. You can start the round again anytime." },
+  { hu: "A Tanuló kártyák oldalon paklit készíthetsz. Ismétléskor a kérdés egy kártyán jelenik meg középen, rákattintva megfordul, a nyíl pedig a következőre visz. A kört bármikor újrakezdheted.", en: "On the Flashcards page you can make a deck. Review shows the question on a card in the middle; click it to turn it over, and the arrow moves to the next one. You can start the round again anytime." },
   { hu: "Ne tanulj az ágyban! Az agyad a pihenéssel köti össze az ágyat, így sokkal hamarabb leszel álmos. Keress egy dedikált tanulósarkot.", en: "Don't study in bed! Your brain associates the bed with rest, so you'll get sleepy much faster. Find a dedicated study corner." },
   { hu: "Ha elakadsz egy bonyolult anyagnál, próbáld meg elmagyarázni egy képzeletbeli ötévesnek (Feynman-technika). Ha nem megy egyszerűen, még nem érted eléggé.", en: "If you get stuck on complex material, try explaining it to an imaginary five-year-old (Feynman technique). If you can't do it simply, you don't understand it well enough yet." },
   { hu: "Mielőtt elkezded a tanulást, írj egy pontos, kis lépésekből álló tervet. A 'Tanulok 3 órát' helyett legyen 'Elolvasom és kijyzetelem a 4. fejezetet'.", en: "Before you start studying, write a precise plan with small steps. Instead of 'I'll study for 3 hours', make it 'I will read and outline chapter 4'." },
@@ -369,14 +370,14 @@ export default function HomePage() {
                 <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end z-10">
 
                   <h3 className="text-2xl font-bold text-blue-200 secret:text-[#1cf85d] leading-tight secret:font-mono uppercase drop-shadow-[2px_2px_0px_#000]">
-                    {item.title}
+                    <LinkifiedText text={item.title} linkClassName="underline text-white" />
                   </h3>
 
                   <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-in-out">
                     <div className="overflow-hidden">
                       <div className="pt-4 mt-4 border-t-4 border-blue-800 secret:border-[#1cf85d]/30">
                         <p className="text-gray-100 secret:text-[#1cf85d]/80 text-sm line-clamp-3 mb-4 font-bold secret:font-mono">
-                          {item.description}
+                          <LinkifiedText text={item.description} linkClassName="underline text-white" />
                         </p>
                         <div className="flex items-center text-xs text-blue-200 secret:text-[#1cf85d]/60 font-bold uppercase secret:font-mono">
                           <Calendar className="w-4 h-4 mr-2 shrink-0" />
@@ -415,7 +416,7 @@ export default function HomePage() {
             {/* --- Modal content --- */}
             <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar flex-1 relative">
               <h1 className="text-3xl md:text-5xl font-bold text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 secret:font-mono uppercase leading-tight pr-10">
-                {selectedNews.title}
+                <LinkifiedText text={selectedNews.title} linkClassName="underline" />
               </h1>
 
               <div className="flex items-center text-md font-bold text-blue-800 dark:text-gray-400 secret:text-[#1cf85d]/70 mb-8 border-b-4 border-black dark:border-gray-600 secret:border-[#1cf85d]/50 pb-4 secret:font-mono uppercase">
@@ -424,7 +425,7 @@ export default function HomePage() {
               </div>
 
               <p className="text-black dark:text-slate-100 secret:text-[#1cf85d]/90 text-lg md:text-xl font-bold leading-relaxed text-justify whitespace-pre-wrap secret:font-mono">
-                {selectedNews.description}
+                <LinkifiedText text={selectedNews.description} linkClassName="underline text-blue-800 dark:text-blue-300 secret:text-[#1cf85d]" />
               </p>
             </div>
 

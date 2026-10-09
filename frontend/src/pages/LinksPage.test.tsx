@@ -60,9 +60,27 @@ describe('LinksPage Komponens', () => {
 
         await user.click(screen.getByText('Széchenyi István Egyetem (SZE)'));
 
-        expect(screen.getByText('Kautz Gyula Gazdaságtudományi Kar')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Kautz Gyula Gazdaságtudományi Kar' })).toBeInTheDocument();
         expect(
             screen.getByRole('link', { name: 'GIVK Főoldal' })
         ).toHaveAttribute('href', 'https://givk.sze.hu/');
+    });
+
+    it('az egyetemlista és a karlista szűri a linkeket', async () => {
+        render(<LinksPage />);
+        const user = userEvent.setup();
+
+        await user.selectOptions(screen.getByLabelText('links.university'), 'BME');
+
+        expect(screen.getByRole('link', { name: 'VIK Wiki (Hallgatói)' })).toHaveAttribute('href', 'https://wiki.sch.bme.hu/');
+        expect(screen.queryByRole('link', { name: 'DEENK - Egyetemi Könyvtár' })).not.toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Villamosmérnöki és Info. Kar (VIK)' })).toBeInTheDocument();
+        expect(screen.queryByRole('option', { name: 'Informatikai Kar (IK)' })).not.toBeInTheDocument();
+
+        await user.selectOptions(screen.getByLabelText('links.faculty'), 'Építészmérnöki Kar (ÉPK)');
+
+        expect(screen.getByRole('link', { name: 'ÉPK Főoldal' })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'VIK Wiki (Hallgatói)' })).not.toBeInTheDocument();
+        expect(screen.queryByText('Alapvető linkek')).not.toBeInTheDocument();
     });
 });

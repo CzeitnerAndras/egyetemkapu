@@ -144,11 +144,15 @@ describe('KnowledgeBasePage Komponens', () => {
 
         await waitFor(() => expect(screen.getByText(/kb\.empty/)).toBeInTheDocument());
         await openUploadModal(user);
+        expect(document.body.style.overflow).toBe('hidden');
+        expect(document.documentElement.style.overflow).toBe('hidden');
 
         const closeButton = container.querySelector('main + div button') as HTMLButtonElement;
         await user.click(closeButton);
 
         expect(screen.queryByText('kb.uploadTitle')).not.toBeInTheDocument();
+        expect(document.body.style.overflow).toBe('');
+        expect(document.documentElement.style.overflow).toBe('');
     });
 
     it('sikeresen feltölt egy dokumentumot a megfelelő FormData adatokkal', async () => {
@@ -215,6 +219,29 @@ describe('KnowledgeBasePage Komponens', () => {
         } finally {
             jest.useRealTimers();
         }
+    });
+
+    it('bejelentkezés nélkül a feltöltésnél belépésre kér', async () => {
+        mockDocumentsFetch([]);
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: false,
+            status: 401,
+            json: async () => {
+                throw new Error('empty');
+            },
+        });
+
+        const user = userEvent.setup();
+        const { container } = render(<KnowledgeBasePage />);
+
+        await waitFor(() => expect(screen.getByText(/kb\.empty/)).toBeInTheDocument());
+        await openUploadModal(user);
+        await fillUploadForm(user, container);
+        await user.click(screen.getByRole('button', { name: 'kb.uploadBtn' }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/kb\.needLogin/)).toBeInTheDocument();
+        });
     });
 
     it('hibaüzenetet mutat, ha a szerver elutasítja a feltöltést', async () => {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { AuthCard, AuthHeader, PageShell } from '../components/PageLayout';
+import PasswordInput from '../components/PasswordInput';
 
 export default function LoginPage() {
     const { t } = useLanguage();
@@ -78,11 +79,12 @@ export default function LoginPage() {
                     {/* --- Password --- */}
                     <div className="flex flex-col group">
                         <label className="text-black dark:text-[#c084fc] secret:text-[#1cf85d] font-bold mb-1 transition-colors group-focus-within:text-blue-800 dark:group-focus-within:text-white secret:group-focus-within:text-white secret:font-mono uppercase">{t('login.password')}</label>
-                        <input
-                            type="password"
+                        <PasswordInput
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            showLabel={t('password.show')}
+                            hideLabel={t('password.hide')}
                             className="border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-2 outline-none focus:border-blue-600 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent transition-all bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none font-bold secret:font-mono"
                         />
                     </div>

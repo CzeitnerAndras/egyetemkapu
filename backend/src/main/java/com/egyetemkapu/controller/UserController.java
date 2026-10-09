@@ -51,8 +51,12 @@ public class UserController {
     }
 
     private Optional<User> getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username);
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null
+                || "anonymousUser".equals(authentication.getName())) {
+            return Optional.empty();
+        }
+        return userRepository.findByUsername(authentication.getName());
     }
 
     // --- Presence ---
@@ -88,7 +92,7 @@ public class UserController {
     @Transactional
     public ResponseEntity<?> updatePreferredLanguage(@RequestBody Map<String, String> request) {
         Optional<User> userOpt = getCurrentUser();
-        if (userOpt.isEmpty()) return ResponseEntity.status(401).body(Map.of("error", "Nincs bejelentkezve!"));
+        if (userOpt.isEmpty()) return ResponseEntity.noContent().build();
 
         String language = request.get("language");
         if (!"hu".equals(language) && !"en".equals(language)) {
