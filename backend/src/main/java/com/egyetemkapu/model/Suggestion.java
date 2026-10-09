@@ -27,7 +27,7 @@ public class Suggestion {
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @PrePersist

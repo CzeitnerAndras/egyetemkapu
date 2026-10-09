@@ -65,6 +65,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     "Túl sok megerősítési kísérlet. Próbáld újra később.")) {
                 return;
             }
+        } else if ("POST".equalsIgnoreCase(request.getMethod()) && "/api/suggestions".equals(path)) {
+            if (!consume(rateLimitingService.resolveSuggestionBucket(clientIpResolver.resolve(request)), response,
+                    "Túl sok ötlet. Próbáld újra később.")) {
+                return;
+            }
         } else if ("GET".equalsIgnoreCase(request.getMethod()) && isFlyerPage(path)) {
             if (!consume(rateLimitingService.resolveFlyerPageBucket(clientIpResolver.resolve(request)), response,
                     "Túl sok újságoldal-kérés. Próbáld újra később.")) {
