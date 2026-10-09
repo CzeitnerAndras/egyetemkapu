@@ -277,10 +277,10 @@ public class FlyerSyncService {
                     log.warn("Coop catalog has no pages: {}", leaflet.paper().sourceKey());
                     continue;
                 }
-                if (catalog.products().isEmpty()) {
-                    catalog = withCoopOcrProducts(catalog, extractor);
-                }
                 catalog = extractor.fillProducts(catalog);
+                if (catalog.products().isEmpty()) {
+                    catalog = extractor.fillProducts(withCoopOcrProducts(catalog, extractor));
+                }
                 if (keepCatalog(catalog, today)) {
                     catalogs.add(catalog);
                 }
@@ -302,6 +302,10 @@ public class FlyerSyncService {
                     : safeBytes(page.imageUrl(), catalog.paper().officialUrl());
             List<TextRun> runs = image.length == 0 ? List.of() : coopPageOcr.read(image);
             List<ParsedProduct> pageProducts = extractor.extractFromLayout(runs, page.pageNumber());
+            if (pageProducts.isEmpty()) {
+                pages.add(page);
+                continue;
+            }
             pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), joinProductNames(pageProducts)));
             products.addAll(pageProducts);
         }
@@ -507,6 +511,7 @@ public class FlyerSyncService {
         return flyers.stream().anyMatch(FlyerSyncService::publitasPagesMissingImages)
                 || flyers.stream().anyMatch(FlyerSyncService::aldiPagesMissingProducts)
                 || flyers.stream().anyMatch(FlyerSyncService::coopCatalogIsCoverOnly)
+                || flyers.stream().anyMatch(FlyerSyncService::coopPagesMissingProducts)
                 || flyers.stream().anyMatch(FlyerSyncService::coopNamesAreSplitWords)
                 || pendingLayoutResync();
     }
@@ -831,6 +836,13 @@ public class FlyerSyncService {
             return false;
         }
         return flyer.getPages().size() < 2;
+    }
+
+    private static boolean coopPagesMissingProducts(Flyer flyer) {
+        if (!"coop".equals(flyer.getStore()) || flyer.getPages() == null || flyer.getPages().size() < 2) {
+            return false;
+        }
+        return flyer.getProducts() == null || flyer.getProducts().isEmpty();
     }
 
     private static boolean aldiPagesMissingProducts(Flyer flyer) {
