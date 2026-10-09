@@ -1,42 +1,129 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Mail, Send, Lightbulb, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
-import { fetchWithAuth } from '../utils/authApi';
+
+type Recaptcha = {
+    ready: (callback: () => void) => void;
+    render: (container: HTMLElement, parameters: { sitekey: string }) => number;
+    getResponse: (widgetId?: number) => string;
+    reset: (widgetId?: number) => void;
+};
+
+declare global {
+    interface Window {
+        grecaptcha?: Recaptcha;
+    }
+}
 
 export default function IdeaBoxPage() {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [siteKey, setSiteKey] = useState<string | null>(null);
     const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+    const captchaBox = useRef<HTMLDivElement>(null);
+    const widgetId = useRef<number | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetch('/api/suggestions/captcha')
+            .then((res) => (res.ok ? res.json() : { siteKey: '' }))
+            .then((data: { siteKey?: string }) => {
+                if (!cancelled) setSiteKey(data.siteKey || '');
+            })
+            .catch(() => {
+                if (!cancelled) setSiteKey('');
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!siteKey || !captchaBox.current) return;
+        let cancelled = false;
+        const paint = () => {
+            if (cancelled || widgetId.current != null || !captchaBox.current || !window.grecaptcha) return;
+            widgetId.current = window.grecaptcha.render(captchaBox.current, { sitekey: siteKey });
+        };
+        if (window.grecaptcha?.render) {
+            if (window.grecaptcha.ready) window.grecaptcha.ready(paint);
+            else paint();
+            return () => {
+                cancelled = true;
+            };
+        }
+        const scriptId = 'egyetemkapu-recaptcha';
+        let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+        const onLoad = () => window.grecaptcha?.ready(paint);
+        if (!script) {
+            script = document.createElement('script');
+            script.id = scriptId;
+            script.src = `https://www.google.com/recaptcha/api.js?render=explicit&hl=${language === 'en' ? 'en' : 'hu'}`;
+            script.async = true;
+            script.addEventListener('load', onLoad);
+            document.head.appendChild(script);
+        } else {
+            script.addEventListener('load', onLoad);
+        }
+        return () => {
+            cancelled = true;
+            script?.removeEventListener('load', onLoad);
+        };
+    }, [siteKey, language]);
+
+    const resetCaptcha = () => {
+        if (widgetId.current != null) window.grecaptcha?.reset(widgetId.current);
+    };
 
     {/* --- Submit --- */}
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!siteKey) {
+            setMessage({ text: t('idea.captchaUnavailable'), type: 'error' });
+            return;
+        }
+        const captchaToken = widgetId.current == null ? '' : window.grecaptcha?.getResponse(widgetId.current) || '';
+        if (!captchaToken) {
+            setMessage({ text: t('idea.captchaRequired'), type: 'error' });
+            return;
+        }
         setIsLoading(true);
         setMessage(null);
 
         try {
-            const res = await fetchWithAuth('/api/suggestions', {
+            const res = await fetch('/api/suggestions', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description })
-            }, { redirectOnAuthFailure: false });
-            if (res.status === 401 || res.status === 403) {
-                setMessage({ text: t('idea.needLogin'), type: 'error' });
+                body: JSON.stringify({ title, description, captchaToken }),
+            });
+            if (res.status === 429) {
+                setMessage({ text: t('idea.tooMany'), type: 'error' });
+                resetCaptcha();
                 return;
             }
-
             if (res.ok) {
                 setMessage({ text: t('idea.thanks'), type: 'success' });
                 setTitle('');
                 setDescription('');
+                resetCaptcha();
             } else {
-                setMessage({ text: t('idea.sendError'), type: 'error' });
+                let failedCaptcha = false;
+                try {
+                    const body = await res.json();
+                    failedCaptcha = body?.error === 'captcha';
+                } catch {
+                    failedCaptcha = false;
+                }
+                setMessage({ text: failedCaptcha ? t('idea.captchaFailed') : t('idea.sendError'), type: 'error' });
+                resetCaptcha();
             }
-        } catch (error) {
+        } catch {
             setMessage({ text: t('idea.serverError'), type: 'error' });
+            resetCaptcha();
         } finally {
             setIsLoading(false);
         }
@@ -55,8 +142,11 @@ export default function IdeaBoxPage() {
                     </h2>
                 </div>
 
-                <p className="text-sm font-bold text-gray-800 dark:text-gray-300 secret:text-[#1cf85d]/80 mb-6 secret:font-mono uppercase">
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-300 secret:text-[#1cf85d]/80 mb-2 secret:font-mono uppercase">
                     &gt; {t('idea.intro')}
+                </p>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-300 secret:text-[#1cf85d]/80 mb-6 secret:font-mono uppercase">
+                    &gt; {t('idea.guest')}
                 </p>
 
                 {message && (
@@ -96,6 +186,14 @@ export default function IdeaBoxPage() {
                             rows={6}
                             className="border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 outline-none focus:border-blue-800 dark:focus:border-[#e879f9] secret:focus:border-white focus:ring-4 focus:ring-transparent dark:focus:ring-[#a855f7]/30 secret:focus:ring-transparent bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-white secret:text-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none resize-none font-bold text-base secret:font-mono placeholder:secret:text-[#1cf85d]/50 transition-colors"
                         />
+                    </div>
+
+                    <div className="bg-white border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 shadow-[4px_4px_0px_#000] dark:shadow-inner secret:shadow-none min-h-[78px]">
+                        {siteKey === '' ? (
+                            <p className="text-sm font-bold text-black">{t('idea.captchaUnavailable')}</p>
+                        ) : (
+                            <div ref={captchaBox} />
+                        )}
                     </div>
 
                     <div className="pt-2">
