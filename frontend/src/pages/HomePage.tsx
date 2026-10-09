@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Megaphone, Zap, Calendar, Bot, Send, Users, Calculator, FileText, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import LinkifiedText from '../components/LinkifiedText';
 import { sendPresenceHeartbeat } from '../utils/presence';
 import { fetchWithAuth } from '../utils/authApi';
 
@@ -369,14 +370,14 @@ export default function HomePage() {
                 <div className="absolute bottom-0 left-0 right-0 p-6 flex flex-col justify-end z-10">
 
                   <h3 className="text-2xl font-bold text-blue-200 secret:text-[#1cf85d] leading-tight secret:font-mono uppercase drop-shadow-[2px_2px_0px_#000]">
-                    {item.title}
+                    <LinkifiedText text={item.title} linkClassName="underline text-white" />
                   </h3>
 
                   <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-all duration-500 ease-in-out">
                     <div className="overflow-hidden">
                       <div className="pt-4 mt-4 border-t-4 border-blue-800 secret:border-[#1cf85d]/30">
                         <p className="text-gray-100 secret:text-[#1cf85d]/80 text-sm line-clamp-3 mb-4 font-bold secret:font-mono">
-                          {item.description}
+                          <LinkifiedText text={item.description} linkClassName="underline text-white" />
                         </p>
                         <div className="flex items-center text-xs text-blue-200 secret:text-[#1cf85d]/60 font-bold uppercase secret:font-mono">
                           <Calendar className="w-4 h-4 mr-2 shrink-0" />
@@ -415,7 +416,7 @@ export default function HomePage() {
             {/* --- Modal content --- */}
             <div className="p-8 md:p-10 overflow-y-auto custom-scrollbar flex-1 relative">
               <h1 className="text-3xl md:text-5xl font-bold text-blue-950 dark:text-[#c084fc] secret:text-[#1cf85d] mb-4 secret:font-mono uppercase leading-tight pr-10">
-                {selectedNews.title}
+                <LinkifiedText text={selectedNews.title} linkClassName="underline" />
               </h1>
 
               <div className="flex items-center text-md font-bold text-blue-800 dark:text-gray-400 secret:text-[#1cf85d]/70 mb-8 border-b-4 border-black dark:border-gray-600 secret:border-[#1cf85d]/50 pb-4 secret:font-mono uppercase">
@@ -424,7 +425,7 @@ export default function HomePage() {
               </div>
 
               <p className="text-black dark:text-slate-100 secret:text-[#1cf85d]/90 text-lg md:text-xl font-bold leading-relaxed text-justify whitespace-pre-wrap secret:font-mono">
-                {selectedNews.description}
+                <LinkifiedText text={selectedNews.description} linkClassName="underline text-blue-800 dark:text-blue-300 secret:text-[#1cf85d]" />
               </p>
             </div>
 
