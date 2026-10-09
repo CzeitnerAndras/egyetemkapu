@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, act, createEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import Navbar from './Navbar';
@@ -45,40 +45,52 @@ describe('Navbar Komponens', () => {
         document.documentElement.className = '';
     });
 
-    const getNavScroll = (container: HTMLElement) =>
-        container.querySelector('.nav-scroll') as HTMLDivElement;
-
-    const pageLinkHrefs: Record<string, string> = {
-        'nav.calendar': '/naptar',
-        'nav.ai': '/ai',
-        'nav.calculators': '/kalkulator',
-        'nav.knowledge': '/tudastar',
-        'nav.reference': '/hivatkozas',
-        'nav.focus': '/tanuloszoba',
-        'nav.cards': '/kartyak',
-        'nav.links': '/linktar',
-        'nav.sales': '/akcios-ujsag',
+    const openGroup = async (user: ReturnType<typeof setup>, name: RegExp) => {
+        await user.click(screen.getByRole('button', { name }));
     };
 
-    it('megjeleníti a fő navigációs linkeket, admin szekció nélkül bejelentkezés nélkül', () => {
-        renderWithRouter();
+    it('a csoportokat mutatja legördülő nélkül, amíg meg nem nyitják', () => {
+        const { container } = renderWithRouter();
 
-        expect(screen.getByText('nav.calendar')).toBeInTheDocument();
-        expect(screen.getByText('nav.ai')).toBeInTheDocument();
-        expect(screen.getByText('nav.calculators')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /nav\.study/ })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /nav\.tools/ })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /nav\.daily/ })).toBeInTheDocument();
+        expect(container.querySelector('.nav-scroll')).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /nav\.focus/ })).not.toBeInTheDocument();
         expect(screen.queryByText('nav.adminSection')).not.toBeInTheDocument();
     });
 
-    it('a húzható sávban minden oldal linkjét a helyes útvonallal jeleníti meg', () => {
-        const { container } = renderWithRouter();
-        const strip = getNavScroll(container);
+    it('a Tanulás menü a tanulószobát, a kártyákat és a tudástárat nyitja', async () => {
+        renderWithRouter();
+        const user = setup();
 
-        expect(strip).toBeInTheDocument();
-        Object.entries(pageLinkHrefs).forEach(([label, href]) => {
-            const link = strip.querySelector(`a[href="${href}"]`);
-            expect(link).toHaveTextContent(label);
-            expect(link).toHaveAttribute('draggable', 'false');
-        });
+        await openGroup(user, /nav\.study/);
+
+        expect(screen.getByRole('link', { name: /nav\.focus/ })).toHaveAttribute('href', '/tanuloszoba');
+        expect(screen.getByRole('link', { name: /nav\.cards/ })).toHaveAttribute('href', '/kartyak');
+        expect(screen.getByRole('link', { name: /nav\.knowledge/ })).toHaveAttribute('href', '/tudastar');
+    });
+
+    it('az Eszközök menü a kalkulátort, a hivatkozást és az AI-t nyitja', async () => {
+        renderWithRouter();
+        const user = setup();
+
+        await openGroup(user, /nav\.tools/);
+
+        expect(screen.getByRole('link', { name: /nav\.calculators/ })).toHaveAttribute('href', '/kalkulator');
+        expect(screen.getByRole('link', { name: /nav\.reference/ })).toHaveAttribute('href', '/hivatkozas');
+        expect(screen.getByRole('link', { name: /nav\.ai/ })).toHaveAttribute('href', '/ai');
+    });
+
+    it('a Mindennapok menü a naptárt, a linktárat és az akciós újságot nyitja', async () => {
+        renderWithRouter();
+        const user = setup();
+
+        await openGroup(user, /nav\.daily/);
+
+        expect(screen.getByRole('link', { name: /nav\.calendar/ })).toHaveAttribute('href', '/naptar');
+        expect(screen.getByRole('link', { name: /nav\.links/ })).toHaveAttribute('href', '/linktar');
+        expect(screen.getByRole('link', { name: /nav\.sales/ })).toHaveAttribute('href', '/akcios-ujsag');
     });
 
     it('a hasznossági ikonokat jobbra igazítja', () => {
@@ -92,60 +104,38 @@ describe('Navbar Komponens', () => {
         expect(icons.querySelector('.lucide-menu')).toBeInTheDocument();
     });
 
-    it('bal kattintásos húzáskor a sávot görgeti, és nem navigál a fülre', () => {
-        const { container } = renderWithRouter();
-        const strip = getNavScroll(container);
-        let scrollLeft = 0;
-        Object.defineProperty(strip, 'scrollLeft', {
-            configurable: true,
-            get: () => scrollLeft,
-            set: (value: number) => { scrollLeft = value; },
-        });
-
-        const pointer = (type: string, clientX: number) =>
-            new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX });
-
-        strip.dispatchEvent(pointer('pointerdown', 220));
-        strip.dispatchEvent(pointer('pointermove', 140));
-        expect(scrollLeft).toBe(80);
-
-        strip.dispatchEvent(pointer('pointerup', 140));
-        fireEvent.click(strip.querySelector('a[href="/naptar"]')!);
-
-        expect(window.location.pathname).not.toBe('/naptar');
-    });
-
-    it('egyszerű kattintással megnyitja a naptár oldalt', async () => {
-        const { container } = renderWithRouter();
+    it('a csoport linkjére kattintva megnyitja az oldalt, és bezárja a menüt', async () => {
+        renderWithRouter();
         const user = setup();
 
-        await user.click(getNavScroll(container).querySelector('a[href="/naptar"]')!);
+        await openGroup(user, /nav\.daily/);
+        await user.click(screen.getByRole('link', { name: /nav\.calendar/ }));
 
         expect(window.location.pathname).toBe('/naptar');
+        expect(screen.queryByRole('link', { name: /nav\.links/ })).not.toBeInTheDocument();
     });
 
-    it('kis egérmozgás után is megnyitja a naptár oldalt', async () => {
-        const { container } = renderWithRouter();
-        const strip = getNavScroll(container);
-        const link = strip.querySelector('a[href="/naptar"]')!;
-        const pointer = (type: string, clientX: number) =>
-            new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX });
+    it('egyszerre csak egy csoportmenü van nyitva', async () => {
+        renderWithRouter();
+        const user = setup();
 
-        strip.dispatchEvent(pointer('pointerdown', 220));
-        strip.dispatchEvent(pointer('pointermove', 216));
-        strip.dispatchEvent(pointer('pointerup', 216));
-        fireEvent.click(link);
+        await openGroup(user, /nav\.study/);
+        await openGroup(user, /nav\.tools/);
 
-        expect(window.location.pathname).toBe('/naptar');
+        expect(screen.queryByRole('link', { name: /nav\.focus/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /nav\.calculators/ })).toBeInTheDocument();
     });
 
-    it('megakadályozza a böngésző natív link-húzását a füleken', () => {
-        const { container } = renderWithRouter();
-        const calendarLink = getNavScroll(container).querySelector('a[href="/naptar"]')!;
-        const event = createEvent.dragStart(calendarLink);
-        fireEvent(calendarLink, event);
+    it('a sávon kívülre kattintva bezárja a csoportmenüt', async () => {
+        renderWithRouter();
+        const user = setup();
 
-        expect(event.defaultPrevented).toBe(true);
+        await openGroup(user, /nav\.study/);
+        expect(screen.getByRole('link', { name: /nav\.focus/ })).toBeInTheDocument();
+
+        fireEvent.mouseDown(document.body);
+
+        expect(screen.queryByRole('link', { name: /nav\.focus/ })).not.toBeInTheDocument();
     });
 
     it('tokennel lekéri a felhasználót, és admin szerepkör esetén megjeleníti az admin panel linket', async () => {
@@ -320,6 +310,8 @@ describe('Navbar Komponens', () => {
 
         expect(screen.getByText('nav.system')).toBeInTheDocument();
         expect(screen.getByText('nav.menu')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /nav\.focus/ })).toHaveAttribute('href', '/tanuloszoba');
+        expect(screen.getByRole('link', { name: /nav\.sales/ })).toHaveAttribute('href', '/akcios-ujsag');
         expect(screen.getByText('nav.about')).toBeInTheDocument();
         expect(screen.getByText('nav.faq')).toBeInTheDocument();
         expect(screen.getByText('nav.settings')).toBeInTheDocument();
