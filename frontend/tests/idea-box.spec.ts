@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Egyetemkapu E2E - Ötletláda', () => {
   test('Új ötlet beküldése sikeresen', async ({ page }) => {
     await page.addInitScript(() => {
-      (window as unknown as { grecaptcha: unknown }).grecaptcha = {
+      (globalThis as unknown as { grecaptcha: unknown }).grecaptcha = {
         ready: (callback: () => void) => callback(),
         render: () => 1,
         getResponse: () => 'test-token',
