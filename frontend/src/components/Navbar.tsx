@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, Newspaper } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, Newspaper, ChevronDown } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
 
@@ -16,58 +16,12 @@ export default function Navbar() {
   const [isFatalError, setIsFatalError] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [crtClass, setCrtClass] = useState('');
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const clickCountRef = useRef<number | null>(0);
   const timeoutRef = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
-  const navScrollRef = useRef<HTMLDivElement>(null);
-  const navDragRef = useRef({ active: false, dragging: false, startX: 0, scrollLeft: 0, moved: false });
-  const [navOverflow, setNavOverflow] = useState({ left: false, right: false });
   const navigate = useNavigate();
-
-  {/* --- Scroll overflow --- */}
-  const updateNavOverflow = useCallback(() => {
-    const el = navScrollRef.current;
-    if (!el) {
-      setNavOverflow({ left: false, right: false });
-      return;
-    }
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    const next = {
-      left: el.scrollLeft > 4,
-      right: maxScroll - el.scrollLeft > 4,
-    };
-    setNavOverflow((prev) => (
-      prev.left === next.left && prev.right === next.right ? prev : next
-    ));
-  }, []);
-
-  useEffect(() => {
-    const el = navScrollRef.current;
-    if (!el) return;
-
-    updateNavOverflow();
-    el.addEventListener('scroll', updateNavOverflow, { passive: true });
-    window.addEventListener('resize', updateNavOverflow);
-
-    const onWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-      event.preventDefault();
-      el.scrollLeft += event.deltaY;
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-
-    const onNativeDragStart = (event: DragEvent) => {
-      event.preventDefault();
-    };
-    el.addEventListener('dragstart', onNativeDragStart, true);
-
-    return () => {
-      el.removeEventListener('scroll', updateNavOverflow);
-      window.removeEventListener('resize', updateNavOverflow);
-      el.removeEventListener('wheel', onWheel);
-      el.removeEventListener('dragstart', onNativeDragStart, true);
-    };
-  }, [updateNavOverflow, language]);
+  const location = useLocation();
 
   {/* --- User --- */}
   const loadCurrentUser = useCallback(async () => {
@@ -101,6 +55,7 @@ export default function Navbar() {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
         setIsProfileMenuOpen(false);
+        setOpenGroup(null);
       }
     };
 
@@ -262,6 +217,7 @@ export default function Navbar() {
     if (isLoggedIn) {
       setIsProfileMenuOpen(!isProfileMenuOpen);
       setIsMenuOpen(false);
+      setOpenGroup(null);
     } else {
       navigate('/login');
     }
@@ -287,79 +243,53 @@ export default function Navbar() {
   const handleMenuClick = () => {
     setIsMenuOpen(!isMenuOpen);
     setIsProfileMenuOpen(false);
-  };
-
-  const handleNavPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    const el = navScrollRef.current;
-    if (!el || event.button > 0) return;
-    navDragRef.current = {
-      active: true,
-      dragging: false,
-      startX: event.clientX,
-      scrollLeft: el.scrollLeft,
-      moved: false,
-    };
-  };
-
-  const handleNavDragStart = (event: React.DragEvent<HTMLElement>) => {
-    event.preventDefault();
-  };
-
-  const handleNavPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const el = navScrollRef.current;
-    const drag = navDragRef.current;
-    if (!el || !drag.active) return;
-    const delta = event.clientX - drag.startX;
-    if (!drag.dragging) {
-      if (Math.abs(delta) < 8) return;
-      drag.dragging = true;
-      drag.moved = true;
-      el.classList.add('is-dragging');
-      el.setPointerCapture?.(event.pointerId);
-    }
-    event.preventDefault();
-    el.scrollLeft = drag.scrollLeft - delta;
-  };
-
-  const endNavDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    const el = navScrollRef.current;
-    const wasDragging = navDragRef.current.dragging;
-    navDragRef.current.active = false;
-    navDragRef.current.dragging = false;
-    el?.classList.remove('is-dragging');
-    if (el?.hasPointerCapture?.(event.pointerId)) {
-      el.releasePointerCapture(event.pointerId);
-    }
-    if (!wasDragging) {
-      navDragRef.current.moved = false;
-    }
-  };
-
-  const handleNavClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (navDragRef.current.moved) {
-      event.preventDefault();
-      event.stopPropagation();
-      navDragRef.current.moved = false;
-    }
+    setOpenGroup(null);
   };
 
   {/* --- Pages --- */}
-  const pageLinks = [
-    { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
-    { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
-    { to: '/ai', label: t('nav.ai'), icon: Bot },
-    { to: '/kalkulator', label: t('nav.calculators'), icon: Calculator },
-    { to: '/tudastar', label: t('nav.knowledge'), icon: BookOpen },
-    { to: '/tanuloszoba', label: t('nav.focus'), icon: BrainCircuit },
-    { to: '/kartyak', label: t('nav.cards'), icon: Layers },
-    { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
-    { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
+  const navGroups = [
+    {
+      id: 'study',
+      label: t('nav.study'),
+      items: [
+        { to: '/tanuloszoba', label: t('nav.focus'), icon: BrainCircuit },
+        { to: '/kartyak', label: t('nav.cards'), icon: Layers },
+        { to: '/tudastar', label: t('nav.knowledge'), icon: BookOpen },
+      ],
+    },
+    {
+      id: 'tools',
+      label: t('nav.tools'),
+      items: [
+        { to: '/kalkulator', label: t('nav.calculators'), icon: Calculator },
+        { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
+        { to: '/ai', label: t('nav.ai'), icon: Bot },
+      ],
+    },
+    {
+      id: 'daily',
+      label: t('nav.daily'),
+      items: [
+        { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
+        { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
+        { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
+      ],
+    },
   ];
 
   return (
     <>
       {/* --- Nav --- */}
-      <nav ref={navRef} className="fixed inset-x-0 top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] md:relative md:inset-auto md:top-auto transition-all duration-300">
+      <nav
+        ref={navRef}
+        onKeyDown={(event) => {
+          if (event.key !== 'Escape') return;
+          setIsMenuOpen(false);
+          setIsProfileMenuOpen(false);
+          setOpenGroup(null);
+        }}
+        className="fixed inset-x-0 top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] md:relative md:inset-auto md:top-auto transition-all duration-300"
+      >
 
         <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group shrink-0">
           <span className="inline-flex items-center justify-center text-2xl font-bold border-4 border-black dark:border-slate-100 secret:border-[#1cf85d] w-12 h-10 leading-none group-hover:bg-black group-hover:text-blue-300 dark:group-hover:bg-slate-100 dark:group-hover:text-[#a855f7] secret:group-hover:bg-[#1cf85d] secret:group-hover:text-black transition-all duration-300 shadow-[2px_2px_0px_#000] dark:shadow-sm secret:shadow-[0_0_10px_rgba(28,248,93,0.5)]">
@@ -367,35 +297,47 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden md:block relative min-w-0 flex-1 md:ml-6 lg:ml-10">
-          {navOverflow.left && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-blue-600 to-transparent dark:from-[#1e1e1e] secret:from-black"></div>
-          )}
-          {navOverflow.right && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-blue-950 to-transparent dark:from-[#3b0764] secret:from-black"></div>
-          )}
-          <div
-            ref={navScrollRef}
-            onPointerDown={handleNavPointerDown}
-            onPointerMove={handleNavPointerMove}
-            onPointerUp={endNavDrag}
-            onPointerCancel={endNavDrag}
-            onDragStart={handleNavDragStart}
-            onClickCapture={handleNavClickCapture}
-            className="nav-scroll flex flex-nowrap items-center gap-5 lg:gap-6 text-sm lg:text-lg font-bold uppercase tracking-wide whitespace-nowrap"
-          >
-            {pageLinks.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                draggable={false}
-                onDragStart={handleNavDragStart}
-                className="shrink-0 hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)] transition-all"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+        <div className="hidden md:flex items-center gap-1 lg:gap-3 min-w-0 flex-1 md:ml-6 lg:ml-10">
+          {navGroups.map((group) => {
+            const isOpen = openGroup === group.id;
+            const isCurrent = group.items.some((item) => location.pathname === item.to);
+            return (
+              <div key={group.id} className="relative">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-haspopup="true"
+                  onClick={() => {
+                    setOpenGroup(isOpen ? null : group.id);
+                    setIsMenuOpen(false);
+                    setIsProfileMenuOpen(false);
+                  }}
+                  className={`inline-flex items-center gap-1 whitespace-nowrap px-2 py-1 text-sm lg:text-base font-bold uppercase tracking-wide transition-all ${isOpen || isCurrent ? 'underline decoration-2 underline-offset-4' : 'hover:text-white hover:drop-shadow-[2px_2px_0px_#000] dark:hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] secret:hover:drop-shadow-[0_0_8px_rgba(28,248,93,0.8)]'}`}
+                >
+                  {group.label}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="absolute left-0 top-full z-50 mt-3 min-w-56 border-4 border-black bg-slate-100 text-black shadow-[4px_4px_0px_#020617] dark:border-[#a855f7] dark:bg-[#3b0764] dark:text-white dark:shadow-[0_8px_24px_rgba(168,85,247,0.35)] secret:border-[#1cf85d] secret:bg-black secret:text-[#1cf85d] secret:shadow-none">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const current = location.pathname === item.to;
+                      return (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setOpenGroup(null)}
+                          className={`px-4 py-3 border-l-4 font-bold uppercase text-sm flex items-center transition-all secret:font-mono ${current ? 'border-black bg-blue-500 dark:border-[#a855f7] dark:bg-white/10 secret:border-[#1cf85d] secret:bg-[#1cf85d]/20' : 'border-transparent hover:border-black hover:bg-blue-500 dark:hover:border-[#a855f7] dark:hover:bg-white/10 secret:hover:border-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black'}`}
+                        >
+                          <Icon className="w-4 h-4 mr-3" /> {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* --- Right icons --- */}
@@ -428,7 +370,7 @@ export default function Navbar() {
 
         {/* --- Main dropdown --- */}
         {isMenuOpen && (
-          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] shadow-[-8px_8px_0px_#020617] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-[60] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
+          <div className="absolute top-full right-0 mt-[4px] bg-slate-100 dark:bg-[#3b0764] secret:bg-black w-72 max-w-[calc(100vw-0.75rem)] max-h-[calc(100dvh-4.75rem)] overflow-y-auto shadow-[-8px_8px_0px_#020617] dark:shadow-[-8px_8px_30px_rgba(168,85,247,0.3)] secret:shadow-none flex flex-col z-[60] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] transition-colors duration-300">
 
             <div className="flex items-center justify-between p-4 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/50 bg-blue-500 dark:bg-transparent secret:bg-transparent">
               <div className="flex items-center space-x-2">
@@ -455,19 +397,24 @@ export default function Navbar() {
 
             <div className="flex md:hidden flex-col py-2 border-b-4 border-black dark:border-[#a855f7]/30 secret:border-[#1cf85d]/30">
               <span className="px-4 py-2 text-xs font-black text-black dark:text-white/70 secret:text-[#1cf85d]/70 uppercase tracking-wider secret:font-mono">{t('nav.menu')}</span>
-              {pageLinks.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-blue-500 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm"
-                  >
-                    <Icon className="w-4 h-4 mr-3 text-black dark:text-white" /> {item.label}
-                  </Link>
-                );
-              })}
+              {navGroups.map((group) => (
+                <div key={group.id} className="flex flex-col">
+                  <span className="px-4 pt-2 pb-1 text-[11px] font-black text-black/60 dark:text-white/50 secret:text-[#1cf85d]/60 uppercase tracking-wider secret:font-mono">{group.label}</span>
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={() => setIsMenuOpen(false)}
+                        className="px-4 py-3 border-l-4 border-transparent hover:border-black hover:bg-blue-500 dark:hover:border-[#a855f7] secret:hover:border-[#1cf85d] dark:hover:bg-white/10 secret:hover:bg-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] secret:hover:text-black font-bold flex items-center transition-all secret:font-mono uppercase text-sm"
+                      >
+                        <Icon className="w-4 h-4 mr-3 text-black dark:text-white" /> {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
 
             <div className="flex flex-col py-2">
