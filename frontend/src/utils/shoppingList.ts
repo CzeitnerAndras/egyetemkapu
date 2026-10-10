@@ -1,6 +1,6 @@
 export const SHOPPING_LIST_KEY = 'egyetemkapu.shoppingList';
 
-export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop';
+export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl';
 
 export interface ShoppingListItem {
     id: string;
@@ -15,7 +15,7 @@ export interface ShoppingListItem {
 
 export type ShoppingListDraft = Omit<ShoppingListItem, 'id' | 'quantity'> & { quantity?: number };
 
-const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
+const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl'];
 
 {/* --- Item key --- */}
 export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | 'pageNumber' | 'name'>): string {

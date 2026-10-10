@@ -62,7 +62,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
     await page.getByRole('button', { name: /Értem|Got it/i }).click();
 
     await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
-    await expect(page.locator('[data-store]')).toHaveCount(6);
+    await expect(page.locator('[data-store]')).toHaveCount(7);
     await expect(page.locator('[data-store="spar"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SPAR szórólap')).toBeVisible();
   });
