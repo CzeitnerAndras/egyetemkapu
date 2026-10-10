@@ -28,7 +28,7 @@ public class FlyerQueryService {
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
-    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop");
+    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -242,6 +242,15 @@ public class FlyerQueryService {
                 return 1;
             }
             return 2;
+        }
+        if ("lidl".equals(flyer.getStore())) {
+            if (hay.contains("nonfood")) {
+                return 1;
+            }
+            if (hay.contains("regionalis")) {
+                return 2;
+            }
+            return 0;
         }
         return 0;
     }
