@@ -27,6 +27,11 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://katalogus.coop.hu/coop-alfold-szorolap-2026-szeptember-4-het/"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://www.coop.hu/wp-content/uploads/2026/09/coop_nyirzem_szorolap_20260924-0930.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.lidl.hu/c/szorolap/s10013623"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=x"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://imgproxy.leaflets.schwarz/x/page.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://assets.leaflets.schwarz/leaflets/pdfs/x.pdf"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }
