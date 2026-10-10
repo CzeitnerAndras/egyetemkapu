@@ -33,7 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
-    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco", "auchan", "coop");
+    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl");
+    private static final int LIDL_MAX_PDF_PAGES = 80;
+    private static final String LIDL_OVERVIEW = "https://www.lidl.hu/c/szorolap/s10013623";
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
 
@@ -94,6 +96,7 @@ public class FlyerSyncService {
             syncPenny(today);
             syncTesco(today);
             syncAuchan(today);
+            syncLidl(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -258,6 +261,64 @@ public class FlyerSyncService {
         } catch (Exception e) {
             log.warn("Auchan flyer sync failed: {}", e.getMessage());
         }
+    }
+
+    public void syncLidl(LocalDate today) {
+        try {
+            String html = safeText(LIDL_OVERVIEW);
+            List<DiscoveredPaper> papers = parser.discoverLidlPapers(html);
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            FlyerProductExtractor extractor = extractors.forStore("lidl");
+            for (DiscoveredPaper paper : papers) {
+                if (catalogs.size() >= 4) {
+                    break;
+                }
+                String api = FlyerCatalogParser.lidlFlyerUrl(paper.sourceKey());
+                if (api == null) {
+                    continue;
+                }
+                ParsedCatalog catalog = parser.parseLidlFlyer(paper, safeText(api));
+                if (!keepCatalog(catalog, today)) {
+                    continue;
+                }
+                catalog = withLidlPdfProducts(catalog, extractor);
+                catalogs.add(catalog);
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("lidl", catalogs, LocalDateTime.now(clock));
+            }
+        } catch (Exception e) {
+            log.warn("Lidl flyer sync failed: {}", e.getMessage());
+        }
+    }
+
+    private ParsedCatalog withLidlPdfProducts(ParsedCatalog catalog, FlyerProductExtractor extractor) {
+        byte[] pdf = safeBytes(catalog.paper().pdfUrl(), "https://www.lidl.hu/");
+        if (pdf == null || pdf.length == 0) {
+            return catalog;
+        }
+        FlyerPdfExtractor.ExtractedDocument extracted =
+                pdfExtractor.extractDocument(pdf, extractor, LIDL_MAX_PDF_PAGES);
+        Map<Integer, String> pdfText = new java.util.HashMap<>();
+        for (ParsedPage page : extracted.pages()) {
+            if (page.text() != null && !page.text().isBlank()) {
+                pdfText.put(page.pageNumber(), page.text());
+            }
+        }
+        if (pdfText.isEmpty() && extracted.products().isEmpty()) {
+            return catalog;
+        }
+        List<ParsedPage> pages = new ArrayList<>();
+        for (ParsedPage page : catalog.pages()) {
+            pages.add(new ParsedPage(
+                    page.pageNumber(),
+                    page.imageUrl(),
+                    pdfText.getOrDefault(page.pageNumber(), page.text())));
+        }
+        List<ParsedProduct> products = extracted.products().isEmpty()
+                ? catalog.products()
+                : extracted.products();
+        return new ParsedCatalog(catalog.paper(), pages, products);
     }
 
     public void syncCoop(LocalDate today) {
@@ -529,7 +590,9 @@ public class FlyerSyncService {
             return false;
         }
         FlyerProductExtractor extractor = extractors.forStore(flyer.getStore());
-        FlyerPdfExtractor.ExtractedDocument extracted = pdfExtractor.extractDocument(pdf, extractor);
+        FlyerPdfExtractor.ExtractedDocument extracted = "lidl".equals(flyer.getStore())
+                ? pdfExtractor.extractDocument(pdf, extractor, LIDL_MAX_PDF_PAGES)
+                : pdfExtractor.extractDocument(pdf, extractor);
         if (extracted.pages().isEmpty()) {
             return false;
         }
@@ -593,7 +656,8 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(FlyerSyncService::isPennyReweFlyer)
                 || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "auchan".equals(flyer.getStore()))
-                || flyers.stream().noneMatch(flyer -> "coop".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "coop".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "lidl".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
@@ -672,7 +736,7 @@ public class FlyerSyncService {
     }
 
     private static boolean usesPdfLayout(String store) {
-        return "spar".equals(store) || "tesco".equals(store) || "aldi".equals(store);
+        return "spar".equals(store) || "tesco".equals(store) || "aldi".equals(store) || "lidl".equals(store);
     }
 
     private static String sparBrandFromSourceKey(String sourceKey) {
