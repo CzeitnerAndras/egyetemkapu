@@ -422,7 +422,9 @@ class FlyerSyncServiceTest {
         sonka.setName("Pápai extra sonka");
         sonka.setPageNumber(1);
         coop.addProduct(sonka);
-        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop));
+        Flyer lidl = storeFlyer("lidl", "lidl:01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61",
+                "https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0");
+        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop, lidl));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -593,6 +595,46 @@ class FlyerSyncServiceTest {
         assertTrue(service.isStale(now));
         service.syncAll();
         assertTrue(service.isStale(now));
+    }
+
+    @Test
+    void syncLidlPersistsTheNationalLeafletAndSkipsRegionalOnes() {
+        String id = "01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61";
+        when(httpClient.getText("https://www.lidl.hu/c/szorolap/s10013623")).thenReturn("""
+                <a href="https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0?lf=HHZ"
+                   id="flyer-%s">
+                    <span class="flyer__title">Akciós újság – 41. hét</span>
+                </a>
+                <a href="https://www.lidl.hu/l/hu/ujsag/regionalis-akciok-debrecen-42het/ar/0?lf=HHZ"
+                   id="flyer-01a120bd-0f8e-7317-95ed-0165b776d176">
+                    <span class="flyer__title">Regionális akciók – Debrecen</span>
+                </a>
+                """.formatted(id));
+        when(httpClient.getText("https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=" + id)).thenReturn("""
+                {"flyer":{
+                  "title":"Akciós újság – 41. hét",
+                  "pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/x.pdf",
+                  "flyerUrlAbsolute":"https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0?lf=HHZ",
+                  "offerStartDate":"2026-10-08",
+                  "offerEndDate":"2026-10-14",
+                  "pages":[{"number":1,"image":"https://imgproxy.leaflets.schwarz/cover.jpg","keyWords":"Milbona Joghurt"}]
+                }}
+                """);
+
+        service.syncLidl(LocalDate.of(2026, 10, 10));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("lidl"), captor.capture(), any());
+        assertEquals(1, captor.getValue().size());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("Akciós újság – 41. hét", catalog.paper().title());
+        assertEquals(LocalDate.of(2026, 10, 8), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 14), catalog.paper().validTo());
+        assertEquals("https://imgproxy.leaflets.schwarz/cover.jpg", catalog.pages().getFirst().imageUrl());
+        assertTrue(catalog.pages().getFirst().text().contains("Milbona"));
+        verify(httpClient, never()).getText(
+                "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=01a120bd-0f8e-7317-95ed-0165b776d176");
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {
