@@ -108,6 +108,10 @@ public class FlyerCatalogParser {
     private static final Pattern AUCHAN_PAPER_GUID = Pattern.compile(
             "cdn\\.ipaper\\.io/iPaper/Papers/([0-9a-fA-F-]{36})",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern LIDL_FLYER = Pattern.compile(
+            "(?is)<a\\s+href=\"(https://www\\.lidl\\.hu/l/hu/ujsag/[^\"?#]+)(?:\\?[^\"#]*)?\"[^>]*\\bid=\"flyer-([0-9a-fA-F-]{36})\"");
+    private static final Pattern LIDL_TITLE = Pattern.compile(
+            "(?is)<span\\s+class=\"flyer__title\">\\s*([^<]+?)\\s*</span>");
     private static final Pattern AUCHAN_PAGE_TOKEN = Pattern.compile(
             "token=([A-Za-z0-9_~-]+)&token_path=([^&\"']+Pages[^&\"']*)&expires=(\\d+)",
             Pattern.CASE_INSENSITIVE);
@@ -224,6 +228,87 @@ public class FlyerCatalogParser {
             papers.putIfAbsent(fallback.sourceKey(), fallback);
         }
         return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    public List<DiscoveredPaper> discoverLidlPapers(String html) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        if (html == null || html.isBlank()) {
+            return papers;
+        }
+        Matcher matcher = LIDL_FLYER.matcher(html);
+        while (matcher.find()) {
+            String url = matcher.group(1);
+            if (url.toLowerCase(Locale.ROOT).contains("regionalis")) {
+                continue;
+            }
+            String id = matcher.group(2).toLowerCase(Locale.ROOT);
+            int windowEnd = Math.min(html.length(), matcher.end() + 2500);
+            Matcher title = LIDL_TITLE.matcher(html.substring(matcher.end(), windowEnd));
+            String name = title.find() ? title.group(1).replaceAll("\\s+", " ").trim() : "";
+            if (name.isBlank()) {
+                name = "Lidl akciós újság";
+            }
+            papers.add(new DiscoveredPaper(
+                    "lidl",
+                    name,
+                    url,
+                    null,
+                    "lidl:" + id,
+                    null,
+                    null));
+        }
+        return papers;
+    }
+
+    public static String lidlFlyerUrl(String sourceKey) {
+        if (sourceKey == null || !sourceKey.startsWith("lidl:")) {
+            return null;
+        }
+        String id = sourceKey.substring("lidl:".length());
+        if (!id.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
+            return null;
+        }
+        return "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=" + id;
+    }
+
+    public ParsedCatalog parseLidlFlyer(DiscoveredPaper paper, String json) {
+        if (paper == null) {
+            return null;
+        }
+        try {
+            JsonNode flyer = objectMapper.readTree(json == null ? "" : json).path("flyer");
+            if (flyer.isMissingNode() || flyer.isNull()) {
+                return new ParsedCatalog(paper, List.of(), List.of());
+            }
+            String title = textOr(flyer.path("title"), paper.title());
+            String official = withoutQuery(FlyerUrlPolicy.allowedOrNull(
+                    textOr(flyer.path("flyerUrlAbsolute"), paper.officialUrl())));
+            if (official == null) {
+                official = paper.officialUrl();
+            }
+            String pdf = FlyerUrlPolicy.allowedOrNull(textOr(flyer.path("pdfUrl"), null));
+            LocalDate from = isoDate(flyer.path("offerStartDate"), isoDate(flyer.path("startDate"), paper.validFrom()));
+            LocalDate to = isoDate(flyer.path("offerEndDate"), isoDate(flyer.path("endDate"), paper.validTo()));
+            DiscoveredPaper resolved = new DiscoveredPaper(
+                    "lidl", title, official, pdf, paper.sourceKey(), from, to);
+            List<ParsedPage> pages = new ArrayList<>();
+            JsonNode pageNodes = flyer.path("pages");
+            if (pageNodes.isArray()) {
+                for (JsonNode page : pageNodes) {
+                    int number = page.path("number").asInt(0);
+                    if (number < 1) {
+                        continue;
+                    }
+                    String image = FlyerUrlPolicy.allowedOrNull(textOr(page.path("image"), null));
+                    String text = textOr(page.path("keyWords"), "");
+                    pages.add(new ParsedPage(number, image, text));
+                }
+            }
+            pages.sort(Comparator.comparingInt(ParsedPage::pageNumber));
+            return new ParsedCatalog(resolved, pages, List.of());
+        } catch (Exception ex) {
+            return new ParsedCatalog(paper, List.of(), List.of());
+        }
     }
 
     public List<DiscoveredPaper> discoverAuchanPapers(String html, LocalDate today) {
@@ -1213,6 +1298,26 @@ public class FlyerCatalogParser {
         } catch (IllegalArgumentException ignored) {
             return null;
         }
+    }
+
+    private static LocalDate isoDate(JsonNode node, LocalDate fallback) {
+        String value = textOr(node, "");
+        if (value.length() < 10) {
+            return fallback;
+        }
+        try {
+            return LocalDate.parse(value.substring(0, 10));
+        } catch (Exception ex) {
+            return fallback;
+        }
+    }
+
+    private static String withoutQuery(String url) {
+        if (url == null) {
+            return null;
+        }
+        int query = url.indexOf('?');
+        return query < 0 ? url : url.substring(0, query);
     }
 
     private static String textOr(JsonNode node, String fallback) {

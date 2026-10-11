@@ -59,17 +59,14 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
 
   test('a bolt tabok megjelennek, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
-    await page.getByRole('button', { name: /Értem|Got it/i }).click();
-
-    await expect(page.locator('.lucide-newspaper').first()).toBeVisible();
-    await expect(page.locator('[data-store]')).toHaveCount(6);
+    await expect(page.getByRole('heading', { level: 1, name: /Akciós újságok|Sale flyers/i })).toBeVisible();
+    await expect(page.locator('[data-store]')).toHaveCount(7);
     await expect(page.locator('[data-store="spar"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SPAR szórólap')).toBeVisible();
   });
 
   test('másik boltra kattintva lecserélődik az újságlista', async ({ page }) => {
     await page.goto('/akcios-ujsag');
-    await page.getByRole('button', { name: /Értem|Got it/i }).click();
     await expect(page.getByText('SPAR szórólap')).toBeVisible();
 
     await page.locator('[data-store="penny"]').click();
@@ -81,8 +78,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
 
   test('keresés találatot ad, és megnyitja a lapozót', async ({ page }) => {
     await page.goto('/akcios-ujsag');
-    await page.getByRole('button', { name: /Értem|Got it/i }).click();
-    await page.getByLabel(/Keresés az újságokban|Search the flyers/i).fill('kakaóscsiga');
+    await page.getByLabel(/Termék keresése|Find a product/i).fill('kakaóscsiga');
     await page.getByRole('button', { name: /Keresés|Search/i }).click();
 
     await expect(page.getByText('Kakaóscsiga')).toBeVisible();
@@ -92,8 +88,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
 
   test('a találat felvehető a listára, és a lista letölthető', async ({ page }) => {
     await page.goto('/akcios-ujsag');
-    await page.getByRole('button', { name: /Értem|Got it/i }).click();
-    await page.getByLabel(/Keresés az újságokban|Search the flyers/i).fill('kakaóscsiga');
+    await page.getByLabel(/Termék keresése|Find a product/i).fill('kakaóscsiga');
     await page.getByRole('button', { name: /Keresés|Search/i }).click();
     await page.getByRole('button', { name: /Hozzáadás|^Add$/ }).click();
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, Newspaper, ChevronDown } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, ChevronDown } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
@@ -272,7 +272,6 @@ export default function Navbar() {
       items: [
         { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
         { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
-        { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
       ],
     },
   ];
@@ -288,7 +287,7 @@ export default function Navbar() {
           setIsProfileMenuOpen(false);
           setOpenGroup(null);
         }}
-        className="fixed inset-x-0 top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] md:relative md:inset-auto md:top-auto transition-all duration-300"
+        className={`fixed inset-x-0 top-0 z-40 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#1e1e1e] dark:to-[#3b0764] secret:bg-none secret:bg-black text-white dark:text-white secret:text-[#1cf85d] flex items-center justify-between gap-3 sm:gap-4 flex-nowrap px-4 sm:px-6 py-3 sm:py-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] shadow-[4px_4px_0px_#000] dark:shadow-[0_4px_20px_rgba(168,85,247,0.4)] secret:shadow-[0_0_20px_rgba(28,248,93,0.3)] md:relative md:inset-auto md:top-auto transition-all duration-300 ${location.pathname === '/akcios-ujsag' ? 'sales-nav' : ''}`}
       >
 
         <Link to={isSecretMode ? "/S3CR3T" : "/"} className="cursor-pointer group shrink-0">

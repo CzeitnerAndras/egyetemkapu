@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Newspaper, Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download } from 'lucide-react';
+import { Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { NoticeModal } from '../components/NoticeModal';
-import { PageHeader, PageShell } from '../components/PageLayout';
-import { useNotice } from '../components/useNotice';
+import { PageShell } from '../components/PageLayout';
+import { isFlyerHost } from '../utils/flyerSite';
 import {
     addItem,
     formatShoppingListText,
@@ -18,7 +17,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl';
 
 interface FlyerSummary {
     id: number;
@@ -57,14 +56,10 @@ interface FlyerDetail {
     products?: FlyerProduct[];
 }
 
-const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop'];
-
-const PAPER_CARD =
-    'text-left p-4 bg-white dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d] hover:bg-blue-500 dark:hover:bg-[#3b0764] dark:hover:border-[#a855f7] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d] transition-all cursor-pointer shadow-[2px_2px_0px_#000]';
+const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl'];
 
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
-    const notice = useNotice('sales-dev');
     const [activeStore, setActiveStore] = useState<StoreId>('spar');
     const [flyers, setFlyers] = useState<FlyerSummary[]>([]);
     const [query, setQuery] = useState('');
@@ -158,9 +153,7 @@ export default function SalesPapersPage() {
 
     const formatRange = (from?: string | null, to?: string | null) => {
         if (!from && !to) return t('sales.noDate');
-        const start = from ? new Date(from).toLocaleDateString(locale) : '?';
-        const end = to ? new Date(to).toLocaleDateString(locale) : '?';
-        return `${start} – ${end}`;
+        return `${formatDmy(from)} – ${formatDmy(to)}`;
     };
 
     const storeLabel = (store: StoreId) => store.toUpperCase();
@@ -194,6 +187,9 @@ export default function SalesPapersPage() {
         ? (viewer.flyer.products ?? []).filter((product) => product.pageNumber === viewer.page)
         : [];
     const listGroups = groupByStore(shoppingList);
+    const listItemCount = shoppingList.reduce((sum, item) => sum + item.quantity, 0);
+    const currentFlyers = storeFlyers.filter((flyer) => isCurrentlyValidFlyer(flyer));
+    const upcomingFlyers = storeFlyers.filter((flyer) => !isCurrentlyValidFlyer(flyer));
 
     const currentPageIndex = viewer
         ? viewer.flyer.pages.findIndex((page) => page.pageNumber === viewer.page)
@@ -248,73 +244,139 @@ export default function SalesPapersPage() {
         };
     }, [pageSrc, viewer]);
 
+    const renderFlyerGroup = (label: string, items: FlyerSummary[], current: boolean) => {
+        if (items.length === 0) return null;
+        const period = periodLabel(items, locale);
+        return (
+            <>
+                <h2 className="mb-4 text-lg font-bold text-[#1c1c1c] dark:text-white secret:text-[#1cf85d] xl:col-start-1">
+                    {label}{period ? ` · ${period}` : ''}
+                </h2>
+                <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:col-start-1">
+                    {items.map((flyer) => (
+                        <button
+                            key={flyer.id}
+                            type="button"
+                            onClick={() => openFlyer(flyer.id)}
+                            className="relative flex w-full cursor-pointer gap-4 rounded-2xl border border-black/8 bg-white p-4 text-left text-[#1c1c1c] shadow-[0_8px_24px_rgba(16,24,16,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(16,24,16,0.1)] dark:border-white/10 dark:bg-[#1c1e1c] dark:text-white dark:hover:bg-[#3b0764] secret:border-[#1cf85d]/40 secret:bg-transparent secret:text-[#1cf85d] secret:hover:border-[#1cf85d]"
+                        >
+                            <FlyerCover flyerId={flyer.id} />
+                            <span className={`absolute left-[6.6rem] top-3 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                                current
+                                    ? 'bg-[#f6d86b] text-[#1c1c1c]'
+                                    : 'bg-[#e7e9e4] text-[#3d433c] dark:bg-white/10 dark:text-white secret:bg-transparent secret:text-[#1cf85d] secret:border secret:border-[#1cf85d]'
+                            }`}>
+                                {current
+                                    ? t('sales.validNow')
+                                    : t('sales.startsOn', { date: flyer.validFrom ? shortDayMonth(flyer.validFrom, locale) : '' })}
+                            </span>
+                            <span className="min-w-0 pt-7">
+                                <h3 className="text-base font-bold leading-tight">{flyer.title}</h3>
+                                <p className="mt-1 text-sm text-[#5c6560] dark:text-white/70 secret:text-[#1cf85d]/80">
+                                    {formatRange(flyer.validFrom, flyer.validTo)}
+                                </p>
+                                <p className="mt-1 text-sm text-[#5c6560] dark:text-white/70 secret:text-[#1cf85d]/80">
+                                    {t('sales.paperMeta', { pages: flyer.pageCount, products: flyer.productCount })}
+                                </p>
+                                <span className="mt-3 inline-block text-sm font-semibold text-[#178a45] secret:text-[#1cf85d]">
+                                    {current ? t('sales.openFlyer') : t('sales.previewFlyer')} →
+                                </span>
+                            </span>
+                            <span className="absolute inset-0 z-10 rounded-2xl" aria-hidden="true" />
+                        </button>
+                    ))}
+                </div>
+            </>
+        );
+    };
+
     return (
-        <PageShell>
+        <PageShell className="!mt-0 !px-0 !pb-0">
+            <div className={`${isFlyerHost() ? 'min-h-dvh' : 'min-h-[calc(100dvh-5rem)]'} bg-[#f3f5f2] px-4 py-8 text-[#1c1c1c] dark:bg-[#121412] dark:text-white secret:bg-transparent secret:text-[#1cf85d] sm:px-6 lg:px-16`}>
             {/* --- Header --- */}
-            <PageHeader
-                icon={Newspaper}
-                extra={
-                    <form onSubmit={handleSearch} className="flex w-full md:w-56 h-8 relative">
-                        <label className="sr-only" htmlFor="flyer-search">{t('sales.searchLabel')}</label>
+            <div className="mb-8">
+                <h1 className="text-4xl font-bold tracking-tight">{t('sales.title')}</h1>
+                <p className="mt-2 text-sm text-[#5c6560] dark:text-white/70 secret:text-[#1cf85d]/80">{t('sales.subtitle')}</p>
+            </div>
+
+            {error && (
+                <p className="mb-6 font-semibold text-red-600 dark:text-red-300 secret:text-[#1cf85d]">{error}</p>
+            )}
+
+            {searching && (
+                <p className="mb-6 text-sm font-semibold text-[#178a45] secret:text-[#1cf85d]">{t('sales.searching')}</p>
+            )}
+
+            {/* --- Store pills --- */}
+            <div className="mb-8 flex flex-wrap items-center gap-2">
+                {STORES.map((store) => (
+                    <button
+                        key={store}
+                        type="button"
+                        data-store={store}
+                        aria-pressed={activeStore === store}
+                        onClick={() => setActiveStore(store)}
+                        className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold uppercase transition ${
+                            activeStore === store
+                                ? 'border-[#0f6e3a] bg-[#0f6e3a] text-white dark:border-[#1f8a4c] dark:bg-[#1f8a4c] secret:border-[#1cf85d] secret:bg-[#1cf85d] secret:text-black'
+                                : 'border-black/10 bg-white text-[#1c1c1c] hover:border-black/25 dark:border-white/15 dark:bg-[#1c1e1c] dark:text-white secret:border-[#1cf85d] secret:bg-transparent secret:text-[#1cf85d]'
+                        }`}
+                    >
+                        {storeLabel(store)}
+                    </button>
+                ))}
+                <form onSubmit={handleSearch} className="w-full sm:ml-auto sm:w-72">
+                    <label className="sr-only" htmlFor="flyer-search">{t('sales.searchLabel')}</label>
+                    <div className="relative">
+                        <button
+                            type="submit"
+                            className="absolute inset-y-0 left-0 flex cursor-pointer items-center px-3 text-[#6b726d]"
+                            aria-label={t('sales.searchSubmit')}
+                        >
+                            <Search className="h-4 w-4" />
+                        </button>
                         <input
                             id="flyer-search"
                             type="search"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t('sales.searchPlaceholder')}
-                            className="h-8 w-full bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-transparent secret:border-[#1cf85d] py-0 pl-2 pr-9 text-sm leading-none text-black dark:text-white secret:text-[#1cf85d] placeholder-gray-500 secret:placeholder-[#1cf85d]/50 focus:outline-none font-bold secret:font-mono"
+                            className="h-10 w-full rounded-full border border-black/10 bg-white py-0 pl-10 pr-3 text-sm text-[#1c1c1c] placeholder-[#8b928d] focus:outline-none focus:ring-2 focus:ring-[#178a45]/40 dark:border-white/10 dark:bg-[#1c1e1c] dark:text-white secret:border-[#1cf85d] secret:bg-black secret:text-[#1cf85d] secret:placeholder-[#1cf85d]/50"
                         />
-                        <button
-                            type="submit"
-                            className="absolute inset-y-0 right-0 px-2 flex items-center text-blue-950 dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer"
-                            aria-label={t('sales.searchSubmit')}
-                        >
-                            <Search className="w-4 h-4" />
-                        </button>
-                    </form>
-                }
-            >
-                {t('sales.title')}
-            </PageHeader>
-
-            {error && (
-                <p className="mb-6 font-bold text-red-600 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono">{error}</p>
-            )}
-
-            {searching && (
-                <p className="mb-6 font-bold uppercase secret:font-mono text-blue-950 dark:text-[#c084fc]">{t('sales.searching')}</p>
-            )}
+                    </div>
+                </form>
+            </div>
 
             {/* --- Search results --- */}
             {hits && (
-                <section className="mb-8 bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
-                    <h2 className="text-xl font-bold uppercase secret:font-mono mb-4 text-black dark:text-white secret:text-[#1cf85d]">
+                <section className="mb-8 rounded-2xl border border-black/8 bg-white p-5 shadow-[0_8px_24px_rgba(16,24,16,0.06)] dark:border-white/10 dark:bg-[#1c1e1c] secret:border-[#1cf85d] secret:bg-transparent">
+                    <h2 className="mb-4 text-lg font-bold">
                         {t('sales.resultsTitle', { count: hits.length })}
                     </h2>
                     {hits.length === 0 ? (
-                        <p className="font-medium secret:font-mono">{t('sales.noResults')}</p>
+                        <p className="text-sm">{t('sales.noResults')}</p>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                             {hits.map((hit, index) => (
-                                <div key={`${hit.flyerId}-${hit.kind}-${hit.pageNumber}-${index}`} className={PAPER_CARD}>
+                                <div key={`${hit.flyerId}-${hit.kind}-${hit.pageNumber}-${index}`} className="rounded-xl border border-black/8 p-3 dark:border-white/10 secret:border-[#1cf85d]/40">
                                     <button
                                         type="button"
                                         onClick={() => openFlyer(hit.flyerId, hit.pageNumber)}
-                                        className="w-full text-left cursor-pointer"
+                                        className="w-full cursor-pointer text-left"
                                     >
-                                        <div className="flex items-center justify-between gap-3 mb-2">
-                                            <span className="text-xs font-black uppercase px-2 py-1 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] bg-blue-900 dark:bg-[#3b0764]">
+                                        <div className="mb-2 flex items-center justify-between gap-3">
+                                            <span className="rounded-full bg-[#e7f2e4] px-2 py-0.5 text-xs font-semibold text-[#0f6e3a] secret:bg-transparent secret:text-[#1cf85d]">
                                                 {storeLabel(hit.store)} · {t('sales.page', { page: hit.pageNumber })}
                                             </span>
-                                            <span className="text-[11px] font-bold uppercase">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
+                                            <span className="text-[11px] font-semibold text-[#5c6560]">{hit.kind === 'product' ? t('sales.hitProduct') : t('sales.hitPage')}</span>
                                         </div>
-                                        <h3 className="font-bold uppercase leading-tight mb-1">
+                                        <h3 className="mb-1 font-bold leading-tight">
                                             {hit.productName || hit.title}
                                         </h3>
                                         {hit.kind === 'product' ? (
-                                            <p className="text-sm opacity-80">{hit.title}</p>
+                                            <p className="text-sm text-[#5c6560] dark:text-white/70">{hit.title}</p>
                                         ) : hit.snippet ? (
-                                            <p className="text-sm opacity-80">{hit.snippet}</p>
+                                            <p className="text-sm text-[#5c6560] dark:text-white/70">{hit.snippet}</p>
                                         ) : null}
                                     </button>
                                     {hit.kind === 'product' && hit.productName && (
@@ -328,9 +390,9 @@ export default function SalesPapersPage() {
                                                 pageNumber: hit.pageNumber,
                                                 name: hit.productName ?? hit.title,
                                             })}
-                                            className="mt-3 inline-flex items-center gap-1 text-xs font-black uppercase border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black cursor-pointer"
+                                            className="mt-3 inline-flex cursor-pointer items-center gap-1 rounded-full bg-[#0f6e3a] px-3 py-1 text-xs font-semibold text-white secret:bg-[#1cf85d] secret:text-black"
                                         >
-                                            <Plus className="w-3 h-3" />
+                                            <Plus className="h-3 w-3" />
                                             {shoppingList.some((item) => item.id === listedKey(hit.productId, hit.flyerId, hit.pageNumber, hit.productName))
                                                 ? t('sales.listAdded')
                                                 : t('sales.listAdd')}
@@ -343,168 +405,113 @@ export default function SalesPapersPage() {
                 </section>
             )}
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* --- Stores --- */}
-                <div className="w-full lg:w-1/4 flex flex-col space-y-2">
-                    {STORES.map((store) => (
-                        <button
-                            key={store}
-                            type="button"
-                            data-store={store}
-                            aria-pressed={activeStore === store}
-                            onClick={() => setActiveStore(store)}
-                            className={`p-4 font-bold text-left border-4 transition-all duration-300 shadow-[4px_4px_0px_#000] dark:shadow-sm secret:font-mono uppercase cursor-pointer
-                                ${activeStore === store
-                                    ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black dark:text-white secret:text-black border-black dark:border-transparent secret:border-[#1cf85d] translate-x-2'
-                                    : 'bg-white dark:bg-[#121212] secret:bg-transparent text-black dark:text-gray-300 secret:text-[#1cf85d] border-black dark:border-[#a855f7] secret:border-[#1cf85d] hover:bg-blue-900 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
-                                }`}
-                        >
-                            <span className="block text-xl leading-none">{storeLabel(store)}</span>
-                        </button>
-                    ))}
-
-                    {/* --- Shopping list --- */}
-                    <section className="mt-6 bg-slate-100 dark:bg-[#121212] secret:bg-transparent border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-4 shadow-[4px_4px_0px_#000] dark:shadow-sm text-black dark:text-white secret:text-[#1cf85d]">
-                        <div className="flex items-center gap-2 mb-2">
-                            <ShoppingCart className="w-4 h-4" />
-                            <h2 className="text-sm font-black uppercase secret:font-mono">{t('sales.listTitle')}</h2>
-                        </div>
-                        <p className="text-xs font-medium mb-3 opacity-80">{t('sales.listHint')}</p>
-                        {shoppingList.length === 0 ? (
-                            <p className="text-sm font-bold">{t('sales.listEmpty')}</p>
-                        ) : (
-                            <>
-                                {listGroups.map((group) => (
-                                    <div key={group.store} className="mb-4">
-                                        <div className="flex items-center justify-between gap-2 mb-2 border-b-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] pb-1">
-                                            <p className="text-xs font-black uppercase">{storeLabel(group.store)}</p>
-                                        </div>
-                                        <ul className="space-y-2">
-                                            {group.items.map((item) => (
-                                                <li key={item.id} className="text-sm">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div className="min-w-0">
-                                                            <ShoppingListName
-                                                                name={item.name}
-                                                                label={t('sales.listEditName')}
-                                                                onCommit={(name) => setShoppingList((prev) => renameItem(prev, item.id, name))}
-                                                            />
-                                                            <p className="text-xs opacity-80">
-                                                                {t('sales.page', { page: item.pageNumber })}
-                                                            </p>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShoppingList((prev) => removeItem(prev, item.id))}
-                                                            className="shrink-0 cursor-pointer"
-                                                            aria-label={t('sales.listRemove')}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                    <div className="mt-1 flex items-center gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShoppingList((prev) => setQuantity(prev, item.id, item.quantity - 1))}
-                                                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-0.5 cursor-pointer"
-                                                            aria-label={t('sales.listDecrease')}
-                                                        >
-                                                            <Minus className="w-3 h-3" />
-                                                        </button>
-                                                        <span className="font-black text-xs w-6 text-center">{item.quantity}</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setShoppingList((prev) => setQuantity(prev, item.id, item.quantity + 1))}
-                                                            className="border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-0.5 cursor-pointer"
-                                                            aria-label={t('sales.listIncrease')}
-                                                        >
-                                                            <Plus className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ))}
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => downloadShoppingList(
-                                            formatShoppingListText(shoppingList, (item) => t('sales.page', { page: item.pageNumber })),
-                                            t('sales.listDownloadFile'),
-                                        )}
-                                        className="inline-flex items-center gap-1 text-xs font-black uppercase cursor-pointer border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-2 py-1 hover:bg-blue-500 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black"
-                                    >
-                                        <Download className="w-3 h-3" />
-                                        {t('sales.listDownload')}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setShoppingList([])}
-                                        className="text-xs font-bold uppercase cursor-pointer"
-                                    >
-                                        {t('sales.listClear')}
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </section>
-                </div>
-
+            <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-x-8">
                 {/* --- Flyers --- */}
-                <div className="w-full lg:w-3/4">
-                    <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 shadow-[8px_8px_0px_#000] dark:shadow-md">
-                        <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
-                            <Newspaper className="w-5 h-5 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
-                            <h2 className="text-xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase ml-2">
-                                {storeLabel(activeStore)}
-                            </h2>
-                        </div>
-
-                        {loading ? (
-                            <p className="font-bold uppercase secret:font-mono animate-pulse">{t('sales.loading')}</p>
-                        ) : storeFlyers.length === 0 ? (
-                            <p className="font-medium secret:font-mono">{t('sales.emptyStore')}</p>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {storeFlyers.map((flyer) => (
-                                    <button
-                                        key={flyer.id}
-                                        type="button"
-                                        onClick={() => openFlyer(flyer.id)}
-                                        className={PAPER_CARD}
-                                    >
-                                        <h3 className="text-lg font-bold uppercase leading-tight mb-2">{flyer.title}</h3>
-                                        <p className="text-sm font-medium mb-3">{formatRange(flyer.validFrom, flyer.validTo)}</p>
-                                        <p className="text-xs font-black uppercase">
-                                            {t('sales.paperMeta', { pages: flyer.pageCount, products: flyer.productCount })}
-                                        </p>
-                                        <span className="mt-4 inline-block text-sm font-black uppercase">{t('sales.openPaper')} →</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <p className="mt-4 text-sm font-bold text-gray-600 dark:text-gray-400 secret:text-[#1cf85d]/70 secret:font-mono">
+                <div className="min-w-0 xl:contents">
+                    {loading ? (
+                        <p className="animate-pulse text-sm font-semibold">{t('sales.loading')}</p>
+                    ) : storeFlyers.length === 0 ? (
+                        <p className="text-sm">{t('sales.emptyStore')}</p>
+                    ) : (
+                        <>
+                            {renderFlyerGroup(t('sales.validNow'), currentFlyers, true)}
+                            {renderFlyerGroup(t('sales.nextWeek'), upcomingFlyers, false)}
+                        </>
+                    )}
+                    <p className="mt-2 text-sm text-[#6b726d] dark:text-white/50 secret:text-[#1cf85d]/70 xl:col-start-1">
                         {t('sales.disclaimer')}
                     </p>
                 </div>
-            </div>
 
-            {/* --- Dev notice --- */}
-            <NoticeModal
-                open={notice.open}
-                onClose={notice.dismiss}
-                title={t('sales.devTitle')}
-                confirmLabel={t('notice.gotIt')}
-                closeLabel={t('notice.close')}
-            >
-                {t('sales.devBody')}
-            </NoticeModal>
+                {/* --- Shopping list --- */}
+                <section className={`h-fit w-full self-start rounded-2xl border border-black/8 bg-white p-4 text-[#1c1c1c] shadow-[0_8px_24px_rgba(16,24,16,0.06)] dark:border-white/10 dark:bg-[#1c1e1c] dark:text-white secret:border-[#1cf85d] secret:bg-transparent secret:text-[#1cf85d] xl:sticky xl:top-4 ${storeFlyers.length > 0 ? 'xl:col-start-2 xl:row-start-2' : ''}`}>
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <ShoppingCart className="h-4 w-4" />
+                            <h2 className="text-base font-bold">{t('sales.listTitle')}</h2>
+                        </div>
+                        {listItemCount > 0 && (
+                            <span className="rounded-full bg-[#f6d86b] px-2 py-0.5 text-xs font-semibold text-[#1c1c1c]">
+                                {t('sales.listCount', { count: listItemCount })}
+                            </span>
+                        )}
+                    </div>
+                    {shoppingList.length === 0 ? (
+                        <p className="text-sm text-[#5c6560] dark:text-white/70">{t('sales.listEmpty')}</p>
+                    ) : (
+                        <>
+                            <ul className="divide-y divide-black/8 dark:divide-white/10">
+                                {listGroups.flatMap((group) => group.items).map((item) => (
+                                    <li key={item.id} className="flex items-start gap-3 py-3 text-sm">
+                                        <span aria-hidden className="mt-1 h-4 w-4 shrink-0 rounded border border-[#c5cbc6]" />
+                                        <div className="min-w-0 flex-1">
+                                            <ShoppingListName
+                                                name={item.name}
+                                                label={t('sales.listEditName')}
+                                                onCommit={(name) => setShoppingList((prev) => renameItem(prev, item.id, name))}
+                                            />
+                                            <p className="text-xs text-[#6b726d] dark:text-white/60 secret:text-[#1cf85d]/70">
+                                                <span>{storeLabel(item.store)}</span>
+                                                <span> · {t('sales.page', { page: item.pageNumber })}</span>
+                                            </p>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShoppingList((prev) => setQuantity(prev, item.id, item.quantity - 1))}
+                                                    className="cursor-pointer rounded border border-black/15 p-0.5 dark:border-white/20 secret:border-[#1cf85d]"
+                                                    aria-label={t('sales.listDecrease')}
+                                                >
+                                                    <Minus className="h-3 w-3" />
+                                                </button>
+                                                <span className="w-6 text-center text-xs font-semibold">{item.quantity}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShoppingList((prev) => setQuantity(prev, item.id, item.quantity + 1))}
+                                                    className="cursor-pointer rounded border border-black/15 p-0.5 dark:border-white/20 secret:border-[#1cf85d]"
+                                                    aria-label={t('sales.listIncrease')}
+                                                >
+                                                    <Plus className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShoppingList((prev) => removeItem(prev, item.id))}
+                                            className="shrink-0 cursor-pointer text-[#6b726d]"
+                                            aria-label={t('sales.listRemove')}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                            <button
+                                type="button"
+                                onClick={() => downloadShoppingList(
+                                    formatShoppingListText(shoppingList, (item) => t('sales.page', { page: item.pageNumber })),
+                                    t('sales.listDownloadFile'),
+                                )}
+                                className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0f6e3a] py-3 text-sm font-semibold text-white secret:bg-[#1cf85d] secret:text-black"
+                            >
+                                <Download className="h-4 w-4" />
+                                {t('sales.listDownload')}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setShoppingList([])}
+                                className="mt-2 w-full cursor-pointer text-center text-xs font-semibold text-[#6b726d] secret:text-[#1cf85d]"
+                            >
+                                {t('sales.listClear')}
+                            </button>
+                        </>
+                    )}
+                </section>
+            </div>
+            </div>
 
             {/* --- Viewer --- */}
             {viewer && createPortal(
-                <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center p-2 sm:p-4">
+                <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center overflow-hidden overscroll-none p-2 sm:p-4">
                     <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1400px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
                         <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
                             <div className="min-w-0 text-black dark:text-white secret:text-[#1cf85d]">
@@ -521,14 +528,14 @@ export default function SalesPapersPage() {
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-blue-500 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#166534] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-[#178a45] hover:text-white dark:hover:bg-[#166534] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                 >
                                     <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setViewer(null)}
-                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-[#a855f7] secret:text-[#1cf85d] cursor-pointer hover:bg-blue-500 hover:text-black dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#166534] secret:border-[#1cf85d] text-black dark:text-[#4ade80] secret:text-[#1cf85d] cursor-pointer hover:bg-[#178a45] hover:text-white dark:hover:bg-[#166534] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
                                     aria-label={t('sales.closeViewer')}
                                 >
                                     <X className="w-5 h-5" />
@@ -574,10 +581,10 @@ export default function SalesPapersPage() {
                                                             name: product.name,
                                                         })}
                                                         aria-label={onList ? t('sales.listAdded') : t('sales.listAdd')}
-                                                        className={`w-full text-left p-2 border-2 border-black dark:border-[#a855f7] secret:border-[#1cf85d] cursor-pointer ${
+                                                        className={`w-full text-left p-2 border-2 border-black dark:border-[#166534] secret:border-[#1cf85d] cursor-pointer ${
                                                             onList
-                                                                ? 'bg-blue-500 dark:bg-[#a855f7] secret:bg-[#1cf85d] text-black secret:text-black'
-                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-blue-900 dark:hover:bg-[#3b0764] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
+                                                                ? 'bg-[#178a45] dark:bg-[#166534] secret:bg-[#1cf85d] text-white secret:text-black'
+                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-[#0f6e3a] dark:hover:bg-[#14532d] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
                                                         }`}
                                                     >
                                                         <p className="font-bold leading-tight">{product.name}</p>
@@ -630,6 +637,56 @@ function localIsoDate(date = new Date()): string {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+function formatDmy(iso?: string | null): string {
+    if (!iso) return '?';
+    const [year, month, day] = iso.slice(0, 10).split('-');
+    return `${day}/${month}/${year}`;
+}
+
+function shortDayMonth(iso: string, locale: string): string {
+    const date = new Date(`${iso.slice(0, 10)}T12:00:00`);
+    const month = date.toLocaleDateString(locale, { month: 'short' }).replace(/\.$/, '');
+    return `${String(date.getDate()).padStart(2, '0')} ${month}`;
+}
+
+function periodLabel(items: FlyerSummary[], locale: string): string {
+    const froms = items.map((item) => item.validFrom).filter((value): value is string => !!value).sort();
+    const tos = items.map((item) => item.validTo).filter((value): value is string => !!value).sort();
+    const start = froms[0];
+    const end = tos[tos.length - 1];
+    if (!start || !end) return '';
+    const startDate = new Date(`${start.slice(0, 10)}T12:00:00`);
+    const endDate = new Date(`${end.slice(0, 10)}T12:00:00`);
+    if (startDate.getFullYear() === endDate.getFullYear() && startDate.getMonth() === endDate.getMonth()) {
+        const month = endDate.toLocaleDateString(locale, { month: 'short' }).replace(/\.$/, '');
+        return `${String(startDate.getDate()).padStart(2, '0')}–${String(endDate.getDate()).padStart(2, '0')} ${month}`;
+    }
+    return `${shortDayMonth(start, locale)} – ${shortDayMonth(end, locale)}`;
+}
+
+function FlyerCover({ flyerId }: { flyerId: number }) {
+    const [failed, setFailed] = useState(false);
+    return (
+        <span className="pointer-events-none relative h-[5.75rem] w-[7.25rem] shrink-0">
+            <span className="block h-full w-full overflow-hidden rounded-xl bg-white dark:bg-[#1c1e1c]">
+                {failed ? null : (
+                    <img
+                        src={`/api/flyers/${flyerId}/pages/1`}
+                        alt=""
+                        role="presentation"
+                        draggable={false}
+                        className="h-full w-full object-cover object-top"
+                        onError={() => setFailed(true)}
+                    />
+                )}
+            </span>
+            <span className="absolute -bottom-1.5 -right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#178a45] text-white shadow-md secret:bg-[#1cf85d] secret:text-black">
+                <Plus className="h-4 w-4" />
+            </span>
+        </span>
+    );
 }
 
 function addIsoDays(iso: string, days: number): string {
@@ -693,6 +750,15 @@ function flyerKind(flyer: FlyerSummary): number {
             return 1;
         }
         return 2;
+    }
+    if (flyer.store === 'lidl') {
+        if (hay.includes('nonfood')) {
+            return 1;
+        }
+        if (hay.includes('regionalis')) {
+            return 2;
+        }
+        return 0;
     }
     return 0;
 }

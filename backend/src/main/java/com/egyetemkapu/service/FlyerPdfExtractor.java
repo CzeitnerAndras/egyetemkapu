@@ -37,15 +37,22 @@ public class FlyerPdfExtractor {
     }
 
     public ExtractedDocument extractDocument(byte[] pdfBytes, FlyerProductExtractor extractor) {
+        return extractDocument(pdfBytes, extractor, FlyerUrlPolicy.MAX_PDF_PAGES);
+    }
+
+    public ExtractedDocument extractDocument(byte[] pdfBytes, FlyerProductExtractor extractor, int maxPages) {
         if (pdfBytes == null || pdfBytes.length == 0) {
             return new ExtractedDocument(List.of(), List.of());
         }
+        int pageCap = maxPages < 1
+                ? FlyerUrlPolicy.MAX_PDF_PAGES
+                : Math.min(maxPages, 96);
         FlyerProductExtractor active = extractor == null ? generic : extractor;
         try (PDDocument document = Loader.loadPDF(pdfBytes)) {
             LayoutStripper stripper = new LayoutStripper();
             List<FlyerCatalogParser.ParsedPage> pages = new ArrayList<>();
             List<FlyerCatalogParser.ParsedProduct> products = new ArrayList<>();
-            int last = Math.min(document.getNumberOfPages(), FlyerUrlPolicy.MAX_PDF_PAGES);
+            int last = Math.min(document.getNumberOfPages(), pageCap);
             for (int i = 1; i <= last; i++) {
                 try {
                     stripper.setStartPage(i);

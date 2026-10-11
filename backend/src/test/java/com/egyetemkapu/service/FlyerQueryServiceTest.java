@@ -58,7 +58,7 @@ class FlyerQueryServiceTest {
     }
 
     @Test
-    void searchFindsPageTextWhenProductNameIsMissing() {
+    void searchIgnoresPageTextThatOnlyRepeatsTheFlyer() {
         Flyer flyer = new Flyer();
         flyer.setId(8L);
         flyer.setStore("spar");
@@ -70,12 +70,53 @@ class FlyerQueryServiceTest {
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
         when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(flyer));
 
-        List<FlyerSearchHitDto> hits = service.search("kakaóscsiga");
+        assertTrue(service.search("kakaóscsiga").isEmpty());
+    }
+
+    @Test
+    void searchMatchesAWholeWordAndSkipsItInsideAnotherWord() {
+        Flyer apples = flyerWithProduct("Jonagold alma");
+        apples.setId(4L);
+        Flyer brand = flyerWithProduct("ALMARE SEAFOOD főtt garnélarák");
+        brand.setId(5L);
+        brand.getProducts().getFirst().setId(12L);
+        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
+        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(apples, brand));
+
+        List<FlyerSearchHitDto> hits = service.search("alma");
 
         assertEquals(1, hits.size());
-        assertEquals("page", hits.getFirst().kind());
-        assertEquals(4, hits.getFirst().pageNumber());
-        assertTrue(hits.getFirst().snippet().toLowerCase().contains("kakaóscsiga"));
+        assertEquals("Jonagold alma", hits.getFirst().productName());
+    }
+
+    @Test
+    void searchKeepsOneHitWhenRegionalFlyersRepeatTheSameProduct() {
+        Flyer alfold = flyerWithProduct("Alma, Banán");
+        alfold.setId(20L);
+        alfold.setStore("coop");
+        alfold.setTitle("Coop Alföld");
+        Flyer eszak = flyerWithProduct("Alma, Banán");
+        eszak.setId(21L);
+        eszak.setStore("coop");
+        eszak.setTitle("Coop Észak-Kelet");
+        eszak.getProducts().getFirst().setId(22L);
+        Flyer tisza = flyerWithProduct("Alma, Banán");
+        tisza.setId(22L);
+        tisza.setStore("coop");
+        tisza.setTitle("Coop Tisza");
+        tisza.getProducts().getFirst().setId(23L);
+        Flyer auchan = flyerWithProduct("GÁLA ALMA");
+        auchan.setId(23L);
+        auchan.setStore("auchan");
+        auchan.getProducts().getFirst().setId(24L);
+        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
+        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(alfold, eszak, tisza, auchan));
+
+        List<FlyerSearchHitDto> hits = service.search("alma");
+
+        assertEquals(2, hits.size());
+        assertEquals(1, hits.stream().filter(hit -> "coop".equals(hit.store())).count());
+        assertEquals(1, hits.stream().filter(hit -> "auchan".equals(hit.store())).count());
     }
 
     @Test

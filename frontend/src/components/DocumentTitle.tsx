@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
+import { FLYER_ORIGIN, isFlyerHost } from '../utils/flyerSite';
 
 const SITE = 'Egyetemkapu';
 const ORIGIN = 'https://egyetemkapu.hu';
@@ -58,16 +59,21 @@ export default function DocumentTitle() {
     const { t, language } = useLanguage();
 
     useEffect(() => {
+        const flyer = isFlyerHost();
         const titleKey = ROUTE_TITLES[pathname];
-        const title = titleKey && pathname !== '/' ? `${t(titleKey)} | ${SITE}` : t('seo.defaultTitle');
-        const description = t('seo.description');
-        const canonicalHref = `${ORIGIN}${pathname === '/' ? '/' : pathname}`;
-        const robots = NOINDEX_PATHS.has(pathname) ? 'noindex, nofollow' : 'index, follow';
+        const title = flyer
+            ? t('sales.title')
+            : titleKey && pathname !== '/' ? `${t(titleKey)} | ${SITE}` : t('seo.defaultTitle');
+        const description = flyer ? t('seo.flyersDescription') : t('seo.description');
+        const canonicalPath = flyer ? '/' : pathname;
+        const canonicalHref = `${flyer ? FLYER_ORIGIN : ORIGIN}${canonicalPath === '/' ? '/' : canonicalPath}`;
+        const robots = !flyer && NOINDEX_PATHS.has(pathname) ? 'noindex, nofollow' : 'index, follow';
 
         document.title = title;
 
         setMeta('meta[name="description"]', 'name', 'description', description);
         setMeta('meta[name="robots"]', 'name', 'robots', robots);
+        setMeta('meta[property="og:site_name"]', 'property', 'og:site_name', flyer ? t('sales.title') : SITE);
         setMeta('meta[property="og:title"]', 'property', 'og:title', title);
         setMeta('meta[property="og:description"]', 'property', 'og:description', description);
         setMeta('meta[property="og:url"]', 'property', 'og:url', canonicalHref);

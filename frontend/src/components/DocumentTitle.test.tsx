@@ -1,12 +1,18 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import DocumentTitle from './DocumentTitle';
+import { isFlyerHost } from '../utils/flyerSite';
 
 jest.mock('../i18n/LanguageContext', () => ({
     useLanguage: () => ({
         t: (key: string) => key,
         language: 'hu',
     }),
+}));
+
+jest.mock('../utils/flyerSite', () => ({
+    FLYER_ORIGIN: 'https://akcio.egyetemkapu.hu',
+    isFlyerHost: jest.fn(() => false),
 }));
 
 const renderAt = (path: string) =>
@@ -46,6 +52,17 @@ describe('DocumentTitle', () => {
         expect(document.title).toBe('cards.title | Egyetemkapu');
         expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href'))
             .toBe('https://egyetemkapu.hu/kartyak');
+    });
+
+    it('az akciós oldal a saját címét és leírását használja', () => {
+        (isFlyerHost as unknown as jest.Mock).mockReturnValue(true);
+        renderAt('/');
+
+        expect(document.title).toBe('sales.title');
+        expect(document.head.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('seo.flyersDescription');
+        expect(document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe('https://akcio.egyetemkapu.hu/');
+        expect(document.head.querySelector('meta[property="og:site_name"]')?.getAttribute('content')).toBe('sales.title');
+        (isFlyerHost as unknown as jest.Mock).mockReturnValue(false);
     });
 
     it('a jelszó-visszaállító oldalakat is noindexre állítja', () => {

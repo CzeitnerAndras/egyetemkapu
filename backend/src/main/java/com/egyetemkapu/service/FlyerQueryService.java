@@ -28,7 +28,7 @@ public class FlyerQueryService {
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
-    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop");
+    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -79,54 +79,30 @@ public class FlyerQueryService {
         }
         List<FlyerSearchHitDto> hits = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
-        Set<String> productPages = new LinkedHashSet<>();
         LocalDate today = LocalDate.now(clock);
         for (Flyer flyer : flyerRepository.findAllByOrderByStoreAscTitleAsc()) {
             if (!listed(flyer, today)) {
                 continue;
             }
-            if (flyer.getProducts() != null) {
-                for (FlyerProduct product : flyer.getProducts()) {
-                    if (!HungarianText.contains(product.getName(), query)) {
-                        continue;
-                    }
-                    String key = flyer.getId() + ":product:" + product.getId();
-                    if (seen.add(key)) {
-                        productPages.add(flyer.getId() + ":" + product.getPageNumber());
-                        hits.add(new FlyerSearchHitDto(
-                                flyer.getId(),
-                                flyer.getStore(),
-                                flyer.getTitle(),
-                                product.getPageNumber(),
-                                product.getName(),
-                                HungarianText.snippet(product.getName(), query, 80),
-                                "product",
-                                product.getId()
-                        ));
-                    }
-                }
+            if (flyer.getProducts() == null) {
+                continue;
             }
-            if (flyer.getPages() != null) {
-                for (FlyerPage page : flyer.getPages()) {
-                    if (productPages.contains(flyer.getId() + ":" + page.getPageNumber())) {
-                        continue;
-                    }
-                    if (!HungarianText.contains(page.getPageText(), query)) {
-                        continue;
-                    }
-                    String key = flyer.getId() + ":page:" + page.getPageNumber();
-                    if (seen.add(key)) {
-                        hits.add(new FlyerSearchHitDto(
-                                flyer.getId(),
-                                flyer.getStore(),
-                                flyer.getTitle(),
-                                page.getPageNumber(),
-                                null,
-                                HungarianText.snippet(page.getPageText(), query, 90),
-                                "page",
-                                null
-                        ));
-                    }
+            for (FlyerProduct product : flyer.getProducts()) {
+                if (!HungarianText.contains(product.getName(), query)) {
+                    continue;
+                }
+                String key = flyer.getStore() + ":" + HungarianText.normalize(product.getName());
+                if (seen.add(key)) {
+                    hits.add(new FlyerSearchHitDto(
+                            flyer.getId(),
+                            flyer.getStore(),
+                            flyer.getTitle(),
+                            product.getPageNumber(),
+                            product.getName(),
+                            HungarianText.snippet(product.getName(), query, 80),
+                            "product",
+                            product.getId()
+                    ));
                 }
             }
         }
@@ -242,6 +218,15 @@ public class FlyerQueryService {
                 return 1;
             }
             return 2;
+        }
+        if ("lidl".equals(flyer.getStore())) {
+            if (hay.contains("nonfood")) {
+                return 1;
+            }
+            if (hay.contains("regionalis")) {
+                return 2;
+            }
+            return 0;
         }
         return 0;
     }

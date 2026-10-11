@@ -756,6 +756,40 @@ class FlyerExtractorsTest {
                 || name.toLowerCase().contains("paradicsom")));
     }
 
+    @Test
+    void lidlExtractorJoinsCondensedBoldNamesAndDropsHeadlines() {
+        LidlFlyerExtractor extractor = new LidlFlyerExtractor(parser);
+        String nameFont = "WOFSCA+LidlFontCondPro-Bold";
+        List<TextRun> runs = List.of(
+                new TextRun(116, 28, 220, 20, "10. 08. csütörtöktől", "WOFSCA+LidlFontPro-Bold", 20),
+                new TextRun(54, 204, 120, 10, "a pénzedért!", nameFont, 10),
+                new TextRun(255, 208, 80, 10, "MILBONA", nameFont, 10),
+                new TextRun(207, 207, 90, 16, "Szuper ár!", "WOFSCA+LidlFontPro-Bold", 16),
+                new TextRun(255, 220, 150, 10, "Bio joghurt müzlivel", nameFont, 10),
+                new TextRun(255, 231, 160, 8, "Banános külön csomagolt", "WOFSCA+LidlFontCondPro-Regular", 8),
+                new TextRun(37, 250, 70, 10, "KINDER", nameFont, 10),
+                new TextRun(37, 261, 100, 10, "Choco Fresh", nameFont, 10),
+                new TextRun(259, 502, 60, 10, "PILOS", nameFont, 10),
+                new TextRun(14, 512, 80, 10, "DANETTE", nameFont, 10),
+                new TextRun(259, 514, 80, 10, "Tejszelet", nameFont, 10),
+                new TextRun(14, 523, 70, 10, "Puding", nameFont, 10),
+                new TextRun(222, 603, 70, 10, "DANONE", nameFont, 10),
+                new TextRun(382, 603, 70, 10, "DANONE", nameFont, 10),
+                new TextRun(222, 615, 150, 10, "Oikos krémjoghurt", nameFont, 10),
+                new TextRun(382, 615, 70, 10, "Actimel", nameFont, 10),
+                new TextRun(229, 710, 80, 40, "549 Ft", "WOFSCA+LidlFontPrice-Pt", 40));
+
+        List<String> names = extractor.extractFromLayout(runs, 8).stream().map(ParsedProduct::name).toList();
+
+        assertEquals(List.of(
+                "MILBONA Bio joghurt müzlivel",
+                "KINDER Choco Fresh",
+                "PILOS Tejszelet",
+                "DANETTE Puding",
+                "DANONE Oikos krémjoghurt",
+                "DANONE Actimel"), names, names.toString());
+    }
+
     private static byte[] pdf(Line... lines) throws Exception {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PDPage page = new PDPage();

@@ -18,6 +18,9 @@ class HungarianTextTest {
     void containsIgnoresAccentsAndCase() {
         assertTrue(HungarianText.contains("Friss kakaóscsiga 249 Ft", "kakaoscsiga"));
         assertFalse(HungarianText.contains("Kenyér és tej", "kakaóscsiga"));
+        assertTrue(HungarianText.contains("Jonagold alma 399 Ft", "alma"));
+        assertFalse(HungarianText.contains("ALMARE SEAFOOD garnélarák", "alma"));
+        assertFalse(HungarianText.contains("különböző színekben vagy alkalmas", "alma"));
     }
 
     @Test

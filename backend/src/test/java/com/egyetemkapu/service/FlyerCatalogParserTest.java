@@ -458,4 +458,59 @@ class FlyerCatalogParserTest {
         assertTrue(catalog.pages().getFirst().imageUrl().contains("cdn.ipaper.io"));
         assertEquals("Auchan Hipermarket", catalog.paper().title());
     }
+
+    @Test
+    void discoversNationalLidlLeafletsAndSkipsRegionalOnes() {
+        String html = """
+                <a href="https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0?lf=HHZ"
+                   class="flyer" id="flyer-01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61">
+                    <span class="flyer__title">Akciós újság – 41. hét</span>
+                </a>
+                <a href="https://www.lidl.hu/l/hu/ujsag/regionalis-akciok-debrecen-42het/ar/0?lf=HHZ"
+                   class="flyer" id="flyer-01a120bd-0f8e-7317-95ed-0165b776d176">
+                    <span class="flyer__title">Regionális akciók – Debrecen</span>
+                </a>
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverLidlPapers(html);
+        assertEquals(1, papers.size());
+        assertEquals("lidl:01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61", papers.getFirst().sourceKey());
+        assertEquals("Akciós újság – 41. hét", papers.getFirst().title());
+        assertEquals(
+                "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61",
+                FlyerCatalogParser.lidlFlyerUrl(papers.getFirst().sourceKey()));
+    }
+
+    @Test
+    void parsesLidlFlyerPagesImagesAndOfferDates() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "lidl",
+                "Akciós újság – 41. hét",
+                "https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0",
+                null,
+                "lidl:01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61",
+                null,
+                null);
+        String json = """
+                {"flyer":{
+                  "title":"Akciós újság – 41. hét",
+                  "pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/x.pdf",
+                  "flyerUrlAbsolute":"https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0?lf=HHZ",
+                  "offerStartDate":"2026-10-08",
+                  "offerEndDate":"2026-10-14",
+                  "pages":[
+                    {"number":2,"image":"https://imgproxy.leaflets.schwarz/page-2.jpg","keyWords":"Danone Oikos"},
+                    {"number":1,"image":"https://imgproxy.leaflets.schwarz/page-1.jpg","keyWords":"Milbona Joghurt"}
+                  ]
+                }}
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parseLidlFlyer(paper, json);
+        assertEquals("Akciós újság – 41. hét", catalog.paper().title());
+        assertEquals("https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0", catalog.paper().officialUrl());
+        assertEquals("https://assets.leaflets.schwarz/leaflets/pdfs/x.pdf", catalog.paper().pdfUrl());
+        assertEquals(LocalDate.of(2026, 10, 8), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 14), catalog.paper().validTo());
+        assertEquals(List.of(1, 2), catalog.pages().stream().map(FlyerCatalogParser.ParsedPage::pageNumber).toList());
+        assertEquals("https://imgproxy.leaflets.schwarz/page-1.jpg", catalog.pages().getFirst().imageUrl());
+        assertTrue(catalog.pages().getFirst().text().contains("Milbona"));
+    }
 }
