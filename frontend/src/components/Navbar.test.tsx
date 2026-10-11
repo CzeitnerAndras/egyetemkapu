@@ -82,7 +82,7 @@ describe('Navbar Komponens', () => {
         expect(screen.getByRole('link', { name: /nav\.ai/ })).toHaveAttribute('href', '/ai');
     });
 
-    it('a Mindennapok menü a naptárt, a linktárat és az akciós újságot nyitja', async () => {
+    it('a Mindennapok menü a naptárt és a linktárat nyitja', async () => {
         renderWithRouter();
         const user = setup();
 
@@ -90,7 +90,7 @@ describe('Navbar Komponens', () => {
 
         expect(screen.getByRole('link', { name: /nav\.calendar/ })).toHaveAttribute('href', '/naptar');
         expect(screen.getByRole('link', { name: /nav\.links/ })).toHaveAttribute('href', '/linktar');
-        expect(screen.getByRole('link', { name: /nav\.sales/ })).toHaveAttribute('href', '/akcios-ujsag');
+        expect(screen.queryByRole('link', { name: /nav\.sales/ })).not.toBeInTheDocument();
     });
 
     it('a hasznossági ikonokat jobbra igazítja', () => {
@@ -311,7 +311,7 @@ describe('Navbar Komponens', () => {
         expect(screen.getByText('nav.system')).toBeInTheDocument();
         expect(screen.getByText('nav.menu')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /nav\.focus/ })).toHaveAttribute('href', '/tanuloszoba');
-        expect(screen.getByRole('link', { name: /nav\.sales/ })).toHaveAttribute('href', '/akcios-ujsag');
+        expect(screen.queryByRole('link', { name: /nav\.sales/ })).not.toBeInTheDocument();
         expect(screen.getByText('nav.about')).toBeInTheDocument();
         expect(screen.getByText('nav.faq')).toBeInTheDocument();
         expect(screen.getByText('nav.settings')).toBeInTheDocument();
