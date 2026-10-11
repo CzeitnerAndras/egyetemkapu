@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
+import { isFlyerHost } from '../utils/flyerSite';
 import {
     addItem,
     formatShoppingListText,
@@ -281,6 +282,7 @@ export default function SalesPapersPage() {
                                     {current ? t('sales.openFlyer') : t('sales.previewFlyer')} →
                                 </span>
                             </span>
+                            <span className="absolute inset-0 z-10 rounded-2xl" aria-hidden="true" />
                         </button>
                     ))}
                 </div>
@@ -290,7 +292,7 @@ export default function SalesPapersPage() {
 
     return (
         <PageShell className="!mt-0 !px-0 !pb-0">
-            <div className="min-h-[calc(100dvh-5rem)] bg-[#f3f5f2] px-4 py-8 text-[#1c1c1c] dark:bg-[#121412] dark:text-white secret:bg-transparent secret:text-[#1cf85d] sm:px-6 lg:px-16">
+            <div className={`${isFlyerHost() ? 'min-h-dvh' : 'min-h-[calc(100dvh-5rem)]'} bg-[#f3f5f2] px-4 py-8 text-[#1c1c1c] dark:bg-[#121412] dark:text-white secret:bg-transparent secret:text-[#1cf85d] sm:px-6 lg:px-16`}>
             {/* --- Header --- */}
             <div className="mb-8">
                 <h1 className="text-4xl font-bold tracking-tight">{t('sales.title')}</h1>
@@ -667,13 +669,14 @@ function periodLabel(items: FlyerSummary[], locale: string): string {
 function FlyerCover({ flyerId }: { flyerId: number }) {
     const [failed, setFailed] = useState(false);
     return (
-        <span className="relative h-[5.75rem] w-[7.25rem] shrink-0">
+        <span className="pointer-events-none relative h-[5.75rem] w-[7.25rem] shrink-0">
             <span className="block h-full w-full overflow-hidden rounded-xl bg-white dark:bg-[#1c1e1c]">
                 {failed ? null : (
                     <img
                         src={`/api/flyers/${flyerId}/pages/1`}
                         alt=""
                         role="presentation"
+                        draggable={false}
                         className="h-full w-full object-cover object-top"
                         onError={() => setFailed(true)}
                     />
