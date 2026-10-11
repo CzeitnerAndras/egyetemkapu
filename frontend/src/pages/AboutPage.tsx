@@ -1,6 +1,7 @@
 import { Info, Code, Database, Layout, User, CheckCircle, GraduationCap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { FLYER_HOST, FLYER_ORIGIN } from '../utils/flyerSite';
 
 const FEATURE_KEYS = [
     'about.f1', 'about.f2', 'about.f3', 'about.f4', 'about.f5',
@@ -55,7 +56,13 @@ export default function AboutPage() {
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black dark:text-gray-300 secret:text-[#1cf85d]/80 font-bold secret:font-mono flex-1">
                         {FEATURE_KEYS.map((key) => (
                             <li key={key} className="flex items-start">
-                                <span className="text-blue-800 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span> {t(key)}
+                                <span className="text-blue-800 dark:text-[#c084fc] secret:text-[#1cf85d] mr-2 font-black">&gt;</span>
+                                {key === 'about.f10' ? (
+                                    <>
+                                        {t(key)}{' '}
+                                        <a href={`${FLYER_ORIGIN}/`} className="underline">{FLYER_HOST}</a>
+                                    </>
+                                ) : t(key)}
                             </li>
                         ))}
                     </ul>
