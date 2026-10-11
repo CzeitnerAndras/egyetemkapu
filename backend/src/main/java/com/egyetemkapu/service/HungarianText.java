@@ -32,7 +32,26 @@ public final class HungarianText {
         if (query.isEmpty()) {
             return false;
         }
-        return normalize(haystack).contains(query);
+        String normalized = normalize(haystack);
+        int from = 0;
+        while (from <= normalized.length() - query.length()) {
+            int index = normalized.indexOf(query, from);
+            if (index < 0) {
+                return false;
+            }
+            if (isWordBoundary(normalized, index - 1) && isWordBoundary(normalized, index + query.length())) {
+                return true;
+            }
+            from = index + 1;
+        }
+        return false;
+    }
+
+    private static boolean isWordBoundary(String value, int index) {
+        if (index < 0 || index >= value.length()) {
+            return true;
+        }
+        return !Character.isLetterOrDigit(value.charAt(index));
     }
 
     public static String snippet(String haystack, String needle, int radius) {
