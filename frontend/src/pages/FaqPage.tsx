@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { HelpCircle, ChevronDown, ChevronUp, MessageCircleQuestion } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { FLYER_ORIGIN } from '../utils/flyerSite';
 
 const FAQ_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 const CALC_ID = 3;
@@ -11,7 +12,7 @@ const DANGER_ID = 10;
 const PAGE_LINKS: Record<string, string> = {
     idea: '/otletlada',
     links: '/linktar',
-    flyers: '/akcios-ujsag',
+    flyers: `${FLYER_ORIGIN}/`,
     kb: '/tudastar',
     calendar: '/naptar',
     ai: '/ai',
@@ -37,6 +38,13 @@ function renderFaqText(text: string) {
         if (!match) return part;
         const to = PAGE_LINKS[match[1]];
         if (!to) return match[2];
+        if (to.startsWith('http')) {
+            return (
+                <a key={index} href={to} className={faqLinkClass}>
+                    {match[2]}
+                </a>
+            );
+        }
         return (
             <Link key={index} to={to} className={faqLinkClass}>
                 {match[2]}
