@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, Newspaper, ChevronDown } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, ChevronDown } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
@@ -272,7 +272,6 @@ export default function Navbar() {
       items: [
         { to: '/naptar', label: t('nav.calendar'), icon: Calendar },
         { to: '/linktar', label: t('nav.links'), icon: LinkIcon },
-        { to: '/akcios-ujsag', label: t('nav.sales'), icon: Newspaper },
       ],
     },
   ];
