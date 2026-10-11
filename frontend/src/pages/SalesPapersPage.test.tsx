@@ -72,13 +72,13 @@ describe('SalesPapersPage Komponens', () => {
 
     it('betölti a SPAR újságokat és vált ALDI-ra', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
-
         expect(await screen.findByRole('heading', { name: 'SPAR szórólap' })).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: 'SPAR szórólap' }).closest('button')?.className)
             .toContain('dark:hover:bg-[#3b0764]');
         expect(screen.getByRole('heading', { name: 'SPAR szórólap' }).closest('button')?.className)
             .toContain('secret:hover:border-[#1cf85d]');
+        expect(screen.getByRole('heading', { name: 'SPAR szórólap' }).closest('button')?.querySelector('img'))
+            .toHaveAttribute('src', '/api/flyers/2/pages/1');
         expect(screen.getByRole('button', { name: /^ALDI$/ })).toBeInTheDocument();
         const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
         expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([
@@ -93,7 +93,6 @@ describe('SalesPapersPage Komponens', () => {
 
     it('ALDI-nál az online újságot rakja a középső sor elé', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByRole('heading', { name: 'SPAR szórólap' });
         await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
         await screen.findByText('ALDI Online akciós újság');
@@ -104,7 +103,6 @@ describe('SalesPapersPage Komponens', () => {
 
     it('SPAR-nál a heti SPAR, INTERSPAR és SPAR Market sorrendjét tartja', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByRole('heading', { name: 'SPAR szórólap' });
         const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
         expect(titles).toEqual(['SPAR szórólap', 'INTERSPAR szórólap', 'SPAR Market']);
@@ -112,7 +110,6 @@ describe('SalesPapersPage Komponens', () => {
 
     it('TESCO-nál a hipermarket, szupermarket és katalógus sorrendjét tartja', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByRole('heading', { name: 'SPAR szórólap' });
         await userEvent.click(screen.getByRole('button', { name: /^TESCO$/ }));
         const titles = screen.getAllByRole('heading', { level: 3 }).map((el) => el.textContent);
@@ -121,7 +118,6 @@ describe('SalesPapersPage Komponens', () => {
 
     it('elrejti a lejárt újságot', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByRole('heading', { name: 'SPAR szórólap' });
         await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
         expect(await screen.findByText('ALDI heti újság')).toBeInTheDocument();
@@ -131,7 +127,6 @@ describe('SalesPapersPage Komponens', () => {
 
     it('keresésre megjeleníti a termék találatot, majd megnyitja a lapozót', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByText('SPAR szórólap');
 
         await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
@@ -156,7 +151,6 @@ describe('SalesPapersPage Komponens', () => {
 
     it('keresésből a listára teszi a terméket boltonként', async () => {
         render(<SalesPapersPage />);
-        await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
         await screen.findByText('SPAR szórólap');
         await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
         await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
@@ -208,7 +202,6 @@ describe('SalesPapersPage Komponens', () => {
 
         try {
             render(<SalesPapersPage />);
-            await userEvent.click(screen.getByRole('button', { name: 'notice.gotIt' }));
             await screen.findByText('SPAR szórólap');
             await userEvent.type(screen.getByLabelText('sales.searchLabel'), 'kakaóscsiga');
             await userEvent.click(screen.getByRole('button', { name: 'sales.searchSubmit' }));
