@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -25,8 +26,38 @@ import FlashcardsPage from './pages/FlashcardsPage';
 import { LanguageProvider } from './i18n/LanguageContext';
 import DocumentTitle from './components/DocumentTitle';
 import PresenceHeartbeat from './components/PresenceHeartbeat';
+import { FLYER_ORIGIN, isFlyerHost, isStudentProductionHost } from './utils/flyerSite';
+
+function GoToFlyerSite() {
+  useEffect(() => {
+    window.location.replace(`${FLYER_ORIGIN}/`);
+  }, []);
+  return null;
+}
+
+function FlyerSite() {
+  return (
+    <LanguageProvider>
+      <Router>
+        <DocumentTitle />
+        <div className="min-h-screen bg-[#f3f5f2] text-[#1c1c1c] dark:bg-[#121412] dark:text-white">
+          <Routes>
+            <Route path="/" element={<SalesPapersPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </LanguageProvider>
+  );
+}
 
 function App() {
+  if (isFlyerHost()) {
+    return <FlyerSite />;
+  }
+
+  const flyerRoute = isStudentProductionHost() ? <GoToFlyerSite /> : <SalesPapersPage />;
+
   return (
     <LanguageProvider>
     <Router>
@@ -59,12 +90,12 @@ function App() {
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/linktar" element={<LinksPage />} />
-          <Route path="/akcios-ujsag" element={<SalesPapersPage />} />
+          <Route path="/akcios-ujsag" element={flyerRoute} />
           <Route path="/kartyak" element={<FlashcardsPage />} />
           <Route path="/fokusz" element={<Navigate to="/tanuloszoba" replace />} />
           <Route path="/ideabox" element={<Navigate to="/otletlada" replace />} />
           <Route path="/links" element={<Navigate to="/linktar" replace />} />
-          <Route path="/flyers" element={<Navigate to="/akcios-ujsag" replace />} />
+          <Route path="/flyers" element={isStudentProductionHost() ? <GoToFlyerSite /> : <Navigate to="/akcios-ujsag" replace />} />
           <Route path="/flashcards" element={<Navigate to="/kartyak" replace />} />
         </Routes>
       </div>

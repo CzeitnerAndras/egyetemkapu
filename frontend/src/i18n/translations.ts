@@ -33,6 +33,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.switchToHu': 'Váltás magyarra',
     'seo.defaultTitle': 'Egyetemkapu – egyetemi hallgatói portál',
     'seo.description': 'Naptár, kalkulátorok, jegyzetek, hivatkozásgenerátor és egyetemi linkek egy helyen a magyar és külföldi hallgatóknak.',
+    'seo.flyersDescription': 'SPAR, Penny, Tesco, Aldi, Lidl, Auchan és Coop heti akciós újságjai egy helyen, bevásárlólistával.',
     'notice.gotIt': 'Értem',
     'notice.close': 'Bezárás',
 
@@ -158,7 +159,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'about.f7': 'Tudástár, admin jóváhagyással',
     'about.f8': 'Linktár az összes magyar egyetemhez',
     'about.f9': 'Ötletláda, ha valami hiányzik',
-    'about.f10': 'Aldi, Spar, Penny, Tesco, Auchan és Lidl akciós újságok',
+    'about.f10': 'Az akciós újságok külön oldalon vannak:',
     'about.f11': 'Tanuló kártyák, egyszerű ismétléssel',
     'about.stack': 'Technológiai háttér',
     'about.version': 'Verzió 1.0',
@@ -541,6 +542,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.switchToHu': 'Switch to Hungarian',
     'seo.defaultTitle': 'Egyetemkapu – university student portal',
     'seo.description': 'Calendar, calculators, notes, a citation generator, and university links in one place for Hungarian students.',
+    'seo.flyersDescription': 'Weekly flyers from SPAR, Penny, Tesco, Aldi, Lidl, Auchan, and Coop in one place, with a shopping list.',
     'notice.gotIt': 'Got it',
     'notice.close': 'Close',
 
@@ -666,7 +668,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'about.f7': 'Knowledge base with admin review',
     'about.f8': 'Link directory for every Hungarian university',
     'about.f9': 'Idea box when something is missing',
-    'about.f10': 'Aldi, Spar, Penny, Tesco, Auchan and Lidl sale flyers',
+    'about.f10': 'Sale flyers live on their own site:',
     'about.f11': 'Flashcards with a simple review schedule',
     'about.stack': 'Technology',
     'about.version': 'Version 1.0',
