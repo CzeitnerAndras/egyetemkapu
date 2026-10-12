@@ -91,6 +91,19 @@ describe('SalesPapersPage Komponens', () => {
         expect(screen.queryByText('ALDI 20. hét')).not.toBeInTheDocument();
     });
 
+    it('a helyben mentett boltsorrendet használja, és az első boltot nyitja meg', async () => {
+        localStorage.setItem('egyetemkapu.storeOrder', JSON.stringify([
+            'lidl', 'aldi', 'spar', 'penny', 'tesco', 'auchan', 'coop',
+        ]));
+        render(<SalesPapersPage />);
+
+        const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
+        expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([
+            'lidl', 'aldi', 'spar', 'penny', 'tesco', 'auchan', 'coop',
+        ]);
+        expect(screen.getByRole('button', { name: /^LIDL$/ })).toHaveAttribute('aria-pressed', 'true');
+    });
+
     it('ALDI-nál az online újságot rakja a középső sor elé', async () => {
         render(<SalesPapersPage />);
         await screen.findByRole('heading', { name: 'SPAR szórólap' });
