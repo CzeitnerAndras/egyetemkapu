@@ -32,6 +32,11 @@ class FlyerUrlPolicyTest {
                 "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=x"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://imgproxy.leaflets.schwarz/x/page.jpg"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://assets.leaflets.schwarz/leaflets/pdfs/x.pdf"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://shop.rossmann.hu/magazin/altalanos/333"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://magazin.microservices.rossmann.hu/api/magazines"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }
