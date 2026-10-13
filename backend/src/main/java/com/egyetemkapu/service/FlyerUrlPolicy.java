@@ -37,7 +37,10 @@ public final class FlyerUrlPolicy {
             "www.lidl.hu",
             "endpoints.leaflets.schwarz",
             "imgproxy.leaflets.schwarz",
-            "assets.leaflets.schwarz"
+            "assets.leaflets.schwarz",
+            "shop.rossmann.hu",
+            "magazin.microservices.rossmann.hu",
+            "assets.microservices.rossmann.hu"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;
