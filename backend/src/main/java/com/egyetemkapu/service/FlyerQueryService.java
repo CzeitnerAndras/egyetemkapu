@@ -28,7 +28,8 @@ public class FlyerQueryService {
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
-    private static final List<String> STORE_ORDER = List.of("spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl");
+    private static final List<String> STORE_ORDER = List.of(
+            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -155,6 +156,7 @@ public class FlyerQueryService {
         if (flyerSyncService.isStale(LocalDateTime.now(clock))) {
             flyerSyncService.refreshAsync();
         }
+        flyerSyncService.refreshRossmannOnce();
     }
 
     private static boolean listed(Flyer flyer, LocalDate today) {
@@ -227,6 +229,18 @@ public class FlyerQueryService {
                 return 2;
             }
             return 0;
+        }
+        if ("rossmann".equals(flyer.getStore())) {
+            if (hay.contains("/magazin/altalanos/")) {
+                return 0;
+            }
+            if (hay.contains("/magazin/joker/")) {
+                return 1;
+            }
+            if (hay.contains("/magazin/baba/")) {
+                return 2;
+            }
+            return 3;
         }
         return 0;
     }
