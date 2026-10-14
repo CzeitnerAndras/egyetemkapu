@@ -60,7 +60,7 @@ test.describe('Egyetemkapu E2E - Akciós újság', () => {
   test('a bolt tabok megjelennek, alapértelmezetten a SPAR aktív, és újságok listázódnak', async ({ page }) => {
     await page.goto('/akcios-ujsag');
     await expect(page.getByRole('heading', { level: 1, name: /Akciós újságok|Sale flyers/i })).toBeVisible();
-    await expect(page.locator('[data-store]')).toHaveCount(7);
+    await expect(page.locator('[data-store]')).toHaveCount(8);
     await expect(page.locator('[data-store="spar"]')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SPAR szórólap')).toBeVisible();
   });

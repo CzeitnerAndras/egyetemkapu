@@ -82,7 +82,7 @@ describe('SalesPapersPage Komponens', () => {
         expect(screen.getByRole('button', { name: /^ALDI$/ })).toBeInTheDocument();
         const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
         expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([
-            'spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl',
+            'spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann',
         ]);
 
         await userEvent.click(screen.getByRole('button', { name: /^ALDI$/ }));
@@ -99,7 +99,7 @@ describe('SalesPapersPage Komponens', () => {
 
         const storeButtons = screen.getAllByRole('button').filter((button) => button.hasAttribute('data-store'));
         expect(storeButtons.map((button) => button.getAttribute('data-store'))).toEqual([
-            'lidl', 'aldi', 'spar', 'penny', 'tesco', 'auchan', 'coop',
+            'lidl', 'aldi', 'spar', 'penny', 'tesco', 'auchan', 'coop', 'rossmann',
         ]);
         expect(screen.getByRole('button', { name: /^LIDL$/ })).toHaveAttribute('aria-pressed', 'true');
     });
