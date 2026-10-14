@@ -565,6 +565,7 @@ class FlyerCatalogParserTest {
                     "1":[
                       {"page":1,"product":{"name":"Winston állateledel macskáknak - 100 g"}},
                       {"page":1,"product":{"name":"Winston állateledel macskáknak - 100 g"}},
+                      {"page":1,"product":{"name":"Vibovit BY EUROVIT Dino Gyümölcsös Ízű Gumivitamin - 50 db"}},
                       {"page":1,"text":"108958"}
                     ]
                   }
@@ -578,8 +579,10 @@ class FlyerCatalogParserTest {
         assertEquals(
                 "https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp",
                 catalog.pages().getFirst().imageUrl());
-        assertEquals(1, catalog.products().size());
-        assertEquals("Winston állateledel macskáknak - 100 g", catalog.products().getFirst().name());
+        assertEquals(List.of(
+                "Vibovit Dino Gumivitamin",
+                "Winston állateledel macskáknak - 100 g"),
+                catalog.products().stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
         assertEquals(1, catalog.products().getFirst().pageNumber());
         assertTrue(catalog.pages().getFirst().text().contains("Winston"));
     }
