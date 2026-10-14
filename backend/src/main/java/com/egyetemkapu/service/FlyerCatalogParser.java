@@ -419,7 +419,7 @@ public class FlyerCatalogParser {
         }
         for (JsonNode poi : pois) {
             int page = poi.path("page").asInt(0);
-            String name = textOr(poi.path("product").path("name"), "").replaceAll("\\s+", " ").trim();
+            String name = rossmannDisplayName(textOr(poi.path("product").path("name"), ""));
             if (page < 1 || name.isBlank()) {
                 continue;
             }
@@ -481,6 +481,17 @@ public class FlyerCatalogParser {
         } catch (RuntimeException ex) {
             return fallback;
         }
+    }
+
+    static String rossmannDisplayName(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        String name = raw.replaceAll("\\s+", " ").trim();
+        name = name.replaceAll("(?iu)\\s*(?:[-–]\\s*)?\\d+\\s*db\\s*$", "");
+        name = name.replaceAll("(?iu)\\s+by\\s+\\p{L}[\\p{L}0-9]*", "");
+        name = name.replaceAll("(?iu)\\s+\\p{L}+\\s+ízű(?=\\s|$)", "");
+        return name.replaceAll("\\s+", " ").replaceAll("^[\\s\\-–]+|[\\s\\-–]+$", "").trim();
     }
 
     private static String rossmannTitle(String slug) {
