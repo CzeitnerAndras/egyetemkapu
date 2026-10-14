@@ -22,7 +22,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann';
 
 interface FlyerSummary {
     id: number;
@@ -884,6 +884,18 @@ function flyerKind(flyer: FlyerSummary): number {
             return 2;
         }
         return 0;
+    }
+    if (flyer.store === 'rossmann') {
+        if (hay.includes('/magazin/altalanos/')) {
+            return 0;
+        }
+        if (hay.includes('/magazin/joker/')) {
+            return 1;
+        }
+        if (hay.includes('/magazin/baba/')) {
+            return 2;
+        }
+        return 3;
     }
     return 0;
 }
