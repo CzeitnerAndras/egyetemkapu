@@ -108,6 +108,10 @@ public class FlyerCatalogParser {
     private static final Pattern AUCHAN_PAPER_GUID = Pattern.compile(
             "cdn\\.ipaper\\.io/iPaper/Papers/([0-9a-fA-F-]{36})",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern ROSSMANN_OFFICIAL = Pattern.compile(
+            "https://shop\\.rossmann\\.hu/magazin/([a-z0-9-]{1,40})/(\\d+)/?");
+    private static final Pattern ROSSMANN_NAME_DATES = Pattern.compile(
+            "(\\d{1,2})\\.(\\d{1,2})\\.?\\s*[-–]\\s*(\\d{1,2})\\.(\\d{1,2})");
     private static final Pattern LIDL_FLYER = Pattern.compile(
             "(?is)<a\\s+href=\"(https://www\\.lidl\\.hu/l/hu/ujsag/[^\"?#]+)(?:\\?[^\"#]*)?\"[^>]*\\bid=\"flyer-([0-9a-fA-F-]{36})\"");
     private static final Pattern LIDL_TITLE = Pattern.compile(
@@ -309,6 +313,184 @@ public class FlyerCatalogParser {
         } catch (Exception ex) {
             return new ParsedCatalog(paper, List.of(), List.of());
         }
+    }
+
+    public static String rossmannMagazineJsonUrl(String officialUrl) {
+        if (officialUrl == null) {
+            return null;
+        }
+        Matcher matcher = ROSSMANN_OFFICIAL.matcher(officialUrl);
+        if (!matcher.matches()) {
+            return null;
+        }
+        return "https://magazin.microservices.rossmann.hu/storage/json/"
+                + matcher.group(1) + "/" + matcher.group(2) + ".json";
+    }
+
+    public List<DiscoveredPaper> discoverRossmannPapers(String json) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        if (json == null || json.isBlank()) {
+            return papers;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            if (!root.isArray()) {
+                return papers;
+            }
+            for (JsonNode item : root) {
+                int id = item.path("id").asInt(0);
+                String slug = textOr(item.path("category_slug"), "").toLowerCase(Locale.ROOT);
+                if (id <= 0 || !slug.matches("[a-z0-9-]{1,40}")) {
+                    continue;
+                }
+                String official = "https://shop.rossmann.hu/magazin/" + slug + "/" + id;
+                papers.add(new DiscoveredPaper(
+                        "rossmann",
+                        rossmannTitle(slug),
+                        official,
+                        null,
+                        "rossmann:" + id,
+                        null,
+                        null));
+            }
+        } catch (Exception ex) {
+            return List.of();
+        }
+        return papers;
+    }
+
+    public ParsedCatalog parseRossmannMagazine(DiscoveredPaper paper, String json) {
+        if (paper == null) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(json == null ? "" : json);
+            if (!root.isObject()) {
+                return new ParsedCatalog(paper, List.of(), List.of());
+            }
+            LocalDate[] offer = rossmannOfferDates(
+                    textOr(root.path("name"), ""),
+                    isoDate(root.path("valid_from"), paper.validFrom()),
+                    isoDate(root.path("valid_to"), paper.validTo()));
+            LocalDate from = offer[0];
+            LocalDate to = offer[1];
+            DiscoveredPaper resolved = new DiscoveredPaper(
+                    "rossmann",
+                    paper.title(),
+                    paper.officialUrl(),
+                    null,
+                    paper.sourceKey(),
+                    from,
+                    to);
+            Map<Integer, String> pageText = new LinkedHashMap<>();
+            Map<String, ParsedProduct> products = new LinkedHashMap<>();
+            JsonNode pois = root.path("pois");
+            if (pois.isObject()) {
+                pois.fields().forEachRemaining(entry -> collectRossmannProducts(entry.getValue(), products, pageText));
+            }
+            List<ParsedPage> pages = new ArrayList<>();
+            JsonNode pageNodes = root.path("pages");
+            if (pageNodes.isObject()) {
+                pageNodes.fields().forEachRemaining(entry -> {
+                    int number = pageNumber(entry.getKey(), entry.getValue());
+                    if (number < 1 || !entry.getValue().isArray()) {
+                        return;
+                    }
+                    String image = rossmannPageImage(entry.getValue());
+                    if (image == null) {
+                        return;
+                    }
+                    pages.add(new ParsedPage(number, image, pageText.getOrDefault(number, "")));
+                });
+            }
+            pages.sort(Comparator.comparingInt(ParsedPage::pageNumber));
+            List<ParsedProduct> productList = new ArrayList<>(products.values());
+            productList.sort(Comparator.comparingInt(ParsedProduct::pageNumber).thenComparing(ParsedProduct::name));
+            return new ParsedCatalog(resolved, pages, productList);
+        } catch (Exception ex) {
+            return new ParsedCatalog(paper, List.of(), List.of());
+        }
+    }
+
+    private static void collectRossmannProducts(
+            JsonNode pois, Map<String, ParsedProduct> products, Map<Integer, String> pageText) {
+        if (pois == null || !pois.isArray()) {
+            return;
+        }
+        for (JsonNode poi : pois) {
+            int page = poi.path("page").asInt(0);
+            String name = textOr(poi.path("product").path("name"), "").replaceAll("\\s+", " ").trim();
+            if (page < 1 || name.isBlank()) {
+                continue;
+            }
+            String key = page + ":" + HungarianText.normalize(name);
+            if (products.putIfAbsent(key, new ParsedProduct(name, page, null)) == null) {
+                pageText.merge(page, name, (left, right) -> left + "\n" + right);
+            }
+        }
+    }
+
+    private static int pageNumber(String key, JsonNode variants) {
+        int fromKey = 0;
+        try {
+            fromKey = Integer.parseInt(key);
+        } catch (NumberFormatException ignored) {
+        }
+        if (fromKey > 0) {
+            return fromKey;
+        }
+        if (variants != null && variants.isArray() && !variants.isEmpty()) {
+            return variants.get(0).path("page").asInt(0);
+        }
+        return 0;
+    }
+
+    private static String rossmannPageImage(JsonNode variants) {
+        String image = null;
+        int bestZoom = -1;
+        for (JsonNode variant : variants) {
+            int zoom = variant.path("zoom").asInt(-1);
+            String path = FlyerUrlPolicy.allowedOrNull(textOr(variant.path("filePath"), null));
+            if (path != null && zoom >= bestZoom) {
+                bestZoom = zoom;
+                image = path;
+            }
+        }
+        return image;
+    }
+
+    private static LocalDate[] rossmannOfferDates(String name, LocalDate validFrom, LocalDate validTo) {
+        LocalDate[] fallback = new LocalDate[] {validFrom, validTo};
+        if (name == null || name.isBlank()) {
+            return fallback;
+        }
+        Matcher matcher = ROSSMANN_NAME_DATES.matcher(name);
+        if (!matcher.find()) {
+            return fallback;
+        }
+        int year = validFrom != null ? validFrom.getYear() : LocalDate.now().getYear();
+        try {
+            LocalDate from = LocalDate.of(year, Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+            int endMonth = Integer.parseInt(matcher.group(3));
+            int endYear = endMonth < from.getMonthValue() ? year + 1 : year;
+            LocalDate to = LocalDate.of(endYear, endMonth, Integer.parseInt(matcher.group(4)));
+            if (validFrom != null && Math.abs(validFrom.toEpochDay() - from.toEpochDay()) > 40) {
+                return fallback;
+            }
+            return new LocalDate[] {from, to};
+        } catch (RuntimeException ex) {
+            return fallback;
+        }
+    }
+
+    private static String rossmannTitle(String slug) {
+        return switch (slug) {
+            case "baba" -> "Rossmann baba";
+            case "joker" -> "Rossmann Joker";
+            case "nyitasi-akciok" -> "Rossmann nyitási akciók";
+            case "egyeb" -> "Rossmann ajánlat";
+            default -> "Rossmann magazin";
+        };
     }
 
     public List<DiscoveredPaper> discoverAuchanPapers(String html, LocalDate today) {

@@ -51,7 +51,8 @@ public class FlyerHttpClient {
         boolean auchan = auchanHost(url);
         boolean coop = coopHost(url);
         boolean lidl = lidlHost(url);
-        headers.set(HttpHeaders.USER_AGENT, spar || auchan || coop || lidl ? BROWSER_UA : USER_AGENT);
+        boolean rossmann = rossmannHost(url);
+        headers.set(HttpHeaders.USER_AGENT, spar || auchan || coop || lidl || rossmann ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.TEXT_HTML, MediaType.APPLICATION_JSON, MediaType.ALL));
         if (spar) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
@@ -65,6 +66,9 @@ public class FlyerHttpClient {
         } else if (lidl) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
             headers.set(HttpHeaders.REFERER, "https://www.lidl.hu/");
+        } else if (rossmann) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.REFERER, "https://shop.rossmann.hu/magazin");
         }
         ResponseEntity<String> response = getFollowingRedirects(
                 url, new HttpEntity<>(headers), String.class);
@@ -115,7 +119,8 @@ public class FlyerHttpClient {
         boolean auchan = auchanHost(url) || auchanHost(referer);
         boolean coop = coopHost(url) || coopHost(referer);
         boolean lidl = lidlHost(url) || lidlHost(referer);
-        headers.set(HttpHeaders.USER_AGENT, tesco || spar || auchan || coop || lidl ? BROWSER_UA : USER_AGENT);
+        boolean rossmann = rossmannHost(url) || rossmannHost(referer);
+        headers.set(HttpHeaders.USER_AGENT, tesco || spar || auchan || coop || lidl || rossmann ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.APPLICATION_PDF, MediaType.ALL));
         if (tesco) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
@@ -136,6 +141,8 @@ public class FlyerHttpClient {
             headers.set(HttpHeaders.REFERER, "https://www.coop.hu/ajanlatkereso/");
         } else if (lidl) {
             headers.set(HttpHeaders.REFERER, "https://www.lidl.hu/");
+        } else if (rossmann) {
+            headers.set(HttpHeaders.REFERER, "https://shop.rossmann.hu/magazin");
         }
         ResponseEntity<byte[]> response = getFollowingRedirects(url, new HttpEntity<>(headers), byte[].class);
         if (!response.getStatusCode().is2xxSuccessful()) {
@@ -204,6 +211,13 @@ public class FlyerHttpClient {
         }
         String lower = value.toLowerCase();
         return lower.contains("lidl.hu") || lower.contains("leaflets.schwarz");
+    }
+
+    private static boolean rossmannHost(String value) {
+        if (value == null) {
+            return false;
+        }
+        return value.toLowerCase().contains("rossmann.hu");
     }
 
     private static boolean auchanHost(String value) {

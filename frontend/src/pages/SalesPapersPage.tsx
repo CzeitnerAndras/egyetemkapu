@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download } from 'lucide-react';
+import { Search, ExternalLink, ChevronLeft, ChevronRight, X, ShoppingCart, Plus, Minus, Trash2, Download, Check } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageShell } from '../components/PageLayout';
 import { isFlyerHost } from '../utils/flyerSite';
+import {
+    loadStoreOrder,
+    reorderStores,
+    saveStoreOrder,
+} from '../utils/storeOrder';
 import {
     addItem,
     formatShoppingListText,
@@ -17,7 +22,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann';
 
 interface FlyerSummary {
     id: number;
@@ -52,15 +57,34 @@ interface FlyerDetail {
     store: StoreId;
     title: string;
     officialUrl: string;
+    validFrom?: string | null;
+    validTo?: string | null;
     pages: { pageNumber: number; hasImage: boolean }[];
     products?: FlyerProduct[];
 }
 
-const STORES: StoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl'];
+function storeUnderPointer(x: number, y: number): StoreId | null {
+    const direct = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-store]')?.dataset.store;
+    if (direct) {
+        return direct as StoreId;
+    }
+    let nearestId: StoreId | null = null;
+    let nearestDistance = 72;
+    for (const button of document.querySelectorAll<HTMLElement>('[data-store]')) {
+        const rect = button.getBoundingClientRect();
+        const distance = Math.hypot(x - (rect.left + rect.width / 2), y - (rect.top + rect.height / 2));
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestId = button.dataset.store as StoreId;
+        }
+    }
+    return nearestId;
+}
 
 export default function SalesPapersPage() {
     const { t, locale } = useLanguage();
-    const [activeStore, setActiveStore] = useState<StoreId>('spar');
+    const [storeOrder, setStoreOrder] = useState<StoreId[]>(() => loadStoreOrder());
+    const [activeStore, setActiveStore] = useState<StoreId>(() => loadStoreOrder()[0] ?? 'spar');
     const [flyers, setFlyers] = useState<FlyerSummary[]>([]);
     const [query, setQuery] = useState('');
     const [hits, setHits] = useState<SearchHit[] | null>(null);
@@ -70,6 +94,9 @@ export default function SalesPapersPage() {
     const [viewer, setViewer] = useState<{ flyer: FlyerDetail; page: number } | null>(null);
     const [pageStatus, setPageStatus] = useState<'loading' | 'ok' | 'error'>('loading');
     const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>(() => loadShoppingList());
+    const listSectionRef = useRef<HTMLElement>(null);
+    const storeDrag = useRef<{ id: StoreId; pointerId: number; moved: boolean; x: number; y: number } | null>(null);
+    const [draggingStore, setDraggingStore] = useState<StoreId | null>(null);
 
     {/* --- Load flyers --- */}
     useEffect(() => {
@@ -246,7 +273,7 @@ export default function SalesPapersPage() {
 
     const renderFlyerGroup = (label: string, items: FlyerSummary[], current: boolean) => {
         if (items.length === 0) return null;
-        const period = periodLabel(items, locale);
+        const period = current ? '' : periodLabel(items, locale);
         return (
             <>
                 <h2 className="mb-4 text-lg font-bold text-[#1c1c1c] dark:text-white secret:text-[#1cf85d] xl:col-start-1">
@@ -309,14 +336,58 @@ export default function SalesPapersPage() {
 
             {/* --- Store pills --- */}
             <div className="mb-8 flex flex-wrap items-center gap-2">
-                {STORES.map((store) => (
+                {storeOrder.map((store) => (
                     <button
                         key={store}
                         type="button"
                         data-store={store}
                         aria-pressed={activeStore === store}
-                        onClick={() => setActiveStore(store)}
-                        className={`cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold uppercase transition ${
+                        onPointerDown={(event) => {
+                            if (event.button !== 0) {
+                                return;
+                            }
+                            storeDrag.current = { id: store, pointerId: event.pointerId, moved: false, x: event.clientX, y: event.clientY };
+                            event.currentTarget.setPointerCapture?.(event.pointerId);
+                        }}
+                        onPointerMove={(event) => {
+                            const drag = storeDrag.current;
+                            if (!drag || drag.pointerId !== event.pointerId || drag.id !== store) {
+                                return;
+                            }
+                            if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) >= 8) {
+                                drag.moved = true;
+                                setDraggingStore(store);
+                            }
+                        }}
+                        onPointerUp={(event) => {
+                            const drag = storeDrag.current;
+                            storeDrag.current = null;
+                            setDraggingStore(null);
+                            if (!drag || drag.pointerId !== event.pointerId || drag.id !== store) {
+                                return;
+                            }
+                            const moved = drag.moved || Math.hypot(event.clientX - drag.x, event.clientY - drag.y) >= 8;
+                            if (!moved) {
+                                setActiveStore(store);
+                                return;
+                            }
+                            const target = storeUnderPointer(event.clientX, event.clientY);
+                            if (!target || target === drag.id) {
+                                return;
+                            }
+                            setStoreOrder((current) => {
+                                const next = reorderStores(current, drag.id, target);
+                                saveStoreOrder(next);
+                                return next;
+                            });
+                        }}
+                        onPointerCancel={() => {
+                            storeDrag.current = null;
+                            setDraggingStore(null);
+                        }}
+                        className={`touch-none cursor-grab rounded-full border px-4 py-2 text-sm font-semibold uppercase transition select-none ${
+                            draggingStore === store ? 'cursor-grabbing opacity-60' : ''
+                        } ${
                             activeStore === store
                                 ? 'border-[#0f6e3a] bg-[#0f6e3a] text-white dark:border-[#1f8a4c] dark:bg-[#1f8a4c] secret:border-[#1cf85d] secret:bg-[#1cf85d] secret:text-black'
                                 : 'border-black/10 bg-white text-[#1c1c1c] hover:border-black/25 dark:border-white/15 dark:bg-[#1c1e1c] dark:text-white secret:border-[#1cf85d] secret:bg-transparent secret:text-[#1cf85d]'
@@ -424,7 +495,7 @@ export default function SalesPapersPage() {
                 </div>
 
                 {/* --- Shopping list --- */}
-                <section className={`h-fit w-full self-start rounded-2xl border border-black/8 bg-white p-4 text-[#1c1c1c] shadow-[0_8px_24px_rgba(16,24,16,0.06)] dark:border-white/10 dark:bg-[#1c1e1c] dark:text-white secret:border-[#1cf85d] secret:bg-transparent secret:text-[#1cf85d] xl:sticky xl:top-4 ${storeFlyers.length > 0 ? 'xl:col-start-2 xl:row-start-2' : ''}`}>
+                <section ref={listSectionRef} className={`h-fit w-full self-start rounded-2xl border border-black/8 bg-white p-4 text-[#1c1c1c] shadow-[0_8px_24px_rgba(16,24,16,0.06)] dark:border-white/10 dark:bg-[#1c1e1c] dark:text-white secret:border-[#1cf85d] secret:bg-transparent secret:text-[#1cf85d] xl:sticky xl:top-4 ${storeFlyers.length > 0 ? 'xl:col-start-2 xl:row-start-2' : ''}`}>
                     <div className="mb-3 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                             <ShoppingCart className="h-4 w-4" />
@@ -511,117 +582,157 @@ export default function SalesPapersPage() {
 
             {/* --- Viewer --- */}
             {viewer && createPortal(
-                <div className="fixed inset-0 bg-black/80 z-[80] flex items-stretch justify-center overflow-hidden overscroll-none p-2 sm:p-4">
-                    <div className="bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] w-full max-w-[1400px] h-full max-h-[98vh] overflow-hidden flex flex-col shadow-[8px_8px_0px_#000] dark:shadow-[0_0_40px_rgba(0,0,0,0.55)]">
-                        <div className="flex items-center justify-between gap-3 p-4 border-b-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d]">
-                            <div className="min-w-0 text-black dark:text-white secret:text-[#1cf85d]">
-                                <p className="text-xs font-black uppercase">{storeLabel(viewer.flyer.store)}</p>
-                                <h2 className="text-lg font-bold uppercase secret:font-mono leading-tight truncate">{viewer.flyer.title}</h2>
+                <div className="fixed inset-0 z-[80] flex items-stretch justify-center overflow-hidden overscroll-none bg-[#1a2420]/80 p-3 sm:p-5">
+                    <div className="flex h-full max-h-[98vh] w-full max-w-[1400px] flex-col overflow-hidden rounded-[28px] bg-white text-[#1c1c1c] shadow-[0_24px_80px_rgba(0,0,0,0.35)] dark:bg-[#171a18] dark:text-white secret:border secret:border-[#1cf85d] secret:bg-black secret:text-[#1cf85d]">
+                        <div className="flex items-center justify-between gap-3 border-b border-black/8 px-4 py-3 dark:border-white/10 secret:border-[#1cf85d]/40 sm:px-5">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <span className="shrink-0 rounded-full bg-[#0f6e3a] px-2.5 py-1 text-[11px] font-semibold uppercase text-white secret:bg-[#1cf85d] secret:text-black">
+                                    {storeLabel(viewer.flyer.store)}
+                                </span>
+                                <h2 className="truncate text-base font-semibold leading-tight sm:text-lg">{viewer.flyer.title}</h2>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                                {shoppingList.length > 0 && (
-                                    <span className="hidden sm:inline text-xs font-black uppercase text-black dark:text-white secret:text-[#1cf85d]">
-                                        {t('sales.listCount', { count: shoppingList.reduce((sum, item) => sum + item.quantity, 0) })}
+                            <div className="flex shrink-0 items-center gap-2">
+                                {viewerDateRange(viewer.flyer.validFrom, viewer.flyer.validTo) && (
+                                    <span className="hidden text-sm text-[#6b726d] dark:text-white/60 secret:text-[#1cf85d]/70 md:inline">
+                                        {viewerDateRange(viewer.flyer.validFrom, viewer.flyer.validTo)}
                                     </span>
                                 )}
                                 <a
                                     href={viewer.flyer.officialUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 font-bold uppercase text-sm border-4 border-black dark:border-[#166534] secret:border-[#1cf85d] px-3 py-1 text-black dark:text-white secret:text-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black hover:bg-[#178a45] hover:text-white dark:hover:bg-[#166534] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-sm font-medium text-[#1c1c1c] hover:bg-[#f3f5f2] dark:border-white/15 dark:text-white dark:hover:bg-white/10 secret:border-[#1cf85d] secret:text-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black"
                                 >
-                                    <ExternalLink className="w-4 h-4" /> {t('sales.openOfficial')}
+                                    <ExternalLink className="h-4 w-4" /> {t('sales.openOfficial')}
                                 </a>
                                 <button
                                     type="button"
                                     onClick={() => setViewer(null)}
-                                    className="p-2 bg-slate-100 dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-[#166534] secret:border-[#1cf85d] text-black dark:text-[#4ade80] secret:text-[#1cf85d] cursor-pointer hover:bg-[#178a45] hover:text-white dark:hover:bg-[#166534] secret:hover:bg-[#1cf85d] secret:hover:text-black secret:hover:border-[#1cf85d]"
+                                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-black/10 text-[#1c1c1c] hover:bg-[#f3f5f2] dark:border-white/15 dark:text-white dark:hover:bg-white/10 secret:border-[#1cf85d] secret:text-[#1cf85d] secret:hover:bg-[#1cf85d] secret:hover:text-black"
                                     aria-label={t('sales.closeViewer')}
                                 >
-                                    <X className="w-5 h-5" />
+                                    <X className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
-                            <div className="flex-1 overflow-auto bg-slate-200 dark:bg-[#121212] secret:bg-black p-3 min-h-0 relative">
-                                {pageStatus !== 'ok' && (
-                                    <p className="sticky top-1/3 font-bold uppercase secret:font-mono text-black dark:text-[#c084fc] secret:text-[#1cf85d] text-center px-4 z-10">
-                                        {pageStatus === 'error' ? t('sales.pageLoadError') : t('sales.pageLoading')}
-                                    </p>
-                                )}
-                                <img
-                                    key={pageSrc}
-                                    src={pageSrc}
-                                    alt={t('sales.page', { page: viewer.page })}
-                                    className={`block w-full h-auto border-4 border-black dark:border-[#a855f7]/40 secret:border-[#1cf85d] bg-white ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
-                                />
+                        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+                            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+                                <div key={pageSrc} className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-white dark:bg-[#121412] secret:bg-black">
+                                    {pageStatus !== 'ok' && (
+                                        <p className="sticky top-1/3 z-10 px-4 text-center text-sm font-semibold text-[#1c1c1c] dark:text-white secret:text-[#1cf85d]">
+                                            {pageStatus === 'error' ? t('sales.pageLoadError') : t('sales.pageLoading')}
+                                        </p>
+                                    )}
+                                    <img
+                                        src={pageSrc}
+                                        alt={t('sales.page', { page: viewer.page })}
+                                        className={`block h-auto w-full ${pageStatus === 'ok' ? '' : 'opacity-0'}`}
+                                    />
+                                </div>
+                                <div data-flyer-pager className="flex items-center justify-between gap-3 border-t border-black/8 px-4 py-3 dark:border-white/10 secret:border-[#1cf85d]/40">
+                                    <button
+                                        type="button"
+                                        disabled={currentPageIndex <= 0}
+                                        onClick={() => setViewer((prev) => prev && currentPageIndex > 0
+                                            ? { ...prev, page: prev.flyer.pages[currentPageIndex - 1].pageNumber }
+                                            : prev)}
+                                        className="inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-1.5 text-sm font-medium text-[#3d433c] disabled:cursor-default disabled:opacity-40 dark:text-white/80 secret:text-[#1cf85d]"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" /> {t('sales.prevPage')}
+                                    </button>
+                                    <span className="text-sm font-medium text-[#5c6560] dark:text-white/70 secret:text-[#1cf85d]">
+                                        {t('sales.pageOf', { page: viewer.page, total: viewer.flyer.pages.length })}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        disabled={currentPageIndex < 0 || currentPageIndex >= viewer.flyer.pages.length - 1}
+                                        onClick={() => setViewer((prev) => prev && currentPageIndex >= 0 && currentPageIndex < prev.flyer.pages.length - 1
+                                            ? { ...prev, page: prev.flyer.pages[currentPageIndex + 1].pageNumber }
+                                            : prev)}
+                                        className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-[#0f6e3a] px-4 py-2 text-sm font-semibold text-white disabled:cursor-default disabled:opacity-40 secret:bg-[#1cf85d] secret:text-black"
+                                    >
+                                        {t('sales.nextPage')} <ChevronRight className="h-4 w-4" />
+                                    </button>
+                                </div>
                             </div>
-                            {/* --- Page products --- */}
-                            <aside className="lg:w-80 shrink-0 max-h-48 lg:max-h-none overflow-auto border-t-4 lg:border-t-0 lg:border-l-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-3 text-black dark:text-white secret:text-[#1cf85d] bg-slate-100 dark:bg-[#1e1e1e] secret:bg-black">
-                                <h3 className="text-xs font-black uppercase">{t('sales.listPageProducts')}</h3>
-                                <p className="text-[11px] font-medium opacity-80 mb-3">{t('sales.listPageHint')}</p>
-                                {pageProducts.length === 0 ? (
-                                    <p className="text-sm font-medium opacity-80">{t('sales.listNoPageProducts')}</p>
-                                ) : (
-                                    <ul className="space-y-2">
-                                        {pageProducts.map((product) => {
-                                            const onList = shoppingList.some((item) =>
-                                                item.id === listedKey(product.id, viewer.flyer.id, product.pageNumber, product.name));
-                                            return (
-                                                <li key={product.id}>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => addToList({
-                                                            productId: product.id,
-                                                            flyerId: viewer.flyer.id,
-                                                            store: viewer.flyer.store,
-                                                            flyerTitle: viewer.flyer.title,
-                                                            pageNumber: product.pageNumber,
-                                                            name: product.name,
-                                                        })}
-                                                        aria-label={onList ? t('sales.listAdded') : t('sales.listAdd')}
-                                                        className={`w-full text-left p-2 border-2 border-black dark:border-[#166534] secret:border-[#1cf85d] cursor-pointer ${
-                                                            onList
-                                                                ? 'bg-[#178a45] dark:bg-[#166534] secret:bg-[#1cf85d] text-white secret:text-black'
-                                                                : 'bg-white dark:bg-[#121212] secret:bg-black hover:bg-[#0f6e3a] dark:hover:bg-[#14532d] secret:hover:bg-[#1cf85d] secret:hover:text-black hover:text-white'
-                                                        }`}
-                                                    >
-                                                        <p className="font-bold leading-tight">{product.name}</p>
-                                                    </button>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                )}
-                            </aside>
-                        </div>
 
-                        {/* --- Pagination --- */}
-                        <div className="flex items-center justify-between p-4 border-t-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] text-black dark:text-white secret:text-[#1cf85d]">
-                            <button
-                                type="button"
-                                disabled={currentPageIndex <= 0}
-                                onClick={() => setViewer((prev) => prev && currentPageIndex > 0
-                                    ? { ...prev, page: prev.flyer.pages[currentPageIndex - 1].pageNumber }
-                                    : prev)}
-                                className="inline-flex items-center gap-1 font-bold uppercase disabled:opacity-40 cursor-pointer"
-                            >
-                                <ChevronLeft className="w-5 h-5" /> {t('sales.prevPage')}
-                            </button>
-                            <span className="font-black uppercase secret:font-mono">
-                                {t('sales.pageOf', { page: viewer.page, total: viewer.flyer.pages.length })}
-                            </span>
-                            <button
-                                type="button"
-                                disabled={currentPageIndex < 0 || currentPageIndex >= viewer.flyer.pages.length - 1}
-                                onClick={() => setViewer((prev) => prev && currentPageIndex >= 0 && currentPageIndex < prev.flyer.pages.length - 1
-                                    ? { ...prev, page: prev.flyer.pages[currentPageIndex + 1].pageNumber }
-                                    : prev)}
-                                className="inline-flex items-center gap-1 font-bold uppercase disabled:opacity-40 cursor-pointer"
-                            >
-                                {t('sales.nextPage')} <ChevronRight className="w-5 h-5" />
-                            </button>
+                            <aside className="flex max-h-[42%] shrink-0 flex-col border-t border-black/8 dark:border-white/10 secret:border-[#1cf85d]/40 lg:max-h-none lg:w-[22rem] lg:border-t-0 lg:border-l">
+                                <div className="px-4 pb-2 pt-4">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-sm font-semibold">{t('sales.listPageProducts')}</h3>
+                                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f6d86b] px-1.5 text-[11px] font-semibold text-[#1c1c1c]">
+                                            {pageProducts.length}
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-xs text-[#6b726d] dark:text-white/60 secret:text-[#1cf85d]/70">{t('sales.listPageHint')}</p>
+                                </div>
+                                <div className="min-h-0 flex-1 overflow-auto px-4 pb-3">
+                                    {pageProducts.length === 0 ? (
+                                        <p className="text-sm text-[#6b726d] dark:text-white/60">{t('sales.listNoPageProducts')}</p>
+                                    ) : (
+                                        <ul className="space-y-2">
+                                            {pageProducts.map((product) => {
+                                                const onList = shoppingList.some((item) =>
+                                                    item.id === listedKey(product.id, viewer.flyer.id, product.pageNumber, product.name));
+                                                return (
+                                                    <li key={product.id}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => addToList({
+                                                                productId: product.id,
+                                                                flyerId: viewer.flyer.id,
+                                                                store: viewer.flyer.store,
+                                                                flyerTitle: viewer.flyer.title,
+                                                                pageNumber: product.pageNumber,
+                                                                name: product.name,
+                                                            })}
+                                                            aria-label={onList ? t('sales.listAdded') : t('sales.listAdd')}
+                                                            className={`flex w-full cursor-pointer items-center gap-3 rounded-2xl border px-3 py-3 text-left ${
+                                                                onList
+                                                                    ? 'border-[#178a45] bg-[#eef8f1] dark:bg-[#14532d]/40 secret:border-[#1cf85d] secret:bg-transparent'
+                                                                    : 'border-black/10 bg-white hover:border-black/20 dark:border-white/10 dark:bg-[#1c1e1c] dark:hover:border-white/25 secret:border-[#1cf85d]/40 secret:bg-transparent secret:hover:border-[#1cf85d]'
+                                                            }`}
+                                                        >
+                                                            <span className="min-w-0 flex-1">
+                                                                <span className="block font-medium leading-tight">{product.name}</span>
+                                                                {onList && (
+                                                                    <span className="mt-0.5 block text-sm font-semibold text-[#178a45] secret:text-[#1cf85d]">{t('sales.listOnList')}</span>
+                                                                )}
+                                                            </span>
+                                                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                                                                onList
+                                                                    ? 'bg-[#178a45] text-white secret:bg-[#1cf85d] secret:text-black'
+                                                                    : 'border border-black/15 text-[#1c1c1c] dark:border-white/20 dark:text-white secret:border-[#1cf85d] secret:text-[#1cf85d]'
+                                                            }`}>
+                                                                {onList ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                                                            </span>
+                                                        </button>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between gap-3 border-t border-black/8 px-4 py-3 dark:border-white/10 secret:border-[#1cf85d]/40">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold">{t('sales.listTitle')}</p>
+                                        <p className="text-xs text-[#6b726d] dark:text-white/60 secret:text-[#1cf85d]/70">
+                                            {t('sales.listProductCount', { count: shoppingList.length })}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setViewer(null);
+                                            window.setTimeout(() => listSectionRef.current?.scrollIntoView({ block: 'nearest' }), 0);
+                                        }}
+                                        className="shrink-0 cursor-pointer rounded-full bg-[#1c1c1c] px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-[#1c1c1c] secret:bg-[#1cf85d] secret:text-black"
+                                    >
+                                        {t('sales.listOpen')}
+                                    </button>
+                                </div>
+                            </aside>
                         </div>
                     </div>
                 </div>,
@@ -637,6 +748,20 @@ function localIsoDate(date = new Date()): string {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+function viewerDateRange(from?: string | null, to?: string | null): string {
+    const start = formatIsoDots(from);
+    const end = formatIsoDots(to);
+    if (start && end) return `${start} – ${end}`;
+    return start || end;
+}
+
+function formatIsoDots(iso?: string | null): string {
+    if (!iso) return '';
+    const [year, month, day] = iso.slice(0, 10).split('-');
+    if (!year || !month || !day) return '';
+    return `${year}.${month}.${day}.`;
 }
 
 function formatDmy(iso?: string | null): string {
@@ -759,6 +884,18 @@ function flyerKind(flyer: FlyerSummary): number {
             return 2;
         }
         return 0;
+    }
+    if (flyer.store === 'rossmann') {
+        if (hay.includes('/magazin/altalanos/')) {
+            return 0;
+        }
+        if (hay.includes('/magazin/joker/')) {
+            return 1;
+        }
+        if (hay.includes('/magazin/baba/')) {
+            return 2;
+        }
+        return 3;
     }
     return 0;
 }

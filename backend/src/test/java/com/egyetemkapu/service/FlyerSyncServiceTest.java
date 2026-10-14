@@ -424,7 +424,10 @@ class FlyerSyncServiceTest {
         coop.addProduct(sonka);
         Flyer lidl = storeFlyer("lidl", "lidl:01a0fcf6-ff2f-7a6f-8cb3-4f8efa06be61",
                 "https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0");
-        when(flyerRepository.findAll()).thenReturn(List.of(tesco, penny, spar, inter, market, auchan, coop, lidl));
+        Flyer rossmann = storeFlyer("rossmann", "rossmann:333",
+                "https://shop.rossmann.hu/magazin/altalanos/333");
+        when(flyerRepository.findAll()).thenReturn(List.of(
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -635,6 +638,56 @@ class FlyerSyncServiceTest {
         assertTrue(catalog.pages().getFirst().text().contains("Milbona"));
         verify(httpClient, never()).getText(
                 "https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=01a120bd-0f8e-7317-95ed-0165b776d176");
+    }
+
+    @Test
+    void syncRossmannPersistsCurrentMagazinesAndSkipsExpiredOnes() {
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/api/magazines")).thenReturn("""
+                [
+                  {"id":333,"category_slug":"altalanos"},
+                  {"id":329,"category_slug":"joker"}
+                ]
+                """);
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/storage/json/altalanos/333.json"))
+                .thenReturn("""
+                        {
+                          "valid_from":"2026-10-12",
+                          "valid_to":"2026-10-18",
+                          "pages":{"1":[{"zoom":3,"page":1,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp"}]},
+                          "pois":{"1":[{"page":1,"product":{"name":"Winston állateledel macskáknak - 100 g"}}]}
+                        }
+                        """);
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/storage/json/joker/329.json"))
+                .thenReturn("""
+                        {
+                          "valid_from":"2026-09-01",
+                          "valid_to":"2026-09-07",
+                          "pages":{"1":[{"zoom":1,"page":1,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/329/329-1-1.webp"}]}
+                        }
+                        """);
+
+        service.syncRossmann(LocalDate.of(2026, 10, 13));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("rossmann"), captor.capture(), any());
+        assertEquals(1, captor.getValue().size());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("Rossmann magazin", catalog.paper().title());
+        assertEquals("rossmann:333", catalog.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 12), catalog.paper().validFrom());
+        assertEquals("Winston állateledel macskáknak - 100 g", catalog.products().getFirst().name());
+        verify(pdfExtractor, never()).extractDocument(any(), any());
+        verify(pdfExtractor, never()).extractDocument(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void syncRossmannLeavesStoredFlyersAloneWhenTheListIsMissing() {
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/api/magazines")).thenReturn("");
+
+        service.syncRossmann(LocalDate.of(2026, 10, 13));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("rossmann"), any(), any());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {

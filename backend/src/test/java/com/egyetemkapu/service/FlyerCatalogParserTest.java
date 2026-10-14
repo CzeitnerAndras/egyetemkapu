@@ -513,4 +513,97 @@ class FlyerCatalogParserTest {
         assertEquals("https://imgproxy.leaflets.schwarz/page-1.jpg", catalog.pages().getFirst().imageUrl());
         assertTrue(catalog.pages().getFirst().text().contains("Milbona"));
     }
+
+    @Test
+    void discoversRossmannMagazinesFromTheList() {
+        String json = """
+                [
+                  {"id":333,"category_slug":"altalanos","label":"10.12 - 10.18."},
+                  {"id":334,"category_slug":"baba"},
+                  {"id":0,"category_slug":"../evil"}
+                ]
+                """;
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverRossmannPapers(json);
+        assertEquals(2, papers.size());
+        assertEquals("rossmann:333", papers.getFirst().sourceKey());
+        assertEquals("Rossmann magazin", papers.getFirst().title());
+        assertEquals("https://shop.rossmann.hu/magazin/altalanos/333", papers.getFirst().officialUrl());
+        assertEquals(
+                "https://magazin.microservices.rossmann.hu/storage/json/altalanos/333.json",
+                FlyerCatalogParser.rossmannMagazineJsonUrl(papers.getFirst().officialUrl()));
+        assertEquals("Rossmann baba", papers.get(1).title());
+    }
+
+    @Test
+    void parsesRossmannPagesAndProductsFromTheMagazineJson() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "rossmann",
+                "Rossmann magazin",
+                "https://shop.rossmann.hu/magazin/altalanos/333",
+                null,
+                "rossmann:333",
+                null,
+                null);
+        String json = """
+                {
+                  "name":"10.12 - 10.18.",
+                  "valid_from":"2026-10-12",
+                  "valid_to":"2026-10-18",
+                  "pdf":"https://storage.googleapis.com/magazin-prod/333/secret.pdf",
+                  "pages":{
+                    "2":[
+                      {"zoom":0,"page":2,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/333/333-2-0.webp"},
+                      {"zoom":2,"page":2,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/333/333-2-2.webp"}
+                    ],
+                    "1":[
+                      {"zoom":1,"page":1,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-1.webp"},
+                      {"zoom":4,"page":1,"filePath":"https://evil.example/page.webp"},
+                      {"zoom":3,"page":1,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp"}
+                    ]
+                  },
+                  "pois":{
+                    "1":[
+                      {"page":1,"product":{"name":"Winston állateledel macskáknak - 100 g"}},
+                      {"page":1,"product":{"name":"Winston állateledel macskáknak - 100 g"}},
+                      {"page":1,"text":"108958"}
+                    ]
+                  }
+                }
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parseRossmannMagazine(paper, json);
+        assertEquals(LocalDate.of(2026, 10, 12), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 18), catalog.paper().validTo());
+        assertNull(catalog.paper().pdfUrl());
+        assertEquals(List.of(1, 2), catalog.pages().stream().map(FlyerCatalogParser.ParsedPage::pageNumber).toList());
+        assertEquals(
+                "https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp",
+                catalog.pages().getFirst().imageUrl());
+        assertEquals(1, catalog.products().size());
+        assertEquals("Winston állateledel macskáknak - 100 g", catalog.products().getFirst().name());
+        assertEquals(1, catalog.products().getFirst().pageNumber());
+        assertTrue(catalog.pages().getFirst().text().contains("Winston"));
+    }
+
+    @Test
+    void rossmannOfferDatesFollowThePrintedRange() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "rossmann",
+                "Rossmann nyitási akciók",
+                "https://shop.rossmann.hu/magazin/nyitasi-akciok/332",
+                null,
+                "rossmann:332",
+                null,
+                null);
+        String json = """
+                {
+                  "name":"10.19 - 10.30.",
+                  "valid_from":"2026-10-12",
+                  "valid_to":"2026-10-25",
+                  "pages":{"1":[{"zoom":1,"page":1,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/332/332-1-1.webp"}]}
+                }
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parseRossmannMagazine(paper, json);
+        assertEquals(LocalDate.of(2026, 10, 19), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 30), catalog.paper().validTo());
+    }
 }

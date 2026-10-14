@@ -33,9 +33,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
-    private static final List<String> STORES = List.of("aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl");
+    private static final List<String> STORES = List.of(
+            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann");
     private static final int LIDL_MAX_PDF_PAGES = 80;
     private static final String LIDL_OVERVIEW = "https://www.lidl.hu/c/szorolap/s10013623";
+    private static final String ROSSMANN_LIST = "https://magazin.microservices.rossmann.hu/api/magazines";
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
 
@@ -48,6 +50,7 @@ public class FlyerSyncService {
     private final CoopPageOcr coopPageOcr;
     private final Clock clock;
     private final AtomicBoolean syncing = new AtomicBoolean(false);
+    private final AtomicBoolean rossmannRefreshed = new AtomicBoolean(false);
     private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
     private static final int COOP_READ_GENERATION = 4;
     private final ConcurrentHashMap<Long, Integer> coopReadApplied = new ConcurrentHashMap<>();
@@ -97,6 +100,7 @@ public class FlyerSyncService {
             syncTesco(today);
             syncAuchan(today);
             syncLidl(today);
+            syncRossmann(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -289,6 +293,44 @@ public class FlyerSyncService {
             }
         } catch (Exception e) {
             log.warn("Lidl flyer sync failed: {}", e.getMessage());
+        }
+    }
+
+    @Async
+    public void refreshRossmannOnce() {
+        if (!rossmannRefreshed.compareAndSet(false, true)) {
+            return;
+        }
+        syncRossmann(LocalDate.now(clock));
+    }
+
+    public void syncRossmann(LocalDate today) {
+        try {
+            String list = safeText(ROSSMANN_LIST);
+            if (list.isBlank()) {
+                return;
+            }
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            for (DiscoveredPaper paper : parser.discoverRossmannPapers(list)) {
+                if (catalogs.size() >= 8) {
+                    break;
+                }
+                String detail = FlyerCatalogParser.rossmannMagazineJsonUrl(paper.officialUrl());
+                if (detail == null) {
+                    continue;
+                }
+                ParsedCatalog catalog = extractors.forStore("rossmann").fillProducts(
+                        parser.parseRossmannMagazine(paper, safeText(detail)));
+                if (!keepCatalog(catalog, today)) {
+                    continue;
+                }
+                catalogs.add(catalog);
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("rossmann", catalogs, LocalDateTime.now(clock));
+            }
+        } catch (Exception e) {
+            log.warn("Rossmann flyer sync failed: {}", e.getMessage());
         }
     }
 
@@ -657,7 +699,8 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(flyer -> "tesco".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "auchan".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "coop".equals(flyer.getStore()))
-                || flyers.stream().noneMatch(flyer -> "lidl".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "lidl".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "rossmann".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
