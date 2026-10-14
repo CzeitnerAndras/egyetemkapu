@@ -111,7 +111,7 @@ public class FlyerQueryService {
     }
 
     private void reparseProductsFromPageText(Flyer flyer) {
-        if (flyer.getPages() == null || flyer.getPages().isEmpty()) {
+        if (flyer.getPages() == null || flyer.getPages().isEmpty() || "rossmann".equals(flyer.getStore())) {
             return;
         }
         List<FlyerCatalogParser.ParsedProduct> incoming = new ArrayList<>();
