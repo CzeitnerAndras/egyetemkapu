@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SecretPage from './SecretPage';
 
@@ -232,6 +232,27 @@ describe('SecretPage Komponens', () => {
 
         expect(handler).toHaveBeenCalledTimes(1);
         window.removeEventListener('triggerLogoffEffect', handler);
+    });
+
+    it('a "run:// source" gomb megnyitja a CRT játékot, a return üzenet pedig bezárja', async () => {
+        hackTerminal();
+        const user = setup();
+        render(<SecretPage />);
+
+        await user.click(screen.getByText('run:// source'));
+
+        expect(screen.getByTitle('RUN:// SOURCE')).toHaveAttribute('src', '/source.html');
+
+        await act(async () => {
+            window.dispatchEvent(new MessageEvent('message', {
+                origin: window.location.origin,
+                data: { type: 'close-source' },
+            }));
+        });
+
+        await waitFor(() => {
+            expect(screen.queryByTitle('RUN:// SOURCE')).not.toBeInTheDocument();
+        });
     });
 
     it('a "run:// error" gomb triggerFatalError eseményt küld', async () => {
