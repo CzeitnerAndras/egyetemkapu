@@ -29,7 +29,7 @@ public class FlyerQueryService {
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
     private static final List<String> STORE_ORDER = List.of(
-            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann");
+            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann", "dm");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -111,7 +111,9 @@ public class FlyerQueryService {
     }
 
     private void reparseProductsFromPageText(Flyer flyer) {
-        if (flyer.getPages() == null || flyer.getPages().isEmpty() || "rossmann".equals(flyer.getStore())) {
+        if (flyer.getPages() == null || flyer.getPages().isEmpty()
+                || "rossmann".equals(flyer.getStore())
+                || "dm".equals(flyer.getStore())) {
             return;
         }
         List<FlyerCatalogParser.ParsedProduct> incoming = new ArrayList<>();
@@ -157,6 +159,7 @@ public class FlyerQueryService {
             flyerSyncService.refreshAsync();
         }
         flyerSyncService.refreshRossmannOnce();
+        flyerSyncService.refreshDmOnce();
     }
 
     private static boolean listed(Flyer flyer, LocalDate today) {
@@ -241,6 +244,9 @@ public class FlyerQueryService {
                 return 2;
             }
             return 3;
+        }
+        if ("dm".equals(flyer.getStore())) {
+            return hay.contains("expressz") ? 0 : 1;
         }
         return 0;
     }
