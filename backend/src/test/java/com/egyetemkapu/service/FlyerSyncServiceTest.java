@@ -426,8 +426,10 @@ class FlyerSyncServiceTest {
                 "https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0");
         Flyer rossmann = storeFlyer("rossmann", "rossmann:333",
                 "https://shop.rossmann.hu/magazin/altalanos/333");
+        Flyer dm = storeFlyer("dm", "dm:expressz_2026-10-15",
+                "https://magazin.dm.hu/expressz_2026-10-15/");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -688,6 +690,48 @@ class FlyerSyncServiceTest {
         service.syncRossmann(LocalDate.of(2026, 10, 13));
 
         verify(flyerPersistenceService, never()).replaceStore(eq("rossmann"), any(), any());
+    }
+
+    @Test
+    void syncDmPersistsTheExpresszIssueAndKeepsThePrintedBrand() {
+        when(httpClient.getText("https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"))
+                .thenReturn("""
+                        {"linkTarget":"https://magazin.dm.hu/expressz_2026-10-15","text":"Magazin érvényessége: október 15 - október 28."}
+                        """);
+        when(httpClient.getText("https://magazin.dm.hu/expressz_2026-10-15/data.json")).thenReturn("""
+                {"config":{"publicationTitle":"dmHU - dm_magazin_expressz_2026-10-15"}}
+                """);
+        when(httpClient.getText("https://magazin.dm.hu/expressz_2026-10-15/spreads.json")).thenReturn("""
+                [{"pages":[{"number":1,"images":{"at1200":"/resize/cover.jpg"},"text":"GARNIER\\nmicellás víz\\nérzékeny bőrre\\n700 ml"}]}]
+                """);
+        when(httpClient.getText("https://magazin.dm.hu/expressz_2026-10-15/page/1/hotspots_data.json")).thenReturn("""
+                [{"type":"product","products":[{"title":"Micellás víz, érzékeny bőrre"}]}]
+                """);
+
+        service.syncDm(LocalDate.of(2026, 10, 16));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("dm"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("dm expressz", catalog.paper().title());
+        assertEquals("dm:expressz_2026-10-15", catalog.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 15), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 28), catalog.paper().validTo());
+        assertEquals("https://magazin.dm.hu/resize/cover.jpg", catalog.pages().getFirst().imageUrl());
+        assertEquals("GARNIER Micellás víz, érzékeny bőrre", catalog.products().getFirst().name());
+        verify(pdfExtractor, never()).extractDocument(any(), any());
+        verify(pdfExtractor, never()).extractDocument(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void syncDmLeavesStoredFlyersAloneWhenThePageIsMissing() {
+        when(httpClient.getText("https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"))
+                .thenReturn("");
+
+        service.syncDm(LocalDate.of(2026, 10, 16));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("dm"), any(), any());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {
