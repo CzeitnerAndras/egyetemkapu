@@ -112,6 +112,16 @@ public class FlyerCatalogParser {
             "https://shop\\.rossmann\\.hu/magazin/([a-z0-9-]{1,40})/(\\d+)/?");
     private static final Pattern ROSSMANN_NAME_DATES = Pattern.compile(
             "(\\d{1,2})\\.(\\d{1,2})\\.?\\s*[-–]\\s*(\\d{1,2})\\.(\\d{1,2})");
+    private static final Pattern DM_PUBLICATION = Pattern.compile(
+            "https://magazin\\.dm\\.hu/([a-z0-9][a-z0-9_-]{0,80})(?:/|[\"'\\s?#]|$)",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern DM_SLUG_DATE = Pattern.compile("(20\\d{2}-\\d{2}-\\d{2})");
+    private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
+            "(?iu)(?:(20\\d{2})\\.\\s*)?"
+                    + "(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)"
+                    + "\\s+(\\d{1,2})\\.?\\s*[-–]\\s*"
+                    + "(?:(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)\\s+)?"
+                    + "(\\d{1,2})\\.?");
     private static final Pattern LIDL_FLYER = Pattern.compile(
             "(?is)<a\\s+href=\"(https://www\\.lidl\\.hu/l/hu/ujsag/[^\"?#]+)(?:\\?[^\"#]*)?\"[^>]*\\bid=\"flyer-([0-9a-fA-F-]{36})\"");
     private static final Pattern LIDL_TITLE = Pattern.compile(
@@ -502,6 +512,253 @@ public class FlyerCatalogParser {
             case "egyeb" -> "Rossmann ajánlat";
             default -> "Rossmann magazin";
         };
+    }
+
+    public List<DiscoveredPaper> discoverDmPapers(String body) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        if (body == null || body.isBlank()) {
+            return papers;
+        }
+        List<String> slugs = new ArrayList<>();
+        Matcher matcher = DM_PUBLICATION.matcher(body);
+        while (matcher.find()) {
+            String slug = matcher.group(1).toLowerCase(Locale.ROOT);
+            if ("page".equals(slug) || slugs.contains(slug)) {
+                continue;
+            }
+            slugs.add(slug);
+        }
+        for (String slug : slugs) {
+            LocalDate slugDate = dmSlugDate(slug);
+            int year = slugDate == null ? 0 : slugDate.getYear();
+            LocalDate[] printed = dmPrintedRange(body, year);
+            LocalDate from = slugDate;
+            LocalDate to = null;
+            if (printed[0] != null && (slugs.size() == 1 || from == null || printed[0].equals(from))) {
+                from = printed[0];
+                to = printed[1];
+            }
+            papers.add(new DiscoveredPaper(
+                    "dm",
+                    dmTitle(slug),
+                    "https://magazin.dm.hu/" + slug + "/",
+                    null,
+                    "dm:" + slug,
+                    from,
+                    to));
+        }
+        return papers;
+    }
+
+    public List<ParsedProduct> dmProducts(String hotspotsJson, int pageNumber, String pageText) {
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
+        if (hotspotsJson == null || hotspotsJson.isBlank()) {
+            return List.of();
+        }
+        try {
+            JsonNode root = objectMapper.readTree(hotspotsJson);
+            if (!root.isArray()) {
+                return List.of();
+            }
+            for (JsonNode hotspot : root) {
+                JsonNode list = hotspot.path("products");
+                if (!list.isArray()) {
+                    continue;
+                }
+                for (JsonNode product : list) {
+                    String name = dmDisplayName(textOr(product.path("title"), ""), pageText);
+                    if (name.length() < 4 || isWeakProductName(name)) {
+                        continue;
+                    }
+                    products.putIfAbsent(
+                            pageNumber + ":" + HungarianText.normalize(name),
+                            new ParsedProduct(name, pageNumber, null));
+                    if (products.size() >= 80) {
+                        return new ArrayList<>(products.values());
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            return List.of();
+        }
+        return new ArrayList<>(products.values());
+    }
+
+    static String dmTitle(String slug) {
+        String head = slug == null ? "" : slug.replaceFirst("(?i)_?20\\d{2}-\\d{2}-\\d{2}$", "")
+                .replace('_', ' ')
+                .trim();
+        if (head.isBlank()) {
+            return "dm magazin";
+        }
+        return "dm " + head;
+    }
+
+    static LocalDate[] dmPrintedRange(String text, int yearHint) {
+        LocalDate[] range = new LocalDate[2];
+        if (text == null || text.isBlank()) {
+            return range;
+        }
+        Matcher matcher = DM_PRINTED_RANGE.matcher(text);
+        if (!matcher.find()) {
+            return range;
+        }
+        int year = matcher.group(1) != null ? Integer.parseInt(matcher.group(1)) : yearHint;
+        int startMonth = dmMonth(matcher.group(2));
+        int endMonth = matcher.group(4) != null ? dmMonth(matcher.group(4)) : startMonth;
+        if (year < 2000 || startMonth == 0 || endMonth == 0) {
+            return range;
+        }
+        try {
+            LocalDate from = LocalDate.of(year, startMonth, Integer.parseInt(matcher.group(3)));
+            LocalDate to = LocalDate.of(endMonth < startMonth ? year + 1 : year, endMonth, Integer.parseInt(matcher.group(5)));
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    static String dmDisplayName(String rawTitle, String pageText) {
+        if (rawTitle == null || rawTitle.isBlank()) {
+            return "";
+        }
+        String title = rawTitle.replaceAll("\\s+", " ").trim();
+        if (title.indexOf('{') >= 0 || title.toLowerCase(Locale.ROOT).contains("http")) {
+            return "";
+        }
+        String brand = dmPrintedBrand(title, pageText);
+        if (brand.isBlank() || HungarianText.normalize(title).contains(HungarianText.normalize(brand))) {
+            return title;
+        }
+        return (brand + " " + title).replaceAll("\\s+", " ").trim();
+    }
+
+    private static LocalDate dmSlugDate(String slug) {
+        Matcher matcher = DM_SLUG_DATE.matcher(slug == null ? "" : slug);
+        if (!matcher.find()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(matcher.group(1));
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private static int dmMonth(String name) {
+        return switch (HungarianText.normalize(name)) {
+            case "januar" -> 1;
+            case "februar" -> 2;
+            case "marcius" -> 3;
+            case "aprilis" -> 4;
+            case "majus" -> 5;
+            case "junius" -> 6;
+            case "julius" -> 7;
+            case "augusztus" -> 8;
+            case "szeptember" -> 9;
+            case "oktober" -> 10;
+            case "november" -> 11;
+            case "december" -> 12;
+            default -> 0;
+        };
+    }
+
+    private static String dmPrintedBrand(String title, String pageText) {
+        if (pageText == null || pageText.isBlank()) {
+            return "";
+        }
+        String normTitle = HungarianText.normalize(title);
+        String[] lines = pageText.split("\\R");
+        int match = -1;
+        for (int i = 0; i < lines.length; i++) {
+            if (dmLineBelongsToTitle(lines[i], normTitle)) {
+                match = i;
+                break;
+            }
+        }
+        if (match < 0) {
+            return "";
+        }
+        for (int i = match - 1; i >= 0; i--) {
+            String line = lines[i].replaceAll("\\s+", " ").trim();
+            if (line.isBlank() || dmSkipLine(line) || dmLineBelongsToTitle(line, normTitle)) {
+                continue;
+            }
+            return dmLooksLikeBrand(line) ? line : "";
+        }
+        return "";
+    }
+
+    private static boolean dmLineBelongsToTitle(String line, String normTitle) {
+        String norm = HungarianText.normalize(line);
+        boolean any = false;
+        for (String word : norm.split(" ")) {
+            if (word.length() < 4) {
+                continue;
+            }
+            any = true;
+            if (!dmContainsWord(normTitle, word)) {
+                return false;
+            }
+        }
+        return any;
+    }
+
+    private static boolean dmContainsWord(String normTitle, String word) {
+        int from = 0;
+        while (from <= normTitle.length() - word.length()) {
+            int index = normTitle.indexOf(word, from);
+            if (index < 0) {
+                return false;
+            }
+            boolean left = index == 0 || !Character.isLetterOrDigit(normTitle.charAt(index - 1));
+            int end = index + word.length();
+            boolean right = end >= normTitle.length() || !Character.isLetterOrDigit(normTitle.charAt(end));
+            if (left && right) {
+                return true;
+            }
+            from = index + 1;
+        }
+        return false;
+    }
+
+    private static boolean dmSkipLine(String line) {
+        String norm = HungarianText.normalize(line);
+        if (norm.isBlank() || norm.equals("ft") || norm.startsWith("ft ")) {
+            return true;
+        }
+        if (norm.matches("[\\d\\s.,]+")) {
+            return true;
+        }
+        if (norm.matches(".*\\d+\\s*(ml|g|kg|dkg|liter|db).*")) {
+            return true;
+        }
+        return norm.matches(".*(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december).*")
+                && norm.matches(".*20\\d{2}.*");
+    }
+
+    private static boolean dmLooksLikeBrand(String line) {
+        String trimmed = line.replaceAll("\\s+", " ").trim();
+        if (trimmed.length() < 2 || trimmed.length() > 32 || trimmed.chars().anyMatch(Character::isDigit)) {
+            return false;
+        }
+        String[] words = trimmed.split(" ");
+        if (words.length > 3) {
+            return false;
+        }
+        if (words.length == 1 && words[0].matches("(?U)dm\\p{Lu}\\p{L}*")) {
+            return true;
+        }
+        for (String word : words) {
+            if (word.isEmpty() || !Character.isUpperCase(word.charAt(0))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public List<DiscoveredPaper> discoverAuchanPapers(String html, LocalDate today) {
