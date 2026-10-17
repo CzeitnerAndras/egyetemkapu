@@ -609,4 +609,43 @@ class FlyerCatalogParserTest {
         assertEquals(LocalDate.of(2026, 10, 19), catalog.paper().validFrom());
         assertEquals(LocalDate.of(2026, 10, 30), catalog.paper().validTo());
     }
+
+    @Test
+    void discoversDmExpresszFromTheMagazinePage() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverDmPapers("""
+                {"linkTarget":"https://magazin.dm.hu/expressz_2026-10-15","text":"Magazin érvényessége: október 15 - október 28."}
+                """);
+
+        assertEquals(1, papers.size());
+        assertEquals("dm expressz", papers.getFirst().title());
+        assertEquals("dm:expressz_2026-10-15", papers.getFirst().sourceKey());
+        assertEquals("https://magazin.dm.hu/expressz_2026-10-15/", papers.getFirst().officialUrl());
+        assertEquals(LocalDate.of(2026, 10, 15), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 28), papers.getFirst().validTo());
+    }
+
+    @Test
+    void dmHotspotNamesKeepTheBrandPrintedAboveThem() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.dmProducts("""
+                [
+                  {"type":"externalLink","title":"Tovább a weboldalra"},
+                  {"type":"product","products":[{"title":"Micellás víz, érzékeny bőrre"}]},
+                  {"type":"product","products":[{"title":"Testápoló lactourea oleo"}]}
+                ]
+                """, 1, """
+                GARNIER
+                micellás víz
+                érzékeny bőrre
+                700 ml
+                Lactovit
+                Lactourea Oleo
+                testápoló
+                400 ml
+                """);
+
+        assertEquals(
+                List.of("GARNIER Micellás víz, érzékeny bőrre", "Lactovit Testápoló lactourea oleo"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+        assertEquals(1, products.getFirst().pageNumber());
+    }
 }
