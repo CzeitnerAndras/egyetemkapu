@@ -32,6 +32,7 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -195,6 +196,64 @@ class UserControllerTest {
 
         verify(refreshTokenService, never()).deleteByUserId(any());
         verify(refreshTokenService, never()).createRefreshToken(any());
+    }
+
+    @Test
+    void getUserInfo_returnsTheSignedInProfile() throws Exception {
+        User current = user("anna");
+        current.setEmail("anna@egyetemkapu.hu");
+        current.setRole("ROLE_USER");
+        current.setPreferredLanguage(null);
+        when(userRepository.findByUsername("anna")).thenReturn(Optional.of(current));
+        authenticate("anna");
+
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("anna"))
+                .andExpect(jsonPath("$.email").value("anna@egyetemkapu.hu"))
+                .andExpect(jsonPath("$.role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.preferredLanguage").value("hu"));
+    }
+
+    @Test
+    void getUserInfo_returnsTheStoredLanguage() throws Exception {
+        User current = user("anna");
+        current.setEmail("anna@egyetemkapu.hu");
+        current.setRole("ROLE_USER");
+        current.setPreferredLanguage("en");
+        when(userRepository.findByUsername("anna")).thenReturn(Optional.of(current));
+        authenticate("anna");
+
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.preferredLanguage").value("en"));
+    }
+
+    @Test
+    void getUserInfo_withoutASessionReturns401() throws Exception {
+        mockMvc.perform(get("/api/users/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("Nincs bejelentkezve!"));
+    }
+
+    @Test
+    void deleteAccount_removesTheUserAndClearsTheSessionCookies() throws Exception {
+        User current = user("anna");
+        when(userRepository.findByUsername("anna")).thenReturn(Optional.of(current));
+        authenticate("anna");
+
+        mockMvc.perform(delete("/api/users/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Fiók törölve!"))
+                .andExpect(result -> {
+                    List<String> cookies = result.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
+                    assertTrue(cookies.stream().anyMatch(cookie ->
+                            cookie.startsWith("ek_access=") && cookie.contains("Max-Age=0")));
+                    assertTrue(cookies.stream().anyMatch(cookie ->
+                            cookie.startsWith("ek_refresh=") && cookie.contains("Max-Age=0")));
+                });
+
+        verify(userAccountService).deleteAccount(current);
     }
 
     private static User user(String username) {
