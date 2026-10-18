@@ -20,10 +20,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -137,6 +140,93 @@ class FlashcardControllerTest {
                         .with(user("nincs"))
                         .principal(() -> "nincs"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void renameDeckReturnsTheUpdatedDeck() throws Exception {
+        User user = signedIn();
+        when(flashcardService.renameDeck(user, 3L, "Új név")).thenReturn(new FlashcardDeckDto(3L, "Új név", 2, 1));
+
+        mockMvc.perform(put("/api/flashcards/decks/3")
+                        .with(user("teszt_hallgato"))
+                        .principal(() -> "teszt_hallgato")
+                        .header("Origin", "https://egyetemkapu.hu")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Új név\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Új név"));
+    }
+
+    @Test
+    void deleteDeckRemovesTheDeck() throws Exception {
+        User user = signedIn();
+
+        mockMvc.perform(delete("/api/flashcards/decks/3")
+                        .with(user("teszt_hallgato"))
+                        .principal(() -> "teszt_hallgato")
+                        .header("Origin", "https://egyetemkapu.hu"))
+                .andExpect(status().isOk());
+
+        verify(flashcardService).deleteDeck(user, 3L);
+    }
+
+    @Test
+    void listCardsReturnsTheDeck() throws Exception {
+        User user = signedIn();
+        when(flashcardService.listCards(user, 3L)).thenReturn(List.of(card()));
+
+        mockMvc.perform(get("/api/flashcards/decks/3/cards")
+                        .with(user("teszt_hallgato"))
+                        .principal(() -> "teszt_hallgato"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].front").value("kérdés"));
+    }
+
+    @Test
+    void createCardReturnsTheSavedCard() throws Exception {
+        User user = signedIn();
+        when(flashcardService.createCard(user, 3L, "kérdés", "válasz")).thenReturn(card());
+
+        mockMvc.perform(post("/api/flashcards/decks/3/cards")
+                        .with(user("teszt_hallgato"))
+                        .principal(() -> "teszt_hallgato")
+                        .header("Origin", "https://egyetemkapu.hu")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"front\":\"kérdés\",\"back\":\"válasz\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.back").value("válasz"));
+    }
+
+    @Test
+    void updateCardReturnsTheEditedCard() throws Exception {
+        User user = signedIn();
+        when(flashcardService.updateCard(user, 5L, "új kérdés", "új válasz")).thenReturn(card());
+
+        mockMvc.perform(put("/api/flashcards/cards/5")
+                        .with(user("teszt_hallgato"))
+                        .principal(() -> "teszt_hallgato")
+                        .header("Origin", "https://egyetemkapu.hu")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"front\":\"új kérdés\",\"back\":\"új válasz\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(5));
+    }
+
+    @Test
+    void deleteCardRemovesTheCard() throws Exception {
+        User user = signedIn();
+
+        mockMvc.perform(delete("/api/flashcards/cards/5")
+                        .with(user("teszt_hallgato"))
+                        .principal(() -> "teszt_hallgato")
+                        .header("Origin", "https://egyetemkapu.hu"))
+                .andExpect(status().isOk());
+
+        verify(flashcardService).deleteCard(user, 5L);
+    }
+
+    private static FlashcardDto card() {
+        return new FlashcardDto(5L, 3L, "Analízis", "kérdés", "válasz", 0, LocalDateTime.of(2026, 9, 30, 12, 0));
     }
 
     private User signedIn() {
