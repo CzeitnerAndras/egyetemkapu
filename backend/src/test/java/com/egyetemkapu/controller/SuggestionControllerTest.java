@@ -27,6 +27,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -109,5 +111,46 @@ class SuggestionControllerTest {
                 .andExpect(jsonPath("$.error").value("captcha"));
 
         verify(suggestionRepository, never()).save(any());
+    }
+
+    @Test
+    void captcha_returnsTheSiteKey() throws Exception {
+        when(recaptchaService.siteKey()).thenReturn("site-key");
+
+        mockMvc.perform(get("/api/suggestions/captcha"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.siteKey").value("site-key"));
+    }
+
+    @Test
+    void getAllSuggestions_returnsTheStoredIdeas() throws Exception {
+        Suggestion suggestion = new Suggestion();
+        suggestion.setId(3L);
+        suggestion.setTitle("Park");
+        suggestion.setDescription("Legyen park.");
+        when(suggestionRepository.findAll()).thenReturn(List.of(suggestion));
+
+        mockMvc.perform(get("/api/suggestions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Park"));
+    }
+
+    @Test
+    void createSuggestion_rejectsABlankTitle() throws Exception {
+        mockMvc.perform(post("/api/suggestions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"  \",\"description\":\"Legyen park.\",\"captchaToken\":\"token\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Hiányzó vagy túl hosszú mező."));
+
+        verify(suggestionRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteSuggestion_removesTheIdea() throws Exception {
+        mockMvc.perform(delete("/api/suggestions/3"))
+                .andExpect(status().isOk());
+
+        verify(suggestionRepository).deleteById(3L);
     }
 }
