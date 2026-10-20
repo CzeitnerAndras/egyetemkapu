@@ -45,6 +45,11 @@ describe('RegistrationPage Komponens', () => {
         jest.clearAllMocks();
     });
 
+    afterEach(() => {
+        jest.clearAllTimers();
+        jest.useRealTimers();
+    });
+
     it('megjeleníti a regisztrációs űrlapot és a beküldés gombot', () => {
         render(<RegistrationPage />);
 
@@ -127,30 +132,26 @@ describe('RegistrationPage Komponens', () => {
     });
 
     it('sikeres regisztráció után 2 másodperccel átirányít a bejelentkezés oldalra', async () => {
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+        const user = userEvent.setup();
+        const { container } = render(<RegistrationPage />);
+        await fillForm(user, container);
+
         jest.useFakeTimers();
-        try {
-            (globalThis.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+        const submit = userEvent.setup({ advanceTimers: jest.advanceTimersByTime, delay: null });
+        await submit.click(screen.getByRole('button', { name: 'Regisztráció' }));
 
-            const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-            const { container } = render(<RegistrationPage />);
+        await waitFor(() => {
+            expect(screen.getByText(/register\.success/)).toBeInTheDocument();
+        });
+        expect(mockNavigate).not.toHaveBeenCalled();
 
-            await fillForm(user, container);
-            await user.click(screen.getByRole('button', { name: 'Regisztráció' }));
-
-            await waitFor(() => {
-                expect(screen.getByText(/register\.success/)).toBeInTheDocument();
-            });
-
-            expect(mockNavigate).not.toHaveBeenCalled();
-
-            act(() => {
-                jest.advanceTimersByTime(2000);
-            });
-
-            expect(mockNavigate).toHaveBeenCalledWith('/login');
-        } finally {
-            jest.useRealTimers();
-        }
+        act(() => {
+            jest.advanceTimersByTime(2000);
+        });
+        expect(mockNavigate).toHaveBeenCalledTimes(1);
+        expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
 
     it('a szerver által küldött egyedi hibaüzenetet jeleníti meg elutasított regisztráció esetén', async () => {
