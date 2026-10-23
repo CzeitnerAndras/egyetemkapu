@@ -112,6 +112,8 @@ public class FlyerCatalogParser {
             "https://shop\\.rossmann\\.hu/magazin/([a-z0-9-]{1,40})/(\\d+)/?");
     private static final Pattern ROSSMANN_NAME_DATES = Pattern.compile(
             "(\\d{1,2})\\.(\\d{1,2})\\.?\\s*[-–]\\s*(\\d{1,2})\\.(\\d{1,2})");
+    private static final Pattern ROSSMANN_PDF = Pattern.compile(
+            "\"pdf\"\\s*:\\s*\"(https://storage\\.googleapis\\.com/magazin-prod/\\d{1,6}/[A-Za-z0-9]{6,80}\\.pdf)\"");
     private static final Pattern DM_PUBLICATION = Pattern.compile(
             "https://magazin\\.dm\\.hu/([a-z0-9][a-z0-9_-]{0,80})(?:/|[\"'\\s?#]|$)",
             Pattern.CASE_INSENSITIVE);
@@ -335,6 +337,14 @@ public class FlyerCatalogParser {
         }
         return "https://magazin.microservices.rossmann.hu/storage/json/"
                 + matcher.group(1) + "/" + matcher.group(2) + ".json";
+    }
+
+    public static String rossmannMagazinePdfUrl(String json) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        Matcher matcher = ROSSMANN_PDF.matcher(json);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     public List<DiscoveredPaper> discoverRossmannPapers(String json) {
