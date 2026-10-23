@@ -14,7 +14,9 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class FlyerPdfExtractor {
@@ -97,6 +99,27 @@ public class FlyerPdfExtractor {
             pages.add(new FlyerCatalogParser.ParsedPage(i, null, ""));
         }
         return new ExtractedDocument(pages, List.of());
+    }
+
+    public Map<Integer, List<FlyerCatalogParser.TextRun>> extractLayout(byte[] pdfBytes) {
+        Map<Integer, List<FlyerCatalogParser.TextRun>> layout = new LinkedHashMap<>();
+        if (pdfBytes == null || pdfBytes.length == 0) {
+            return layout;
+        }
+        try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+            LayoutStripper stripper = new LayoutStripper();
+            int last = Math.min(document.getNumberOfPages(), FlyerUrlPolicy.MAX_PDF_PAGES);
+            for (int i = 1; i <= last; i++) {
+                stripper.setStartPage(i);
+                stripper.setEndPage(i);
+                stripper.clearRuns();
+                stripper.getText(document);
+                layout.put(i, List.copyOf(stripper.runs()));
+            }
+        } catch (Exception ignored) {
+            return layout;
+        }
+        return layout;
     }
 
     public byte[] renderPagePng(byte[] pdfBytes, int pageNumber) {
