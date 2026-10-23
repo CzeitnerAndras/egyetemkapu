@@ -585,6 +585,11 @@ class FlyerCatalogParserTest {
                 catalog.products().stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
         assertEquals(1, catalog.products().getFirst().pageNumber());
         assertTrue(catalog.pages().getFirst().text().contains("Winston"));
+        assertEquals(
+                "https://storage.googleapis.com/magazin-prod/333/secret.pdf",
+                FlyerCatalogParser.rossmannMagazinePdfUrl(json));
+        assertNull(FlyerCatalogParser.rossmannMagazinePdfUrl(
+                "{\"pdf\":\"https://evil.example/magazin-prod/333/secret.pdf\"}"));
     }
 
     @Test
