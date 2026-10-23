@@ -12,6 +12,7 @@ import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
 import com.egyetemkapu.service.flyer.CoopPageOcr;
 import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import com.egyetemkapu.service.flyer.FlyerProductExtractor;
+import com.egyetemkapu.service.flyer.RossmannPrintedNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -324,8 +325,9 @@ public class FlyerSyncService {
                 if (detail == null) {
                     continue;
                 }
+                String magazine = safeText(detail);
                 ParsedCatalog catalog = extractors.forStore("rossmann").fillProducts(
-                        parser.parseRossmannMagazine(paper, safeText(detail)));
+                        withRossmannPrintedNames(parser.parseRossmannMagazine(paper, magazine), magazine));
                 if (!keepCatalog(catalog, today)) {
                     continue;
                 }
@@ -336,6 +338,60 @@ public class FlyerSyncService {
             }
         } catch (Exception e) {
             log.warn("Rossmann flyer sync failed: {}", e.getMessage());
+        }
+    }
+
+    private ParsedCatalog withRossmannPrintedNames(ParsedCatalog catalog, String magazineJson) {
+        if (catalog == null || catalog.pages() == null || catalog.pages().isEmpty()) {
+            return catalog;
+        }
+        byte[] pdf = rossmannPdf(magazineJson);
+        if (pdf.length == 0) {
+            return catalog;
+        }
+        Map<Integer, List<TextRun>> layout = pdfExtractor.extractLayout(pdf);
+        if (layout == null || layout.isEmpty()) {
+            return catalog;
+        }
+        List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
+        boolean printed = false;
+        for (ParsedPage page : catalog.pages()) {
+            List<ParsedProduct> names = RossmannPrintedNames.read(
+                    layout.get(page.pageNumber()), page.pageNumber());
+            if (names.isEmpty()) {
+                pages.add(page);
+                if (catalog.products() != null) {
+                    for (ParsedProduct product : catalog.products()) {
+                        if (product.pageNumber() == page.pageNumber()) {
+                            products.add(product);
+                        }
+                    }
+                }
+                continue;
+            }
+            printed = true;
+            products.addAll(names);
+            pages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), joinProductNames(names)));
+        }
+        if (!printed) {
+            return catalog;
+        }
+        return new ParsedCatalog(catalog.paper(), pages, products);
+    }
+
+    private byte[] rossmannPdf(String magazineJson) {
+        String url = FlyerCatalogParser.rossmannMagazinePdfUrl(magazineJson);
+        if (url == null) {
+            return new byte[0];
+        }
+        try {
+            FlyerUrlPolicy.assertResolvesToPublicAddress(url);
+            byte[] bytes = httpClient.getBytes(url, "https://shop.rossmann.hu/magazin");
+            return bytes == null ? new byte[0] : bytes;
+        } catch (RuntimeException ex) {
+            log.warn("Rossmann flyer pdf was not readable: {}", ex.getMessage());
+            return new byte[0];
         }
     }
 
