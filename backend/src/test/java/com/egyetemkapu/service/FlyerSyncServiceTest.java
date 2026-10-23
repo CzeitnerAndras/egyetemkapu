@@ -681,6 +681,45 @@ class FlyerSyncServiceTest {
         assertEquals("Winston állateledel macskáknak - 100 g", catalog.products().getFirst().name());
         verify(pdfExtractor, never()).extractDocument(any(), any());
         verify(pdfExtractor, never()).extractDocument(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+        verify(pdfExtractor, never()).extractLayout(any());
+    }
+
+    @Test
+    void syncRossmannListsTheNamePrintedOnThePageInsteadOfTheLinkedShopProduct() {
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/api/magazines")).thenReturn("""
+                [{"id":335,"category_slug":"altalanos"}]
+                """);
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/storage/json/altalanos/335.json"))
+                .thenReturn("""
+                        {
+                          "valid_from":"2026-10-19",
+                          "valid_to":"2026-10-30",
+                          "pdf":"https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf",
+                          "pages":{"2":[{"zoom":3,"page":2,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/335/335-2-3.webp"}]},
+                          "pois":{"2":[{"page":2,"product":{"name":"Garnier Hyaluron+ textilmaszk hialuronsavval - 28 g"}}]}
+                        }
+                        """);
+        when(httpClient.getBytes(
+                eq("https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf"),
+                eq("https://shop.rossmann.hu/magazin")))
+                .thenReturn(new byte[] {'%', 'P', 'D', 'F', '-', '1', '.', '4'});
+        when(pdfExtractor.extractLayout(any())).thenReturn(java.util.Map.of(2, List.of(
+                new TextRun(330, 312, 30, 7, "GARNIER", "ROSSMANNSans-Black", 7),
+                new TextRun(330, 319, 35, 7, "HYALURON", "ROSSMANNSans-Black", 7),
+                new TextRun(364, 319, 3, 7, "+", "ROSSMANNSans-Black", 7),
+                new TextRun(330, 327, 53, 7, "BARRIER REPAIR", "ROSSMANNSans-Black", 7),
+                new TextRun(330, 334, 46, 7, "FÁTYOLMASZK", "ROSSMANNSans-Black", 7),
+                new TextRun(394, 353, 32, 19, "839", "ROSSMANNSans-Black", 19))));
+
+        service.syncRossmann(LocalDate.of(2026, 10, 23));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("rossmann"), captor.capture(), any());
+        List<String> names = captor.getValue().getFirst().products().stream()
+                .map(FlyerCatalogParser.ParsedProduct::name)
+                .toList();
+        assertEquals(List.of("GARNIER HYALURON+ BARRIER REPAIR FÁTYOLMASZK"), names);
     }
 
     @Test
