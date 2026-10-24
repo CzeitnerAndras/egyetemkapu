@@ -43,6 +43,17 @@ services:
       - db
     restart: unless-stopped
 
+  points:
+    build: ./points
+    container_name: egyetemkapu-points
+    environment:
+      - TZ=Europe/Budapest
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks:
+      - app
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     container_name: egyetemkapu-frontend
@@ -58,6 +69,7 @@ services:
         ipv4_address: 172.30.60.10
     depends_on:
       - backend
+      - points
     restart: unless-stopped
 
 networks:
