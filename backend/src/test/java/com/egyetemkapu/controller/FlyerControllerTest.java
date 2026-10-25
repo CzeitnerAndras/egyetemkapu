@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +24,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -79,5 +82,25 @@ class FlyerControllerTest {
         mockMvc.perform(get("/api/flyers/search").param("q", "kakaoscsiga"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].productName").value("Kakaóscsiga"));
+    }
+
+    @Test
+    void servesAPageImage() throws Exception {
+        when(flyerPageProxyService.pageImage(1L, 2)).thenReturn(
+                ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(new byte[] {1, 2, 3}));
+
+        mockMvc.perform(get("/api/flyers/1/pages/2"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+                .andExpect(content().bytes(new byte[] {1, 2, 3}));
+    }
+
+    @Test
+    void missingPageIsABadRequest() throws Exception {
+        when(flyerPageProxyService.pageImage(1L, 9)).thenThrow(new IllegalArgumentException("Nincs ilyen oldal."));
+
+        mockMvc.perform(get("/api/flyers/1/pages/9"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Nincs ilyen oldal."));
     }
 }

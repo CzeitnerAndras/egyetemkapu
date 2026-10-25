@@ -46,7 +46,8 @@ const tips = [
   { hu: "Ha elakadsz egy bonyolult anyagnál, próbáld meg elmagyarázni egy képzeletbeli ötévesnek (Feynman-technika). Ha nem megy egyszerűen, még nem érted eléggé.", en: "If you get stuck on complex material, try explaining it to an imaginary five-year-old (Feynman technique). If you can't do it simply, you don't understand it well enough yet." },
   { hu: "Mielőtt elkezded a tanulást, írj egy pontos, kis lépésekből álló tervet. A 'Tanulok 3 órát' helyett legyen 'Elolvasom és kijyzetelem a 4. fejezetet'.", en: "Before you start studying, write a precise plan with small steps. Instead of 'I'll study for 3 hours', make it 'I will read and outline chapter 4'." },
   { hu: "Igyál elég vizet! Még az enyhe dehidratáció is jelentősen rontja a koncentrációs képességet és a rövidtávú memóriát.", en: "Drink enough water! Even mild dehydration significantly impairs concentration and short-term memory." },
-  { hu: "A mozgás javítja az agy vérellátását. Egy 15 perces séta tanulás előtt vagy a szünetekben csodákat tehet a memóriáddal.", en: "Exercise improves blood flow to the brain. A 15-minute walk before studying or during breaks can do wonders for your memory." }
+  { hu: "A mozgás javítja az agy vérellátását. Egy 15 perces séta tanulás előtt vagy a szünetekben csodákat tehet a memóriáddal.", en: "Exercise improves blood flow to the brain. A 15-minute walk before studying or during breaks can do wonders for your memory." },
+  { hu: "A Ponttervező megmondja, hány pont kell még a ketteshez, ha a vizsga nincs megírva. Az Eszközök menüben találod.", en: "The points planner tells you how many points you still need for a passing grade when the exam is not marked yet. It is in the Tools menu." }
 ];
 
 {/* --- Counter animation --- */}

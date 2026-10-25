@@ -17,10 +17,10 @@ describe('AboutPage Komponens', () => {
         expect(screen.getByText('Czeitner András')).toBeInTheDocument();
     });
 
-    it('megjeleníti mind a tizenegy funkció listaelemet', () => {
+    it('megjeleníti mind a tizenkét funkció listaelemet', () => {
         render(<AboutPage />);
 
-        for (let i = 1; i <= 11; i++) {
+        for (let i = 1; i <= 12; i++) {
             expect(screen.getByText(`about.f${i}`)).toBeInTheDocument();
         }
     });
@@ -36,7 +36,7 @@ describe('AboutPage Komponens', () => {
     it('megjeleníti a backend/üzemeltetés technológiákat', () => {
         render(<AboutPage />);
 
-        ['Java', 'Spring Boot', 'PostgreSQL', 'JWT', 'Docker', 'Caddy'].forEach((tech) => {
+        ['Java', 'Spring Boot', 'Python', 'FastAPI', 'PostgreSQL', 'JWT', 'Docker', 'Caddy'].forEach((tech) => {
             expect(screen.getByText(tech)).toBeInTheDocument();
         });
     });

@@ -40,7 +40,11 @@ public final class FlyerUrlPolicy {
             "assets.leaflets.schwarz",
             "shop.rossmann.hu",
             "magazin.microservices.rossmann.hu",
-            "assets.microservices.rossmann.hu"
+            "assets.microservices.rossmann.hu",
+            "www.dm.hu",
+            "dm.hu",
+            "magazin.dm.hu",
+            "content.services.dmtech.com"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;

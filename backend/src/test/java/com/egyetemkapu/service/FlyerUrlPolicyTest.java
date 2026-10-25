@@ -37,6 +37,10 @@ class FlyerUrlPolicyTest {
                 "https://magazin.microservices.rossmann.hu/api/magazines"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.dm.hu/magazin-1616174"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://magazin.dm.hu/expressz_2026-10-15/data.json"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

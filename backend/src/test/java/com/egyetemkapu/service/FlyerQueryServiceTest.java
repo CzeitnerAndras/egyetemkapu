@@ -262,6 +262,34 @@ class FlyerQueryServiceTest {
     }
 
     @Test
+    void getKeepsTheRossmannCatalogNameInsteadOfClippingIt() {
+        Flyer flyer = flyerWithProduct("Vibovit BY EUROVIT Dino Gyümölcsös Ízű Gumivitamin - 50 db");
+        flyer.setStore("rossmann");
+        flyer.getPages().getFirst().setPageText("Vibovit BY EUROVIT Dino Gyümölcsös Ízű Gumivitamin - 50 db");
+        when(flyerRepository.findById(3L)).thenReturn(Optional.of(flyer));
+
+        FlyerDetailDto detail = service.get(3L);
+
+        assertEquals(
+                "Vibovit BY EUROVIT Dino Gyümölcsös Ízű Gumivitamin - 50 db",
+                detail.products().getFirst().name());
+        verify(flyerRepository, never()).save(flyer);
+    }
+
+    @Test
+    void getKeepsTheDmHotspotNameInsteadOfClippingThePageText() {
+        Flyer flyer = flyerWithProduct("GARNIER Micellás víz, érzékeny bőrre");
+        flyer.setStore("dm");
+        flyer.getPages().getFirst().setPageText("GARNIER\nmicellás víz\nérzékeny bőrre\n700 ml");
+        when(flyerRepository.findById(3L)).thenReturn(Optional.of(flyer));
+
+        FlyerDetailDto detail = service.get(3L);
+
+        assertEquals("GARNIER Micellás víz, érzékeny bőrre", detail.products().getFirst().name());
+        verify(flyerRepository, never()).save(flyer);
+    }
+
+    @Test
     void getQueuesACoopRereadWhenTheStoredNamesNeedIt() {
         Flyer flyer = flyerWithProduct("TEJ");
         flyer.setStore("coop");

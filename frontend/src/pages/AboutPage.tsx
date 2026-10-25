@@ -5,11 +5,11 @@ import { FLYER_HOST, FLYER_ORIGIN } from '../utils/flyerSite';
 
 const FEATURE_KEYS = [
     'about.f1', 'about.f2', 'about.f3', 'about.f4', 'about.f5',
-    'about.f6', 'about.f7', 'about.f8', 'about.f9', 'about.f10', 'about.f11',
+    'about.f6', 'about.f7', 'about.f8', 'about.f9', 'about.f10', 'about.f11', 'about.f12',
 ] as const;
 
 const FRONTEND_TECH = ['React', 'TypeScript', 'Vite', 'Tailwind CSS'];
-const BACKEND_TECH = ['Java', 'Spring Boot', 'PostgreSQL', 'JWT', 'Docker', 'Caddy'];
+const BACKEND_TECH = ['Java', 'Spring Boot', 'Python', 'FastAPI', 'PostgreSQL', 'JWT', 'Docker', 'Caddy'];
 
 export default function AboutPage() {
     const { t } = useLanguage();

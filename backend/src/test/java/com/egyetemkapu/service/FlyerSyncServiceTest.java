@@ -426,8 +426,10 @@ class FlyerSyncServiceTest {
                 "https://www.lidl.hu/l/hu/ujsag/akcios-ujsag-41-het-2026/ar/0");
         Flyer rossmann = storeFlyer("rossmann", "rossmann:333",
                 "https://shop.rossmann.hu/magazin/altalanos/333");
+        Flyer dm = storeFlyer("dm", "dm:expressz_2026-10-15",
+                "https://magazin.dm.hu/expressz_2026-10-15/");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -679,6 +681,45 @@ class FlyerSyncServiceTest {
         assertEquals("Winston állateledel macskáknak - 100 g", catalog.products().getFirst().name());
         verify(pdfExtractor, never()).extractDocument(any(), any());
         verify(pdfExtractor, never()).extractDocument(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+        verify(pdfExtractor, never()).extractLayout(any());
+    }
+
+    @Test
+    void syncRossmannListsTheNamePrintedOnThePageInsteadOfTheLinkedShopProduct() {
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/api/magazines")).thenReturn("""
+                [{"id":335,"category_slug":"altalanos"}]
+                """);
+        when(httpClient.getText("https://magazin.microservices.rossmann.hu/storage/json/altalanos/335.json"))
+                .thenReturn("""
+                        {
+                          "valid_from":"2026-10-19",
+                          "valid_to":"2026-10-30",
+                          "pdf":"https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf",
+                          "pages":{"2":[{"zoom":3,"page":2,"filePath":"https://assets.microservices.rossmann.hu/magazin-prod/335/335-2-3.webp"}]},
+                          "pois":{"2":[{"page":2,"product":{"name":"Garnier Hyaluron+ textilmaszk hialuronsavval - 28 g"}}]}
+                        }
+                        """);
+        when(httpClient.getBytes(
+                eq("https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf"),
+                eq("https://shop.rossmann.hu/magazin")))
+                .thenReturn(new byte[] {'%', 'P', 'D', 'F', '-', '1', '.', '4'});
+        when(pdfExtractor.extractLayout(any())).thenReturn(java.util.Map.of(2, List.of(
+                new TextRun(330, 312, 30, 7, "GARNIER", "ROSSMANNSans-Black", 7),
+                new TextRun(330, 319, 35, 7, "HYALURON", "ROSSMANNSans-Black", 7),
+                new TextRun(364, 319, 3, 7, "+", "ROSSMANNSans-Black", 7),
+                new TextRun(330, 327, 53, 7, "BARRIER REPAIR", "ROSSMANNSans-Black", 7),
+                new TextRun(330, 334, 46, 7, "FÁTYOLMASZK", "ROSSMANNSans-Black", 7),
+                new TextRun(394, 353, 32, 19, "839", "ROSSMANNSans-Black", 19))));
+
+        service.syncRossmann(LocalDate.of(2026, 10, 23));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("rossmann"), captor.capture(), any());
+        List<String> names = captor.getValue().getFirst().products().stream()
+                .map(FlyerCatalogParser.ParsedProduct::name)
+                .toList();
+        assertEquals(List.of("GARNIER HYALURON+ BARRIER REPAIR FÁTYOLMASZK"), names);
     }
 
     @Test
@@ -688,6 +729,48 @@ class FlyerSyncServiceTest {
         service.syncRossmann(LocalDate.of(2026, 10, 13));
 
         verify(flyerPersistenceService, never()).replaceStore(eq("rossmann"), any(), any());
+    }
+
+    @Test
+    void syncDmPersistsTheExpresszIssueAndKeepsThePrintedBrand() {
+        when(httpClient.getText("https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"))
+                .thenReturn("""
+                        {"linkTarget":"https://magazin.dm.hu/expressz_2026-10-15","text":"Magazin érvényessége: október 15 - október 28."}
+                        """);
+        when(httpClient.getText("https://magazin.dm.hu/expressz_2026-10-15/data.json")).thenReturn("""
+                {"config":{"publicationTitle":"dmHU - dm_magazin_expressz_2026-10-15"}}
+                """);
+        when(httpClient.getText("https://magazin.dm.hu/expressz_2026-10-15/spreads.json")).thenReturn("""
+                [{"pages":[{"number":1,"images":{"at1200":"/resize/cover.jpg"},"text":"GARNIER\\nmicellás víz\\nérzékeny bőrre\\n700 ml"}]}]
+                """);
+        when(httpClient.getText("https://magazin.dm.hu/expressz_2026-10-15/page/1/hotspots_data.json")).thenReturn("""
+                [{"type":"product","products":[{"title":"Micellás víz, érzékeny bőrre"}]}]
+                """);
+
+        service.syncDm(LocalDate.of(2026, 10, 16));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("dm"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("dm expressz", catalog.paper().title());
+        assertEquals("dm:expressz_2026-10-15", catalog.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 15), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 28), catalog.paper().validTo());
+        assertEquals("https://magazin.dm.hu/resize/cover.jpg", catalog.pages().getFirst().imageUrl());
+        assertEquals("GARNIER Micellás víz, érzékeny bőrre", catalog.products().getFirst().name());
+        verify(pdfExtractor, never()).extractDocument(any(), any());
+        verify(pdfExtractor, never()).extractDocument(any(), any(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void syncDmLeavesStoredFlyersAloneWhenThePageIsMissing() {
+        when(httpClient.getText("https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"))
+                .thenReturn("");
+
+        service.syncDm(LocalDate.of(2026, 10, 16));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("dm"), any(), any());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RUN:// SOURCE</title>
+    <style>
+        :root {
+            --phosphor: #1cf85d;
+            --phosphor-dim: rgba(28, 248, 93, 0.55);
+            --crt-bg: #031e08;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #000;
+            color: var(--phosphor);
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: var(--crt-bg);
+            text-shadow: 0 0 6px rgba(28, 248, 93, 0.5);
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--phosphor);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            position: relative;
+            z-index: 40;
+        }
+
+        header p {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        #return-btn {
+            color: var(--phosphor);
+            background: transparent;
+            border: none;
+            font: inherit;
+            font-size: 18px;
+            text-transform: uppercase;
+            text-shadow: inherit;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        #return-btn:hover {
+            background: var(--phosphor);
+            color: #000;
+            text-shadow: none;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #game-container {
+            position: relative;
+            width: min(800px, 100%);
+            aspect-ratio: 4 / 3;
+            max-height: 100%;
+            border: 2px solid var(--phosphor);
+            box-shadow: 0 0 24px rgba(28, 248, 93, 0.35);
+            overflow: hidden;
+            background: #020f06;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(2, 15, 6, 0.88);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .overlay h1 {
+            margin: 0 0 16px;
+            font-size: clamp(32px, 6vw, 56px);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .overlay p {
+            margin: 0;
+            max-width: 34rem;
+            color: var(--phosphor);
+            line-height: 1.5;
+            text-transform: uppercase;
+        }
+
+        .btn {
+            margin-top: 24px;
+            background: transparent;
+            color: var(--phosphor);
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-shadow: inherit;
+            padding: 10px 28px;
+            border: 2px solid var(--phosphor);
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--phosphor);
+            color: #000;
+            text-shadow: none;
+        }
+
+        #touch-controls {
+            position: absolute;
+            bottom: 16px;
+            left: 0;
+            width: 100%;
+            padding: 0 16px;
+            display: none;
+            justify-content: space-between;
+            z-index: 5;
+            box-sizing: border-box;
+        }
+
+        .touch-btn {
+            background: transparent;
+            border: 2px solid var(--phosphor);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            color: var(--phosphor);
+        }
+
+        .touch-btn:active {
+            background: var(--phosphor);
+            color: #000;
+        }
+
+        .touch-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .crt-scanlines,
+        .crt-vignette {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 30;
+        }
+
+        .crt-scanlines {
+            background-image: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+            background-size: 100% 4px;
+        }
+
+        .crt-vignette {
+            background: radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.9) 100%);
+        }
+
+        @media (max-width: 850px) {
+            #touch-controls { display: flex; }
+            header p, #return-btn { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <p>&gt; run:// source</p>
+        <button id="return-btn" type="button">&lt;&lt; return</button>
+    </header>
+
+    <main>
+        <div id="game-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <div id="start-screen" class="overlay">
+                <h1>Soul Escape</h1>
+                <p>
+                    Use WASD or arrow keys to move and jump.<br>
+                    Avoid the acid. Reach the portal to win.
+                </p>
+                <button class="btn" type="button" onclick="startGame()">Start</button>
+            </div>
+
+            <div id="win-screen" class="overlay" style="display: none;">
+                <h1>Victory</h1>
+                <p>You escaped the dungeon.</p>
+                <button class="btn" type="button" onclick="resetGame()">Play again</button>
+            </div>
+
+            <div id="touch-controls">
+                <div class="touch-group">
+                    <div class="touch-btn" id="btn-left" aria-label="left">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </div>
+                    <div class="touch-btn" id="btn-right" aria-label="right">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+                <div class="touch-btn" id="btn-jump" aria-label="jump">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="crt-scanlines"></div>
+    <div class="crt-vignette"></div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameState = 'START';
+        let animationFrameId;
+
+        const keys = { left: false, right: false, up: false };
+
+        const player = {
+            x: 40,
+            y: 480,
+            width: 24,
+            height: 24,
+            vx: 0,
+            vy: 0,
+            speed: 5,
+            jumpPower: 12.5,
+            gravity: 0.6,
+            friction: 0.8,
+            grounded: false,
+            color: '#1cf85d',
+            trail: []
+        };
+
+        const platforms = [
+            { x: -20, y: -1000, w: 20, h: 2000, type: 'boundary' },
+            { x: 800, y: -1000, w: 20, h: 2000, type: 'boundary' },
+            { x: 0, y: 580, w: 800, h: 20, type: 'lava', color: '#7dffb2' },
+            { x: 20, y: 520, w: 100, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 180, y: 460, w: 120, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 380, y: 400, w: 90, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 560, y: 340, w: 120, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 380, y: 250, w: 100, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 180, y: 190, w: 120, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 40, y: 130, w: 80, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 250, y: 70, w: 120, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 500, y: 120, w: 80, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 650, y: 180, w: 130, h: 20, type: 'solid', color: '#0d4a24' },
+            { x: 720, y: 100, w: 40, h: 80, type: 'goal', color: '#d8ffe8' }
+        ];
+
+        function leaveSource() {
+            if (window.parent !== window) {
+                window.parent.postMessage({ type: 'close-source' }, window.location.origin);
+            }
+        }
+
+        document.getElementById('return-btn').addEventListener('click', leaveSource);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                leaveSource();
+                return;
+            }
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+            if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') {
+                keys.up = true;
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+            if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') keys.up = false;
+        });
+
+        const bindTouch = (id, key) => {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+            el.addEventListener('touchcancel', (e) => { e.preventDefault(); keys[key] = false; });
+        };
+        bindTouch('btn-left', 'left');
+        bindTouch('btn-right', 'right');
+        bindTouch('btn-jump', 'up');
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            resetPlayer();
+            gameState = 'PLAY';
+        }
+
+        function resetGame() {
+            document.getElementById('win-screen').style.display = 'none';
+            resetPlayer();
+            gameState = 'PLAY';
+        }
+
+        function resetPlayer() {
+            player.x = 40;
+            player.y = 480;
+            player.vx = 0;
+            player.vy = 0;
+            player.grounded = false;
+            player.trail = [];
+        }
+
+        function collides(a, b) {
+            return a.x < b.x + b.w &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.h &&
+                   a.y + a.height > b.y;
+        }
+
+        function update() {
+            if (gameState !== 'PLAY') return;
+
+            if (keys.right) {
+                player.vx += 1;
+                if (player.vx > player.speed) player.vx = player.speed;
+            } else if (keys.left) {
+                player.vx -= 1;
+                if (player.vx < -player.speed) player.vx = -player.speed;
+            } else {
+                player.vx *= player.friction;
+                if (Math.abs(player.vx) < 0.1) player.vx = 0;
+            }
+
+            player.x += player.vx;
+
+            for (let p of platforms) {
+                if (collides(player, p)) {
+                    if (p.type === 'lava') { resetPlayer(); return; }
+                    if (p.type === 'goal') { gameState = 'WIN'; document.getElementById('win-screen').style.display = 'flex'; return; }
+                    if (p.type === 'solid' || p.type === 'boundary') {
+                        if (player.vx > 0) player.x = p.x - player.width;
+                        else if (player.vx < 0) player.x = p.x + p.w;
+                        player.vx = 0;
+                    }
+                }
+            }
+
+            if (keys.up && player.grounded) {
+                player.vy = -player.jumpPower;
+                player.grounded = false;
+            }
+
+            player.vy += player.gravity;
+            if (player.vy > 15) player.vy = 15;
+
+            player.y += player.vy;
+            player.grounded = false;
+
+            for (let p of platforms) {
+                if (collides(player, p)) {
+                    if (p.type === 'lava') { resetPlayer(); return; }
+                    if (p.type === 'goal') { gameState = 'WIN'; document.getElementById('win-screen').style.display = 'flex'; return; }
+                    if (p.type === 'solid') {
+                        if (player.vy > 0) {
+                            player.y = p.y - player.height;
+                            player.vy = 0;
+                            player.grounded = true;
+                        } else if (player.vy < 0) {
+                            player.y = p.y + p.h;
+                            player.vy = 0;
+                        }
+                    }
+                }
+            }
+
+            player.trail.push({ x: player.x, y: player.y });
+            if (player.trail.length > 8) player.trail.shift();
+        }
+
+        function draw() {
+            ctx.fillStyle = '#031e08';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#0a3d1c';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.width; i += 40) {
+                ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+            }
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+            }
+
+            for (let p of platforms) {
+                if (p.type === 'boundary') continue;
+
+                ctx.fillStyle = p.color;
+
+                if (p.type === 'solid') {
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.fillStyle = '#1cf85d';
+                    ctx.fillRect(p.x, p.y, p.w, 4);
+                } else if (p.type === 'lava') {
+                    const pulse = Math.sin(Date.now() / 200) * 5;
+                    ctx.shadowBlur = 15 + pulse;
+                    ctx.shadowColor = '#1cf85d';
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#d8ffe8';
+                    ctx.fillRect(p.x, p.y, p.w, 3);
+                } else if (p.type === 'goal') {
+                    const glow = Math.abs(Math.sin(Date.now() / 300)) * 20;
+                    ctx.shadowBlur = 20 + glow;
+                    ctx.shadowColor = '#1cf85d';
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    ctx.fillStyle = '#f4fff8';
+                    ctx.fillRect(p.x + 5, p.y + 5, p.w - 10, p.h - 10);
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            if (gameState === 'PLAY') {
+                for (let i = 0; i < player.trail.length; i++) {
+                    const point = player.trail[i];
+                    const alpha = (i + 1) / player.trail.length * 0.4;
+                    ctx.fillStyle = `rgba(28, 248, 93, ${alpha})`;
+                    const offset = (player.trail.length - i);
+                    ctx.fillRect(point.x + offset, point.y + offset, player.width - offset * 2, player.height - offset * 2);
+                }
+
+                ctx.fillStyle = player.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = player.color;
+
+                let stretchX = 0;
+                let stretchY = 0;
+                if (!player.grounded) {
+                    stretchY = player.vy > 0 ? 4 : -4;
+                    stretchX = -Math.abs(stretchY) / 2;
+                }
+
+                ctx.beginPath();
+                ctx.roundRect(player.x + stretchX / 2, player.y + stretchY / 2, player.width - stretchX, player.height - stretchY, 4);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                ctx.fillStyle = '#031e08';
+                const eyeOffsetX = (player.vx > 0) ? 4 : (player.vx < 0 ? -4 : 0);
+                ctx.fillRect(player.x + 14 + eyeOffsetX, player.y + 6, 4, 4);
+                ctx.fillRect(player.x + 6 + eyeOffsetX, player.y + 6, 4, 4);
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        draw();
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>

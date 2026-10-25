@@ -78,6 +78,7 @@ describe('Navbar Komponens', () => {
         await openGroup(user, /nav\.tools/);
 
         expect(screen.getByRole('link', { name: /nav\.calculators/ })).toHaveAttribute('href', '/kalkulator');
+        expect(screen.getByRole('link', { name: /nav\.points/ })).toHaveAttribute('href', '/pontok');
         expect(screen.getByRole('link', { name: /nav\.reference/ })).toHaveAttribute('href', '/hivatkozas');
         expect(screen.getByRole('link', { name: /nav\.ai/ })).toHaveAttribute('href', '/ai');
     });

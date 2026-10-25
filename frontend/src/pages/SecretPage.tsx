@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Save, X } from 'lucide-react';
 import TerminalHack from '../components/TerminalGame';
 import { fetchWithAuth } from '../utils/authApi';
@@ -10,6 +11,7 @@ export default function SecretPage() {
     const [bootStart, setBootStart] = useState(false);
 
     const [showNotes, setShowNotes] = useState(false);
+    const [showSource, setShowSource] = useState(false);
     const [noteContent, setNoteContent] = useState('');
     const [noteId, setNoteId] = useState<number | null>(null);
     const [isLoadingNote, setIsLoadingNote] = useState(false);
@@ -92,9 +94,10 @@ export default function SecretPage() {
     const text10 = "|========";
     const text11 = "run:// details";
     const text12 = "run:// error";
-    const text13 = "<< Logoff";
+    const text13 = "run:// source";
+    const text14 = "<< Logoff";
 
-    const allTexts = [text1, text2, text3, text4, text5, text6, text7, text8, text9, text10, text11, text12, text13];
+    const allTexts = [text1, text2, text3, text4, text5, text6, text7, text8, text9, text10, text11, text12, text13, text14];
     const totalChars = allTexts.reduce((acc, t) => acc + t.length, 0);
 
     useEffect(() => {
@@ -110,6 +113,24 @@ export default function SecretPage() {
             return () => clearTimeout(t);
         }
     }, [charCount, totalChars, bootStart]);
+
+    useEffect(() => {
+        if (!showSource) return;
+        const previousOverflow = document.body.style.overflow;
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        const onMessage = (event: MessageEvent) => {
+            if (event.origin !== window.location.origin) return;
+            if (event.data?.type === 'close-source') setShowSource(false);
+        };
+        window.addEventListener('message', onMessage);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.documentElement.style.overflow = previousHtmlOverflow;
+            window.removeEventListener('message', onMessage);
+        };
+    }, [showSource]);
 
     if (!isHacked) {
         return (
@@ -180,6 +201,11 @@ export default function SecretPage() {
                             className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
                             {renderText(text12)}
                         </button>
+                        <button
+                            onClick={() => setShowSource(true)}
+                            className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]">
+                            {renderText(text13)}
+                        </button>
                     </div>
                 </div>
 
@@ -188,10 +214,22 @@ export default function SecretPage() {
                         onClick={handleLogoff}
                         className="text-left w-fit px-2 py-1 hover:bg-[#1cf85d] hover:text-black transition-none cursor-pointer uppercase block border-none bg-transparent font-mono text-[#1cf85d] text-lg md:text-xl [text-shadow:0_0_6px_rgba(28,248,93,0.5)]"
                     >
-                        {renderText(text13)}
+                        {renderText(text14)}
                     </button>
                 </div>
             </div>
+
+            {showSource && createPortal(
+                <div className="fixed inset-0 z-[80] bg-black">
+                    <iframe
+                        src="/source.html"
+                        title="RUN:// SOURCE"
+                        className="absolute inset-0 h-full w-full border-0"
+                        onLoad={(event) => event.currentTarget.contentWindow?.focus()}
+                    />
+                </div>,
+                document.body
+            )}
 
             {/* --- Notes modal --- */}
             {showNotes && (
