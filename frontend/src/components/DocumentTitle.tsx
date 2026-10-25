@@ -19,6 +19,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/naptar': 'nav.calendar',
     '/profile': 'profile.title',
     '/kalkulator': 'nav.calculators',
+    '/pontok': 'points.title',
     '/tudastar': 'kb.title',
     '/hivatkozas': 'ref.title',
     '/tanuloszoba': 'focus.title',
