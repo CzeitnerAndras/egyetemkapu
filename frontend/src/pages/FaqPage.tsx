@@ -18,6 +18,7 @@ const PAGE_LINKS: Record<string, string> = {
     ai: '/ai',
     reference: '/hivatkozas',
     calculator: '/kalkulator',
+    points: '/pontok',
     cards: '/kartyak',
     settings: '/settings',
     login: '/login',
