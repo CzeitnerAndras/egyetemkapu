@@ -4,6 +4,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      // Listed before /api. Vite keeps the first matching prefix.
+      '/api/thesis': {
+        target: 'http://localhost:8091',
+        changeOrigin: true,
+      },
       '/api/points': {
         target: 'http://localhost:8090',
         changeOrigin: true,

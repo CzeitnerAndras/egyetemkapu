@@ -12,6 +12,7 @@ Live at [egyetemkapu.hu](https://egyetemkapu.hu). Sale flyers are on [akcio.egye
 - Symbolic math: derive, integrate, simplify
 - Credit index and weighted average
 - Points planner: how many points a grade still needs
+- Length checker for a thesis abstract or chapter
 - Study room: Pomodoro timer, notes, lo-fi
 - Flashcards with a simple review schedule
 - Knowledge base; uploads wait for admin approval
@@ -27,7 +28,7 @@ Accounts use email and password, with optional email verification, password rese
 | --- | --- |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS |
 | Backend | Java 21, Spring Boot 4, Spring Security, Flyway |
-| Points service | Python 3.12, FastAPI |
+| Python services | FastAPI. Points planner on 8090, length checker on 8091 |
 | Database | PostgreSQL 15 |
 | Auth | JWT access tokens and refresh cookies |
 | Production | Docker Compose, Caddy (HTTPS), GitHub Actions |
@@ -37,13 +38,14 @@ Accounts use email and password, with optional email verification, password rese
 ```
 backend/          Spring Boot API (port 8080)
 points/           Python points planner (port 8090)
+thesis/           Python length checker (port 8091)
 frontend/         React app (Vite dev server on 5173)
 uploads/          Uploaded knowledge-base files (created at runtime)
 docker-compose.yml
 deploy.sh         Production deploy, run on the server
 ```
 
-In production, Caddy serves the built frontend, proxies `/api/points/*` to the Python service, and proxies every other `/api/*` path to the Java backend. Locally, the Vite dev server does the same split: `/api/points` goes to `http://localhost:8090`, and `/api` goes to `http://localhost:8080`. The `/api/points` rule has to be listed first, because the first matching prefix wins.
+In production, Caddy serves the built frontend, proxies `/api/points/*` and `/api/thesis/*` to the Python services, and proxies every other `/api/*` path to the Java backend. Locally, the Vite dev server does the same split: `/api/points` goes to `http://localhost:8090`, `/api/thesis` goes to `http://localhost:8091`, and `/api` goes to `http://localhost:8080`. The Python prefixes have to be listed before `/api`, because the first matching prefix wins.
 
 ## Run it locally
 
@@ -75,6 +77,8 @@ uvicorn app.main:app --reload --port 8090
 ```
 
 Its own docs are at [http://localhost:8090/docs](http://localhost:8090/docs). The page is [http://localhost:5173/pontok](http://localhost:5173/pontok) once the frontend is running. Details and a small exercise are in `points/README.md`.
+
+The length checker is the same kind of service, on port 8091. From `thesis/`, repeat the venv and install steps, then `uvicorn app.main:app --reload --port 8091`. The page is [http://localhost:5173/terjedelem](http://localhost:5173/terjedelem). Details are in `thesis/README.md`.
 
 Then the frontend:
 
@@ -120,10 +124,10 @@ Backend, from `backend/`:
 .\mvnw.cmd test
 ```
 
-Points service, from `points/`:
+Points service, from `points/`, and the length checker, from `thesis/`:
 
 ```powershell
-python -m pytest
+py -3 -m pytest
 ```
 
 Frontend unit tests and Playwright, from `frontend/`:
@@ -137,6 +141,6 @@ Playwright starts the Vite server if it is not already running, and runs Chromiu
 
 ## Production
 
-`docker-compose.yml` runs Postgres, the Java API, the Python points service, and Caddy. The frontend container listens on 80 and 443 and terminates TLS for `egyetemkapu.hu`, `www.egyetemkapu.hu`, and `akcio.egyetemkapu.hu`.
+`docker-compose.yml` runs Postgres, the Java API, the two Python services, and Caddy. The frontend container listens on 80 and 443 and terminates TLS for `egyetemkapu.hu`, `www.egyetemkapu.hu`, and `akcio.egyetemkapu.hu`.
 
 A push to `main` SSHes to the server and runs `deploy.sh`, which pulls with `--ff-only`, rebuilds the containers, and checks `https://egyetemkapu.hu/api/users/count`. The workflow secrets are `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, and `DEPLOY_KNOWN_HOSTS`. `DEPLOY_PATH` must be an absolute path.
