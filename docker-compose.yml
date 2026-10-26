@@ -54,6 +54,17 @@ services:
       - app
     restart: unless-stopped
 
+  thesis:
+    build: ./thesis
+    container_name: egyetemkapu-thesis
+    environment:
+      - TZ=Europe/Budapest
+    ports:
+      - "127.0.0.1:8091:8091"
+    networks:
+      - app
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     container_name: egyetemkapu-frontend
@@ -70,6 +81,7 @@ services:
     depends_on:
       - backend
       - points
+      - thesis
     restart: unless-stopped
 
 networks:
