@@ -47,7 +47,8 @@ const tips = [
   { hu: "Mielőtt elkezded a tanulást, írj egy pontos, kis lépésekből álló tervet. A 'Tanulok 3 órát' helyett legyen 'Elolvasom és kijyzetelem a 4. fejezetet'.", en: "Before you start studying, write a precise plan with small steps. Instead of 'I'll study for 3 hours', make it 'I will read and outline chapter 4'." },
   { hu: "Igyál elég vizet! Még az enyhe dehidratáció is jelentősen rontja a koncentrációs képességet és a rövidtávú memóriát.", en: "Drink enough water! Even mild dehydration significantly impairs concentration and short-term memory." },
   { hu: "A mozgás javítja az agy vérellátását. Egy 15 perces séta tanulás előtt vagy a szünetekben csodákat tehet a memóriáddal.", en: "Exercise improves blood flow to the brain. A 15-minute walk before studying or during breaks can do wonders for your memory." },
-  { hu: "A Ponttervező megmondja, hány pont kell még a ketteshez, ha a vizsga nincs megírva. Az Eszközök menüben találod.", en: "The points planner tells you how many points you still need for a passing grade when the exam is not marked yet. It is in the Tools menu." }
+  { hu: "A Ponttervező megmondja, hány pont kell még a ketteshez, ha a vizsga nincs megírva. Az Eszközök menüben találod.", en: "The points planner tells you how many points you still need for a passing grade when the exam is not marked yet. It is in the Tools menu." },
+  { hu: "A Terjedelem-ellenőr megszámolja az absztrakt szavait és a leghosszabb mondatot. Az összegzés egy szónak számít.", en: "The length checker counts the words in an abstract and finds the longest sentence. Összegzés counts as one word." }
 ];
 
 {/* --- Counter animation --- */}
