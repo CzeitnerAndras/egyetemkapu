@@ -13,6 +13,7 @@ import CalendarPage from './pages/CalendarPage';
 import ProfilePage from './pages/ProfilePage';
 import CalculatorPage from './pages/CalculatorPage';
 import PointsPage from './pages/PointsPage';
+import ThesisPage from './pages/ThesisPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 import ReferencePage from './pages/ReferencePage';
 import FocusRoomPage from './pages/FocusRoomPage';
@@ -83,6 +84,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/kalkulator" element={<CalculatorPage />} />
           <Route path="/pontok" element={<PointsPage />} />
+          <Route path="/terjedelem" element={<ThesisPage />} />
           <Route path="/tudastar" element={<KnowledgeBasePage />} />
           <Route path="/hivatkozas" element={<ReferencePage />} />
           <Route path="/tanuloszoba" element={<FocusRoomPage />} />
