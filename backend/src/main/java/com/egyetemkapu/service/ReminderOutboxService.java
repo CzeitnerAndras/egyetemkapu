@@ -103,6 +103,38 @@ public class ReminderOutboxService {
         });
     }
 
+    // --- Retry ---
+    public ReminderRetry retryDead(long id, LocalDateTime now) {
+        ReminderRetry result = requiresNew.execute(status -> reopenDead(id, now));
+        return result == null ? ReminderRetry.NOT_FOUND : result;
+    }
+
+    private ReminderRetry reopenDead(long id, LocalDateTime now) {
+        ReminderOutbox row = repository.findById(id).orElse(null);
+        if (row == null) {
+            return ReminderRetry.NOT_FOUND;
+        }
+        if (row.getStatus() == ReminderStatus.DEAD) {
+            row.setStatus(ReminderStatus.PENDING);
+            row.setAttempts(0);
+            row.setAvailableAt(now);
+            row.setClaimedAt(null);
+            row.setSentAt(null);
+            row.setLastError(null);
+            return ReminderRetry.REQUEUED;
+        }
+        if (row.getStatus() == ReminderStatus.PENDING) {
+            return ReminderRetry.ALREADY_QUEUED;
+        }
+        if (row.getStatus() == ReminderStatus.SENDING) {
+            return ReminderRetry.IN_FLIGHT;
+        }
+        if (row.getStatus() == ReminderStatus.SENT) {
+            return ReminderRetry.ALREADY_SENT;
+        }
+        return ReminderRetry.NOT_DEAD;
+    }
+
     public void markCancelled(long id, String reason, LocalDateTime now) {
         requiresNew.executeWithoutResult(status -> {
             ReminderOutbox row = repository.findById(id).orElse(null);

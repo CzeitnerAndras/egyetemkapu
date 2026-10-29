@@ -101,6 +101,34 @@ public class FlyerSyncService {
         syncAll();
     }
 
+    public boolean reserveStoreRetry(String store) {
+        if (store == null || !STORES.contains(store)) {
+            throw new IllegalArgumentException("unknown store");
+        }
+        return syncing.compareAndSet(false, true);
+    }
+
+    @Async
+    public void runReservedStoreRetry(String store) {
+        try {
+            LocalDate today = LocalDate.now(clock);
+            switch (store) {
+                case "coop" -> syncCoop(today);
+                case "aldi" -> syncAldi(today);
+                case "spar" -> syncSpar(today);
+                case "penny" -> syncPenny(today);
+                case "tesco" -> syncTesco(today);
+                case "auchan" -> syncAuchan(today);
+                case "lidl" -> syncLidl(today);
+                case "rossmann" -> syncRossmann(today);
+                case "dm" -> syncDm(today);
+                default -> log.warn("No flyer retry for store {}", store);
+            }
+        } finally {
+            syncing.set(false);
+        }
+    }
+
     public void syncAll() {
         if (!syncing.compareAndSet(false, true)) {
             return;

@@ -101,6 +101,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/users/me/language").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/suggestions/captcha").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/suggestions").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/documents/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/events").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/events/**").hasRole("ADMIN")
