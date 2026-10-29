@@ -125,7 +125,7 @@ class PasswordResetServiceTest {
         assertEquals(0, user.getFailedLoginAttempts());
         assertNull(user.getLockoutEndTime());
         assertTrue(resetToken.isUsed());
-        verify(refreshTokenService).deleteByUserId(9L);
+        verify(refreshTokenService).endSession(user);
     }
 
     @Test
@@ -143,7 +143,7 @@ class PasswordResetServiceTest {
 
         assertEquals(PasswordResetService.INVALID_TOKEN_MESSAGE, error.orElseThrow());
         verify(userRepository, never()).save(any());
-        verify(refreshTokenService, never()).deleteByUserId(any());
+        verify(refreshTokenService, never()).endSession(any());
     }
 
     @Test

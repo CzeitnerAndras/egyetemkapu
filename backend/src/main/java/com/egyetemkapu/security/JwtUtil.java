@@ -39,8 +39,13 @@ public class JwtUtil {
 
     // --- Tokens ---
     public String generateToken(String username) {
+        return generateToken(username, 0);
+    }
+
+    public String generateToken(String username, int sessionVersion) {
         return Jwts.builder()
                 .setSubject(username)
+                .claim("sv", sessionVersion)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)
@@ -54,6 +59,23 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public int sessionVersion(String token) {
+        try {
+            Object value = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("sv");
+            if (value instanceof Number number) {
+                return number.intValue();
+            }
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public boolean validateToken(String token) {

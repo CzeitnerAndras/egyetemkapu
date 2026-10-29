@@ -142,7 +142,7 @@ public class AuthController {
         userRepository.save(user);
 
         RefreshTokenService.IssuedRefreshToken refresh = refreshTokenService.createRefreshToken(user.getId());
-        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername()), cookieSecure);
+        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername(), user.getSessionVersion()), cookieSecure);
         AuthCookies.setRefresh(response, refresh.rawToken(), cookieSecure);
         return ResponseEntity.ok(Map.of("ok", true));
     }
@@ -151,12 +151,18 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String rawToken = AuthCookies.readRefresh(request);
-        RefreshToken stored = refreshTokenService.findByRawToken(rawToken)
-                .map(refreshTokenService::verifyExpiration)
-                .orElseThrow(() -> new TokenRefreshException("A Refresh Token érvénytelen az adatbázisban!"));
+        Optional<RefreshToken> stored = refreshTokenService.findByRawToken(rawToken);
+        if (stored.isEmpty()) {
+            if (refreshTokenService.revokeIfReused(rawToken)) {
+                AuthCookies.clearSession(response, cookieSecure);
+            }
+            throw new TokenRefreshException("A Refresh Token érvénytelen az adatbázisban!");
+        }
 
-        RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(stored);
-        AuthCookies.setAccess(response, jwtUtil.generateToken(stored.getUser().getUsername()), cookieSecure);
+        RefreshToken current = refreshTokenService.verifyExpiration(stored.get());
+        RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(current);
+        User user = current.getUser();
+        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername(), user.getSessionVersion()), cookieSecure);
         AuthCookies.setRefresh(response, rotated.rawToken(), cookieSecure);
         return ResponseEntity.ok(Map.of("ok", true));
     }
@@ -165,9 +171,18 @@ public class AuthController {
     @LogAction("Kijelentkezés")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         String rawToken = AuthCookies.readRefresh(request);
-        refreshTokenService.findByRawToken(rawToken).ifPresent(token ->
-                refreshTokenService.deleteByUserId(token.getUser().getId())
-        );
+        User user = refreshTokenService.findByRawToken(rawToken)
+                .map(RefreshToken::getUser)
+                .orElse(null);
+        if (user == null) {
+            String access = AuthCookies.readAccess(request);
+            if (access != null && jwtUtil.validateToken(access)) {
+                user = userRepository.findByUsername(jwtUtil.extractUsername(access)).orElse(null);
+            }
+        }
+        if (user != null) {
+            refreshTokenService.endSession(user);
+        }
         AuthCookies.clearSession(response, cookieSecure);
         return ResponseEntity.ok(Map.of("message", "Sikeres kijelentkezés!"));
     }

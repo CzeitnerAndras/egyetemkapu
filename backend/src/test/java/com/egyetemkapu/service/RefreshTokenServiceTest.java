@@ -49,6 +49,7 @@ class RefreshTokenServiceTest {
 
         assertEquals(42L, existing.getId());
         assertEquals(PasswordResetTokens.hash(issued.rawToken()), existing.getToken());
+        assertNull(existing.getPreviousToken());
         assertNotEquals(issued.rawToken(), existing.getToken());
         verify(refreshTokenRepository, never()).deleteByUser(any());
     }
@@ -89,6 +90,7 @@ class RefreshTokenServiceTest {
 
         RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(current);
 
+        assertEquals("regi-hash", current.getPreviousToken());
         assertEquals(PasswordResetTokens.hash(rotated.rawToken()), current.getToken());
         assertNotEquals("regi-hash", current.getToken());
         assertTrue(current.getExpiryDate().isAfter(LocalDateTime.now().plusDays(6)));
@@ -117,5 +119,33 @@ class RefreshTokenServiceTest {
 
         assertEquals("A Refresh Token lejárt! Kérlek, jelentkezz be újra.", exception.getMessage());
         verify(refreshTokenRepository, times(1)).delete(token);
+    }
+
+    @Test
+    void revokeIfReused_EndsTheSessionThatReplacedTheToken() {
+        User user = new User();
+        user.setId(1L);
+        user.setSessionVersion(3);
+        RefreshToken current = new RefreshToken();
+        current.setUser(user);
+        current.setPreviousToken(PasswordResetTokens.hash("regi"));
+        when(refreshTokenRepository.findByPreviousToken(PasswordResetTokens.hash("regi")))
+                .thenReturn(Optional.of(current));
+
+        assertTrue(refreshTokenService.revokeIfReused("regi"));
+
+        assertEquals(4, user.getSessionVersion());
+        verify(userRepository).save(user);
+        verify(refreshTokenRepository).deleteByUser(user);
+    }
+
+    @Test
+    void revokeIfReused_UnknownToken_DoesNothing() {
+        when(refreshTokenRepository.findByPreviousToken(any())).thenReturn(Optional.empty());
+
+        assertFalse(refreshTokenService.revokeIfReused("ismeretlen"));
+
+        verify(userRepository, never()).save(any());
+        verify(refreshTokenRepository, never()).deleteByUser(any());
     }
 }

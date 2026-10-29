@@ -34,7 +34,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
         if (token != null && jwtUtil.validateToken(token)) {
             String username = jwtUtil.extractUsername(token);
+            int sessionVersion = jwtUtil.sessionVersion(token);
             userRepository.findByUsername(username).ifPresent(user -> {
+                if (user.getSessionVersion() != sessionVersion) {
+                    return;
+                }
                 List<SimpleGrantedAuthority> authorities =
                         List.of(new SimpleGrantedAuthority(normalizeRole(user.getRole())));
 

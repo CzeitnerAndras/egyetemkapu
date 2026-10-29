@@ -17,8 +17,10 @@ services:
     container_name: egyetemkapu-backend
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/egyetemkapu
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_USERNAME=egyetemkapu_app
+      - SPRING_DATASOURCE_PASSWORD=${DB_APP_PASSWORD}
+      - SPRING_FLYWAY_USER=${DB_USER}
+      - SPRING_FLYWAY_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=prod
       - JWT_SECRET=${JWT_SECRET}
       - AI_API_KEY=${AI_API_KEY:-nincs_megadva}
