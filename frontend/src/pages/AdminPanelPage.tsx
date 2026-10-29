@@ -30,6 +30,27 @@ interface SyncRun {
     errorMessage: string | null;
 }
 
+interface DeadReminder {
+    id: number;
+    channel: string;
+    kind: string;
+    attempts: number;
+    lastError: string | null;
+    deadline: string;
+    message: string;
+}
+
+interface DeadFlyerSync {
+    store: string;
+    lastError: string | null;
+    finishedAt: string | null;
+}
+
+interface DeadLetters {
+    reminders: DeadReminder[];
+    flyerSyncs: DeadFlyerSync[];
+}
+
 export default function AdminPanelPage() {
     const { t, locale } = useLanguage();
     const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
@@ -37,7 +58,10 @@ export default function AdminPanelPage() {
     const [loadingDocs, setLoadingDocs] = useState(true);
     const [loadingSuggestions, setLoadingSuggestions] = useState(true);
     const [loadingSync, setLoadingSync] = useState(true);
+    const [loadingQueue, setLoadingQueue] = useState(true);
     const [syncRuns, setSyncRuns] = useState<SyncRun[]>([]);
+    const [deadLetters, setDeadLetters] = useState<DeadLetters>({ reminders: [], flyerSyncs: [] });
+    const [queueMsg, setQueueMsg] = useState<string | null>(null);
     const [newsTitle, setNewsTitle] = useState('');
     const [newsDescription, setNewsDescription] = useState('');
     const [newsDate, setNewsDate] = useState('');
@@ -49,7 +73,53 @@ export default function AdminPanelPage() {
         fetchPending();
         fetchSuggestions();
         fetchSyncRuns();
+        fetchQueue();
     }, []);
+
+    const fetchQueue = async () => {
+        try {
+            const res = await fetchWithAuth('/api/admin/dead-letters', {}, { redirectOnAuthFailure: false });
+            if (res.ok) setDeadLetters(await res.json());
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingQueue(false);
+        }
+    };
+
+    const retryReminder = async (id: number) => {
+        setQueueMsg(null);
+        try {
+            const res = await fetchWithAuth(`/api/admin/dead-letters/reminders/${id}/retry`, { method: 'POST' }, { redirectOnAuthFailure: false });
+            if (res.status === 409) {
+                const body = await res.json().catch(() => ({} as { result?: string }));
+                setQueueMsg(t(body.result === 'ALREADY_SENT' ? 'admin.queueAlreadySent' : 'admin.queueInFlight'));
+                return;
+            }
+            if (res.ok) {
+                setQueueMsg(t('admin.queueRetried'));
+                await fetchQueue();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const retryFlyer = async (store: string) => {
+        setQueueMsg(null);
+        try {
+            const res = await fetchWithAuth(`/api/admin/dead-letters/flyers/${store}/retry`, { method: 'POST' }, { redirectOnAuthFailure: false });
+            if (res.status === 409) {
+                setQueueMsg(t('admin.queueSyncBusy'));
+                return;
+            }
+            if (res.ok || res.status === 202) {
+                setQueueMsg(t('admin.queueSyncStarted'));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     {/* --- Sync runs --- */}
     const fetchSyncRuns = async () => {
@@ -156,6 +226,63 @@ export default function AdminPanelPage() {
     return (
         <PageShell>
             <PageHeader icon={ShieldAlert}>{t('admin.title')}</PageHeader>
+
+            {/* --- Dead letters --- */}
+            <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#000] dark:shadow-[0_0_30px_rgba(168,85,247,0.15)] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 mb-8 secret:rounded-none">
+                <div className="flex items-center mb-4 border-b-4 border-black dark:border-gray-700 secret:border-[#1cf85d] pb-2">
+                    <RefreshCw className="w-6 h-6 mr-2 text-black dark:text-[#c084fc] secret:text-[#1cf85d]" />
+                    <h2 className="text-2xl font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono uppercase">
+                        {t('admin.queueTitle')}
+                    </h2>
+                </div>
+                <p className="mb-4 text-sm font-medium text-black dark:text-gray-300 secret:text-[#1cf85d]/80 secret:font-mono">
+                    {t('admin.queueHint')}
+                </p>
+                {queueMsg && (
+                    <p className="mb-4 font-bold text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{queueMsg}</p>
+                )}
+                {loadingQueue ? (
+                    <p className="text-center font-bold text-gray-500 secret:text-[#1cf85d] secret:font-mono uppercase">{t('admin.loading')}</p>
+                ) : deadLetters.reminders.length === 0 && deadLetters.flyerSyncs.length === 0 ? (
+                    <p className="text-center font-bold text-gray-500 secret:text-[#1cf85d] secret:font-mono uppercase">{t('admin.queueEmpty')}</p>
+                ) : (
+                    <div className="space-y-6">
+                        {deadLetters.reminders.length > 0 && (
+                            <div>
+                                <h3 className="mb-2 font-black uppercase text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{t('admin.queueReminders')}</h3>
+                                <ul className="space-y-3">
+                                    {deadLetters.reminders.map(row => (
+                                        <li key={row.id} className="bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 flex flex-wrap items-center gap-3">
+                                            <span className="font-black uppercase text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{row.channel}</span>
+                                            <span className="flex-1 min-w-[12rem] font-medium text-black dark:text-gray-200 secret:text-[#1cf85d]/80 secret:font-mono">{row.message}</span>
+                                            {row.lastError && <span className="basis-full text-sm font-bold text-red-700 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono">{row.lastError}</span>}
+                                            <button type="button" onClick={() => void retryReminder(row.id)} className="ml-auto border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 font-black uppercase cursor-pointer secret:font-mono secret:text-[#1cf85d]">
+                                                {t('admin.queueRetry')}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {deadLetters.flyerSyncs.length > 0 && (
+                            <div>
+                                <h3 className="mb-2 font-black uppercase text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{t('admin.queueFlyers')}</h3>
+                                <ul className="space-y-3">
+                                    {deadLetters.flyerSyncs.map(row => (
+                                        <li key={row.store} className="bg-white dark:bg-[#121212] secret:bg-black border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] p-3 flex flex-wrap items-center gap-3">
+                                            <span className="font-black uppercase text-black dark:text-white secret:text-[#1cf85d] secret:font-mono">{row.store}</span>
+                                            {row.lastError && <span className="flex-1 text-sm font-bold text-red-700 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono">{row.lastError}</span>}
+                                            <button type="button" onClick={() => void retryFlyer(row.store)} className="ml-auto border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] px-3 py-1 font-black uppercase cursor-pointer secret:font-mono secret:text-[#1cf85d]">
+                                                {t('admin.queueRetry')}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* --- Flyer sync --- */}
             <div className="bg-slate-100 dark:bg-gradient-to-br dark:from-[#1e1e1e] dark:to-[#2b184a] secret:bg-none secret:bg-transparent shadow-[8px_8px_0px_#000] dark:shadow-[0_0_30px_rgba(168,85,247,0.15)] border-4 border-black dark:border-[#a855f7] secret:border-[#1cf85d] p-6 mb-8 secret:rounded-none">
