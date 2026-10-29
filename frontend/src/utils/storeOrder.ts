@@ -1,11 +1,17 @@
-export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro' | 'real' | 'cba';
+export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro' | 'real' | 'cba' | 'mediamarkt';
 
 export const STORE_ORDER_KEY = 'egyetemkapu.storeOrder';
 
-export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real', 'cba'];
+export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real', 'cba', 'mediamarkt'];
 
 export function storeLabel(store: OrderedStoreId): string {
-    return store === 'real' ? 'REÁL' : store.toUpperCase();
+    if (store === 'real') {
+        return 'REÁL';
+    }
+    if (store === 'mediamarkt') {
+        return 'MEDIA MARKT';
+    }
+    return store.toUpperCase();
 }
 
 const KNOWN = new Set<string>(DEFAULT_STORE_ORDER);
