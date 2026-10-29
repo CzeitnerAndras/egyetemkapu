@@ -48,6 +48,9 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://real.hu/aktualis-ajanlataink/"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.cba.hu/aktualis-ajanlataink/"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

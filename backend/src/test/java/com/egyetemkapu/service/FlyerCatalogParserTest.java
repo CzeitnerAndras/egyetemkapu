@@ -724,4 +724,36 @@ class FlyerCatalogParserTest {
                 "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf",
                 papers.get(1).pdfUrl());
     }
+
+    @Test
+    void discoversCbaPostersAndFeaturedProducts() {
+        List<FlyerCatalogParser.DiscoveredPaper> posters = parser.discoverCbaPosters("""
+                <a href="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg" data-elementor-lightbox-title="CBA-Prima_OP_oktober_Piros">
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros-1024x484.jpg">
+                <img src="https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg">
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals(1, posters.size());
+        assertEquals("CBA Príma Piros", posters.getFirst().title());
+        assertEquals("cba:cba-prima-op-oktober-piros", posters.getFirst().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 1), posters.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), posters.getFirst().validTo());
+        assertEquals(
+                "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg",
+                posters.getFirst().pdfUrl());
+
+        FlyerCatalogParser.ParsedCatalog featured = parser.parseCbaFeatured("""
+                <h3>Érvényes: 2026.10.05- 10.31.</h3>
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png" alt="CBA PIROS GÉPSONKA">
+                <h2 class="woocommerce-loop-product__title">CBA PIROS GÉPSONKA</h2>
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals("cba:kiemelt:2026-10-05", featured.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 5), featured.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), featured.paper().validTo());
+        assertEquals("CBA PIROS GÉPSONKA", featured.products().getFirst().name());
+        assertEquals(
+                "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png",
+                featured.pages().getFirst().imageUrl());
+    }
 }

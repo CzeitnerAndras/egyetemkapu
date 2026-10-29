@@ -126,6 +126,15 @@ public class FlyerCatalogParser {
             "(?i)(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december)"
                     + "[-_. ]+(\\d{1,2})[-_. ]+(\\d{1,2})");
     private static final Pattern REAL_UPLOAD_DATE = Pattern.compile("/(20\\d{2})/(\\d{2})/");
+    private static final Pattern CBA_IMAGE = Pattern.compile(
+            "https://(?:www\\.)?cba\\.hu/wp-content/uploads/(20\\d{2})/(\\d{2})/(CBA[^\\s\"'<>]+?\\.(?:jpe?g|png|webp))",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern CBA_THUMB = Pattern.compile("-\\d+x\\d+\\.(?:jpe?g|png|webp)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CBA_PRODUCT = Pattern.compile(
+            "(?is)<img[^>]+src=\"(https://(?:www\\.)?cba\\.hu/wp-content/uploads/[^\"]+)\""
+                    + "[\\s\\S]{0,5000}?woocommerce-loop-product__title\">\\s*([^<]+?)\\s*</h2>");
+    private static final Pattern CBA_VALID = Pattern.compile(
+            "Érvényes:\\s*(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
     private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
             "(?iu)(?:(20\\d{2})\\.\\s*)?"
                     + "(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)"
@@ -755,6 +764,135 @@ public class FlyerCatalogParser {
             case "december" -> 12;
             default -> 0;
         };
+    }
+
+    public ParsedCatalog parseCbaFeatured(String html, LocalDate today) {
+        if (html == null || html.isBlank()) {
+            return null;
+        }
+        LocalDate[] range = cbaValidity(html);
+        if (range[0] == null || !isCurrentOrUpcoming(range[0], range[1], today)) {
+            return null;
+        }
+        List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
+        Matcher matcher = CBA_PRODUCT.matcher(html);
+        while (matcher.find() && pages.size() < 24) {
+            String image = cbaHttps(matcher.group(1));
+            String name = matcher.group(2).replaceAll("\\s+", " ").trim();
+            if (image == null || name.length() < 3 || isWeakProductName(name)) {
+                continue;
+            }
+            int page = pages.size() + 1;
+            pages.add(new ParsedPage(page, image, name));
+            products.add(new ParsedProduct(name, page, image));
+        }
+        if (pages.isEmpty()) {
+            return null;
+        }
+        return new ParsedCatalog(
+                new DiscoveredPaper(
+                        "cba",
+                        "CBA kiemelt termékek",
+                        "https://www.cba.hu/",
+                        null,
+                        "cba:kiemelt:" + range[0],
+                        range[0],
+                        range[1]),
+                pages,
+                products);
+    }
+
+    public List<DiscoveredPaper> discoverCbaPosters(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = CBA_IMAGE.matcher(html);
+        while (matcher.find()) {
+            String file = matcher.group(3);
+            if (CBA_THUMB.matcher(file).find()) {
+                continue;
+            }
+            String image = "https://www.cba.hu/wp-content/uploads/"
+                    + matcher.group(1) + "/" + matcher.group(2) + "/" + file;
+            if (!FlyerUrlPolicy.isAllowed(image) || papers.containsKey(image)) {
+                continue;
+            }
+            int year = Integer.parseInt(matcher.group(1));
+            int month = realMonth(file);
+            if (month == 0) {
+                month = Integer.parseInt(matcher.group(2));
+            }
+            LocalDate from = null;
+            LocalDate to = null;
+            if (month >= 1 && month <= 12) {
+                from = LocalDate.of(year, month, 1);
+                to = from.plusMonths(1).minusDays(1);
+            }
+            papers.put(image, new DiscoveredPaper(
+                    "cba",
+                    cbaPosterTitle(file),
+                    "https://www.cba.hu/aktualis-ajanlataink/",
+                    image,
+                    "cba:" + cbaSlug(file),
+                    from,
+                    to));
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    static LocalDate[] cbaValidity(String text) {
+        LocalDate[] range = new LocalDate[2];
+        if (text == null) {
+            return range;
+        }
+        Matcher matcher = CBA_VALID.matcher(text);
+        if (!matcher.find()) {
+            return range;
+        }
+        try {
+            int startYear = Integer.parseInt(matcher.group(1));
+            LocalDate from = LocalDate.of(
+                    startYear, Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)));
+            int endYear = matcher.group(4) != null ? Integer.parseInt(matcher.group(4)) : startYear;
+            int endMonth = Integer.parseInt(matcher.group(5));
+            if (matcher.group(4) == null && endMonth < from.getMonthValue()) {
+                endYear++;
+            }
+            LocalDate to = LocalDate.of(endYear, endMonth, Integer.parseInt(matcher.group(6)));
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    private static String cbaPosterTitle(String file) {
+        String name = file.replaceAll("(?i)\\.(?:jpe?g|png|webp)$", "")
+                .replace('_', ' ')
+                .replace('-', ' ');
+        name = name.replaceAll("(?i)\\bop\\b", " ");
+        name = name.replaceAll("(?i)\\boktober(?:\\s+[ivx]+)?\\b", " ");
+        name = name.replaceAll("(?i)\\bcba\\s+prima\\b", "CBA Príma");
+        name = name.replaceAll("\\s+", " ").trim();
+        return name.isBlank() ? "CBA ajánlat" : name;
+    }
+
+    private static String cbaSlug(String file) {
+        String slug = HungarianText.normalize(file).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        return slug.replaceAll("-(?:jpe?g|png|webp)$", "");
+    }
+
+    private static String cbaHttps(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        String trimmed = url.trim().replace("&amp;", "&");
+        return FlyerUrlPolicy.isAllowed(trimmed) ? trimmed : null;
     }
 
     public List<ParsedProduct> dmProducts(String hotspotsJson, int pageNumber, String pageText) {
@@ -2649,7 +2787,7 @@ public class FlyerCatalogParser {
         if (isDisclaimerLine(lower)
                 || lower.matches("(?iu)^(csomag|darab|doboz|db|db[- ]*t[oóöő]l|csak|akció)$")
                 || lower.matches("(?iu)^\\d+\\s*(?:db|cs\\.?|darab|csomag)[- .]*t[oóöő]l$")
-                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan|metro|real|reál)$")
+                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan|metro|real|reál|cba)$")
                 || lower.contains("darab/készlet")
                 || lower.contains("doboz díj")
                 || lower.equals("díj")

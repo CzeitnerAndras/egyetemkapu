@@ -464,8 +464,9 @@ class FlyerSyncServiceTest {
                 "https://katalogus.metro.hu/mm2610_brands/");
         Flyer real = storeFlyer("real", "real:kisalfold-oktober-28-31-01",
                 "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf");
+        Flyer cba = storeFlyer("cba", "cba:kiemelt:2026-10-05", "https://www.cba.hu/");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro, real));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro, real, cba));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -893,6 +894,35 @@ class FlyerSyncServiceTest {
         service.syncReal(LocalDate.of(2026, 10, 29));
 
         verify(flyerPersistenceService, never()).replaceStore(eq("real"), any(), any());
+    }
+
+    @Test
+    void syncCbaPersistsFeaturedProductsAndTheCurrentPoster() {
+        String poster = "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg";
+        when(httpClient.getText("https://www.cba.hu/aktualis-ajanlataink/")).thenReturn("""
+                <a href="%s" data-elementor-lightbox-title="CBA-Prima_OP_oktober_Piros"></a>
+                <img src="https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg">
+                """.formatted(poster));
+        when(httpClient.getText("https://www.cba.hu/")).thenReturn("""
+                <h3>Érvényes: 2026.10.05- 10.31.</h3>
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png">
+                <h2 class="woocommerce-loop-product__title">CBA PIROS GÉPSONKA</h2>
+                """);
+        when(httpClient.getBytes(eq(poster), eq("https://www.cba.hu/aktualis-ajanlataink/")))
+                .thenReturn(new byte[] {1, 2, 3});
+
+        service.syncCba(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("cba"), captor.capture(), any());
+        assertEquals(
+                List.of("cba:kiemelt:2026-10-05", "cba:cba-prima-op-oktober-piros"),
+                captor.getValue().stream().map(catalog -> catalog.paper().sourceKey()).toList());
+        assertEquals("CBA PIROS GÉPSONKA", captor.getValue().getFirst().products().getFirst().name());
+        assertEquals(poster, captor.getValue().get(1).pages().getFirst().imageUrl());
+        verify(httpClient, never()).getBytes(
+                eq("https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg"), any());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {
