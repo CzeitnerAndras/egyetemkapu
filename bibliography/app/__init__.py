@@ -1,0 +1,1 @@
+"""Bibliography sorter for Egyetemkapu."""
