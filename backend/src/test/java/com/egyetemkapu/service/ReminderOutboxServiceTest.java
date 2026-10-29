@@ -221,6 +221,54 @@ class ReminderOutboxServiceTest {
         verify(repository).claimPending(eq(NOW), eq(ReminderOutboxService.BATCH));
     }
 
+    @Test
+    void retryDeadReopensTheSameRow() {
+        ReminderOutbox row = existing(ReminderStatus.DEAD, 5, "most lejár");
+        row.setLastError("discord 503");
+        row.setClaimedAt(NOW);
+        when(repository.findById(4L)).thenReturn(Optional.of(row));
+
+        assertEquals(ReminderRetry.REQUEUED, service.retryDead(4L, NOW));
+
+        assertEquals(ReminderStatus.PENDING, row.getStatus());
+        assertEquals(0, row.getAttempts());
+        assertEquals(NOW, row.getAvailableAt());
+        assertNull(row.getLastError());
+        assertNull(row.getClaimedAt());
+    }
+
+    @Test
+    void retryOfASentReminderDoesNotQueueAnother() {
+        ReminderOutbox row = existing(ReminderStatus.SENT, 1, "most lejár");
+        when(repository.findById(4L)).thenReturn(Optional.of(row));
+
+        assertEquals(ReminderRetry.ALREADY_SENT, service.retryDead(4L, NOW));
+
+        assertEquals(ReminderStatus.SENT, row.getStatus());
+        assertEquals(1, row.getAttempts());
+    }
+
+    @Test
+    void retryOfAPendingReminderDoesNotResetIt() {
+        ReminderOutbox row = existing(ReminderStatus.PENDING, 2, "most lejár");
+        when(repository.findById(4L)).thenReturn(Optional.of(row));
+
+        assertEquals(ReminderRetry.ALREADY_QUEUED, service.retryDead(4L, NOW));
+
+        assertEquals(2, row.getAttempts());
+    }
+
+    @Test
+    void retryOfASendingReminderStaysInFlight() {
+        ReminderOutbox row = sending(3);
+        when(repository.findById(4L)).thenReturn(Optional.of(row));
+
+        assertEquals(ReminderRetry.IN_FLIGHT, service.retryDead(4L, NOW));
+
+        assertEquals(ReminderStatus.SENDING, row.getStatus());
+        assertEquals(3, row.getAttempts());
+    }
+
     private static ReminderDraft draft(String key, String message) {
         return new ReminderDraft(
                 key,

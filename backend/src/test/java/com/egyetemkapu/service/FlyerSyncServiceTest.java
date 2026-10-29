@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -60,6 +61,17 @@ class FlyerSyncServiceTest {
                 image -> List.of(),
                 clock,
                 syncLog);
+    }
+
+    @Test
+    void aSecondStoreRetryDoesNotStartAnotherSync() {
+        assertTrue(service.reserveStoreRetry("aldi"));
+        assertFalse(service.reserveStoreRetry("spar"));
+    }
+
+    @Test
+    void unknownStoreRetryIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> service.reserveStoreRetry("nincs"));
     }
 
     @Test
