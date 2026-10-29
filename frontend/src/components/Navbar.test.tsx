@@ -80,6 +80,7 @@ describe('Navbar Komponens', () => {
         expect(screen.getByRole('link', { name: /nav\.calculators/ })).toHaveAttribute('href', '/kalkulator');
         expect(screen.getByRole('link', { name: /nav\.points/ })).toHaveAttribute('href', '/pontok');
         expect(screen.getByRole('link', { name: /nav\.thesis/ })).toHaveAttribute('href', '/terjedelem');
+        expect(screen.getByRole('link', { name: /nav\.bibliography/ })).toHaveAttribute('href', '/irodalomjegyzek');
         expect(screen.getByRole('link', { name: /nav\.reference/ })).toHaveAttribute('href', '/hivatkozas');
         expect(screen.getByRole('link', { name: /nav\.ai/ })).toHaveAttribute('href', '/ai');
     });

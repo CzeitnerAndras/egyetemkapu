@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, ChevronDown, Target, FileText } from 'lucide-react';
+import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, Flag, Calendar, Bot, Calculator, BookOpen, BookMarked, BrainCircuit, Layers, Link as LinkIcon, ChevronDown, Target, FileText, ListOrdered } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
@@ -264,6 +264,7 @@ export default function Navbar() {
         { to: '/kalkulator', label: t('nav.calculators'), icon: Calculator },
         { to: '/pontok', label: t('nav.points'), icon: Target },
         { to: '/terjedelem', label: t('nav.thesis'), icon: FileText },
+        { to: '/irodalomjegyzek', label: t('nav.bibliography'), icon: ListOrdered },
         { to: '/hivatkozas', label: t('nav.reference'), icon: BookMarked },
         { to: '/ai', label: t('nav.ai'), icon: Bot },
       ],

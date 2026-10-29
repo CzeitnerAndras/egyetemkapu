@@ -21,6 +21,7 @@ const ROUTE_TITLES: Record<string, string> = {
     '/kalkulator': 'nav.calculators',
     '/pontok': 'points.title',
     '/terjedelem': 'thesis.title',
+    '/irodalomjegyzek': 'bib.title',
     '/tudastar': 'kb.title',
     '/hivatkozas': 'ref.title',
     '/tanuloszoba': 'focus.title',

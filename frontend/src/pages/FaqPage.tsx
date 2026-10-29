@@ -20,6 +20,7 @@ const PAGE_LINKS: Record<string, string> = {
     calculator: '/kalkulator',
     points: '/pontok',
     thesis: '/terjedelem',
+    bib: '/irodalomjegyzek',
     cards: '/kartyak',
     settings: '/settings',
     login: '/login',
