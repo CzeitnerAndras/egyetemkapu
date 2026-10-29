@@ -119,6 +119,13 @@ public class FlyerCatalogParser {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DM_SLUG_DATE = Pattern.compile("(20\\d{2}-\\d{2}-\\d{2})");
     private static final Pattern METRO_SLUG = Pattern.compile("^[a-z0-9][a-z0-9_-]{0,120}$");
+    private static final Pattern REAL_PDF_LINK = Pattern.compile(
+            "(?is)<a\\s+href=\"([^\"]+\\.pdf)\"[^>]*class=\"[^\"]*promotion-pdf-download");
+    private static final Pattern REAL_H3 = Pattern.compile("(?is)<h3[^>]*>\\s*([^<]{3,160}?)\\s*</h3>");
+    private static final Pattern REAL_FILE_RANGE = Pattern.compile(
+            "(?i)(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december)"
+                    + "[-_. ]+(\\d{1,2})[-_. ]+(\\d{1,2})");
+    private static final Pattern REAL_UPLOAD_DATE = Pattern.compile("/(20\\d{2})/(\\d{2})/");
     private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
             "(?iu)(?:(20\\d{2})\\.\\s*)?"
                     + "(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)"
@@ -599,6 +606,155 @@ public class FlyerCatalogParser {
                 .thenComparing(DiscoveredPaper::validFrom, Comparator.nullsLast(Comparator.reverseOrder()))
                 .thenComparing(DiscoveredPaper::title, String.CASE_INSENSITIVE_ORDER));
         return current;
+    }
+
+    public List<DiscoveredPaper> discoverRealPapers(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher links = REAL_PDF_LINK.matcher(html);
+        while (links.find()) {
+            String pdf = absoluteRealPdf(links.group(1));
+            if (pdf == null) {
+                continue;
+            }
+            String title = nearestRealTitle(html, links.start());
+            LocalDate[] range = realRange(pdf);
+            DiscoveredPaper paper = new DiscoveredPaper(
+                    "real", title, pdf, pdf, realSourceKey(pdf), range[0], range[1]);
+            DiscoveredPaper previous = papers.get(pdf);
+            if (previous == null) {
+                papers.put(pdf, paper);
+            } else {
+                papers.put(pdf, new DiscoveredPaper(
+                        "real",
+                        joinRealTitles(previous.title(), title),
+                        previous.officialUrl(),
+                        previous.pdfUrl(),
+                        previous.sourceKey(),
+                        previous.validFrom(),
+                        previous.validTo()));
+            }
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    static LocalDate[] realRange(String pdfUrl) {
+        LocalDate[] range = new LocalDate[2];
+        if (pdfUrl == null) {
+            return range;
+        }
+        Matcher upload = REAL_UPLOAD_DATE.matcher(pdfUrl);
+        Matcher file = REAL_FILE_RANGE.matcher(pdfUrl);
+        if (!upload.find() || !file.find()) {
+            return range;
+        }
+        int year = Integer.parseInt(upload.group(1));
+        int month = realMonth(file.group(1));
+        if (month == 0) {
+            return range;
+        }
+        try {
+            int startDay = Integer.parseInt(file.group(2));
+            int endDay = Integer.parseInt(file.group(3));
+            LocalDate from = LocalDate.of(year, month, startDay);
+            int endMonth = month;
+            int endYear = year;
+            if (endDay < startDay) {
+                endMonth++;
+                if (endMonth == 13) {
+                    endMonth = 1;
+                    endYear++;
+                }
+            }
+            LocalDate to = LocalDate.of(endYear, endMonth, endDay);
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    private static String absoluteRealPdf(String href) {
+        if (href == null || href.isBlank()) {
+            return null;
+        }
+        String trimmed = href.trim().replace("&amp;", "&");
+        if (trimmed.startsWith("//")) {
+            trimmed = "https:" + trimmed;
+        } else if (trimmed.startsWith("/")) {
+            trimmed = "https://real.hu" + trimmed;
+        }
+        try {
+            java.net.URI uri = java.net.URI.create(trimmed);
+            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
+            String path = uri.getRawPath() == null ? "" : uri.getRawPath();
+            if (!"https".equalsIgnoreCase(uri.getScheme())
+                    || !(host.equals("real.hu") || host.equals("www.real.hu"))
+                    || !path.toLowerCase(Locale.ROOT).contains("/wp-content/uploads/")
+                    || !path.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+                return null;
+            }
+            String pdf = "https://real.hu" + path;
+            return FlyerUrlPolicy.isAllowed(pdf) ? pdf : null;
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private static String nearestRealTitle(String html, int linkAt) {
+        int from = Math.max(0, linkAt - 8000);
+        Matcher matcher = REAL_H3.matcher(html.substring(from, linkAt));
+        String title = "";
+        while (matcher.find()) {
+            title = matcher.group(1).replaceAll("\\s+", " ").trim();
+        }
+        return title.isBlank() ? "Reál ajánlat" : title;
+    }
+
+    private static String joinRealTitles(String left, String right) {
+        if (left == null || left.isBlank()) {
+            return right;
+        }
+        if (right == null || right.isBlank() || left.equals(right) || left.contains(right)) {
+            return left;
+        }
+        int dash = left.lastIndexOf(" - ");
+        if (dash > 0 && right.startsWith(left.substring(0, dash + 3))) {
+            return left + ", " + right.substring(dash + 3);
+        }
+        return left + ", " + right;
+    }
+
+    private static String realSourceKey(String pdfUrl) {
+        String file = pdfUrl.substring(pdfUrl.lastIndexOf('/') + 1);
+        String slug = HungarianText.normalize(file).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        if (slug.endsWith("-pdf")) {
+            slug = slug.substring(0, slug.length() - 4);
+        }
+        return "real:" + slug;
+    }
+
+    private static int realMonth(String name) {
+        return switch (HungarianText.normalize(name)) {
+            case "januar" -> 1;
+            case "februar" -> 2;
+            case "marcius" -> 3;
+            case "aprilis" -> 4;
+            case "majus" -> 5;
+            case "junius" -> 6;
+            case "julius" -> 7;
+            case "augusztus" -> 8;
+            case "szeptember" -> 9;
+            case "oktober" -> 10;
+            case "november" -> 11;
+            case "december" -> 12;
+            default -> 0;
+        };
     }
 
     public List<ParsedProduct> dmProducts(String hotspotsJson, int pageNumber, String pageText) {
@@ -2493,7 +2649,7 @@ public class FlyerCatalogParser {
         if (isDisclaimerLine(lower)
                 || lower.matches("(?iu)^(csomag|darab|doboz|db|db[- ]*t[oóöő]l|csak|akció)$")
                 || lower.matches("(?iu)^\\d+\\s*(?:db|cs\\.?|darab|csomag)[- .]*t[oóöő]l$")
-                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan)$")
+                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan|metro|real|reál)$")
                 || lower.contains("darab/készlet")
                 || lower.contains("doboz díj")
                 || lower.equals("díj")

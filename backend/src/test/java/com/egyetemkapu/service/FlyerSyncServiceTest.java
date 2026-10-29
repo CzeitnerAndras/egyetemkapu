@@ -462,8 +462,10 @@ class FlyerSyncServiceTest {
                 "https://magazin.dm.hu/expressz_2026-10-15/");
         Flyer metro = storeFlyer("metro", "metro:mm2610_brands",
                 "https://katalogus.metro.hu/mm2610_brands/");
+        Flyer real = storeFlyer("real", "real:kisalfold-oktober-28-31-01",
+                "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro, real));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -848,6 +850,49 @@ class FlyerSyncServiceTest {
         service.syncMetro(LocalDate.of(2026, 10, 29));
 
         verify(flyerPersistenceService, never()).replaceStore(eq("metro"), any(), any());
+    }
+
+    @Test
+    void syncRealPersistsTheWeekendPdfsAndSkipsTheExpiredOne() {
+        String page = "https://real.hu/aktualis-ajanlataink/";
+        String alfi = "https://real.hu/wp-content/uploads/2026/10/JAV4-Alfi-oktober-28-31.-01.pdf";
+        String kisalfold = "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf";
+        when(httpClient.getText(page)).thenReturn("""
+                <h3>Bevásárló hétvége - Pest megye</h3>
+                <a href="%s" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Kisalföld</h3>
+                <a href="%s" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Régi hétvége</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/09/regi-oktober-01-04.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                """.formatted(alfi, kisalfold));
+        when(httpClient.getBytes(eq(alfi), eq(page))).thenReturn(new byte[] {1, 2, 3});
+        when(httpClient.getBytes(eq(kisalfold), eq(page))).thenReturn(new byte[] {4, 5, 6});
+        when(pdfExtractor.extractDocument(any(), any(), eq(16))).thenReturn(
+                new FlyerPdfExtractor.ExtractedDocument(
+                        List.of(new FlyerCatalogParser.ParsedPage(1, null, "")),
+                        List.of(new FlyerCatalogParser.ParsedProduct("Pilos tej", 1, null))));
+
+        service.syncReal(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("real"), captor.capture(), any());
+        assertEquals(
+                List.of("real:jav4-alfi-oktober-28-31-01", "real:kisalfold-oktober-28-31-01"),
+                captor.getValue().stream().map(catalog -> catalog.paper().sourceKey()).toList());
+        assertEquals("Bevásárló hétvége - Pest megye", captor.getValue().getFirst().paper().title());
+        assertEquals("Pilos tej", captor.getValue().getFirst().products().getFirst().name());
+        verify(httpClient, never()).getBytes(
+                eq("https://real.hu/wp-content/uploads/2026/09/regi-oktober-01-04.pdf"), any());
+    }
+
+    @Test
+    void syncRealLeavesStoredFlyersAloneWhenThePageIsMissing() {
+        when(httpClient.getText("https://real.hu/aktualis-ajanlataink/")).thenReturn("");
+
+        service.syncReal(LocalDate.of(2026, 10, 29));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("real"), any(), any());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {

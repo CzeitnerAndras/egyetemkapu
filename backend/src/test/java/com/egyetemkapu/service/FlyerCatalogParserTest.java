@@ -698,4 +698,30 @@ class FlyerCatalogParserTest {
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
         assertEquals(2, products.getFirst().pageNumber());
     }
+
+    @Test
+    void discoversCurrentRealPdfsAndJoinsRegionsThatShareOneFile() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverRealPapers("""
+                <h3 class="et_pb_toggle_title">Bevásárló hétvége - Pest megye</h3>
+                <iframe src="https://heyzine.com/flip-book/cdf837b5da.html"></iframe>
+                <a href="https://real.hu/wp-content/uploads/2026/10/JAV4-Alfi-oktober-28-31.-01.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Kelet Magyarország</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/10/JAV4-Alfi-oktober-28-31.-01.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Kisalföld</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Régi hétvége</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/09/regi-oktober-01-04.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <a href="https://real.hu/wp-content/uploads/2022/08/Uzletszabalyzat.pdf">Üzletszabályzat</a>
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals(
+                List.of("real:jav4-alfi-oktober-28-31-01", "real:kisalfold-oktober-28-31-01"),
+                papers.stream().map(FlyerCatalogParser.DiscoveredPaper::sourceKey).toList());
+        assertEquals("Bevásárló hétvége - Pest megye, Kelet Magyarország", papers.getFirst().title());
+        assertEquals(LocalDate.of(2026, 10, 28), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), papers.getFirst().validTo());
+        assertEquals(
+                "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf",
+                papers.get(1).pdfUrl());
+    }
 }

@@ -48,7 +48,9 @@ public final class FlyerUrlPolicy {
             "www.metro.hu",
             "metro.hu",
             "katalogus.metro.hu",
-            "components.me-catalogues.metronom.com"
+            "components.me-catalogues.metronom.com",
+            "real.hu",
+            "www.real.hu"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;

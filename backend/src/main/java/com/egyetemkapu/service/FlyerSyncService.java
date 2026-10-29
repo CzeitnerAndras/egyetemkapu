@@ -36,7 +36,7 @@ public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
     private static final List<String> STORES = List.of(
-            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm", "metro");
+            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm", "metro", "real");
     private static final int LIDL_MAX_PDF_PAGES = 80;
     private static final String LIDL_OVERVIEW = "https://www.lidl.hu/c/szorolap/s10013623";
     private static final String ROSSMANN_LIST = "https://magazin.microservices.rossmann.hu/api/magazines";
@@ -48,6 +48,9 @@ public class FlyerSyncService {
                     + "&metatags%5B%5D=channel=website";
     private static final List<String> METRO_IMAGE_SIZES = List.of("at1200", "at1000", "at1600", "at800", "at600");
     private static final int METRO_MAX_CATALOGS = 8;
+    private static final String REAL_PAGE = "https://real.hu/aktualis-ajanlataink/";
+    private static final int REAL_MAX_CATALOGS = 6;
+    private static final int REAL_MAX_PDF_PAGES = 16;
     private static final List<String> DM_IMAGE_SIZES = List.of("at1200", "at1000", "at1600", "at800", "at600");
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
@@ -65,6 +68,7 @@ public class FlyerSyncService {
     private final AtomicBoolean rossmannRefreshed = new AtomicBoolean(false);
     private final AtomicBoolean dmRefreshed = new AtomicBoolean(false);
     private final AtomicBoolean metroRefreshed = new AtomicBoolean(false);
+    private final AtomicBoolean realRefreshed = new AtomicBoolean(false);
     private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
     private static final int COOP_READ_GENERATION = 4;
     private final ConcurrentHashMap<Long, Integer> coopReadApplied = new ConcurrentHashMap<>();
@@ -130,6 +134,7 @@ public class FlyerSyncService {
                 case "rossmann" -> syncRossmann(today);
                 case "dm" -> syncDm(today);
                 case "metro" -> syncMetro(today);
+                case "real" -> syncReal(today);
                 default -> log.warn("No flyer retry for store {}", store);
             }
         } finally {
@@ -153,6 +158,7 @@ public class FlyerSyncService {
             syncRossmann(today);
             syncDm(today);
             syncMetro(today);
+            syncReal(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -557,6 +563,71 @@ public class FlyerSyncService {
         });
     }
 
+    @Async
+    public void refreshRealOnce() {
+        if (!realRefreshed.compareAndSet(false, true)) {
+            return;
+        }
+        syncReal(LocalDate.now(clock));
+    }
+
+    public void syncReal(LocalDate today) {
+        tracked("real", () -> {
+            String html = safeText(REAL_PAGE);
+            if (html.isBlank()) {
+                return 0;
+            }
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            FlyerProductExtractor extractor = extractors.forStore("real");
+            for (DiscoveredPaper paper : parser.discoverRealPapers(html, today)) {
+                if (catalogs.size() >= REAL_MAX_CATALOGS) {
+                    break;
+                }
+                byte[] pdf = safeBytes(paper.pdfUrl(), REAL_PAGE);
+                FlyerPdfExtractor.ExtractedDocument extracted =
+                        pdfExtractor.extractDocument(pdf, extractor, REAL_MAX_PDF_PAGES);
+                List<ParsedPage> pages = extracted == null || extracted.pages() == null
+                        ? List.of()
+                        : extracted.pages();
+                List<ParsedProduct> products = new ArrayList<>();
+                if (extracted != null && extracted.products() != null) {
+                    products.addAll(extracted.products());
+                }
+                if (products.isEmpty()) {
+                    products.addAll(realProductsFromImages(pdf, pages, extractor));
+                }
+                ParsedCatalog catalog = extractor.fillProducts(new ParsedCatalog(paper, pages, products));
+                if (!keepCatalog(catalog, today)) {
+                    continue;
+                }
+                catalogs.add(catalog);
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("real", catalogs, LocalDateTime.now(clock));
+            }
+            return productCount(catalogs);
+        });
+    }
+
+    private List<ParsedProduct> realProductsFromImages(
+            byte[] pdf, List<ParsedPage> pages, FlyerProductExtractor extractor) {
+        List<ParsedProduct> products = new ArrayList<>();
+        if (pdf == null || pdf.length == 0 || pages == null) {
+            return products;
+        }
+        for (ParsedPage page : pages) {
+            if (products.size() >= 200) {
+                break;
+            }
+            byte[] png = pdfExtractor.renderPagePng(pdf, page.pageNumber());
+            if (png == null || png.length == 0) {
+                continue;
+            }
+            products.addAll(extractor.extractFromLayout(coopPageOcr.read(png), page.pageNumber()));
+        }
+        return products;
+    }
+
     private ParsedCatalog withLidlPdfProducts(ParsedCatalog catalog, FlyerProductExtractor extractor) {
         byte[] pdf = safeBytes(catalog.paper().pdfUrl(), "https://www.lidl.hu/");
         if (pdf == null || pdf.length == 0) {
@@ -920,7 +991,8 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(flyer -> "lidl".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "rossmann".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "dm".equals(flyer.getStore()))
-                || flyers.stream().noneMatch(flyer -> "metro".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "metro".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "real".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {
