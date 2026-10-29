@@ -19,13 +19,20 @@ const sorted = [
 describe('BibliographyPage', () => {
     beforeEach(() => {
         globalThis.fetch = jest.fn();
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            return { ok: false, status: 500, json: async () => null };
+        });
     });
 
     it('a mintát elküldi a Python szolgáltatásnak, és a kapott sorrendet írja ki', async () => {
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            json: async () => ({ entries: sorted, count: sorted.length }),
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            return { ok: true, status: 200, json: async () => ({ entries: sorted, count: sorted.length }) };
         });
 
         const user = userEvent.setup();
@@ -55,11 +62,16 @@ describe('BibliographyPage', () => {
         await user.click(screen.getByRole('button', { name: 'bib.sort' }));
 
         expect(screen.getByText(/bib\.err\.empty/)).toBeInTheDocument();
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        expect(globalThis.fetch).not.toHaveBeenCalledWith('/api/bibliography/sort', expect.anything());
     });
 
     it('szól, ha a szolgáltatás nem elérhető', async () => {
-        (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error('offline'));
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            throw new Error('offline');
+        });
 
         const user = userEvent.setup();
         render(<BibliographyPage />);
@@ -67,7 +79,16 @@ describe('BibliographyPage', () => {
         await user.click(screen.getByRole('button', { name: 'bib.sort' }));
 
         await waitFor(() => {
-            expect(screen.getByText(/bib\.error/)).toBeInTheDocument();
+            expect(screen.getByRole('alert')).toHaveTextContent('bib.down');
         });
+    });
+
+    it('ha a health nem válaszol, a rendezés leáll', async () => {
+        (globalThis.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
+
+        render(<BibliographyPage />);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('bib.down');
+        expect(screen.getByRole('button', { name: 'bib.sort' })).toBeDisabled();
     });
 });

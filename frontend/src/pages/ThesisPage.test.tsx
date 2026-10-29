@@ -31,13 +31,20 @@ const report = {
 describe('ThesisPage', () => {
     beforeEach(() => {
         globalThis.fetch = jest.fn();
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            return { ok: false, status: 500, json: async () => null };
+        });
     });
 
     it('a mintát elküldi a Python szolgáltatásnak, és kiírja a szószámot', async () => {
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            json: async () => report,
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            return { ok: true, status: 200, json: async () => report };
         });
 
         const user = userEvent.setup();
@@ -54,7 +61,8 @@ describe('ThesisPage', () => {
                     body: expect.stringContaining('összegzése'),
                 })
             );
-            const body = JSON.parse((globalThis.fetch as jest.Mock).mock.calls[0][1].body as string);
+            const call = (globalThis.fetch as jest.Mock).mock.calls.find((item) => item[0] === '/api/thesis/check');
+            const body = JSON.parse(call[1].body as string);
             expect(body.wordLimit).toBe(250);
             expect(body.characterLimit).toBeNull();
             expect(screen.getByText('12')).toBeInTheDocument();
@@ -70,11 +78,16 @@ describe('ThesisPage', () => {
         await user.click(screen.getByRole('button', { name: 'thesis.check' }));
 
         expect(screen.getByText(/thesis\.err\.empty/)).toBeInTheDocument();
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        expect(globalThis.fetch).not.toHaveBeenCalledWith('/api/thesis/check', expect.anything());
     });
 
     it('szól, ha a szolgáltatás nem elérhető', async () => {
-        (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error('offline'));
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            throw new Error('offline');
+        });
 
         const user = userEvent.setup();
         render(<ThesisPage />);
@@ -82,7 +95,16 @@ describe('ThesisPage', () => {
         await user.click(screen.getByRole('button', { name: 'thesis.check' }));
 
         await waitFor(() => {
-            expect(screen.getByText(/thesis\.error/)).toBeInTheDocument();
+            expect(screen.getByRole('alert')).toHaveTextContent('thesis.down');
         });
+    });
+
+    it('ha a health nem válaszol, a számolás leáll', async () => {
+        (globalThis.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
+
+        render(<ThesisPage />);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('thesis.down');
+        expect(screen.getByRole('button', { name: 'thesis.check' })).toBeDisabled();
     });
 });

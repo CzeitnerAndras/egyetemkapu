@@ -28,13 +28,20 @@ const plan = {
 describe('PointsPage', () => {
     beforeEach(() => {
         globalThis.fetch = jest.fn();
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            return { ok: false, status: 500, json: async () => null };
+        });
     });
 
     it('a mintával megkérdezi a Python szolgáltatást, és kiírja a vizsgapontot', async () => {
-        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            json: async () => plan,
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            return { ok: true, status: 200, json: async () => plan };
         });
 
         const user = userEvent.setup();
@@ -78,7 +85,7 @@ describe('PointsPage', () => {
         await user.click(screen.getByRole('button', { name: 'points.calculate' }));
 
         expect(screen.getByText(/points\.err\.earnedAboveMax/)).toBeInTheDocument();
-        expect(globalThis.fetch).not.toHaveBeenCalled();
+        expect(globalThis.fetch).not.toHaveBeenCalledWith('/api/points/plan', expect.anything());
     });
 
     it('új részt lehet hozzáadni, és az utolsót nem engedi törölni egyedül', async () => {
@@ -91,14 +98,28 @@ describe('PointsPage', () => {
     });
 
     it('szól, ha a szolgáltatás nem elérhető', async () => {
-        (globalThis.fetch as jest.Mock).mockRejectedValueOnce(new Error('offline'));
+        (globalThis.fetch as jest.Mock).mockImplementation(async (url: RequestInfo | URL) => {
+            if (String(url).includes('/health')) {
+                return { ok: true, status: 200, json: async () => ({ status: 'ok' }) };
+            }
+            throw new Error('offline');
+        });
 
         const user = userEvent.setup();
         render(<PointsPage />);
         await user.click(screen.getByRole('button', { name: 'points.calculate' }));
 
         await waitFor(() => {
-            expect(screen.getByText(/points\.error/)).toBeInTheDocument();
+            expect(screen.getByRole('alert')).toHaveTextContent('points.down');
         });
+    });
+
+    it('ha a health nem válaszol, a számolás gomb leáll, a többi oldal szövege megmarad', async () => {
+        (globalThis.fetch as jest.Mock).mockRejectedValue(new Error('offline'));
+
+        render(<PointsPage />);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('points.down');
+        expect(screen.getByRole('button', { name: 'points.calculate' })).toBeDisabled();
     });
 });
