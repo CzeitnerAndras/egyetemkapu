@@ -15,7 +15,7 @@ Live at [egyetemkapu.hu](https://egyetemkapu.hu). Sale flyers are on [akcio.egye
 - Length checker for a thesis abstract or chapter
 - Study room: Pomodoro timer, notes, lo-fi
 - Flashcards with a simple review schedule
-- Knowledge base; uploads wait for admin approval
+- Knowledge base with Hungarian full-text search; uploads wait for admin approval
 - Link directory for Hungarian universities
 - Idea box for missing features
 - Grocery flyers, scraped and shown on the flyer site

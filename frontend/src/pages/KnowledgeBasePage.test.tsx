@@ -282,4 +282,47 @@ describe('KnowledgeBasePage Komponens', () => {
             expect(screen.getByText(/kb\.networkError/)).toBeInTheDocument();
         });
     });
+
+    it('kereséskor a találati listát kéri, és kiemeli a részletet', async () => {
+        mockDocumentsFetch([]);
+        mockDocumentsFetch([{
+            ...sampleDoc,
+            title: 'Jegyzet',
+            description: 'A lap végén állnak a kérdések.',
+            snippet: 'A lap végén állnak a \u001ekérdések\u001f.',
+        }]);
+
+        const user = userEvent.setup();
+        render(<KnowledgeBasePage />);
+
+        await waitFor(() => expect(screen.getByText(/kb\.empty/)).toBeInTheDocument());
+        await user.type(screen.getByLabelText('kb.searchLabel'), 'kerdes');
+        await user.click(screen.getByRole('button', { name: 'kb.searchSubmit' }));
+
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/documents/search?q=kerdes',
+                expect.anything()
+            );
+            expect(screen.getByText('kérdések').tagName).toBe('MARK');
+        });
+    });
+
+    it('egy karakterre nem indít keresést', async () => {
+        mockDocumentsFetch([]);
+        const user = userEvent.setup();
+        render(<KnowledgeBasePage />);
+
+        await waitFor(() => expect(screen.getByText(/kb\.empty/)).toBeInTheDocument());
+        await user.type(screen.getByLabelText('kb.searchLabel'), 'a');
+        await user.click(screen.getByRole('button', { name: 'kb.searchSubmit' }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/kb\.searchShort/)).toBeInTheDocument();
+        });
+        expect(globalThis.fetch).not.toHaveBeenCalledWith(
+            expect.stringContaining('/api/documents/search'),
+            expect.anything()
+        );
+    });
 });
