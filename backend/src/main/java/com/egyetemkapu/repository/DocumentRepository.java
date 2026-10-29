@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface DocumentRepository extends JpaRepository<Document, Long> {
+public interface DocumentRepository extends JpaRepository<Document, Long>, DocumentRepositoryCustom {
     List<Document> findByStatusOrderByCreatedAtDesc(DocumentStatus status);
     List<Document> findByCategoryAndStatusOrderByCreatedAtDesc(String category, DocumentStatus status);
     List<Document> findByUploader(User uploader);

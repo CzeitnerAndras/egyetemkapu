@@ -1,5 +1,6 @@
 package com.egyetemkapu.service;
 
+import com.egyetemkapu.dto.DocumentSearchHitDto;
 import com.egyetemkapu.model.Document;
 import com.egyetemkapu.model.DocumentStatus;
 import com.egyetemkapu.model.User;
@@ -141,6 +142,18 @@ public class DocumentService {
             return documentRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, DocumentStatus.APPROVED);
         }
         return documentRepository.findByStatusOrderByCreatedAtDesc(DocumentStatus.APPROVED);
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentSearchHitDto> searchApproved(String query, String category) {
+        String text = query == null ? "" : query.trim().replaceAll("\\s+", " ");
+        if (text.length() < 2 || text.length() > 200) {
+            return List.of();
+        }
+        String selected = category == null || category.isBlank() ? null : category.trim();
+        return documentRepository.searchApproved(text, selected).stream()
+                .map(DocumentSearchHitDto::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)

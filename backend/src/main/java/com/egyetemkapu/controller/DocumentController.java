@@ -2,6 +2,7 @@ package com.egyetemkapu.controller;
 
 import com.egyetemkapu.annotation.LogAction;
 import com.egyetemkapu.dto.DocumentResponseDto;
+import com.egyetemkapu.dto.DocumentSearchHitDto;
 import com.egyetemkapu.model.Document;
 import com.egyetemkapu.service.DocumentService;
 import org.slf4j.Logger;
@@ -59,6 +60,13 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.getApprovedDocuments(category).stream()
                 .map(DocumentResponseDto::from)
                 .toList());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<DocumentSearchHitDto>> searchDocuments(
+            @RequestParam("q") String query,
+            @RequestParam(required = false) String category) {
+        return ResponseEntity.ok(documentService.searchApproved(query, category));
     }
 
     @GetMapping("/download/{id}")
