@@ -6,6 +6,7 @@ import com.egyetemkapu.dto.FlyerSummaryDto;
 import com.egyetemkapu.model.Flyer;
 import com.egyetemkapu.model.FlyerPage;
 import com.egyetemkapu.model.FlyerProduct;
+import com.egyetemkapu.repository.FlyerProductRepository;
 import com.egyetemkapu.repository.FlyerRepository;
 import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +35,7 @@ import static org.mockito.Mockito.when;
 class FlyerQueryServiceTest {
 
     @Mock private FlyerRepository flyerRepository;
+    @Mock private FlyerProductRepository flyerProductRepository;
     @Mock private FlyerSyncService flyerSyncService;
 
     private FlyerQueryService service;
@@ -40,109 +44,40 @@ class FlyerQueryServiceTest {
     void setUp() {
         Clock clock = Clock.fixed(Instant.parse("2026-09-06T10:00:00Z"), ZoneId.of("Europe/Budapest"));
         service = new FlyerQueryService(
-                flyerRepository, flyerSyncService, clock, new FlyerExtractorRegistry(new FlyerCatalogParser()));
+                flyerRepository, flyerProductRepository, flyerSyncService, clock, new FlyerExtractorRegistry(new FlyerCatalogParser()));
     }
 
     @Test
-    void searchFindsAccentInsensitiveProductAndRefreshesWhenStale() {
-        Flyer flyer = flyerWithProduct("Kakaóscsiga");
+    void searchRanksIndexedCandidatesAndRefreshesWhenStale() {
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(true);
-        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(flyer));
+        when(flyerProductRepository.searchCandidates(
+                eq("kakaoscsiga"),
+                eq("%kakaoscsiga%"),
+                eq(LocalDate.of(2026, 9, 6)),
+                eq(LocalDate.of(2026, 9, 14))))
+                .thenReturn(List.of(searchRow(11L, 3L, "aldi", "ALDI heti újság", 2, "Kakaóscsiga")));
 
-        List<FlyerSearchHitDto> hits = service.search("kakaoscsiga");
+        List<FlyerSearchHitDto> hits = service.search("kakaóscsiga");
 
         assertEquals(1, hits.size());
         assertEquals("Kakaóscsiga", hits.getFirst().productName());
         assertEquals("product", hits.getFirst().kind());
         verify(flyerSyncService).refreshAsync();
+        verify(flyerRepository, never()).findAllByOrderByStoreAscTitleAsc();
     }
 
     @Test
-    void searchIgnoresPageTextThatOnlyRepeatsTheFlyer() {
-        Flyer flyer = new Flyer();
-        flyer.setId(8L);
-        flyer.setStore("spar");
-        flyer.setTitle("SPAR szórólap");
-        FlyerPage page = new FlyerPage();
-        page.setPageNumber(4);
-        page.setPageText("Ajánlat: kakaóscsiga a pékpultnál");
-        flyer.addPage(page);
-        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
-        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(flyer));
-
-        assertTrue(service.search("kakaóscsiga").isEmpty());
-    }
-
-    @Test
-    void searchMatchesAWholeWordAndSkipsItInsideAnotherWord() {
-        Flyer apples = flyerWithProduct("Jonagold alma");
-        apples.setId(4L);
-        Flyer brand = flyerWithProduct("ALMARE SEAFOOD főtt garnélarák");
-        brand.setId(5L);
-        brand.getProducts().getFirst().setId(12L);
-        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
-        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(apples, brand));
-
-        List<FlyerSearchHitDto> hits = service.search("alma");
-
-        assertEquals(1, hits.size());
-        assertEquals("Jonagold alma", hits.getFirst().productName());
-    }
-
-    @Test
-    void searchKeepsOneHitWhenRegionalFlyersRepeatTheSameProduct() {
-        Flyer alfold = flyerWithProduct("Alma, Banán");
-        alfold.setId(20L);
-        alfold.setStore("coop");
-        alfold.setTitle("Coop Alföld");
-        Flyer eszak = flyerWithProduct("Alma, Banán");
-        eszak.setId(21L);
-        eszak.setStore("coop");
-        eszak.setTitle("Coop Észak-Kelet");
-        eszak.getProducts().getFirst().setId(22L);
-        Flyer tisza = flyerWithProduct("Alma, Banán");
-        tisza.setId(22L);
-        tisza.setStore("coop");
-        tisza.setTitle("Coop Tisza");
-        tisza.getProducts().getFirst().setId(23L);
-        Flyer auchan = flyerWithProduct("GÁLA ALMA");
-        auchan.setId(23L);
-        auchan.setStore("auchan");
-        auchan.getProducts().getFirst().setId(24L);
-        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
-        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(alfold, eszak, tisza, auchan));
-
-        List<FlyerSearchHitDto> hits = service.search("alma");
-
-        assertEquals(2, hits.size());
-        assertEquals(1, hits.stream().filter(hit -> "coop".equals(hit.store())).count());
-        assertEquals(1, hits.stream().filter(hit -> "auchan".equals(hit.store())).count());
-    }
-
-    @Test
-    void searchOmitsFlyerPageWhenAProductOnThatPageAlreadyMatched() {
-        Flyer flyer = flyerWithProduct("Karlskrone ínyenc grillkolbász");
-        flyer.getPages().getFirst().setPageText("Karlskrone ínyenc grillkolbász 2330 Ft/kg alkoholmentes sör");
-        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
-        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(flyer));
-
-        List<FlyerSearchHitDto> hits = service.search("karlskrone");
-
-        assertEquals(1, hits.size());
-        assertEquals("product", hits.getFirst().kind());
-        assertEquals("Karlskrone ínyenc grillkolbász", hits.getFirst().productName());
-    }
-
-    @Test
-    void blankQueryReturnsNothing() {
+    void blankOrSingleLetterQueryDoesNotScan() {
         assertTrue(service.search("   ").isEmpty());
+        assertTrue(service.search("a").isEmpty());
+        verify(flyerProductRepository, never()).searchCandidates(any(), any(), any(), any());
     }
 
     @Test
     void listShowsCurrentFlyersBeforeUpcomingAndHidesExpired() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
         FlyerQueryService listing = new FlyerQueryService(
-                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
+                flyerRepository, flyerProductRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(
                 datedFlyer("ALDI 36. hét", LocalDate.of(2026, 9, 3), LocalDate.of(2026, 9, 9)),
@@ -160,7 +95,7 @@ class FlyerQueryServiceTest {
     void listHidesFlyersWithNoPages() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
         FlyerQueryService listing = new FlyerQueryService(
-                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
+                flyerRepository, flyerProductRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         Flyer empty = datedFlyer("ALDI KOZEPSO SOR 2026 KW38", LocalDate.of(2026, 9, 17), LocalDate.of(2026, 9, 23));
         empty.getPages().clear();
@@ -176,7 +111,7 @@ class FlyerQueryServiceTest {
     void listPutsAldiOnlineBeforeMiddleLaneAndSparBrandsInOrder() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
         FlyerQueryService listing = new FlyerQueryService(
-                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
+                flyerRepository, flyerProductRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         Flyer middle = datedFlyer("ALDI Középső sor", LocalDate.of(2026, 9, 10), LocalDate.of(2026, 9, 16));
         middle.setOfficialUrl("https://szorolap.aldi.hu/aldi_kozepso_sor_2026_kw37/");
@@ -211,7 +146,7 @@ class FlyerQueryServiceTest {
     void listPutsTescoHypermarketBeforeSupermarketAndCatalogue() {
         Clock thursday = Clock.fixed(Instant.parse("2026-09-10T08:00:00Z"), ZoneId.of("Europe/Budapest"));
         FlyerQueryService listing = new FlyerQueryService(
-                flyerRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
+                flyerRepository, flyerProductRepository, flyerSyncService, thursday, new FlyerExtractorRegistry(new FlyerCatalogParser()));
         when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 10, 10, 0))).thenReturn(false);
         Flyer catalogue = datedFlyer("Tesco Katalógus", LocalDate.of(2026, 8, 5), LocalDate.of(2026, 9, 13));
         catalogue.setStore("tesco");
@@ -236,15 +171,16 @@ class FlyerQueryServiceTest {
         assertEquals(List.of("Tesco Hipermarket", "Tesco Szupermarket", "Tesco Katalógus"), titles);
     }
 
-    @Test
-    void searchSkipsExpiredFlyers() {
-        Flyer expired = flyerWithProduct("Kakaóscsiga");
-        expired.setValidFrom(LocalDate.of(2026, 5, 14));
-        expired.setValidTo(LocalDate.of(2026, 5, 20));
-        when(flyerSyncService.isStale(LocalDateTime.of(2026, 9, 6, 12, 0))).thenReturn(false);
-        when(flyerRepository.findAllByOrderByStoreAscTitleAsc()).thenReturn(List.of(expired));
-
-        assertTrue(service.search("kakaoscsiga").isEmpty());
+    private static FlyerProductRepository.SearchRow searchRow(
+            Long productId, Long flyerId, String store, String title, int pageNumber, String name) {
+        return new FlyerProductRepository.SearchRow() {
+            public Long getProductId() { return productId; }
+            public Long getFlyerId() { return flyerId; }
+            public String getStore() { return store; }
+            public String getTitle() { return title; }
+            public Integer getPageNumber() { return pageNumber; }
+            public String getName() { return name; }
+        };
     }
 
     @Test

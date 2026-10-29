@@ -64,6 +64,7 @@ class FlyerPersistenceServiceTest {
         assertEquals(42L, persisted.getId());
         assertEquals("ALDI Online", persisted.getTitle());
         assertEquals(1, persisted.getPages().size());
+        assertEquals("alma", persisted.getProducts().getFirst().getNameFolded());
         verify(flyerRepository).saveAndFlush(keep);
         verify(flyerRepository).delete(drop);
     }

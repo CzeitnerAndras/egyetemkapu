@@ -24,7 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.intThat;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -38,6 +41,7 @@ class FlyerSyncServiceTest {
     @Mock private FlyerPersistenceService flyerPersistenceService;
     @Mock private FlyerHttpClient httpClient;
     @Mock private FlyerPdfExtractor pdfExtractor;
+    @Mock private FlyerSyncLog syncLog;
 
     private FlyerCatalogParser parser;
     private FlyerSyncService service;
@@ -54,7 +58,8 @@ class FlyerSyncServiceTest {
                 pdfExtractor,
                 new FlyerExtractorRegistry(parser),
                 image -> List.of(),
-                clock);
+                clock,
+                syncLog);
     }
 
     @Test
@@ -73,6 +78,18 @@ class FlyerSyncServiceTest {
         verify(flyerPersistenceService).replaceStore(eq("aldi"), captor.capture(), any());
         assertEquals("ALDI KW36", captor.getValue().getFirst().paper().title());
         assertEquals("Kakaóscsiga", captor.getValue().getFirst().products().getFirst().name());
+        verify(syncLog).record(eq("aldi"), any(), any(), intThat(count -> count > 0), isNull());
+    }
+
+    // --- Sync log ---
+    @Test
+    void syncAldiRecordsAFailureAndKeepsTheStoredFlyer() {
+        when(httpClient.getText(any())).thenThrow(new IllegalStateException("aldi down"));
+
+        service.syncAldi(LocalDate.of(2026, 9, 6));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("aldi"), any(), any());
+        verify(syncLog).record(eq("aldi"), any(), any(), eq(0), eq("aldi down"));
     }
 
     @Test
@@ -219,9 +236,10 @@ class FlyerSyncServiceTest {
         verify(flyerPersistenceService).replaceStore(eq("tesco"), captor.capture(), any());
         assertEquals(List.of("Tesco Hipermarket", "Tesco Szupermarket", "Tesco Katalógus"),
                 captor.getValue().stream().map(catalog -> catalog.paper().title()).toList());
-        assertTrue(captor.getValue().getFirst().paper().officialUrl().contains("/hipermarket/tesco-ujsag-2026-09-10/1"));
+        assertTrue(                captor.getValue().getFirst().paper().officialUrl().contains("/hipermarket/tesco-ujsag-2026-09-10/1"));
     }
 
+    // --- Recent Tesco ---
     @Test
     void syncTescoSkipsWhenRecentlySynced() {
         Flyer existing = new Flyer();
@@ -233,6 +251,7 @@ class FlyerSyncServiceTest {
 
         verify(httpClient, never()).postJson(any(), any());
         verify(flyerPersistenceService, never()).replaceStore(eq("tesco"), any(), any());
+        verify(syncLog, never()).record(any(), any(), any(), anyInt(), any());
     }
 
     @Test
@@ -363,7 +382,8 @@ class FlyerSyncServiceTest {
                         new FlyerCatalogParser.TextRun(64, 80, 70, 16, "párizsi"),
                         new FlyerCatalogParser.TextRun(20, 110, 40, 16, "289"),
                         new FlyerCatalogParser.TextRun(20, 130, 24, 16, "Ft")),
-                Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest")));
+                Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest")),
+                syncLog);
         when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
             String url = invocation.getArgument(0);
             if (url.contains("ajanlatkereso")) {
@@ -455,7 +475,8 @@ class FlyerSyncServiceTest {
                         new TextRun(66, 120, 50, 16, "Panni"),
                         new TextRun(300, 120, 36, 16, "Red"),
                         new TextRun(342, 120, 40, 16, "Bull")),
-                clock);
+                clock,
+                syncLog);
         Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
         coop.setId(7L);
         FlyerPage page = new FlyerPage();
