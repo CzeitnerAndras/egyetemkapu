@@ -41,6 +41,10 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://magazin.dm.hu/expressz_2026-10-15/data.json"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.metro.hu/ajanlataink/katalogusok"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://katalogus.metro.hu/mm2610_brands/data.json"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://components.me-catalogues.metronom.com/api/catalog-filter?feeds=metro-nagykereskedelem"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

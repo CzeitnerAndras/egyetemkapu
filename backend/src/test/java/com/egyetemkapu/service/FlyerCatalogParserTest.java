@@ -653,4 +653,49 @@ class FlyerCatalogParserTest {
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
         assertEquals(1, products.getFirst().pageNumber());
     }
+
+    @Test
+    void discoversCurrentMetroCatalogsAndDropsExpiredOnes() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMetroPapers("""
+                {"items":[
+                  {"slug":"regi-katalogus","name":"Régi katalógus","validFrom":"2026-09-01","validTo":"2026-09-15"},
+                  {"slug":"mm2610_brands","name":"Márkák katalógus 2026/10","validFrom":"2026-10-16","validTo":"2026-10-31T23:55:00.000+01:00"},
+                  {"slug":"not a slug","name":"Rossz"},
+                  {"slug":"olasz-katalogus","name":"Olasz katalógus"}
+                ]}
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals(List.of("metro:mm2610_brands", "metro:olasz-katalogus"),
+                papers.stream().map(FlyerCatalogParser.DiscoveredPaper::sourceKey).toList());
+        assertEquals("Márkák katalógus 2026/10", papers.getFirst().title());
+        assertEquals("https://katalogus.metro.hu/mm2610_brands/", papers.getFirst().officialUrl());
+        assertEquals(LocalDate.of(2026, 10, 16), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), papers.getFirst().validTo());
+    }
+
+    @Test
+    void metroPageTextKeepsTheBrandWithTheProductName() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.metroProducts("""
+                METRO.HU
+                2026.
+                OKTÓBER 16–31.
+                DANONE
+                DANETTE PUDING
+                többféle
+                4x90-125 g/gyűjtő
+                839,-
+                PICK
+                TÉLISZALÁMI
+                400 g/db
+                MAGYAR
+                tejföl 20%
+                gyűjtő
+                Válogasd össze kedvenc terméked íz
+                """, 2);
+
+        assertEquals(
+                List.of("DANONE DANETTE PUDING", "PICK TÉLISZALÁMI", "MAGYAR tejföl"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+        assertEquals(2, products.getFirst().pageNumber());
+    }
 }

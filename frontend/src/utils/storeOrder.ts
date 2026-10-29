@@ -1,8 +1,8 @@
-export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm';
+export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro';
 
 export const STORE_ORDER_KEY = 'egyetemkapu.storeOrder';
 
-export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm'];
+export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro'];
 
 const KNOWN = new Set<string>(DEFAULT_STORE_ORDER);
 

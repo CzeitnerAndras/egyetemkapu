@@ -460,8 +460,10 @@ class FlyerSyncServiceTest {
                 "https://shop.rossmann.hu/magazin/altalanos/333");
         Flyer dm = storeFlyer("dm", "dm:expressz_2026-10-15",
                 "https://magazin.dm.hu/expressz_2026-10-15/");
+        Flyer metro = storeFlyer("metro", "metro:mm2610_brands",
+                "https://katalogus.metro.hu/mm2610_brands/");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -804,6 +806,48 @@ class FlyerSyncServiceTest {
         service.syncDm(LocalDate.of(2026, 10, 16));
 
         verify(flyerPersistenceService, never()).replaceStore(eq("dm"), any(), any());
+    }
+
+    @Test
+    void syncMetroPersistsTheCurrentCatalogAndSkipsTheExpiredOne() {
+        String feed = "https://components.me-catalogues.metronom.com/api/catalog-filter"
+                + "?resolution=600&feeds=metro-nagykereskedelem&collection_id=6365"
+                + "&metatags%5B%5D=channel=website";
+        when(httpClient.getText(feed)).thenReturn("""
+                {"items":[
+                  {"slug":"regi-katalogus","name":"Régi katalógus","validFrom":"2026-09-01","validTo":"2026-09-15"},
+                  {"slug":"mm2610_brands","name":"Márkák katalógus 2026/10","validFrom":"2026-10-16","validTo":"2026-10-31"}
+                ]}
+                """);
+        when(httpClient.getText("https://katalogus.metro.hu/mm2610_brands/data.json")).thenReturn("""
+                {"config":{"publicationTitle":"Márkák katalógus 2026/10","downloadPdfUrl":"https://view.publitas.com/445/3454860/pdfs/markak.pdf"}}
+                """);
+        when(httpClient.getText("https://katalogus.metro.hu/mm2610_brands/spreads.json")).thenReturn("""
+                [{"pages":[{"number":1,"images":{"at1200":"/resize/cover.jpg"},"text":"DANONE\\nDANETTE PUDING\\n839,-"}]}]
+                """);
+
+        service.syncMetro(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("metro"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("Márkák katalógus 2026/10", catalog.paper().title());
+        assertEquals("metro:mm2610_brands", catalog.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 16), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), catalog.paper().validTo());
+        assertEquals("https://katalogus.metro.hu/resize/cover.jpg", catalog.pages().getFirst().imageUrl());
+        assertEquals("DANONE DANETTE PUDING", catalog.products().getFirst().name());
+        verify(httpClient, never()).getText("https://katalogus.metro.hu/regi-katalogus/data.json");
+    }
+
+    @Test
+    void syncMetroLeavesStoredFlyersAloneWhenTheFeedIsMissing() {
+        when(httpClient.getText(any())).thenReturn("");
+
+        service.syncMetro(LocalDate.of(2026, 10, 29));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("metro"), any(), any());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {

@@ -36,12 +36,18 @@ public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
     private static final List<String> STORES = List.of(
-            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm");
+            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm", "metro");
     private static final int LIDL_MAX_PDF_PAGES = 80;
     private static final String LIDL_OVERVIEW = "https://www.lidl.hu/c/szorolap/s10013623";
     private static final String ROSSMANN_LIST = "https://magazin.microservices.rossmann.hu/api/magazines";
     private static final String DM_PAGE =
             "https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174";
+    private static final String METRO_FEED =
+            "https://components.me-catalogues.metronom.com/api/catalog-filter"
+                    + "?resolution=600&feeds=metro-nagykereskedelem&collection_id=6365"
+                    + "&metatags%5B%5D=channel=website";
+    private static final List<String> METRO_IMAGE_SIZES = List.of("at1200", "at1000", "at1600", "at800", "at600");
+    private static final int METRO_MAX_CATALOGS = 8;
     private static final List<String> DM_IMAGE_SIZES = List.of("at1200", "at1000", "at1600", "at800", "at600");
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
@@ -58,6 +64,7 @@ public class FlyerSyncService {
     private final AtomicBoolean syncing = new AtomicBoolean(false);
     private final AtomicBoolean rossmannRefreshed = new AtomicBoolean(false);
     private final AtomicBoolean dmRefreshed = new AtomicBoolean(false);
+    private final AtomicBoolean metroRefreshed = new AtomicBoolean(false);
     private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
     private static final int COOP_READ_GENERATION = 4;
     private final ConcurrentHashMap<Long, Integer> coopReadApplied = new ConcurrentHashMap<>();
@@ -122,6 +129,7 @@ public class FlyerSyncService {
                 case "lidl" -> syncLidl(today);
                 case "rossmann" -> syncRossmann(today);
                 case "dm" -> syncDm(today);
+                case "metro" -> syncMetro(today);
                 default -> log.warn("No flyer retry for store {}", store);
             }
         } finally {
@@ -144,6 +152,7 @@ public class FlyerSyncService {
             syncLidl(today);
             syncRossmann(today);
             syncDm(today);
+            syncMetro(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -505,6 +514,44 @@ public class FlyerSyncService {
             }
             if (!catalogs.isEmpty()) {
                 flyerPersistenceService.replaceStore("dm", catalogs, LocalDateTime.now(clock));
+            }
+            return productCount(catalogs);
+        });
+    }
+
+    @Async
+    public void refreshMetroOnce() {
+        if (!metroRefreshed.compareAndSet(false, true)) {
+            return;
+        }
+        syncMetro(LocalDate.now(clock));
+    }
+
+    public void syncMetro(LocalDate today) {
+        tracked("metro", () -> {
+            String feed = safeText(METRO_FEED);
+            if (feed.isBlank()) {
+                return 0;
+            }
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            FlyerProductExtractor extractor = extractors.forStore("metro");
+            for (DiscoveredPaper paper : parser.discoverMetroPapers(feed, today)) {
+                if (catalogs.size() >= METRO_MAX_CATALOGS) {
+                    break;
+                }
+                String base = trimUrl(paper.officialUrl());
+                ParsedCatalog catalog = extractor.fillProducts(parser.parsePublitas(
+                        paper,
+                        safeText(base + "data.json"),
+                        safeText(base + "spreads.json"),
+                        METRO_IMAGE_SIZES));
+                if (!keepCatalog(catalog, today)) {
+                    continue;
+                }
+                catalogs.add(catalog);
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("metro", catalogs, LocalDateTime.now(clock));
             }
             return productCount(catalogs);
         });
@@ -872,7 +919,8 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(flyer -> "coop".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "lidl".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "rossmann".equals(flyer.getStore()))
-                || flyers.stream().noneMatch(flyer -> "dm".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "dm".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "metro".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {

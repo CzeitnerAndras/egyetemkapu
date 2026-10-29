@@ -118,6 +118,7 @@ public class FlyerCatalogParser {
             "https://magazin\\.dm\\.hu/([a-z0-9][a-z0-9_-]{0,80})(?:/|[\"'\\s?#]|$)",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DM_SLUG_DATE = Pattern.compile("(20\\d{2}-\\d{2}-\\d{2})");
+    private static final Pattern METRO_SLUG = Pattern.compile("^[a-z0-9][a-z0-9_-]{0,120}$");
     private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
             "(?iu)(?:(20\\d{2})\\.\\s*)?"
                     + "(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)"
@@ -560,6 +561,46 @@ public class FlyerCatalogParser {
         return papers;
     }
 
+    public List<DiscoveredPaper> discoverMetroPapers(String json, LocalDate today) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        if (json == null || json.isBlank()) {
+            return papers;
+        }
+        try {
+            JsonNode items = objectMapper.readTree(json).path("items");
+            if (!items.isArray()) {
+                return papers;
+            }
+            for (JsonNode item : items) {
+                String slug = textOr(item.path("slug"), "").toLowerCase(Locale.ROOT);
+                if (!METRO_SLUG.matcher(slug).matches()) {
+                    continue;
+                }
+                String title = textOr(item.path("name"), "").replaceAll("\\s+", " ").trim();
+                if (title.isBlank()) {
+                    title = "METRO katalógus";
+                }
+                papers.add(new DiscoveredPaper(
+                        "metro",
+                        title,
+                        "https://katalogus.metro.hu/" + slug + "/",
+                        null,
+                        "metro:" + slug,
+                        isoDate(item.path("validFrom"), null),
+                        isoDate(item.path("validTo"), null)));
+            }
+        } catch (Exception ignored) {
+            return List.of();
+        }
+        List<DiscoveredPaper> current = keepCurrentOrUpcoming(papers, today);
+        current.sort(Comparator
+                .comparing((DiscoveredPaper paper) -> paper.validTo() == null)
+                .thenComparing(paper -> paper.validFrom() == null)
+                .thenComparing(DiscoveredPaper::validFrom, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(DiscoveredPaper::title, String.CASE_INSENSITIVE_ORDER));
+        return current;
+    }
+
     public List<ParsedProduct> dmProducts(String hotspotsJson, int pageNumber, String pageText) {
         LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
         if (hotspotsJson == null || hotspotsJson.isBlank()) {
@@ -592,6 +633,77 @@ public class FlyerCatalogParser {
             return List.of();
         }
         return new ArrayList<>(products.values());
+    }
+
+    public List<ParsedProduct> metroProducts(String pageText, int pageNumber) {
+        if (pageText == null || pageText.isBlank()) {
+            return List.of();
+        }
+        List<String> lines = new ArrayList<>();
+        for (String raw : pageText.split("\\R")) {
+            String line = raw.replace('\u00a0', ' ').replaceAll("\\s+", " ").trim();
+            if (!line.isEmpty()) {
+                lines.add(line);
+            }
+        }
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
+        String brand = "";
+        for (int i = 0; i < lines.size() && products.size() < 80; i++) {
+            String line = lines.get(i);
+            if (metroSkipLine(line)) {
+                continue;
+            }
+            String next = i + 1 < lines.size() ? lines.get(i + 1) : "";
+            if (metroBrandLine(line) && !next.isEmpty() && !metroSkipLine(next)) {
+                brand = line;
+                continue;
+            }
+            String combined = brand.isBlank() ? line : brand + " " + line;
+            brand = "";
+            String name = tidyProductName(combined);
+            if (name.isBlank() || isJunkProductName(name)) {
+                continue;
+            }
+            products.putIfAbsent(
+                    pageNumber + ":" + HungarianText.normalize(name),
+                    new ParsedProduct(name, pageNumber, null));
+        }
+        return new ArrayList<>(products.values());
+    }
+
+    private static boolean metroBrandLine(String line) {
+        if (line.indexOf(' ') >= 0 || line.length() < 3 || line.length() > 18) {
+            return false;
+        }
+        if (line.chars().anyMatch(Character::isDigit)) {
+            return false;
+        }
+        return line.equals(line.toUpperCase(Locale.forLanguageTag("hu")));
+    }
+
+    private static boolean metroSkipLine(String line) {
+        if (line.length() < 3) {
+            return true;
+        }
+        String folded = HungarianText.normalize(line);
+        if (folded.equals("metro")
+                || folded.contains("metro.hu")
+                || folded.contains("eseten")
+                || folded.matches("tobbfele|gyujto|csomag|darab|doboz|lap")
+                || folded.contains("hogy")
+                || folded.contains("kedvenc")
+                || folded.contains("kedvezmeny")
+                || folded.matches(".*(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december).*")) {
+            return true;
+        }
+        if (line.split("\\s+").length >= 5) {
+            return true;
+        }
+        return line.matches("(?iu).*\\d[\\d\\s.]*,-.*")
+                || line.matches("(?iu)^[\\d\\s./,+%\\-–]+$")
+                || line.matches("(?iu)^(?:kb\\.\\s*)?\\d.*(?:g|kg|dkg|ml|l|db)(?:/|\\b).*")
+                || line.matches("(?iu)^\\d+\\s*(?:db|gyűjtő|gyujto|kg)\\b.*")
+                || line.matches("(?iu)^20\\d{2}\\.?$");
     }
 
     static String dmTitle(String slug) {

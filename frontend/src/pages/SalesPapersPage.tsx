@@ -22,7 +22,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro';
 
 interface FlyerSummary {
     id: number;

@@ -34,7 +34,7 @@ public class FlyerQueryService {
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
     private static final List<String> STORE_ORDER = List.of(
-            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann", "dm");
+            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann", "dm", "metro");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
@@ -159,6 +159,7 @@ public class FlyerQueryService {
         }
         flyerSyncService.refreshRossmannOnce();
         flyerSyncService.refreshDmOnce();
+        flyerSyncService.refreshMetroOnce();
     }
 
     // --- Order ---
