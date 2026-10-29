@@ -208,6 +208,14 @@ class DocumentServiceTest {
         }
     }
 
+    @Test
+    void searchApproved_skipsBlankShortAndHugeQueries() {
+        assertTrue(documentService.searchApproved("  ", null).isEmpty());
+        assertTrue(documentService.searchApproved("a", "Fizika").isEmpty());
+        assertTrue(documentService.searchApproved("k".repeat(201), null).isEmpty());
+        verify(documentRepository, never()).searchApproved(any(), any());
+    }
+
     private static User uploader() {
         User user = new User();
         user.setId(2L);
