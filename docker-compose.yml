@@ -34,6 +34,8 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
       - MAIL_FROM=${MAIL_FROM:-noreply@egyetemkapu.hu}
       - EMAIL_VERIFICATION_ENABLED=${EMAIL_VERIFICATION_ENABLED:-false}
+      - RECAPTCHA_SITE_KEY=${RECAPTCHA_SITE_KEY:-}
+      - RECAPTCHA_SECRET_KEY=${RECAPTCHA_SECRET_KEY:-}
       - OTEL_TRACING_ENABLED=true
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4318/v1/traces
       - TZ=Europe/Budapest
