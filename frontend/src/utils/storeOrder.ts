@@ -1,8 +1,8 @@
-export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro' | 'real';
+export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro' | 'real' | 'cba';
 
 export const STORE_ORDER_KEY = 'egyetemkapu.storeOrder';
 
-export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real'];
+export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real', 'cba'];
 
 export function storeLabel(store: OrderedStoreId): string {
     return store === 'real' ? 'REÁL' : store.toUpperCase();
