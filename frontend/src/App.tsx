@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import SiteFooter from './components/SiteFooter';
+import LegalPage from './pages/LegalPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
@@ -43,11 +45,14 @@ function FlyerSite() {
     <LanguageProvider>
       <Router>
         <DocumentTitle />
-        <div className="min-h-screen bg-[#f3f5f2] text-[#1c1c1c] dark:bg-[#121412] dark:text-white">
-          <Routes>
-            <Route path="/" element={<SalesPapersPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+        <div className="flex min-h-screen flex-col bg-[#f3f5f2] text-[#1c1c1c] dark:bg-[#121412] dark:text-white">
+          <div className="flex-1">
+            <Routes>
+              <Route path="/" element={<SalesPapersPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+          <SiteFooter />
         </div>
       </Router>
     </LanguageProvider>
@@ -66,10 +71,11 @@ function App() {
     <Router>
       <DocumentTitle />
       <PresenceHeartbeat />
-      <div className="min-h-screen overflow-x-clip bg-gradient-to-br from-blue-100 via-slate-50 to-blue-200 animate-gradient dark:from-[#121212] dark:via-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-[#031e08] secret:text-[#1cf85d] transition-colors duration-500">
+      <div className="flex min-h-screen flex-col overflow-x-clip bg-gradient-to-br from-blue-100 via-slate-50 to-blue-200 animate-gradient dark:from-[#121212] dark:via-[#1e1e1e] dark:to-[#2e1065] secret:bg-none secret:bg-[#031e08] secret:text-[#1cf85d] transition-colors duration-500">
         <Navbar />
 
         {/* --- Routes --- */}
+        <div className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -93,6 +99,12 @@ function App() {
           <Route path="/otletlada" element={<IdeaBoxPage />} />
           <Route path="/admin" element={<AdminPanelPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/adatvedelem" element={<LegalPage kind="privacy" />} />
+          <Route path="/impresszum" element={<LegalPage kind="imprint" />} />
+          <Route path="/felhasznalasi-feltetelek" element={<LegalPage kind="terms" />} />
+          <Route path="/privacy" element={<Navigate to="/adatvedelem" replace />} />
+          <Route path="/imprint" element={<Navigate to="/impresszum" replace />} />
+          <Route path="/terms" element={<Navigate to="/felhasznalasi-feltetelek" replace />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/linktar" element={<LinksPage />} />
@@ -104,6 +116,8 @@ function App() {
           <Route path="/flyers" element={isStudentProductionHost() ? <GoToFlyerSite /> : <Navigate to="/akcios-ujsag" replace />} />
           <Route path="/flashcards" element={<Navigate to="/kartyak" replace />} />
         </Routes>
+        </div>
+        <SiteFooter />
       </div>
     </Router>
     </LanguageProvider>
