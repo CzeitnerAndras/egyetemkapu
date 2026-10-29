@@ -51,6 +51,9 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://www.cba.hu/aktualis-ajanlataink/"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.mediamarkt.hu/hu/campaign/promocioink"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://cms-images.mmst.eu/1h4udvs0ugq1/cover.jpg"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

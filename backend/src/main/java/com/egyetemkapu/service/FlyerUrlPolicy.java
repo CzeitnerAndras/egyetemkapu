@@ -52,7 +52,10 @@ public final class FlyerUrlPolicy {
             "real.hu",
             "www.real.hu",
             "cba.hu",
-            "www.cba.hu"
+            "www.cba.hu",
+            "mediamarkt.hu",
+            "www.mediamarkt.hu",
+            "cms-images.mmst.eu"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;

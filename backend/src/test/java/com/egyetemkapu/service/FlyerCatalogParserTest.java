@@ -756,4 +756,31 @@ class FlyerCatalogParserTest {
                 "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png",
                 featured.pages().getFirst().imageUrl());
     }
+
+    @Test
+    void discoversTheCurrentMediaMarktCampaignAndItsProducts() {
+        String image = "https://cms-images.mmst.eu/1h4udvs0ugq1/cover/kedvezmenyeso.jpg";
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMediaMarktPapers("""
+                <p>Érvényes: 2026.07.24. - 2026.10.31.</p>
+                <a href="/hu/campaign/kedvezmenyeso"><h3>Kedvezményeső</h3></a>
+                <img src="%s?q=88&amp;w=495">
+                <p>Érvényes: 2026.09.01. - 2026.09.15.</p>
+                <a href="/hu/campaign/regi-akcio"><h3>Régi akció</h3></a>
+                <img src="https://cms-images.mmst.eu/1h4udvs0ugq1/cover/regi.jpg">
+                """.formatted(image), LocalDate.of(2026, 10, 29));
+
+        assertEquals(1, papers.size());
+        assertEquals("Kedvezményeső", papers.getFirst().title());
+        assertEquals("mediamarkt:kedvezmenyeso:2026-07-24", papers.getFirst().sourceKey());
+        assertEquals(LocalDate.of(2026, 7, 24), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), papers.getFirst().validTo());
+        assertEquals(image, papers.getFirst().pdfUrl());
+
+        List<FlyerCatalogParser.ParsedProduct> products = parser.mediaMarktProducts("""
+                {"productName":"PHILIPS EP3343\\u002F50 Series 3300 LatteGo"}
+                {"productName":"PHILIPS EP3343\\u002F50 Series 3300 LatteGo"}
+                """, 1);
+        assertEquals(List.of("PHILIPS EP3343/50 Series 3300 LatteGo"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+    }
 }

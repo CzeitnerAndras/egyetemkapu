@@ -36,7 +36,8 @@ public class FlyerSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(FlyerSyncService.class);
     private static final List<String> STORES = List.of(
-            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm", "metro", "real", "cba");
+            "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm", "metro", "real", "cba",
+            "mediamarkt");
     private static final int LIDL_MAX_PDF_PAGES = 80;
     private static final String LIDL_OVERVIEW = "https://www.lidl.hu/c/szorolap/s10013623";
     private static final String ROSSMANN_LIST = "https://magazin.microservices.rossmann.hu/api/magazines";
@@ -54,6 +55,8 @@ public class FlyerSyncService {
     private static final String CBA_OFFERS = "https://www.cba.hu/aktualis-ajanlataink/";
     private static final String CBA_HOME = "https://www.cba.hu/";
     private static final int CBA_MAX_CATALOGS = 8;
+    private static final String MEDIA_MARKT_OFFERS = "https://www.mediamarkt.hu/hu/campaign/promocioink";
+    private static final int MEDIA_MARKT_MAX_CATALOGS = 6;
     private static final List<String> DM_IMAGE_SIZES = List.of("at1200", "at1000", "at1600", "at800", "at600");
     private static final String TESCO_GRAPHQL = "https://api.prod.retail.tesco.com/marketing/leaflets-be/graphql";
     private static final int PRODUCT_PARSER_GENERATION = 5;
@@ -73,6 +76,7 @@ public class FlyerSyncService {
     private final AtomicBoolean metroRefreshed = new AtomicBoolean(false);
     private final AtomicBoolean realRefreshed = new AtomicBoolean(false);
     private final AtomicBoolean cbaRefreshed = new AtomicBoolean(false);
+    private final AtomicBoolean mediaMarktRefreshed = new AtomicBoolean(false);
     private final ConcurrentHashMap<Long, Integer> layoutApplied = new ConcurrentHashMap<>();
     private static final int COOP_READ_GENERATION = 4;
     private final ConcurrentHashMap<Long, Integer> coopReadApplied = new ConcurrentHashMap<>();
@@ -140,6 +144,7 @@ public class FlyerSyncService {
                 case "metro" -> syncMetro(today);
                 case "real" -> syncReal(today);
                 case "cba" -> syncCba(today);
+                case "mediamarkt" -> syncMediaMarkt(today);
                 default -> log.warn("No flyer retry for store {}", store);
             }
         } finally {
@@ -165,6 +170,7 @@ public class FlyerSyncService {
             syncMetro(today);
             syncReal(today);
             syncCba(today);
+            syncMediaMarkt(today);
         } finally {
             lastLayoutRetryAt = LocalDateTime.now(clock);
             syncing.set(false);
@@ -687,6 +693,53 @@ public class FlyerSyncService {
         });
     }
 
+    @Async
+    public void refreshMediaMarktOnce() {
+        if (!mediaMarktRefreshed.compareAndSet(false, true)) {
+            return;
+        }
+        syncMediaMarkt(LocalDate.now(clock));
+    }
+
+    public void syncMediaMarkt(LocalDate today) {
+        tracked("mediamarkt", () -> {
+            String overview = safeText(MEDIA_MARKT_OFFERS);
+            if (overview.isBlank()) {
+                return 0;
+            }
+            List<ParsedCatalog> catalogs = new ArrayList<>();
+            for (DiscoveredPaper paper : parser.discoverMediaMarktPapers(overview, today)) {
+                if (catalogs.size() >= MEDIA_MARKT_MAX_CATALOGS) {
+                    break;
+                }
+                String image = paper.pdfUrl();
+                if (image == null || image.isBlank()) {
+                    continue;
+                }
+                List<ParsedProduct> products = parser.mediaMarktProducts(safeText(paper.officialUrl()), 1);
+                DiscoveredPaper saved = new DiscoveredPaper(
+                        "mediamarkt",
+                        paper.title(),
+                        paper.officialUrl(),
+                        null,
+                        paper.sourceKey(),
+                        paper.validFrom(),
+                        paper.validTo());
+                ParsedCatalog catalog = new ParsedCatalog(
+                        saved,
+                        List.of(new ParsedPage(1, image, "")),
+                        products);
+                if (keepCatalog(catalog, today)) {
+                    catalogs.add(catalog);
+                }
+            }
+            if (!catalogs.isEmpty()) {
+                flyerPersistenceService.replaceStore("mediamarkt", catalogs, LocalDateTime.now(clock));
+            }
+            return productCount(catalogs);
+        });
+    }
+
     private ParsedCatalog withLidlPdfProducts(ParsedCatalog catalog, FlyerProductExtractor extractor) {
         byte[] pdf = safeBytes(catalog.paper().pdfUrl(), "https://www.lidl.hu/");
         if (pdf == null || pdf.length == 0) {
@@ -1052,7 +1105,8 @@ public class FlyerSyncService {
                 || flyers.stream().noneMatch(flyer -> "dm".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "metro".equals(flyer.getStore()))
                 || flyers.stream().noneMatch(flyer -> "real".equals(flyer.getStore()))
-                || flyers.stream().noneMatch(flyer -> "cba".equals(flyer.getStore()));
+                || flyers.stream().noneMatch(flyer -> "cba".equals(flyer.getStore()))
+                || flyers.stream().noneMatch(flyer -> "mediamarkt".equals(flyer.getStore()));
     }
 
     private static boolean missingWeeklySpar(List<Flyer> flyers, LocalDate today) {

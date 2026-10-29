@@ -465,8 +465,10 @@ class FlyerSyncServiceTest {
         Flyer real = storeFlyer("real", "real:kisalfold-oktober-28-31-01",
                 "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf");
         Flyer cba = storeFlyer("cba", "cba:kiemelt:2026-10-05", "https://www.cba.hu/");
+        Flyer mediaMarkt = storeFlyer("mediamarkt", "mediamarkt:kedvezmenyeso:2026-07-24",
+                "https://www.mediamarkt.hu/hu/campaign/kedvezmenyeso");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro, real, cba));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro, real, cba, mediaMarkt));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -923,6 +925,29 @@ class FlyerSyncServiceTest {
         assertEquals(poster, captor.getValue().get(1).pages().getFirst().imageUrl());
         verify(httpClient, never()).getBytes(
                 eq("https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg"), any());
+    }
+
+    @Test
+    void syncMediaMarktPersistsTheCurrentCampaignProducts() {
+        String image = "https://cms-images.mmst.eu/1h4udvs0ugq1/cover/kedvezmenyeso.jpg";
+        when(httpClient.getText("https://www.mediamarkt.hu/hu/campaign/promocioink")).thenReturn("""
+                <p>Érvényes: 2026.07.24. - 2026.10.31.</p>
+                <a href="/hu/campaign/kedvezmenyeso"><h3>Kedvezményeső</h3></a>
+                <img src="%s">
+                """.formatted(image));
+        when(httpClient.getText("https://www.mediamarkt.hu/hu/campaign/kedvezmenyeso")).thenReturn("""
+                {"productName":"PHILIPS EP3343\\u002F50 Series 3300 LatteGo"}
+                """);
+
+        service.syncMediaMarkt(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("mediamarkt"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("mediamarkt:kedvezmenyeso:2026-07-24", catalog.paper().sourceKey());
+        assertEquals(image, catalog.pages().getFirst().imageUrl());
+        assertEquals("PHILIPS EP3343/50 Series 3300 LatteGo", catalog.products().getFirst().name());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {

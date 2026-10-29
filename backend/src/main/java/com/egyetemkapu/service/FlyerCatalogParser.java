@@ -135,6 +135,15 @@ public class FlyerCatalogParser {
                     + "[\\s\\S]{0,5000}?woocommerce-loop-product__title\">\\s*([^<]+?)\\s*</h2>");
     private static final Pattern CBA_VALID = Pattern.compile(
             "Érvényes:\\s*(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
+    private static final Pattern MM_TEASER = Pattern.compile(
+            "(?is)<p[^>]*>\\s*Érvényes:\\s*([^<]{8,80})</p>\\s*"
+                    + "<a[^>]*href=\"(/hu/campaign/[a-z0-9-]+)\"[^>]*>\\s*<h3[^>]*>\\s*([^<]{2,140})\\s*</h3>");
+    private static final Pattern MM_IMAGE = Pattern.compile(
+            "https://cms-images\\.mmst\\.eu/[^\\s\"'<>]+?\\.(?:jpe?g|png|webp)");
+    private static final Pattern MM_RANGE = Pattern.compile(
+            "(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\.?\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
+    private static final Pattern MM_PRODUCT = Pattern.compile("\"productName\":\"((?:\\\\.|[^\"\\\\])*)\"");
+    private static final Pattern MM_UNICODE = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
     private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
             "(?iu)(?:(20\\d{2})\\.\\s*)?"
                     + "(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)"
@@ -893,6 +902,123 @@ public class FlyerCatalogParser {
         }
         String trimmed = url.trim().replace("&amp;", "&");
         return FlyerUrlPolicy.isAllowed(trimmed) ? trimmed : null;
+    }
+
+    public List<DiscoveredPaper> discoverMediaMarktPapers(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = MM_TEASER.matcher(html);
+        while (matcher.find()) {
+            String slug = matcher.group(2).substring("/hu/campaign/".length());
+            if (papers.containsKey(slug)) {
+                continue;
+            }
+            LocalDate[] range = mediaMarktRange(matcher.group(1));
+            if (range[0] == null) {
+                continue;
+            }
+            String image = mediaMarktImage(html, matcher.end(), slug);
+            papers.put(slug, new DiscoveredPaper(
+                    "mediamarkt",
+                    matcher.group(3).replaceAll("\\s+", " ").trim(),
+                    "https://www.mediamarkt.hu/hu/campaign/" + slug,
+                    image,
+                    "mediamarkt:" + slug + ":" + range[0],
+                    range[0],
+                    range[1]));
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    public List<ParsedProduct> mediaMarktProducts(String html, int pageNumber) {
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = MM_PRODUCT.matcher(html);
+        while (matcher.find() && products.size() < 40) {
+            String name = mediaMarktUnescape(matcher.group(1)).replaceAll("\\s+", " ").trim();
+            if (name.length() < 4 || isWeakProductName(name)) {
+                continue;
+            }
+            products.putIfAbsent(
+                    pageNumber + ":" + HungarianText.normalize(name),
+                    new ParsedProduct(name, pageNumber, null));
+        }
+        return new ArrayList<>(products.values());
+    }
+
+    static LocalDate[] mediaMarktRange(String text) {
+        LocalDate[] range = new LocalDate[2];
+        if (text == null) {
+            return range;
+        }
+        Matcher matcher = MM_RANGE.matcher(text);
+        if (!matcher.find()) {
+            return range;
+        }
+        try {
+            int startYear = Integer.parseInt(matcher.group(1));
+            LocalDate from = LocalDate.of(
+                    startYear, Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)));
+            int endYear = matcher.group(4) != null ? Integer.parseInt(matcher.group(4)) : startYear;
+            int endMonth = Integer.parseInt(matcher.group(5));
+            if (matcher.group(4) == null && endMonth < from.getMonthValue()) {
+                endYear++;
+            }
+            LocalDate to = LocalDate.of(endYear, endMonth, Integer.parseInt(matcher.group(6)));
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    private static String mediaMarktImage(String html, int from, String slug) {
+        int nextDate = html.indexOf("Érvényes:", from);
+        int end = nextDate < 0 ? html.length() : nextDate;
+        end = Math.min(end, from + 12000);
+        if (from >= end) {
+            return null;
+        }
+        Matcher matcher = MM_IMAGE.matcher(html.substring(from, end));
+        String fallback = null;
+        while (matcher.find()) {
+            String image = matcher.group().replace("&amp;", "&");
+            int query = image.indexOf('?');
+            if (query >= 0) {
+                image = image.substring(0, query);
+            }
+            if (!FlyerUrlPolicy.isAllowed(image)) {
+                continue;
+            }
+            if (image.toLowerCase(Locale.ROOT).contains(slug)) {
+                return image;
+            }
+            if (fallback == null) {
+                fallback = image;
+            }
+        }
+        return fallback;
+    }
+
+    private static String mediaMarktUnescape(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        Matcher matcher = MM_UNICODE.matcher(value);
+        StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            int code = Integer.parseInt(matcher.group(1), 16);
+            matcher.appendReplacement(out, Matcher.quoteReplacement(String.valueOf((char) code)));
+        }
+        matcher.appendTail(out);
+        return out.toString().replace("\\/", "/").replace("\\\"", "\"");
     }
 
     public List<ParsedProduct> dmProducts(String hotspotsJson, int pageNumber, String pageText) {
