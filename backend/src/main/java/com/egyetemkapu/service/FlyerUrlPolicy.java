@@ -41,6 +41,7 @@ public final class FlyerUrlPolicy {
             "shop.rossmann.hu",
             "magazin.microservices.rossmann.hu",
             "assets.microservices.rossmann.hu",
+            "storage.googleapis.com",
             "www.dm.hu",
             "dm.hu",
             "magazin.dm.hu",

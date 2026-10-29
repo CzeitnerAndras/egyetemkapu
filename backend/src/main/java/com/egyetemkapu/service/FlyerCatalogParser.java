@@ -369,7 +369,7 @@ public class FlyerCatalogParser {
         if (json == null || json.isBlank()) {
             return null;
         }
-        Matcher matcher = ROSSMANN_PDF.matcher(json);
+        Matcher matcher = ROSSMANN_PDF.matcher(json.replace("\\/", "/"));
         return matcher.find() ? matcher.group(1) : null;
     }
 
@@ -1037,7 +1037,10 @@ public class FlyerCatalogParser {
                     continue;
                 }
                 for (JsonNode product : list) {
-                    String name = dmDisplayName(textOr(product.path("title"), ""), pageText);
+                    String name = dmDisplayName(
+                            textOr(product.path("title"), ""),
+                            pageText,
+                            textOr(product.path("brand"), ""));
                     if (name.length() < 4 || isWeakProductName(name)) {
                         continue;
                     }
@@ -1219,6 +1222,10 @@ public class FlyerCatalogParser {
     }
 
     static String dmDisplayName(String rawTitle, String pageText) {
+        return dmDisplayName(rawTitle, pageText, "");
+    }
+
+    static String dmDisplayName(String rawTitle, String pageText, String catalogBrand) {
         if (rawTitle == null || rawTitle.isBlank()) {
             return "";
         }
@@ -1227,6 +1234,9 @@ public class FlyerCatalogParser {
             return "";
         }
         String brand = dmPrintedBrand(title, pageText);
+        if (brand.isBlank() && !dmTitleAlreadyShowsNearbyLine(title, pageText)) {
+            brand = catalogBrand == null ? "" : catalogBrand.replaceAll("\\s+", " ").trim();
+        }
         if (brand.isBlank() || HungarianText.normalize(title).contains(HungarianText.normalize(brand))) {
             return title;
         }
@@ -1264,21 +1274,12 @@ public class FlyerCatalogParser {
     }
 
     private static String dmPrintedBrand(String title, String pageText) {
-        if (pageText == null || pageText.isBlank()) {
+        int match = dmBestTitleLine(title, pageText);
+        if (match < 0) {
             return "";
         }
         String normTitle = HungarianText.normalize(title);
         String[] lines = pageText.split("\\R");
-        int match = -1;
-        for (int i = 0; i < lines.length; i++) {
-            if (dmLineBelongsToTitle(lines[i], normTitle)) {
-                match = i;
-                break;
-            }
-        }
-        if (match < 0) {
-            return "";
-        }
         for (int i = match - 1; i >= 0; i--) {
             String line = lines[i].replaceAll("\\s+", " ").trim();
             if (line.isBlank() || dmSkipLine(line) || dmLineBelongsToTitle(line, normTitle)) {
@@ -1287,6 +1288,73 @@ public class FlyerCatalogParser {
             return dmLooksLikeBrand(line) ? line : "";
         }
         return "";
+    }
+
+    private static boolean dmTitleAlreadyShowsNearbyLine(String title, String pageText) {
+        int match = dmBestTitleLine(title, pageText);
+        if (match < 0 || pageText == null) {
+            return false;
+        }
+        String normTitle = HungarianText.normalize(title);
+        String[] lines = pageText.split("\\R");
+        int seen = 0;
+        for (int i = match - 1; i >= 0 && seen < 4; i--) {
+            String line = lines[i].replaceAll("\\s+", " ").trim();
+            if (line.isBlank() || dmSkipLine(line)) {
+                continue;
+            }
+            seen++;
+            String norm = HungarianText.normalize(line);
+            if (norm.length() >= 4 && !dmGenericWord(norm) && normTitle.contains(norm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int dmBestTitleLine(String title, String pageText) {
+        if (pageText == null || pageText.isBlank() || title == null || title.isBlank()) {
+            return -1;
+        }
+        String normTitle = HungarianText.normalize(title);
+        String[] lines = pageText.split("\\R");
+        int match = -1;
+        int bestScore = 0;
+        for (int i = 0; i < lines.length; i++) {
+            int score = dmTitleScore(lines[i], normTitle);
+            if (score > bestScore) {
+                bestScore = score;
+                match = i;
+            }
+        }
+        return match;
+    }
+
+    private static int dmTitleScore(String line, String normTitle) {
+        String norm = HungarianText.normalize(line);
+        int score = 0;
+        boolean distinctive = false;
+        for (String word : norm.split(" ")) {
+            if (word.length() < 4 || dmGenericWord(word)) {
+                continue;
+            }
+            distinctive = true;
+            if (!dmContainsWord(normTitle, word)) {
+                return 0;
+            }
+            score++;
+        }
+        return distinctive ? score : 0;
+    }
+
+    private static boolean dmGenericWord(String word) {
+        return word.equals("ajandekcsomag")
+                || word.equals("ajandek")
+                || word.equals("csomag")
+                || word.equals("termek")
+                || word.equals("termekek")
+                || word.equals("termekre")
+                || word.equals("tobbfele");
     }
 
     private static boolean dmLineBelongsToTitle(String line, String normTitle) {
@@ -2854,7 +2922,7 @@ public class FlyerCatalogParser {
                 || lower.contains("húspult")
                 || lower.contains("vásárlásától")
                 || lower.contains("kuponos")
-                || lower.contains("mosás")
+                || lower.matches("(?iu)^(?:akár\\s+)?\\d+\\s*mosás(?:ra|hoz|nak|ig)?$")
                 || lower.contains("vigyél vissza")
                 || lower.contains("db-tól")
                 || lower.contains("db-től")

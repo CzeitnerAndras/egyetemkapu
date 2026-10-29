@@ -37,6 +37,8 @@ class FlyerUrlPolicyTest {
                 "https://magazin.microservices.rossmann.hu/api/magazines"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://www.dm.hu/magazin-1616174"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"));

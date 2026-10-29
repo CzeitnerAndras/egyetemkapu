@@ -248,7 +248,8 @@ public class FlyerHttpClient {
         if (value == null) {
             return false;
         }
-        return value.toLowerCase().contains("rossmann.hu");
+        String lower = value.toLowerCase();
+        return lower.contains("rossmann.hu") || lower.contains("storage.googleapis.com/magazin-prod/");
     }
 
     private static boolean mediaMarktHost(String value) {

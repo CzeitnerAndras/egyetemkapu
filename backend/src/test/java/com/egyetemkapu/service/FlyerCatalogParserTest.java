@@ -655,6 +655,68 @@ class FlyerCatalogParserTest {
     }
 
     @Test
+    void dmHotspotNamesFollowTheOfferAboveThePriceInsteadOfTheFirstSharedWord() {
+        String page = """
+                LANGHAARMÄDCHEN
+                adventi kalendárium
+                Edényfogó
+                ajándékcsomag
+                karácsonyi mintával
+                NIVEA MEN
+                Time To Be Epic
+                ajándékcsomag
+                YOGI TEA
+                Lelki harmónia
+                teaválogatás
+                ajándékcsomag
+                NIVEA
+                Time To Reset
+                ajándékcsomag
+                Vaseline
+                Hya Gorgeous
+                ajándékcsomag
+                essence
+                Juicy Bomb
+                ajándékcsomag
+                AXE
+                Black
+                ajándékcsomag
+                """;
+        List<FlyerCatalogParser.ParsedProduct> products = parser.dmProducts("""
+                [
+                  {"products":[{"title":"Ajándékcsomag férfiaknak, Time to be Epic","brand":"NIVEA MEN"}]},
+                  {"products":[{"title":"Ajándékcsomag bőrápoláshoz, Time to Reset","brand":"NIVEA"}]},
+                  {"products":[{"title":"Edényfogó szett karácsonyi mintával","brand":"AMO LA CASA"}]},
+                  {"products":[{"title":"Adventi kalendárium, Merry Christmas","brand":"LANGHAARMÄDCHEN"}]},
+                  {"products":[{"title":"Ajándékcsomag, Lelki harmónia","brand":"Yogi"}]},
+                  {"products":[{"title":"Mini szájfény szett, Juicy Bomb","brand":"essence"}]},
+                  {"products":[{"title":"Férfi ajándékcsomag, Black","brand":"AXE"}]}
+                ]
+                """, 3, page);
+
+        assertEquals(List.of(
+                "NIVEA MEN Ajándékcsomag férfiaknak, Time to be Epic",
+                "NIVEA Ajándékcsomag bőrápoláshoz, Time to Reset",
+                "Edényfogó szett karácsonyi mintával",
+                "LANGHAARMÄDCHEN Adventi kalendárium, Merry Christmas",
+                "YOGI TEA Ajándékcsomag, Lelki harmónia",
+                "essence Mini szájfény szett, Juicy Bomb",
+                "AXE Férfi ajándékcsomag, Black"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+    }
+
+    @Test
+    void rossmannPdfUrlAcceptsEscapedSlashesAndWashCountsStayOnProductNames() {
+        assertEquals(
+                "https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf",
+                FlyerCatalogParser.rossmannMagazinePdfUrl(
+                        "{\"pdf\":\"https:\\/\\/storage.googleapis.com\\/magazin-prod\\/335\\/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf\"}"));
+        assertFalse(FlyerCatalogParser.isWeakProductName(
+                "Silan Fresh Sky öblítő koncentrátum 64 mosás - 1408 ml"));
+        assertTrue(FlyerCatalogParser.isWeakProductName("60 mosás"));
+    }
+
+    @Test
     void discoversCurrentMetroCatalogsAndDropsExpiredOnes() {
         List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMetroPapers("""
                 {"items":[
