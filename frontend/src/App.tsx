@@ -14,6 +14,7 @@ import ProfilePage from './pages/ProfilePage';
 import CalculatorPage from './pages/CalculatorPage';
 import PointsPage from './pages/PointsPage';
 import ThesisPage from './pages/ThesisPage';
+import BibliographyPage from './pages/BibliographyPage';
 import KnowledgeBasePage from './pages/KnowledgeBasePage';
 import ReferencePage from './pages/ReferencePage';
 import FocusRoomPage from './pages/FocusRoomPage';
@@ -85,6 +86,7 @@ function App() {
           <Route path="/kalkulator" element={<CalculatorPage />} />
           <Route path="/pontok" element={<PointsPage />} />
           <Route path="/terjedelem" element={<ThesisPage />} />
+          <Route path="/irodalomjegyzek" element={<BibliographyPage />} />
           <Route path="/tudastar" element={<KnowledgeBasePage />} />
           <Route path="/hivatkozas" element={<ReferencePage />} />
           <Route path="/tanuloszoba" element={<FocusRoomPage />} />

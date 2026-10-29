@@ -5,6 +5,10 @@ export default defineConfig({
   server: {
     proxy: {
       // Listed before /api. Vite keeps the first matching prefix.
+      '/api/bibliography': {
+        target: 'http://localhost:8092',
+        changeOrigin: true,
+      },
       '/api/thesis': {
         target: 'http://localhost:8091',
         changeOrigin: true,

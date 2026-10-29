@@ -12,6 +12,12 @@ egyetemkapu.hu {
         Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
     }
 
+    handle /api/bibliography/* {
+        reverse_proxy bibliography:8092 {
+            header_up X-Forwarded-For {remote_host}
+        }
+    }
+
     handle /api/thesis/* {
         reverse_proxy thesis:8091 {
             header_up X-Forwarded-For {remote_host}

@@ -65,6 +65,17 @@ services:
       - app
     restart: unless-stopped
 
+  bibliography:
+    build: ./bibliography
+    container_name: egyetemkapu-bibliography
+    environment:
+      - TZ=Europe/Budapest
+    ports:
+      - "127.0.0.1:8092:8092"
+    networks:
+      - app
+    restart: unless-stopped
+
   frontend:
     build: ./frontend
     container_name: egyetemkapu-frontend
@@ -82,6 +93,7 @@ services:
       - backend
       - points
       - thesis
+      - bibliography
     restart: unless-stopped
 
 networks:

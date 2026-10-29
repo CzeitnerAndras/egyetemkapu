@@ -28,7 +28,7 @@ Accounts use email and password, with optional email verification, password rese
 | --- | --- |
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS |
 | Backend | Java 21, Spring Boot 4, Spring Security, Flyway |
-| Python services | FastAPI. Points planner on 8090, length checker on 8091 |
+| Python services | FastAPI. Points planner on 8090, length checker on 8091, bibliography sorter on 8092 |
 | Database | PostgreSQL 15 |
 | Auth | JWT access tokens and refresh cookies |
 | Production | Docker Compose, Caddy (HTTPS), GitHub Actions |
@@ -39,13 +39,14 @@ Accounts use email and password, with optional email verification, password rese
 backend/          Spring Boot API (port 8080)
 points/           Python points planner (port 8090)
 thesis/           Python length checker (port 8091)
+bibliography/     Python bibliography sorter (port 8092)
 frontend/         React app (Vite dev server on 5173)
 uploads/          Uploaded knowledge-base files (created at runtime)
 docker-compose.yml
 deploy.sh         Production deploy, run on the server
 ```
 
-In production, Caddy serves the built frontend, proxies `/api/points/*` and `/api/thesis/*` to the Python services, and proxies every other `/api/*` path to the Java backend. Locally, the Vite dev server does the same split: `/api/points` goes to `http://localhost:8090`, `/api/thesis` goes to `http://localhost:8091`, and `/api` goes to `http://localhost:8080`. The Python prefixes have to be listed before `/api`, because the first matching prefix wins.
+In production, Caddy serves the built frontend, proxies `/api/points/*`, `/api/thesis/*`, and `/api/bibliography/*` to the Python services, and proxies every other `/api/*` path to the Java backend. Locally, the Vite dev server does the same split: `/api/points` goes to `http://localhost:8090`, `/api/thesis` goes to `http://localhost:8091`, `/api/bibliography` goes to `http://localhost:8092`, and `/api` goes to `http://localhost:8080`. The Python prefixes have to be listed before `/api`, because the first matching prefix wins.
 
 ## Run it locally
 
@@ -79,6 +80,8 @@ uvicorn app.main:app --reload --port 8090
 Its own docs are at [http://localhost:8090/docs](http://localhost:8090/docs). The page is [http://localhost:5173/pontok](http://localhost:5173/pontok) once the frontend is running. Details and a small exercise are in `points/README.md`.
 
 The length checker is the same kind of service, on port 8091. From `thesis/`, repeat the venv and install steps, then `uvicorn app.main:app --reload --port 8091`. The page is [http://localhost:5173/terjedelem](http://localhost:5173/terjedelem). Details are in `thesis/README.md`.
+
+The bibliography sorter is on port 8092. From `bibliography/`, repeat the venv and install steps, then `uvicorn app.main:app --reload --port 8092`. The page is [http://localhost:5173/irodalomjegyzek](http://localhost:5173/irodalomjegyzek). Details are in `bibliography/README.md`.
 
 Then the frontend:
 
@@ -124,7 +127,7 @@ Backend, from `backend/`:
 .\mvnw.cmd test
 ```
 
-Points service, from `points/`, and the length checker, from `thesis/`:
+Points service, from `points/`, the length checker, from `thesis/`, and the bibliography sorter, from `bibliography/`:
 
 ```powershell
 py -3 -m pytest

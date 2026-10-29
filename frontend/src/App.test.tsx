@@ -40,6 +40,7 @@ jest.mock('./pages/ProfilePage', () => ({ __esModule: true, default: () => <div>
 jest.mock('./pages/CalculatorPage', () => ({ __esModule: true, default: () => <div>calculator-page</div> }));
 jest.mock('./pages/PointsPage', () => ({ __esModule: true, default: () => <div>points-page</div> }));
 jest.mock('./pages/ThesisPage', () => ({ __esModule: true, default: () => <div>thesis-page</div> }));
+jest.mock('./pages/BibliographyPage', () => ({ __esModule: true, default: () => <div>bibliography-page</div> }));
 jest.mock('./pages/KnowledgeBasePage', () => ({ __esModule: true, default: () => <div>knowledge-page</div> }));
 jest.mock('./pages/ReferencePage', () => ({ __esModule: true, default: () => <div>reference-page</div> }));
 jest.mock('./pages/FocusRoomPage', () => ({ __esModule: true, default: () => <div>focus-page</div> }));
@@ -67,6 +68,7 @@ const directRoutes: Array<[string, string]> = [
     ['/kalkulator', 'calculator-page'],
     ['/pontok', 'points-page'],
     ['/terjedelem', 'thesis-page'],
+    ['/irodalomjegyzek', 'bibliography-page'],
     ['/tudastar', 'knowledge-page'],
     ['/hivatkozas', 'reference-page'],
     ['/tanuloszoba', 'focus-page'],
