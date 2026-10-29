@@ -93,6 +93,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/documents/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/documents/download/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/count").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/heartbeat").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tools/calculator/count").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/calculator/weighted-average").permitAll()

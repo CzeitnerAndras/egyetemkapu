@@ -16,5 +16,6 @@ describe('toolFetch', () => {
 
         const init = (globalThis.fetch as jest.Mock).mock.calls[0][1] as RequestInit;
         expect(init.signal).toBeInstanceOf(AbortSignal);
+        expect((init.headers as Headers).get('traceparent')).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
     });
 });

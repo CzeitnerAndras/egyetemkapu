@@ -144,6 +144,6 @@ Playwright starts the Vite server if it is not already running, and runs Chromiu
 
 ## Production
 
-`docker-compose.yml` runs Postgres, the Java API, the three Python services, and Caddy. Each Python service has a health check. If one of them is down, that tool's page says so, and the rest of the site still answers. The frontend container listens on 80 and 443 and terminates TLS for `egyetemkapu.hu`, `www.egyetemkapu.hu`, and `akcio.egyetemkapu.hu`.
+`docker-compose.yml` runs Postgres, the Java API, the three Python services, Caddy, and a local Grafana board (Tempo for traces, Prometheus for the three panels). Grafana listens on `127.0.0.1:3000`. Each Python service has a health check. If one of them is down, that tool's page says so, and the rest of the site still answers. The frontend container listens on 80 and 443 and terminates TLS for `egyetemkapu.hu`, `www.egyetemkapu.hu`, and `akcio.egyetemkapu.hu`.
 
 A push to `main` SSHes to the server and runs `deploy.sh`, which pulls with `--ff-only`, rebuilds the containers, and checks `https://egyetemkapu.hu/api/users/count`. The workflow secrets are `DEPLOY_SSH_KEY`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, and `DEPLOY_KNOWN_HOSTS`. `DEPLOY_PATH` must be an absolute path.

@@ -9,6 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.metrics import ToolMetricsMiddleware, metrics
 from app.rate_limit import ToolRateLimitMiddleware
 from app.sorter import MAX_TEXT_LENGTH, SortError, sort_text
+from app.tracing import enable_tracing
+from opentelemetry import trace
 
 app = FastAPI(
     title="Egyetemkapu bibliography sorter",
@@ -54,8 +56,13 @@ def service_metrics() -> dict[str, int | float | str]:
 
 @app.post("/api/bibliography/sort", response_model=SortResponse)
 def create_sort(body: SortRequest) -> SortResponse:
-    try:
-        entries = sort_text(body.text)
-    except SortError as error:
-        raise HTTPException(status_code=400, detail=error.code) from error
-    return SortResponse(entries=entries, count=len(entries))
+    with trace.get_tracer("bibliography").start_as_current_span("bibliography.sort") as span:
+        span.set_attribute("bibliography.characters", len(body.text))
+        try:
+            entries = sort_text(body.text)
+        except SortError as error:
+            raise HTTPException(status_code=400, detail=error.code) from error
+        return SortResponse(entries=entries, count=len(entries))
+
+
+enable_tracing(app, "bibliography")

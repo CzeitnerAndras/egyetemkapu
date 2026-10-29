@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { withTrace } from './trace';
 
 export const TOOL_TIMEOUT_MS = 5000;
 
@@ -10,7 +11,7 @@ export function toolFetch(url: string, init: RequestInit = {}): Promise<Response
     const signal = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
         ? AbortSignal.timeout(TOOL_TIMEOUT_MS)
         : fallbackTimeout(TOOL_TIMEOUT_MS);
-    return fetch(url, { ...init, signal });
+    return fetch(url, withTrace({ ...init, signal }));
 }
 
 function fallbackTimeout(ms: number): AbortSignal {

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.checker import MAX_TEXT_LENGTH, LengthError, LengthReport, check_text
 from app.metrics import ToolMetricsMiddleware, metrics
 from app.rate_limit import ToolRateLimitMiddleware
+from app.tracing import enable_tracing
 
 app = FastAPI(
     title="Egyetemkapu length checker",
@@ -98,3 +99,6 @@ def create_check(body: CheckRequest) -> CheckResponse:
     except LengthError as error:
         raise HTTPException(status_code=400, detail=error.code) from error
     return _response(report)
+
+
+enable_tracing(app, "thesis")

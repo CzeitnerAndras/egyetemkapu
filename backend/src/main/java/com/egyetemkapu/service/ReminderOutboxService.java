@@ -5,6 +5,7 @@ import com.egyetemkapu.model.ReminderStatus;
 import com.egyetemkapu.repository.ReminderOutboxRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -28,6 +29,12 @@ public class ReminderOutboxService {
 
     private final ReminderOutboxRepository repository;
     private final TransactionTemplate requiresNew;
+    private SiteMeters siteMeters;
+
+    @Autowired(required = false)
+    public void setSiteMeters(SiteMeters siteMeters) {
+        this.siteMeters = siteMeters;
+    }
 
     public ReminderOutboxService(ReminderOutboxRepository repository, PlatformTransactionManager transactions) {
         this.repository = repository;
@@ -70,6 +77,9 @@ public class ReminderOutboxService {
             row.setSentAt(now);
             row.setLastError(null);
             row.setClaimedAt(null);
+            if (siteMeters != null) {
+                siteMeters.reminderSent(row, now);
+            }
         });
     }
 

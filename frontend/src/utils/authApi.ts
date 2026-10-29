@@ -1,3 +1,5 @@
+import { withTrace } from './trace';
+
 type AuthFetchOptions = {
     redirectOnAuthFailure?: boolean;
     retryOn401?: boolean;
@@ -17,10 +19,10 @@ let refreshPromise: Promise<boolean> | null = null;
 const refreshAccessToken = (): Promise<boolean> => {
     if (refreshPromise) return refreshPromise;
 
-    const pending = Promise.resolve(fetch('/api/auth/refresh', {
+    const pending = Promise.resolve(fetch('/api/auth/refresh', withTrace({
         method: 'POST',
         credentials: 'include',
-    }))
+    })))
         .then(response => !!response && response.ok)
         .catch(err => {
             console.error("Hiba a token frissítésekor", err);
@@ -42,7 +44,7 @@ export const fetchWithAuth = async (
 ): Promise<Response> => {
     const send = () => {
         const headers = new Headers(options.headers || {});
-        return fetch(url, { ...options, headers, credentials: 'include' });
+        return fetch(url, withTrace({ ...options, headers, credentials: 'include' }));
     };
 
     const response = await send();

@@ -3,6 +3,7 @@ package com.egyetemkapu.service;
 import com.egyetemkapu.dto.FlyerSyncRunDto;
 import com.egyetemkapu.model.FlyerSyncRun;
 import com.egyetemkapu.repository.FlyerSyncRunRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +20,15 @@ public class FlyerSyncLog {
     private static final int KEEP_DAYS = 30;
 
     private final FlyerSyncRunRepository repository;
+    private SiteMeters siteMeters;
 
     public FlyerSyncLog(FlyerSyncRunRepository repository) {
         this.repository = repository;
+    }
+
+    @Autowired(required = false)
+    public void setSiteMeters(SiteMeters siteMeters) {
+        this.siteMeters = siteMeters;
     }
 
     // --- Record ---
@@ -36,6 +43,9 @@ public class FlyerSyncLog {
         run.setProductCount(error == null ? productCount : 0);
         run.setErrorMessage(limit(error));
         repository.save(run);
+        if (siteMeters != null) {
+            siteMeters.flyerSync(error == null);
+        }
     }
 
     // --- Latest ---

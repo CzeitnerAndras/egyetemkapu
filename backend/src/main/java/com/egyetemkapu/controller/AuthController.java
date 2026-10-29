@@ -12,8 +12,10 @@ import com.egyetemkapu.security.UsernamePolicy;
 import com.egyetemkapu.service.EmailVerificationService;
 import com.egyetemkapu.service.PasswordResetService;
 import com.egyetemkapu.service.RefreshTokenService;
+import com.egyetemkapu.service.SiteMeters;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +49,12 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final boolean cookieSecure;
     private final boolean requireEmailVerification;
+    private SiteMeters siteMeters;
+
+    @Autowired(required = false)
+    public void setSiteMeters(SiteMeters siteMeters) {
+        this.siteMeters = siteMeters;
+    }
 
     public AuthController(
             UserRepository userRepository,
@@ -150,6 +159,17 @@ public class AuthController {
     // --- Tokens ---
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        long started = System.nanoTime();
+        try {
+            return rotateRefresh(request, response);
+        } finally {
+            if (siteMeters != null) {
+                siteMeters.recordRefresh(Duration.ofNanos(System.nanoTime() - started));
+            }
+        }
+    }
+
+    private ResponseEntity<?> rotateRefresh(HttpServletRequest request, HttpServletResponse response) {
         String rawToken = AuthCookies.readRefresh(request);
         Optional<RefreshToken> stored = refreshTokenService.findByRawToken(rawToken);
         if (stored.isEmpty()) {

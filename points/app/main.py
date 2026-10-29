@@ -11,7 +11,6 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.metrics import ToolMetricsMiddleware, metrics
-from app.rate_limit import ToolRateLimitMiddleware
 from app.planner import (
     DEFAULT_THRESHOLDS,
     CoursePlan,
@@ -20,6 +19,8 @@ from app.planner import (
     ThresholdInput,
     plan_course,
 )
+from app.rate_limit import ToolRateLimitMiddleware
+from app.tracing import enable_tracing
 
 app = FastAPI(
     title="Egyetemkapu points",
@@ -179,3 +180,6 @@ def create_plan(body: PlanRequest) -> PlanResponse:
     except PlanError as error:
         raise HTTPException(status_code=400, detail=error.code) from error
     return _response(plan)
+
+
+enable_tracing(app, "points")
