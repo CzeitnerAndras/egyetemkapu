@@ -48,4 +48,10 @@ def test_a_burst_from_one_address_is_limited_and_health_stays_open():
 
     blocked = client.post("/api/bibliography/sort", json={"text": SAMPLE}, headers=headers)
     assert blocked.status_code == 429
+    assert blocked.json()["detail"] == "too_many_requests"
     assert client.get("/api/bibliography/health", headers=headers).status_code == 200
+    assert client.post(
+        "/api/bibliography/sort",
+        json={"text": SAMPLE},
+        headers={"X-Forwarded-For": "203.0.113.31"},
+    ).status_code == 200

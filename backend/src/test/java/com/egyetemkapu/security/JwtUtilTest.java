@@ -62,5 +62,20 @@ class JwtUtilTest {
 
         assertEquals(4, jwtUtil.sessionVersion(current));
         assertEquals(0, jwtUtil.sessionVersion(legacy));
+        assertEquals(0, jwtUtil.sessionVersion(jwtUtil.generateToken("teszt_hallgato")));
+    }
+
+    @Test
+    void sessionVersion_InvalidTokenAndNonNumericClaim_ReturnZero() {
+        String textClaim = Jwts.builder()
+                .setSubject("teszt_hallgato")
+                .claim("sv", "negy")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 60_000))
+                .signWith(Keys.hmacShaKeyFor("test-secret-key-at-least-32-characters!!".getBytes(StandardCharsets.UTF_8)))
+                .compact();
+
+        assertEquals(0, jwtUtil.sessionVersion("nem-token"));
+        assertEquals(0, jwtUtil.sessionVersion(textClaim));
     }
 }

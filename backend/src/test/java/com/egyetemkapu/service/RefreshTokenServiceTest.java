@@ -68,8 +68,20 @@ class RefreshTokenServiceTest {
         assertFalse(issued.rawToken().isBlank());
         verify(refreshTokenRepository).save(argThat(saved ->
                 saved.getUser().equals(user)
+                        && saved.getPreviousToken() == null
                         && PasswordResetTokens.hash(issued.rawToken()).equals(saved.getToken())
                         && saved.getExpiryDate().isAfter(LocalDateTime.now())));
+    }
+
+    @Test
+    void createRefreshToken_MissingUser_Throws() {
+        when(userRepository.findById(9L)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> refreshTokenService.createRefreshToken(9L));
+
+        assertEquals("Felhasználó nem található", exception.getMessage());
+        verify(refreshTokenRepository, never()).save(any());
     }
 
     @Test
@@ -147,5 +159,13 @@ class RefreshTokenServiceTest {
 
         verify(userRepository, never()).save(any());
         verify(refreshTokenRepository, never()).deleteByUser(any());
+    }
+
+    @Test
+    void revokeIfReused_BlankToken_DoesNothing() {
+        assertFalse(refreshTokenService.revokeIfReused(" "));
+
+        verify(refreshTokenRepository, never()).findByPreviousToken(any());
+        verify(userRepository, never()).save(any());
     }
 }

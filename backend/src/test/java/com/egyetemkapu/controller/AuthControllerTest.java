@@ -333,9 +333,27 @@ class AuthControllerTest {
     @Test
     void refresh_MissingToken_Throws() {
         when(refreshTokenService.findByRawToken(null)).thenReturn(Optional.empty());
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
         assertThrows(TokenRefreshException.class,
-                () -> controller.refreshToken(new MockHttpServletRequest(), new MockHttpServletResponse()));
+                () -> controller.refreshToken(new MockHttpServletRequest(), response));
+
+        verify(refreshTokenService).revokeIfReused(null);
+        assertTrue(response.getHeaders(HttpHeaders.SET_COOKIE).isEmpty());
+    }
+
+    @Test
+    void refresh_UnknownTokenDoesNotClearCookies() {
+        when(refreshTokenService.findByRawToken("idegen")).thenReturn(Optional.empty());
+        when(refreshTokenService.revokeIfReused("idegen")).thenReturn(false);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(AuthCookies.REFRESH, "idegen"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        assertThrows(TokenRefreshException.class, () -> controller.refreshToken(request, response));
+
+        verify(refreshTokenService).revokeIfReused("idegen");
+        assertTrue(response.getHeaders(HttpHeaders.SET_COOKIE).isEmpty());
     }
 
     @Test
@@ -372,6 +390,50 @@ class AuthControllerTest {
                 cookie.startsWith(AuthCookies.ACCESS + "=") && cookie.contains("Max-Age=0")));
         assertTrue(cookies.stream().anyMatch(cookie ->
                 cookie.startsWith(AuthCookies.REFRESH + "=") && cookie.contains("Max-Age=0")));
+    }
+
+    @Test
+    void logout_AccessCookieEndsTheSessionWhenRefreshIsMissing() {
+        User user = verifiedUser();
+        when(refreshTokenService.findByRawToken(null)).thenReturn(Optional.empty());
+        when(jwtUtil.validateToken("access")).thenReturn(true);
+        when(jwtUtil.extractUsername("access")).thenReturn("diak");
+        when(userRepository.findByUsername("diak")).thenReturn(Optional.of(user));
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(AuthCookies.ACCESS, "access"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        ResponseEntity<?> result = controller.logout(request, response);
+
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        verify(refreshTokenService).endSession(user);
+        assertTrue(response.getHeaders(HttpHeaders.SET_COOKIE).stream().anyMatch(cookie ->
+                cookie.startsWith(AuthCookies.ACCESS + "=") && cookie.contains("Max-Age=0")));
+    }
+
+    @Test
+    void logout_UnusableAccessCookieDoesNotEndASession() {
+        when(refreshTokenService.findByRawToken(null)).thenReturn(Optional.empty());
+        when(jwtUtil.validateToken("rossz")).thenReturn(false);
+        when(jwtUtil.validateToken("access")).thenReturn(true);
+        when(jwtUtil.extractUsername("access")).thenReturn("nincs");
+        when(userRepository.findByUsername("nincs")).thenReturn(Optional.empty());
+
+        MockHttpServletRequest badRequest = new MockHttpServletRequest();
+        badRequest.setCookies(new Cookie(AuthCookies.ACCESS, "rossz"));
+        MockHttpServletResponse bad = new MockHttpServletResponse();
+        controller.logout(badRequest, bad);
+
+        MockHttpServletRequest missingRequest = new MockHttpServletRequest();
+        missingRequest.setCookies(new Cookie(AuthCookies.ACCESS, "access"));
+        MockHttpServletResponse missing = new MockHttpServletResponse();
+        controller.logout(missingRequest, missing);
+
+        verify(refreshTokenService, never()).endSession(any());
+        assertTrue(bad.getHeaders(HttpHeaders.SET_COOKIE).stream().anyMatch(cookie ->
+                cookie.startsWith(AuthCookies.REFRESH + "=") && cookie.contains("Max-Age=0")));
+        assertTrue(missing.getHeaders(HttpHeaders.SET_COOKIE).stream().anyMatch(cookie ->
+                cookie.startsWith(AuthCookies.ACCESS + "=") && cookie.contains("Max-Age=0")));
     }
 
     @Test

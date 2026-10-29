@@ -28,7 +28,7 @@ ensure_app_db_role() {
     if [ -n "$(tail -c 1 .env || true)" ]; then
       printf '\n' >> .env
     fi
-    printf 'DB_APP_USER=egyetemkapu_app\nDB_APP_PASSWORD=%s\n' "$pass" >> .env
+    printf 'DB_APP_PASSWORD=%s\n' "$pass" >> .env
   fi
 
   local db_user db_password app_password

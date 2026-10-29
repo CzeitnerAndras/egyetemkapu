@@ -83,6 +83,7 @@ def test_a_burst_from_one_address_is_limited_and_health_stays_open():
 
     blocked = client.post("/api/points/plan", json=SAMPLE, headers=headers)
     assert blocked.status_code == 429
+    assert blocked.json()["detail"] == "too_many_requests"
     assert client.get("/api/points/health", headers=headers).status_code == 200
     assert client.post(
         "/api/points/plan",
