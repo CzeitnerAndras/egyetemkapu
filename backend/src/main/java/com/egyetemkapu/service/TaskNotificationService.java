@@ -1,14 +1,17 @@
 package com.egyetemkapu.service;
 
 import com.egyetemkapu.model.Settings;
+import com.egyetemkapu.model.Task;
 import com.egyetemkapu.repository.SettingsRepository;
 import com.egyetemkapu.repository.TaskRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 public class TaskNotificationService {
@@ -16,78 +19,67 @@ public class TaskNotificationService {
     static final int MIN_PING_HOURS_BEFORE = 1;
     static final int MAX_PING_HOURS_BEFORE = 168;
 
+    private static final Logger log = LoggerFactory.getLogger(TaskNotificationService.class);
+
     private final TaskRepository taskRepository;
     private final SettingsRepository settingsRepository;
-    private final NotificationSenderService notificationSenderService;
+    private final ReminderOutboxService reminderOutboxService;
+    private final ReminderDispatchService reminderDispatchService;
     private final Clock clock;
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
     public TaskNotificationService(
             TaskRepository taskRepository,
             SettingsRepository settingsRepository,
-            NotificationSenderService notificationSenderService,
+            ReminderOutboxService reminderOutboxService,
+            ReminderDispatchService reminderDispatchService,
             Clock clock) {
         this.taskRepository = taskRepository;
         this.settingsRepository = settingsRepository;
-        this.notificationSenderService = notificationSenderService;
+        this.reminderOutboxService = reminderOutboxService;
+        this.reminderDispatchService = reminderDispatchService;
         this.clock = clock;
     }
 
     // --- Deadline pings ---
     @Scheduled(cron = "0 * * * * *")
     public void checkDeadlinesAndPing() {
-        LocalDateTime nowMinute = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MINUTES);
-
-        var activeTasks = taskRepository.findAllByCompletedFalse();
-
-        for (var task : activeTasks) {
-            if (task.getDeadline() == null || task.getUser() == null) continue;
-
-            LocalDateTime deadlineMinute = task.getDeadline().truncatedTo(ChronoUnit.MINUTES);
-            int hoursBeforeDeadline = task.getPingHoursBefore() == null ? 0 : task.getPingHoursBefore();
-            boolean atDeadline = nowMinute.equals(deadlineMinute);
-            boolean hoursBefore = isValidHoursBefore(hoursBeforeDeadline)
-                    && nowMinute.equals(deadlineMinute.minusHours(hoursBeforeDeadline));
-
-            if (!atDeadline && !hoursBefore) continue;
-
-            Settings settings = settingsRepository.findByUser(task.getUser()).orElse(null);
-            if (settings == null) continue;
-
-            String language = task.getUser().getPreferredLanguage();
-
-            if (hoursBefore) {
-                String msg = DeadlinePingMessages.hoursBefore(
-                        language, task.getTitle(), task.getTaskType(), hoursBeforeDeadline);
-
-                if (task.isPingDayBefore() && isValid(settings.getDiscordWebhook()))
-                    notificationSenderService.sendDiscordMessage(settings.getDiscordWebhook(), msg);
-
-                if (task.isPingTelegramDayBefore() && isValid(settings.getTelegramChatId()))
-                    notificationSenderService.sendTelegramMessage(settings.getTelegramChatId(), msg);
-            }
-
-            if (atDeadline) {
-                String msg = DeadlinePingMessages.atDeadline(language, task.getTitle(), task.getTaskType());
-
-                if (task.isPingOnDay() && isValid(settings.getDiscordWebhook()))
-                    notificationSenderService.sendDiscordMessage(settings.getDiscordWebhook(), msg);
-
-                if (task.isPingTelegramOnDay() && isValid(settings.getTelegramChatId()))
-                    notificationSenderService.sendTelegramMessage(settings.getTelegramChatId(), msg);
-            }
+        if (!running.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            LocalDateTime now = LocalDateTime.now(clock);
+            enqueueDue(now);
+            reminderDispatchService.dispatch(now);
+        } finally {
+            running.set(false);
         }
     }
 
     public static int clampPingHoursBefore(Integer hours) {
-        if (hours == null || hours < MIN_PING_HOURS_BEFORE) return 24;
+        if (hours == null || hours < MIN_PING_HOURS_BEFORE) {
+            return 24;
+        }
         return Math.min(MAX_PING_HOURS_BEFORE, hours);
     }
 
-    private static boolean isValidHoursBefore(int hours) {
-        return hours >= MIN_PING_HOURS_BEFORE && hours <= MAX_PING_HOURS_BEFORE;
-    }
-
-    private boolean isValid(String value) {
-        return value != null && !value.trim().isEmpty();
+    private void enqueueDue(LocalDateTime now) {
+        for (Task task : taskRepository.findAllByCompletedFalse()) {
+            if (!DeadlineReminderPlanner.windowOpen(task, now)) {
+                continue;
+            }
+            Settings settings = null;
+            if (task.getUser() != null) {
+                settings = settingsRepository.findByUser(task.getUser()).orElse(null);
+            }
+            for (ReminderDraft draft : DeadlineReminderPlanner.plan(task, settings, now)) {
+                try {
+                    reminderOutboxService.enqueue(draft, now);
+                } catch (RuntimeException ex) {
+                    log.warn("Could not enqueue reminder {} ({})",
+                            draft.idempotencyKey(), ex.getClass().getSimpleName());
+                }
+            }
+        }
     }
 }
