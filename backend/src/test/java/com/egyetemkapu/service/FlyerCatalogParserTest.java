@@ -690,13 +690,82 @@ class FlyerCatalogParserTest {
                 MAGYAR
                 tejföl 20%
                 gyűjtő
+                1 gyűjtő
+                3 gyűjtő
+                MAGYAR
+                UHT tej 2,8%
+                MAGYAR
+                ESL tej 2,8%
                 Válogasd össze kedvenc terméked íz
                 """, 2);
 
         assertEquals(
-                List.of("DANONE DANETTE PUDING", "PICK TÉLISZALÁMI", "MAGYAR tejföl"),
+                List.of(
+                        "DANONE DANETTE PUDING",
+                        "PICK TÉLISZALÁMI",
+                        "MAGYAR tejföl",
+                        "MAGYAR UHT tej",
+                        "MAGYAR ESL tej"),
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
         assertEquals(2, products.getFirst().pageNumber());
+    }
+
+    @Test
+    void metroCheesePageJoinsNameLinesAndDropsTheGluedPrice() {
+        List<String> names = parser.metroProducts("""
+                Paysan Breton
+                camembert sajt
+                250 g/db
+                Gran Moravia
+                darabolt
+                parmezán jellegű
+                sajt
+                200 g/db
+                Niva
+                márványsajt
+                kb. 1,25 kg/db
+                Belga
+                vaj 82%
+                Brazzale
+                reszelt sajt mix
+                1 kg/db
+                3899,Natúr vagy füstölt
+                tehéntejes
+                gomolya sajt
+                kb. 1,5 kg/db
+                ALPRO
+                kókuszgurt
+                ALPRO
+                szójagurt
+                többféle
+                LURPAK
+                sótlan vaj
+                A FINOM ÉTEL
+                LURPAKOT ÉRDEMEL
+                200 g/db
+                LURPAK
+                kenhető keverék készítmény
+                ARLA
+                Apetina
+                feta sajt
+                500 g/db
+                DobD fel
+                valami
+                különlegessel!
+                """, 2).stream().map(FlyerCatalogParser.ParsedProduct::name).toList();
+
+        assertEquals(List.of(
+                "Paysan Breton camembert sajt",
+                "Gran Moravia darabolt parmezán jellegű sajt",
+                "Niva márványsajt",
+                "Belga vaj",
+                "Brazzale reszelt sajt mix",
+                "Natúr vagy füstölt tehéntejes gomolya sajt",
+                "ALPRO kókuszgurt",
+                "ALPRO szójagurt",
+                "LURPAK sótlan vaj",
+                "LURPAK kenhető keverék készítmény",
+                "ARLA Apetina feta sajt"), names);
     }
 
     @Test

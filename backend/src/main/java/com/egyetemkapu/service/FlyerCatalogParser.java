@@ -1067,28 +1067,69 @@ public class FlyerCatalogParser {
             }
         }
         LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
-        String brand = "";
+        List<String> group = new ArrayList<>();
         for (int i = 0; i < lines.size() && products.size() < 80; i++) {
             String line = lines.get(i);
-            if (metroSkipLine(line)) {
+            if (metroSkipLine(line) || metroSlogan(line)) {
+                addMetroGroup(products, group, pageNumber);
                 continue;
             }
-            String next = i + 1 < lines.size() ? lines.get(i + 1) : "";
-            if (metroBrandLine(line) && !next.isEmpty() && !metroSkipLine(next)) {
-                brand = line;
+            String readable = line.replaceFirst("^\\d{3,6},(?=\\p{L})", "");
+            if (readable.isBlank() || metroSkipLine(readable) || metroSlogan(readable)) {
+                addMetroGroup(products, group, pageNumber);
                 continue;
             }
-            String combined = brand.isBlank() ? line : brand + " " + line;
-            brand = "";
-            String name = tidyProductName(combined);
-            if (name.isBlank() || isJunkProductName(name)) {
-                continue;
+            String following = i + 1 < lines.size() ? lines.get(i + 1) : "";
+            String next = following.isBlank() || metroSkipLine(following) || metroSlogan(following)
+                    ? ""
+                    : following;
+            if (metroStartsProduct(readable, next, group)) {
+                addMetroGroup(products, group, pageNumber);
             }
-            products.putIfAbsent(
-                    pageNumber + ":" + HungarianText.normalize(name),
-                    new ParsedProduct(name, pageNumber, null));
+            group.add(readable);
         }
+        addMetroGroup(products, group, pageNumber);
         return new ArrayList<>(products.values());
+    }
+
+    private static boolean metroStartsProduct(String line, String next, List<String> group) {
+        if (group.isEmpty() || !metroTitleLine(line)) {
+            return false;
+        }
+        boolean described = group.stream().anyMatch(part -> !metroTitleLine(part));
+        if (!described) {
+            return metroBrandLine(line) && !next.isBlank();
+        }
+        return !next.isBlank() || metroBrandLine(line);
+    }
+
+    private static boolean metroTitleLine(String line) {
+        String[] words = line.split(" ");
+        if (words.length < 1 || words.length > 2) {
+            return false;
+        }
+        for (String word : words) {
+            if (word.length() < 2 || !Character.isUpperCase(word.charAt(0)) || word.chars().anyMatch(Character::isDigit)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void addMetroGroup(
+            Map<String, ParsedProduct> products, List<String> group, int pageNumber) {
+        if (group.isEmpty() || products.size() >= 80) {
+            group.clear();
+            return;
+        }
+        String name = tidyProductName(String.join(" ", group));
+        group.clear();
+        if (name.isBlank() || isJunkProductName(name) || metroPackLine(name)) {
+            return;
+        }
+        products.putIfAbsent(
+                pageNumber + ":" + HungarianText.normalize(name),
+                new ParsedProduct(name, pageNumber, null));
     }
 
     private static boolean metroBrandLine(String line) {
@@ -1109,21 +1150,34 @@ public class FlyerCatalogParser {
         if (folded.equals("metro")
                 || folded.contains("metro.hu")
                 || folded.contains("eseten")
-                || folded.matches("tobbfele|gyujto|csomag|darab|doboz|lap")
+                || folded.matches("tobbfele|ketfele|gyujto|csomag|darab|doboz|lap")
                 || folded.contains("hogy")
                 || folded.contains("kedvenc")
                 || folded.contains("kedvezmeny")
                 || folded.matches(".*(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december).*")) {
             return true;
         }
-        if (line.split("\\s+").length >= 5) {
+        if (line.split("\\s+").length >= 5 || metroPackLine(line)) {
             return true;
         }
         return line.matches("(?iu).*\\d[\\d\\s.]*,-.*")
                 || line.matches("(?iu)^[\\d\\s./,+%\\-–]+$")
                 || line.matches("(?iu)^(?:kb\\.\\s*)?\\d.*(?:g|kg|dkg|ml|l|db)(?:/|\\b).*")
-                || line.matches("(?iu)^\\d+\\s*(?:db|gyűjtő|gyujto|kg)\\b.*")
                 || line.matches("(?iu)^20\\d{2}\\.?$");
+    }
+
+    private static boolean metroSlogan(String line) {
+        String folded = HungarianText.normalize(line);
+        return folded.contains("erdemel")
+                || folded.contains("finom etel")
+                || folded.contains("dobd fel")
+                || folded.contains("kulonleges")
+                || folded.equals("valami");
+    }
+
+    private static boolean metroPackLine(String line) {
+        String folded = HungarianText.normalize(line);
+        return folded.matches("\\d+\\s*(?:db|gyujto|kg|csomag|darab|doboz)\\s*[:.]?\\s*(?:\\d.*)?");
     }
 
     static String dmTitle(String slug) {
@@ -2845,6 +2899,7 @@ public class FlyerCatalogParser {
         cleaned = DISCLAIMER.matcher(cleaned).replaceAll(" ");
         cleaned = cleaned.replaceAll("(?i)\\b\\d{5,8}\\b", " ");
         cleaned = cleaned.replaceAll("(?iu)(?:^|\\s)(?:csak|akció%?|szuper\\s*ár!?)(?=\\s|$)", " ");
+        cleaned = cleaned.replaceAll("(?iu)\\d{1,2}[,.]\\d{1,2}\\s*%", " ");
         cleaned = cleaned.replaceAll("[-+]?\\d{1,3}\\s*%", " ");
         cleaned = cleaned.replaceAll("(?iu)\\d{1,2}\\.\\d{1,2}\\.?", " ");
         cleaned = cleaned.replaceAll(
