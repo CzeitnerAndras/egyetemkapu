@@ -90,3 +90,17 @@ def test_a_burst_from_one_address_is_limited_and_health_stays_open():
         json=SAMPLE,
         headers={"X-Forwarded-For": "203.0.113.11"},
     ).status_code == 200
+
+
+def test_metrics_skip_health_and_count_a_plan():
+    before = client.get("/api/points/metrics").json()["requests"]
+
+    assert client.get("/api/points/health").status_code == 200
+    assert client.post("/api/points/plan", json=SAMPLE).status_code == 200
+
+    body = client.get("/api/points/metrics").json()
+    assert body["service"] == "points"
+    assert body["requests"] == before + 1
+    assert body["errors"] <= body["requests"]
+    assert "errorRate" in body
+    assert "latencyMsP95" in body

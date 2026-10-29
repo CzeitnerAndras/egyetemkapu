@@ -77,3 +77,15 @@ def test_a_burst_from_one_address_is_limited_and_health_stays_open():
         json=body,
         headers={"X-Forwarded-For": "203.0.113.21"},
     ).status_code == 200
+
+
+def test_metrics_skip_health_and_count_a_check():
+    before = client.get("/api/thesis/metrics").json()["requests"]
+
+    assert client.get("/api/thesis/health").status_code == 200
+    assert client.post("/api/thesis/check", json={"text": "Egy mondat."}).status_code == 200
+
+    body = client.get("/api/thesis/metrics").json()
+    assert body["service"] == "thesis"
+    assert body["requests"] == before + 1
+    assert "latencyMsP95" in body

@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.checker import MAX_TEXT_LENGTH, LengthError, LengthReport, check_text
+from app.metrics import ToolMetricsMiddleware, metrics
 from app.rate_limit import ToolRateLimitMiddleware
 
 app = FastAPI(
@@ -16,8 +17,9 @@ app = FastAPI(
     summary="Word, character, and sentence counts for a thesis draft.",
 )
 
-# --- Rate limit ---
+# --- Rate limit and metrics ---
 app.add_middleware(ToolRateLimitMiddleware)
+app.add_middleware(ToolMetricsMiddleware)
 
 
 class CheckRequest(BaseModel):
@@ -82,6 +84,11 @@ def _response(report: LengthReport) -> CheckResponse:
 @app.get("/api/thesis/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/thesis/metrics")
+def service_metrics() -> dict[str, int | float | str]:
+    return metrics.snapshot("thesis")
 
 
 @app.post("/api/thesis/check", response_model=CheckResponse)

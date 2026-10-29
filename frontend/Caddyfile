@@ -15,18 +15,42 @@ egyetemkapu.hu {
     handle /api/bibliography/* {
         reverse_proxy bibliography:8092 {
             header_up X-Forwarded-For {remote_host}
+            health_uri /api/bibliography/health
+            health_interval 10s
+            health_timeout 2s
+            health_status 200
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 5s
+            }
         }
     }
 
     handle /api/thesis/* {
         reverse_proxy thesis:8091 {
             header_up X-Forwarded-For {remote_host}
+            health_uri /api/thesis/health
+            health_interval 10s
+            health_timeout 2s
+            health_status 200
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 5s
+            }
         }
     }
 
     handle /api/points/* {
         reverse_proxy points:8090 {
             header_up X-Forwarded-For {remote_host}
+            health_uri /api/points/health
+            health_interval 10s
+            health_timeout 2s
+            health_status 200
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 5s
+            }
         }
     }
 

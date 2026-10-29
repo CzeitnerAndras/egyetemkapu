@@ -10,6 +10,7 @@ from typing import Any, Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.metrics import ToolMetricsMiddleware, metrics
 from app.rate_limit import ToolRateLimitMiddleware
 from app.planner import (
     DEFAULT_THRESHOLDS,
@@ -26,8 +27,9 @@ app = FastAPI(
     summary="How many points each grade still needs.",
 )
 
-# --- Rate limit ---
+# --- Rate limit and metrics ---
 app.add_middleware(ToolRateLimitMiddleware)
+app.add_middleware(ToolMetricsMiddleware)
 
 
 def _decimal(value: Any) -> Decimal:
@@ -160,6 +162,11 @@ def _response(plan: CoursePlan) -> PlanResponse:
 @app.get("/api/points/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/points/metrics")
+def service_metrics() -> dict[str, int | float | str]:
+    return metrics.snapshot("points")
 
 
 @app.post("/api/points/plan", response_model=PlanResponse)

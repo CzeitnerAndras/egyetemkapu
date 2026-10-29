@@ -6,6 +6,7 @@ Pydantic checks the JSON shape. ``sorter.sort_text`` orders the lines.
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.metrics import ToolMetricsMiddleware, metrics
 from app.rate_limit import ToolRateLimitMiddleware
 from app.sorter import MAX_TEXT_LENGTH, SortError, sort_text
 
@@ -15,8 +16,9 @@ app = FastAPI(
     summary="Sort reference lines in Hungarian alphabetical order.",
 )
 
-# --- Rate limit ---
+# --- Rate limit and metrics ---
 app.add_middleware(ToolRateLimitMiddleware)
+app.add_middleware(ToolMetricsMiddleware)
 
 
 class SortRequest(BaseModel):
@@ -43,6 +45,11 @@ class SortResponse(BaseModel):
 @app.get("/api/bibliography/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/bibliography/metrics")
+def service_metrics() -> dict[str, int | float | str]:
+    return metrics.snapshot("bibliography")
 
 
 @app.post("/api/bibliography/sort", response_model=SortResponse)
