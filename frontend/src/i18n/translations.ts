@@ -522,6 +522,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'cards.pickDeck': 'Válassz egy paklit, vagy ismételd az esedékes kártyákat.',
     'cards.backToList': 'Vissza a listához',
 
+    // --- Admin ---
     'admin.title': 'Adminisztrátori Panel',
     'admin.pending': 'Várakozó Fájlok',
     'admin.loading': 'Betöltés...',
@@ -535,6 +536,12 @@ export const translations: Record<Lang, Record<string, string>> = {
     'admin.emptyIdeas': 'Az ötletláda jelenleg üres.',
     'admin.unknown': 'Ismeretlen',
     'admin.deleteProcessed': 'Feldolgozva / Törlés',
+    'admin.syncTitle': 'Szórólap szinkron',
+    'admin.syncHint': 'Boltanként az utolsó futás. Ha a névszám 0, ez a futás nem mentett terméket; a korábbi újság megmaradhat.',
+    'admin.sync.ok': 'Rendben',
+    'admin.sync.failed': 'Hiba',
+    'admin.sync.never': 'Még nem futott',
+    'admin.syncNames': 'név',
 
     'links.title': 'Egyetemi Linkek',
     'links.university': 'Egyetem',
@@ -1123,6 +1130,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'cards.pickDeck': 'Pick a deck, or review what is due.',
     'cards.backToList': 'Back to the list',
 
+    // --- Admin ---
     'admin.title': 'Administrator Panel',
     'admin.pending': 'Pending Files',
     'admin.loading': 'Loading...',
@@ -1136,6 +1144,12 @@ export const translations: Record<Lang, Record<string, string>> = {
     'admin.emptyIdeas': 'The idea box is currently empty.',
     'admin.unknown': 'Unknown',
     'admin.deleteProcessed': 'Processed / Delete',
+    'admin.syncTitle': 'Flyer sync',
+    'admin.syncHint': 'The latest run for each store. A name count of 0 means this run saved no products; the previous flyer can still be there.',
+    'admin.sync.ok': 'OK',
+    'admin.sync.failed': 'Failed',
+    'admin.sync.never': 'Not run yet',
+    'admin.syncNames': 'names',
 
     'links.title': 'University Links',
     'links.university': 'University',

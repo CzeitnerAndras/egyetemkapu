@@ -9,10 +9,11 @@ jest.mock('../i18n/LanguageContext', () => {
     };
 });
 
-const mockInitialFetches = (pending: unknown[] = [], suggestions: unknown[] = []) => {
+const mockInitialFetches = (pending: unknown[] = [], suggestions: unknown[] = [], syncRuns: unknown[] = []) => {
     (globalThis.fetch as jest.Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => pending })
-        .mockResolvedValueOnce({ ok: true, json: async () => suggestions });
+        .mockResolvedValueOnce({ ok: true, json: async () => suggestions })
+        .mockResolvedValueOnce({ ok: true, json: async () => syncRuns });
 };
 
 const waitForListsToLoad = async () => {
@@ -37,7 +38,7 @@ describe('AdminPanelPage Komponens', () => {
         mockInitialFetches();
         render(<AdminPanelPage />);
 
-        expect(screen.getAllByText('admin.loading')).toHaveLength(2);
+        expect(screen.getAllByText('admin.loading')).toHaveLength(3);
     });
 
     it('lekéri a várakozó dokumentumokat és az ötleteket a megfelelő végpontokról', async () => {
@@ -55,6 +56,28 @@ describe('AdminPanelPage Komponens', () => {
                 '/api/suggestions',
                 expect.objectContaining({ credentials: 'include' })
             );
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/flyers/admin/sync-runs',
+                expect.objectContaining({ credentials: 'include' })
+            );
+        });
+    });
+
+    // --- Sync runs ---
+    it('megjeleníti a bolt utolsó szinkronját', async () => {
+        mockInitialFetches([], [], [
+            { store: 'aldi', status: 'failed', startedAt: '2026-10-29T06:30:00', finishedAt: '2026-10-29T06:31:00', productCount: 0, errorMessage: 'aldi down' },
+            { store: 'spar', status: 'ok', startedAt: '2026-10-29T06:30:00', finishedAt: '2026-10-29T06:32:00', productCount: 840, errorMessage: null },
+        ]);
+
+        render(<AdminPanelPage />);
+
+        await waitFor(() => {
+            expect(screen.getByText('aldi')).toBeInTheDocument();
+            expect(screen.getByText('admin.sync.failed')).toBeInTheDocument();
+            expect(screen.getByText('aldi down')).toBeInTheDocument();
+            expect(screen.getByText(/840/)).toBeInTheDocument();
+            expect(screen.getByText('admin.sync.ok')).toBeInTheDocument();
         });
     });
 
