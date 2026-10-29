@@ -17,6 +17,16 @@ jest.mock('./components/Navbar', () => ({
     default: () => <nav>navbar</nav>,
 }));
 
+jest.mock('./components/SiteFooter', () => ({
+    __esModule: true,
+    default: () => <footer>footer</footer>,
+}));
+
+jest.mock('./pages/LegalPage', () => ({
+    __esModule: true,
+    default: ({ kind }: { kind: string }) => <div>{kind}-page</div>,
+}));
+
 jest.mock('./components/DocumentTitle', () => ({
     __esModule: true,
     default: () => null,
@@ -75,6 +85,9 @@ const directRoutes: Array<[string, string]> = [
     ['/otletlada', 'idea-page'],
     ['/admin', 'admin-page'],
     ['/about', 'about-page'],
+    ['/adatvedelem', 'privacy-page'],
+    ['/impresszum', 'imprint-page'],
+    ['/felhasznalasi-feltetelek', 'terms-page'],
     ['/faq', 'faq-page'],
     ['/settings', 'settings-page'],
     ['/linktar', 'links-page'],
@@ -89,6 +102,9 @@ const redirects: Array<[string, string, string]> = [
     ['/links', 'links-page', '/linktar'],
     ['/flyers', 'sales-page', '/akcios-ujsag'],
     ['/flashcards', 'flashcards-page', '/kartyak'],
+    ['/privacy', 'privacy-page', '/adatvedelem'],
+    ['/imprint', 'imprint-page', '/impresszum'],
+    ['/terms', 'terms-page', '/felhasznalasi-feltetelek'],
 ];
 
 describe('App', () => {
