@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { ListOrdered } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { ToolDownNotice, toolFetch, toolIsDown, useToolHealth } from '../utils/toolFetch';
 
 const SAMPLE = [
     'Szabó, Anna (2020). A város.',
@@ -33,6 +34,8 @@ export default function BibliographyPage() {
     const [error, setError] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [failed, setFailed] = useState(false);
+    const down = useToolHealth('/api/bibliography/health') || failed;
 
     const handleSort = async (event: FormEvent) => {
         event.preventDefault();
@@ -47,12 +50,17 @@ export default function BibliographyPage() {
 
         setLoading(true);
         try {
-            const response = await fetch('/api/bibliography/sort', {
+            const response = await toolFetch('/api/bibliography/sort', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text }),
             });
             const data: unknown = await response.json().catch(() => null);
+            if (toolIsDown(response.status)) {
+                setFailed(true);
+                setError(null);
+                return;
+            }
             if (!response.ok || !isResult(data)) {
                 const detail = data && typeof data === 'object' && 'detail' in data && typeof (data as { detail: unknown }).detail === 'string'
                     ? (data as { detail: string }).detail
@@ -63,9 +71,11 @@ export default function BibliographyPage() {
                 else setError(t('bib.error'));
                 return;
             }
+            setFailed(false);
             setResult(data);
         } catch {
-            setError(t('bib.error'));
+            setFailed(true);
+            setError(null);
         } finally {
             setLoading(false);
         }
@@ -88,6 +98,7 @@ export default function BibliographyPage() {
             <p className="mb-6 max-w-3xl text-black dark:text-gray-200 secret:text-[#1cf85d] secret:font-mono">
                 {t('bib.intro')}
             </p>
+            {down && <ToolDownNotice message={t('bib.down')} />}
 
             <form onSubmit={handleSort} className="flex flex-col gap-6">
                 <label className="flex flex-col gap-2">
@@ -116,7 +127,7 @@ export default function BibliographyPage() {
                     </button>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || down}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50 shadow-[4px_4px_0px_#000] dark:shadow-md"
                     >
                         <ListOrdered className="w-5 h-5 mr-2" />

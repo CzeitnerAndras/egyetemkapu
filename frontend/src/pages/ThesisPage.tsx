@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { FileText } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { ToolDownNotice, toolFetch, toolIsDown, useToolHealth } from '../utils/toolFetch';
 
 const SAMPLE = 'A szakdolgozat összegzése rövid. Ld. pl. a 3,14. ábrát, és a szak-dolgozat kötőjeles alakja is egy szó. Ez a hosszabb mondat azért hosszabb, hogy ő legyen a leghosszabb.';
 
@@ -45,6 +46,8 @@ export default function ThesisPage() {
     const [report, setReport] = useState<LengthReport | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [failed, setFailed] = useState(false);
+    const down = useToolHealth('/api/thesis/health') || failed;
 
     const readingLabel = (seconds: number): string => {
         if (seconds <= 0) return t('thesis.readingNone');
@@ -79,12 +82,17 @@ export default function ThesisPage() {
 
         setLoading(true);
         try {
-            const response = await fetch('/api/thesis/check', {
+            const response = await toolFetch('/api/thesis/check', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, wordLimit: words, characterLimit: characters }),
             });
             const data: unknown = await response.json().catch(() => null);
+            if (toolIsDown(response.status)) {
+                setFailed(true);
+                setError(null);
+                return;
+            }
             if (!response.ok || !isReport(data)) {
                 const detail = data && typeof data === 'object' && 'detail' in data && typeof (data as { detail: unknown }).detail === 'string'
                     ? (data as { detail: string }).detail
@@ -92,9 +100,11 @@ export default function ThesisPage() {
                 setError(t(detail === 'too_long' ? 'thesis.err.tooLong' : response.status === 400 ? 'thesis.err.empty' : 'thesis.error'));
                 return;
             }
+            setFailed(false);
             setReport(data);
         } catch {
-            setError(t('thesis.error'));
+            setFailed(true);
+            setError(null);
         } finally {
             setLoading(false);
         }
@@ -106,6 +116,7 @@ export default function ThesisPage() {
             <p className="mb-6 max-w-3xl text-black dark:text-gray-200 secret:text-[#1cf85d] secret:font-mono">
                 {t('thesis.intro')}
             </p>
+            {down && <ToolDownNotice message={t('thesis.down')} />}
 
             <form onSubmit={handleCheck} className="flex flex-col gap-6">
                 <label className="flex flex-col gap-2">
@@ -164,7 +175,7 @@ export default function ThesisPage() {
                     </button>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || down}
                         className="flex-1 bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50 shadow-[4px_4px_0px_#000] dark:shadow-md"
                     >
                         <FileText className="w-5 h-5 mr-2" />

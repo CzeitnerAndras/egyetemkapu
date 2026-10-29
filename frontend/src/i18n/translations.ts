@@ -350,6 +350,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'points.status.impossible': 'Nem jön össze: {needed} pont kellene, és csak {left} maradt',
     'points.invalid': 'Ellenőrizd a pontokat és a ponthatárokat.',
     'points.error': 'A pontszolgáltatás most nem elérhető.',
+    'points.down': 'A ponttervező nem elérhető. A naptár, a belépés és a jegyzetek ettől még működnek.',
     'points.err.earnedAboveMax': 'A megszerzett pont nem lehet több a maximumnál.',
     'points.err.thresholdOrder': 'A magasabb jegyhez magasabb százalék kell.',
     'points.err.duplicateGrade': 'Minden jegy csak egyszer szerepelhet.',
@@ -385,6 +386,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'thesis.err.limit': 'A limit pozitív egész szám legyen, vagy hagyd üresen.',
     'thesis.err.tooLong': 'A szöveg túl hosszú ehhez az ellenőrzéshez.',
     'thesis.error': 'A terjedelem-szolgáltatás most nem elérhető.',
+    'thesis.down': 'A terjedelem-ellenőr nem elérhető. A naptár, a belépés és a jegyzetek ettől még működnek.',
 
     'bib.title': 'Irodalomjegyzék-rendező',
     'bib.intro': 'Egy sor, egy tétel. A szolgáltatás magyar ábécé szerint rendezi: a cs egy betű, ezért Czakó a Csányi elé kerül, és a sz is egy betű, ezért Sáros a Szabó elé. A vessző és a szóköz nem számít.',
@@ -402,6 +404,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'bib.err.tooLong': 'A lista túl hosszú ehhez a rendezéshez.',
     'bib.err.tooMany': 'Legfeljebb 1000 tétel rendezhető egyszerre.',
     'bib.error': 'Az irodalomjegyzék-szolgáltatás most nem elérhető.',
+    'bib.down': 'Az irodalomjegyzék-rendező nem elérhető. A naptár, a belépés és a jegyzetek ettől még működnek.',
 
     'ai.title': 'AI Asszisztens',
     'ai.secretTitle': 'Bandi Industries AI Asszisztens',
@@ -964,6 +967,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'points.status.impossible': 'Out of reach: that needs {needed}, and only {left} are left',
     'points.invalid': 'Check the scores and the cutoffs.',
     'points.error': 'The points service is unavailable right now.',
+    'points.down': 'The points planner is down. The calendar, sign-in, and notes still work.',
     'points.err.earnedAboveMax': 'Earned points cannot be higher than the maximum.',
     'points.err.thresholdOrder': 'A higher grade needs a higher percent.',
     'points.err.duplicateGrade': 'Each grade can only be listed once.',
@@ -999,6 +1003,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'thesis.err.limit': 'A limit has to be a positive whole number, or stay empty.',
     'thesis.err.tooLong': 'This text is too long to check.',
     'thesis.error': 'The length checker is unavailable right now.',
+    'thesis.down': 'The length checker is down. The calendar, sign-in, and notes still work.',
 
     'bib.title': 'Bibliography sorter',
     'bib.intro': 'One reference per line. The service sorts them in Hungarian alphabetical order: cs is one letter, so Czakó comes before Csányi, and sz is one letter, so Sáros comes before Szabó. Commas and spaces do not count.',
@@ -1016,6 +1021,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'bib.err.tooLong': 'This list is too long to sort.',
     'bib.err.tooMany': 'At most 1000 entries can be sorted at once.',
     'bib.error': 'The bibliography service is unavailable right now.',
+    'bib.down': 'The bibliography sorter is down. The calendar, sign-in, and notes still work.',
 
     'ai.title': 'AI Assistant',
     'ai.secretTitle': 'Bandi Industries AI Assistant',
