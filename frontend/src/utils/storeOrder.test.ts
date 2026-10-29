@@ -17,7 +17,7 @@ describe('storeOrder', () => {
 
     it('a mentett sorrendet olvassa, és a hiányzó boltot a végére teszi', () => {
         localStorage.setItem(STORE_ORDER_KEY, JSON.stringify(['lidl', 'coop', 'nem-bolt', 'lidl']));
-        expect(loadStoreOrder()).toEqual(['lidl', 'coop', 'spar', 'penny', 'tesco', 'aldi', 'auchan', 'rossmann', 'dm', 'metro']);
+        expect(loadStoreOrder()).toEqual(['lidl', 'coop', 'spar', 'penny', 'tesco', 'aldi', 'auchan', 'rossmann', 'dm', 'metro', 'real']);
     });
 
     it('hibás mentés helyett az alap sorrendet adja', () => {
@@ -29,7 +29,7 @@ describe('storeOrder', () => {
 
     it('áthelyezi a boltot a cél helyére, és elmenti', () => {
         const next = reorderStores(DEFAULT_STORE_ORDER, 'aldi', 'spar');
-        expect(next).toEqual(['aldi', 'spar', 'penny', 'tesco', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro']);
+        expect(next).toEqual(['aldi', 'spar', 'penny', 'tesco', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real']);
         expect(reorderStores(next, 'aldi', 'aldi')).toBe(next);
         saveStoreOrder(next);
         expect(loadStoreOrder()).toEqual(next);
