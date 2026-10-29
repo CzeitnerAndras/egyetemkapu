@@ -8,12 +8,16 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.checker import MAX_TEXT_LENGTH, LengthError, LengthReport, check_text
+from app.rate_limit import ToolRateLimitMiddleware
 
 app = FastAPI(
     title="Egyetemkapu length checker",
     version="1.0.0",
     summary="Word, character, and sentence counts for a thesis draft.",
 )
+
+# --- Rate limit ---
+app.add_middleware(ToolRateLimitMiddleware)
 
 
 class CheckRequest(BaseModel):

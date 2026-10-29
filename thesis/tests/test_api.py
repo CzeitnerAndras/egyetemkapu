@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.rate_limit import LIMIT
 
 client = TestClient(app)
 
@@ -57,3 +58,16 @@ def test_a_zero_limit_is_rejected_by_the_schema():
     )
 
     assert response.status_code == 422
+
+
+def test_a_burst_from_one_address_is_limited_and_health_stays_open():
+    headers = {"X-Forwarded-For": "203.0.113.20"}
+    body = {"text": "Egy mondat."}
+
+    for _ in range(LIMIT):
+        response = client.post("/api/thesis/check", json=body, headers=headers)
+        assert response.status_code == 200
+
+    blocked = client.post("/api/thesis/check", json=body, headers=headers)
+    assert blocked.status_code == 429
+    assert client.get("/api/thesis/health", headers=headers).status_code == 200

@@ -6,6 +6,7 @@ Pydantic checks the JSON shape. ``sorter.sort_text`` orders the lines.
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.rate_limit import ToolRateLimitMiddleware
 from app.sorter import MAX_TEXT_LENGTH, SortError, sort_text
 
 app = FastAPI(
@@ -13,6 +14,9 @@ app = FastAPI(
     version="1.0.0",
     summary="Sort reference lines in Hungarian alphabetical order.",
 )
+
+# --- Rate limit ---
+app.add_middleware(ToolRateLimitMiddleware)
 
 
 class SortRequest(BaseModel):

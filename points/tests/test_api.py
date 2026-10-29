@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.rate_limit import LIMIT
 
 client = TestClient(app)
 
@@ -71,3 +72,20 @@ def test_a_missing_part_list_is_rejected_by_the_schema():
     response = client.post("/api/points/plan", json={"parts": []})
 
     assert response.status_code == 422
+
+
+def test_a_burst_from_one_address_is_limited_and_health_stays_open():
+    headers = {"X-Forwarded-For": "203.0.113.10"}
+
+    for _ in range(LIMIT):
+        response = client.post("/api/points/plan", json=SAMPLE, headers=headers)
+        assert response.status_code == 200
+
+    blocked = client.post("/api/points/plan", json=SAMPLE, headers=headers)
+    assert blocked.status_code == 429
+    assert client.get("/api/points/health", headers=headers).status_code == 200
+    assert client.post(
+        "/api/points/plan",
+        json=SAMPLE,
+        headers={"X-Forwarded-For": "203.0.113.11"},
+    ).status_code == 200

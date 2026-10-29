@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.rate_limit import LIMIT
 
 client = TestClient(app)
 
@@ -36,3 +37,15 @@ def test_blank_text_is_a_client_error():
 
     assert response.status_code == 400
     assert response.json()["detail"] == "empty_text"
+
+
+def test_a_burst_from_one_address_is_limited_and_health_stays_open():
+    headers = {"X-Forwarded-For": "203.0.113.30"}
+
+    for _ in range(LIMIT):
+        response = client.post("/api/bibliography/sort", json={"text": SAMPLE}, headers=headers)
+        assert response.status_code == 200
+
+    blocked = client.post("/api/bibliography/sort", json={"text": SAMPLE}, headers=headers)
+    assert blocked.status_code == 429
+    assert client.get("/api/bibliography/health", headers=headers).status_code == 200

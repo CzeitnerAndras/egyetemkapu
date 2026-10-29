@@ -10,6 +10,7 @@ from typing import Any, Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.rate_limit import ToolRateLimitMiddleware
 from app.planner import (
     DEFAULT_THRESHOLDS,
     CoursePlan,
@@ -24,6 +25,9 @@ app = FastAPI(
     version="1.0.0",
     summary="How many points each grade still needs.",
 )
+
+# --- Rate limit ---
+app.add_middleware(ToolRateLimitMiddleware)
 
 
 def _decimal(value: Any) -> Decimal:
