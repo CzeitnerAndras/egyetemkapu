@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -131,7 +132,7 @@ class UserControllerTest {
         User current = user("anna");
         when(userRepository.findByUsername("anna")).thenReturn(Optional.of(current));
         when(userRepository.findByUsername("uj.nev")).thenReturn(Optional.empty());
-        when(jwtUtil.generateToken("uj.nev")).thenReturn("access-jwt");
+        when(jwtUtil.generateToken("uj.nev", 0)).thenReturn("access-jwt");
         authenticate("anna");
 
         mockMvc.perform(put("/api/users/username")
@@ -150,7 +151,12 @@ class UserControllerTest {
         when(userRepository.findByUsername("anna")).thenReturn(Optional.of(current));
         when(passwordEncoder.matches("Regi123!", "old-hash")).thenReturn(true);
         when(passwordEncoder.encode("UjJelszo1!")).thenReturn("new-hash");
-        when(jwtUtil.generateToken("anna")).thenReturn("access-jwt");
+        doAnswer(invocation -> {
+            User signedIn = invocation.getArgument(0);
+            signedIn.setSessionVersion(signedIn.getSessionVersion() + 1);
+            return null;
+        }).when(refreshTokenService).endSession(current);
+        when(jwtUtil.generateToken("anna", 1)).thenReturn("access-jwt");
         when(refreshTokenService.createRefreshToken(4L))
                 .thenReturn(new RefreshTokenService.IssuedRefreshToken("raw-refresh"));
         authenticate("anna");
@@ -167,7 +173,7 @@ class UserControllerTest {
 
         assertEquals("new-hash", current.getPassword());
         var order = inOrder(refreshTokenService);
-        order.verify(refreshTokenService).deleteByUserId(4L);
+        order.verify(refreshTokenService).endSession(current);
         order.verify(refreshTokenService).createRefreshToken(4L);
     }
 
@@ -194,7 +200,7 @@ class UserControllerTest {
                         .content("{\"currentPassword\":\"Rossz123!\",\"newPassword\":\"UjJelszo1!\"}"))
                 .andExpect(status().isBadRequest());
 
-        verify(refreshTokenService, never()).deleteByUserId(any());
+        verify(refreshTokenService, never()).endSession(any());
         verify(refreshTokenService, never()).createRefreshToken(any());
     }
 

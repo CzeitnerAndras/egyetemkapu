@@ -17,10 +17,10 @@ describe('AboutPage Komponens', () => {
         expect(screen.getByText('Czeitner András')).toBeInTheDocument();
     });
 
-    it('megjeleníti mind a tizenkét funkció listaelemet', () => {
+    it('megjeleníti mind a tizennégy funkció listaelemet', () => {
         render(<AboutPage />);
 
-        for (let i = 1; i <= 12; i++) {
+        for (let i = 1; i <= 14; i++) {
             expect(screen.getByText(`about.f${i}`)).toBeInTheDocument();
         }
     });

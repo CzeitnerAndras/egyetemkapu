@@ -129,7 +129,7 @@ public class UserController {
         user.setUsername(newUsername);
         userRepository.save(user);
 
-        AuthCookies.setAccess(response, jwtUtil.generateToken(newUsername), cookieSecure);
+        AuthCookies.setAccess(response, jwtUtil.generateToken(newUsername, user.getSessionVersion()), cookieSecure);
         return ResponseEntity.ok(Map.of("message", "Sikeres frissítés!", "username", newUsername));
     }
 
@@ -155,9 +155,9 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        refreshTokenService.deleteByUserId(user.getId());
+        refreshTokenService.endSession(user);
         RefreshTokenService.IssuedRefreshToken refresh = refreshTokenService.createRefreshToken(user.getId());
-        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername()), cookieSecure);
+        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername(), user.getSessionVersion()), cookieSecure);
         AuthCookies.setRefresh(response, refresh.rawToken(), cookieSecure);
 
         return ResponseEntity.ok(Map.of("message", "Jelszó sikeresen frissítve!"));

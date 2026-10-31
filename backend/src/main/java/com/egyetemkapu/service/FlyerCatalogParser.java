@@ -118,6 +118,32 @@ public class FlyerCatalogParser {
             "https://magazin\\.dm\\.hu/([a-z0-9][a-z0-9_-]{0,80})(?:/|[\"'\\s?#]|$)",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern DM_SLUG_DATE = Pattern.compile("(20\\d{2}-\\d{2}-\\d{2})");
+    private static final Pattern METRO_SLUG = Pattern.compile("^[a-z0-9][a-z0-9_-]{0,120}$");
+    private static final Pattern REAL_PDF_LINK = Pattern.compile(
+            "(?is)<a\\s+href=\"([^\"]+\\.pdf)\"[^>]*class=\"[^\"]*promotion-pdf-download");
+    private static final Pattern REAL_H3 = Pattern.compile("(?is)<h3[^>]*>\\s*([^<]{3,160}?)\\s*</h3>");
+    private static final Pattern REAL_FILE_RANGE = Pattern.compile(
+            "(?i)(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december)"
+                    + "[-_. ]+(\\d{1,2})[-_. ]+(\\d{1,2})");
+    private static final Pattern REAL_UPLOAD_DATE = Pattern.compile("/(20\\d{2})/(\\d{2})/");
+    private static final Pattern CBA_IMAGE = Pattern.compile(
+            "https://(?:www\\.)?cba\\.hu/wp-content/uploads/(20\\d{2})/(\\d{2})/(CBA[^\\s\"'<>]+?\\.(?:jpe?g|png|webp))",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern CBA_THUMB = Pattern.compile("-\\d+x\\d+\\.(?:jpe?g|png|webp)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CBA_PRODUCT = Pattern.compile(
+            "(?is)<img[^>]+src=\"(https://(?:www\\.)?cba\\.hu/wp-content/uploads/[^\"]+)\""
+                    + "[\\s\\S]{0,5000}?woocommerce-loop-product__title\">\\s*([^<]+?)\\s*</h2>");
+    private static final Pattern CBA_VALID = Pattern.compile(
+            "Érvényes:\\s*(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
+    private static final Pattern MM_TEASER = Pattern.compile(
+            "(?is)<p[^>]*>\\s*Érvényes:\\s*([^<]{8,80})</p>\\s*"
+                    + "<a[^>]*href=\"(/hu/campaign/[a-z0-9-]+)\"[^>]*>\\s*<h3[^>]*>\\s*([^<]{2,140})\\s*</h3>");
+    private static final Pattern MM_IMAGE = Pattern.compile(
+            "https://cms-images\\.mmst\\.eu/[^\\s\"'<>]+?\\.(?:jpe?g|png|webp)");
+    private static final Pattern MM_RANGE = Pattern.compile(
+            "(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\.?\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
+    private static final Pattern MM_PRODUCT = Pattern.compile("\"productName\":\"((?:\\\\.|[^\"\\\\])*)\"");
+    private static final Pattern MM_UNICODE = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
     private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
             "(?iu)(?:(20\\d{2})\\.\\s*)?"
                     + "(január|február|március|április|május|június|július|augusztus|szeptember|október|november|december)"
@@ -343,7 +369,7 @@ public class FlyerCatalogParser {
         if (json == null || json.isBlank()) {
             return null;
         }
-        Matcher matcher = ROSSMANN_PDF.matcher(json);
+        Matcher matcher = ROSSMANN_PDF.matcher(json.replace("\\/", "/"));
         return matcher.find() ? matcher.group(1) : null;
     }
 
@@ -560,6 +586,441 @@ public class FlyerCatalogParser {
         return papers;
     }
 
+    public List<DiscoveredPaper> discoverMetroPapers(String json, LocalDate today) {
+        List<DiscoveredPaper> papers = new ArrayList<>();
+        if (json == null || json.isBlank()) {
+            return papers;
+        }
+        try {
+            JsonNode items = objectMapper.readTree(json).path("items");
+            if (!items.isArray()) {
+                return papers;
+            }
+            for (JsonNode item : items) {
+                String slug = textOr(item.path("slug"), "").toLowerCase(Locale.ROOT);
+                if (!METRO_SLUG.matcher(slug).matches()) {
+                    continue;
+                }
+                String title = textOr(item.path("name"), "").replaceAll("\\s+", " ").trim();
+                if (title.isBlank()) {
+                    title = "METRO katalógus";
+                }
+                papers.add(new DiscoveredPaper(
+                        "metro",
+                        title,
+                        "https://katalogus.metro.hu/" + slug + "/",
+                        null,
+                        "metro:" + slug,
+                        isoDate(item.path("validFrom"), null),
+                        isoDate(item.path("validTo"), null)));
+            }
+        } catch (Exception ignored) {
+            return List.of();
+        }
+        List<DiscoveredPaper> current = keepCurrentOrUpcoming(papers, today);
+        current.sort(Comparator
+                .comparing((DiscoveredPaper paper) -> paper.validTo() == null)
+                .thenComparing(paper -> paper.validFrom() == null)
+                .thenComparing(DiscoveredPaper::validFrom, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(DiscoveredPaper::title, String.CASE_INSENSITIVE_ORDER));
+        return current;
+    }
+
+    public List<DiscoveredPaper> discoverRealPapers(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher links = REAL_PDF_LINK.matcher(html);
+        while (links.find()) {
+            String pdf = absoluteRealPdf(links.group(1));
+            if (pdf == null) {
+                continue;
+            }
+            String title = nearestRealTitle(html, links.start());
+            LocalDate[] range = realRange(pdf);
+            DiscoveredPaper paper = new DiscoveredPaper(
+                    "real", title, pdf, pdf, realSourceKey(pdf), range[0], range[1]);
+            DiscoveredPaper previous = papers.get(pdf);
+            if (previous == null) {
+                papers.put(pdf, paper);
+            } else {
+                papers.put(pdf, new DiscoveredPaper(
+                        "real",
+                        joinRealTitles(previous.title(), title),
+                        previous.officialUrl(),
+                        previous.pdfUrl(),
+                        previous.sourceKey(),
+                        previous.validFrom(),
+                        previous.validTo()));
+            }
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    static LocalDate[] realRange(String pdfUrl) {
+        LocalDate[] range = new LocalDate[2];
+        if (pdfUrl == null) {
+            return range;
+        }
+        Matcher upload = REAL_UPLOAD_DATE.matcher(pdfUrl);
+        Matcher file = REAL_FILE_RANGE.matcher(pdfUrl);
+        if (!upload.find() || !file.find()) {
+            return range;
+        }
+        int year = Integer.parseInt(upload.group(1));
+        int month = realMonth(file.group(1));
+        if (month == 0) {
+            return range;
+        }
+        try {
+            int startDay = Integer.parseInt(file.group(2));
+            int endDay = Integer.parseInt(file.group(3));
+            LocalDate from = LocalDate.of(year, month, startDay);
+            int endMonth = month;
+            int endYear = year;
+            if (endDay < startDay) {
+                endMonth++;
+                if (endMonth == 13) {
+                    endMonth = 1;
+                    endYear++;
+                }
+            }
+            LocalDate to = LocalDate.of(endYear, endMonth, endDay);
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    private static String absoluteRealPdf(String href) {
+        if (href == null || href.isBlank()) {
+            return null;
+        }
+        String trimmed = href.trim().replace("&amp;", "&");
+        if (trimmed.startsWith("//")) {
+            trimmed = "https:" + trimmed;
+        } else if (trimmed.startsWith("/")) {
+            trimmed = "https://real.hu" + trimmed;
+        }
+        try {
+            java.net.URI uri = java.net.URI.create(trimmed);
+            String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase(Locale.ROOT);
+            String path = uri.getRawPath() == null ? "" : uri.getRawPath();
+            if (!"https".equalsIgnoreCase(uri.getScheme())
+                    || !(host.equals("real.hu") || host.equals("www.real.hu"))
+                    || !path.toLowerCase(Locale.ROOT).contains("/wp-content/uploads/")
+                    || !path.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+                return null;
+            }
+            String pdf = "https://real.hu" + path;
+            return FlyerUrlPolicy.isAllowed(pdf) ? pdf : null;
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private static String nearestRealTitle(String html, int linkAt) {
+        int from = Math.max(0, linkAt - 8000);
+        Matcher matcher = REAL_H3.matcher(html.substring(from, linkAt));
+        String title = "";
+        while (matcher.find()) {
+            title = matcher.group(1).replaceAll("\\s+", " ").trim();
+        }
+        return title.isBlank() ? "Reál ajánlat" : title;
+    }
+
+    private static String joinRealTitles(String left, String right) {
+        if (left == null || left.isBlank()) {
+            return right;
+        }
+        if (right == null || right.isBlank() || left.equals(right) || left.contains(right)) {
+            return left;
+        }
+        int dash = left.lastIndexOf(" - ");
+        if (dash > 0 && right.startsWith(left.substring(0, dash + 3))) {
+            return left + ", " + right.substring(dash + 3);
+        }
+        return left + ", " + right;
+    }
+
+    private static String realSourceKey(String pdfUrl) {
+        String file = pdfUrl.substring(pdfUrl.lastIndexOf('/') + 1);
+        String slug = HungarianText.normalize(file).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        if (slug.endsWith("-pdf")) {
+            slug = slug.substring(0, slug.length() - 4);
+        }
+        return "real:" + slug;
+    }
+
+    private static int realMonth(String name) {
+        return switch (HungarianText.normalize(name)) {
+            case "januar" -> 1;
+            case "februar" -> 2;
+            case "marcius" -> 3;
+            case "aprilis" -> 4;
+            case "majus" -> 5;
+            case "junius" -> 6;
+            case "julius" -> 7;
+            case "augusztus" -> 8;
+            case "szeptember" -> 9;
+            case "oktober" -> 10;
+            case "november" -> 11;
+            case "december" -> 12;
+            default -> 0;
+        };
+    }
+
+    public ParsedCatalog parseCbaFeatured(String html, LocalDate today) {
+        if (html == null || html.isBlank()) {
+            return null;
+        }
+        LocalDate[] range = cbaValidity(html);
+        if (range[0] == null || !isCurrentOrUpcoming(range[0], range[1], today)) {
+            return null;
+        }
+        List<ParsedPage> pages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
+        Matcher matcher = CBA_PRODUCT.matcher(html);
+        while (matcher.find() && pages.size() < 24) {
+            String image = cbaHttps(matcher.group(1));
+            String name = matcher.group(2).replaceAll("\\s+", " ").trim();
+            if (image == null || name.length() < 3 || isWeakProductName(name)) {
+                continue;
+            }
+            int page = pages.size() + 1;
+            pages.add(new ParsedPage(page, image, name));
+            products.add(new ParsedProduct(name, page, image));
+        }
+        if (pages.isEmpty()) {
+            return null;
+        }
+        return new ParsedCatalog(
+                new DiscoveredPaper(
+                        "cba",
+                        "CBA kiemelt termékek",
+                        "https://www.cba.hu/",
+                        null,
+                        "cba:kiemelt:" + range[0],
+                        range[0],
+                        range[1]),
+                pages,
+                products);
+    }
+
+    public List<DiscoveredPaper> discoverCbaPosters(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = CBA_IMAGE.matcher(html);
+        while (matcher.find()) {
+            String file = matcher.group(3);
+            if (CBA_THUMB.matcher(file).find()) {
+                continue;
+            }
+            String image = "https://www.cba.hu/wp-content/uploads/"
+                    + matcher.group(1) + "/" + matcher.group(2) + "/" + file;
+            if (!FlyerUrlPolicy.isAllowed(image) || papers.containsKey(image)) {
+                continue;
+            }
+            int year = Integer.parseInt(matcher.group(1));
+            int month = realMonth(file);
+            if (month == 0) {
+                month = Integer.parseInt(matcher.group(2));
+            }
+            LocalDate from = null;
+            LocalDate to = null;
+            if (month >= 1 && month <= 12) {
+                from = LocalDate.of(year, month, 1);
+                to = from.plusMonths(1).minusDays(1);
+            }
+            papers.put(image, new DiscoveredPaper(
+                    "cba",
+                    cbaPosterTitle(file),
+                    "https://www.cba.hu/aktualis-ajanlataink/",
+                    image,
+                    "cba:" + cbaSlug(file),
+                    from,
+                    to));
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    static LocalDate[] cbaValidity(String text) {
+        LocalDate[] range = new LocalDate[2];
+        if (text == null) {
+            return range;
+        }
+        Matcher matcher = CBA_VALID.matcher(text);
+        if (!matcher.find()) {
+            return range;
+        }
+        try {
+            int startYear = Integer.parseInt(matcher.group(1));
+            LocalDate from = LocalDate.of(
+                    startYear, Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)));
+            int endYear = matcher.group(4) != null ? Integer.parseInt(matcher.group(4)) : startYear;
+            int endMonth = Integer.parseInt(matcher.group(5));
+            if (matcher.group(4) == null && endMonth < from.getMonthValue()) {
+                endYear++;
+            }
+            LocalDate to = LocalDate.of(endYear, endMonth, Integer.parseInt(matcher.group(6)));
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    private static String cbaPosterTitle(String file) {
+        String name = file.replaceAll("(?i)\\.(?:jpe?g|png|webp)$", "")
+                .replace('_', ' ')
+                .replace('-', ' ');
+        name = name.replaceAll("(?i)\\bop\\b", " ");
+        name = name.replaceAll("(?i)\\boktober(?:\\s+[ivx]+)?\\b", " ");
+        name = name.replaceAll("(?i)\\bcba\\s+prima\\b", "CBA Príma");
+        name = name.replaceAll("\\s+", " ").trim();
+        return name.isBlank() ? "CBA ajánlat" : name;
+    }
+
+    private static String cbaSlug(String file) {
+        String slug = HungarianText.normalize(file).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+        return slug.replaceAll("-(?:jpe?g|png|webp)$", "");
+    }
+
+    private static String cbaHttps(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        String trimmed = url.trim().replace("&amp;", "&");
+        return FlyerUrlPolicy.isAllowed(trimmed) ? trimmed : null;
+    }
+
+    public List<DiscoveredPaper> discoverMediaMarktPapers(String html, LocalDate today) {
+        Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = MM_TEASER.matcher(html);
+        while (matcher.find()) {
+            String slug = matcher.group(2).substring("/hu/campaign/".length());
+            if (papers.containsKey(slug)) {
+                continue;
+            }
+            LocalDate[] range = mediaMarktRange(matcher.group(1));
+            if (range[0] == null) {
+                continue;
+            }
+            String image = mediaMarktImage(html, matcher.end(), slug);
+            papers.put(slug, new DiscoveredPaper(
+                    "mediamarkt",
+                    matcher.group(3).replaceAll("\\s+", " ").trim(),
+                    "https://www.mediamarkt.hu/hu/campaign/" + slug,
+                    image,
+                    "mediamarkt:" + slug + ":" + range[0],
+                    range[0],
+                    range[1]));
+        }
+        return keepCurrentOrUpcoming(papers.values(), today);
+    }
+
+    public List<ParsedProduct> mediaMarktProducts(String html, int pageNumber) {
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = MM_PRODUCT.matcher(html);
+        while (matcher.find() && products.size() < 40) {
+            String name = mediaMarktUnescape(matcher.group(1)).replaceAll("\\s+", " ").trim();
+            if (name.length() < 4 || isWeakProductName(name)) {
+                continue;
+            }
+            products.putIfAbsent(
+                    pageNumber + ":" + HungarianText.normalize(name),
+                    new ParsedProduct(name, pageNumber, null));
+        }
+        return new ArrayList<>(products.values());
+    }
+
+    static LocalDate[] mediaMarktRange(String text) {
+        LocalDate[] range = new LocalDate[2];
+        if (text == null) {
+            return range;
+        }
+        Matcher matcher = MM_RANGE.matcher(text);
+        if (!matcher.find()) {
+            return range;
+        }
+        try {
+            int startYear = Integer.parseInt(matcher.group(1));
+            LocalDate from = LocalDate.of(
+                    startYear, Integer.parseInt(matcher.group(2)), Integer.parseInt(matcher.group(3)));
+            int endYear = matcher.group(4) != null ? Integer.parseInt(matcher.group(4)) : startYear;
+            int endMonth = Integer.parseInt(matcher.group(5));
+            if (matcher.group(4) == null && endMonth < from.getMonthValue()) {
+                endYear++;
+            }
+            LocalDate to = LocalDate.of(endYear, endMonth, Integer.parseInt(matcher.group(6)));
+            if (!to.isBefore(from)) {
+                range[0] = from;
+                range[1] = to;
+            }
+        } catch (RuntimeException ignored) {
+            return new LocalDate[2];
+        }
+        return range;
+    }
+
+    private static String mediaMarktImage(String html, int from, String slug) {
+        int nextDate = html.indexOf("Érvényes:", from);
+        int end = nextDate < 0 ? html.length() : nextDate;
+        end = Math.min(end, from + 12000);
+        if (from >= end) {
+            return null;
+        }
+        Matcher matcher = MM_IMAGE.matcher(html.substring(from, end));
+        String fallback = null;
+        while (matcher.find()) {
+            String image = matcher.group().replace("&amp;", "&");
+            int query = image.indexOf('?');
+            if (query >= 0) {
+                image = image.substring(0, query);
+            }
+            if (!FlyerUrlPolicy.isAllowed(image)) {
+                continue;
+            }
+            if (image.toLowerCase(Locale.ROOT).contains(slug)) {
+                return image;
+            }
+            if (fallback == null) {
+                fallback = image;
+            }
+        }
+        return fallback;
+    }
+
+    private static String mediaMarktUnescape(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        Matcher matcher = MM_UNICODE.matcher(value);
+        StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            int code = Integer.parseInt(matcher.group(1), 16);
+            matcher.appendReplacement(out, Matcher.quoteReplacement(String.valueOf((char) code)));
+        }
+        matcher.appendTail(out);
+        return out.toString().replace("\\/", "/").replace("\\\"", "\"");
+    }
+
     public List<ParsedProduct> dmProducts(String hotspotsJson, int pageNumber, String pageText) {
         LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
         if (hotspotsJson == null || hotspotsJson.isBlank()) {
@@ -576,7 +1037,10 @@ public class FlyerCatalogParser {
                     continue;
                 }
                 for (JsonNode product : list) {
-                    String name = dmDisplayName(textOr(product.path("title"), ""), pageText);
+                    String name = dmDisplayName(
+                            textOr(product.path("title"), ""),
+                            pageText,
+                            textOr(product.path("brand"), ""));
                     if (name.length() < 4 || isWeakProductName(name)) {
                         continue;
                     }
@@ -592,6 +1056,131 @@ public class FlyerCatalogParser {
             return List.of();
         }
         return new ArrayList<>(products.values());
+    }
+
+    public List<ParsedProduct> metroProducts(String pageText, int pageNumber) {
+        if (pageText == null || pageText.isBlank()) {
+            return List.of();
+        }
+        List<String> lines = new ArrayList<>();
+        for (String raw : pageText.split("\\R")) {
+            String line = raw.replace('\u00a0', ' ').replaceAll("\\s+", " ").trim();
+            if (!line.isEmpty()) {
+                lines.add(line);
+            }
+        }
+        LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
+        List<String> group = new ArrayList<>();
+        for (int i = 0; i < lines.size() && products.size() < 80; i++) {
+            String line = lines.get(i);
+            if (metroSkipLine(line) || metroSlogan(line)) {
+                addMetroGroup(products, group, pageNumber);
+                continue;
+            }
+            String readable = line.replaceFirst("^\\d{3,6},(?=\\p{L})", "");
+            if (readable.isBlank() || metroSkipLine(readable) || metroSlogan(readable)) {
+                addMetroGroup(products, group, pageNumber);
+                continue;
+            }
+            String following = i + 1 < lines.size() ? lines.get(i + 1) : "";
+            String next = following.isBlank() || metroSkipLine(following) || metroSlogan(following)
+                    ? ""
+                    : following;
+            if (metroStartsProduct(readable, next, group)) {
+                addMetroGroup(products, group, pageNumber);
+            }
+            group.add(readable);
+        }
+        addMetroGroup(products, group, pageNumber);
+        return new ArrayList<>(products.values());
+    }
+
+    private static boolean metroStartsProduct(String line, String next, List<String> group) {
+        if (group.isEmpty() || !metroTitleLine(line)) {
+            return false;
+        }
+        boolean described = group.stream().anyMatch(part -> !metroTitleLine(part));
+        if (!described) {
+            return metroBrandLine(line) && !next.isBlank();
+        }
+        return !next.isBlank() || metroBrandLine(line);
+    }
+
+    private static boolean metroTitleLine(String line) {
+        String[] words = line.split(" ");
+        if (words.length < 1 || words.length > 2) {
+            return false;
+        }
+        for (String word : words) {
+            if (word.length() < 2 || !Character.isUpperCase(word.charAt(0)) || word.chars().anyMatch(Character::isDigit)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void addMetroGroup(
+            Map<String, ParsedProduct> products, List<String> group, int pageNumber) {
+        if (group.isEmpty() || products.size() >= 80) {
+            group.clear();
+            return;
+        }
+        String name = tidyProductName(String.join(" ", group));
+        group.clear();
+        if (name.isBlank() || isJunkProductName(name) || metroPackLine(name)) {
+            return;
+        }
+        products.putIfAbsent(
+                pageNumber + ":" + HungarianText.normalize(name),
+                new ParsedProduct(name, pageNumber, null));
+    }
+
+    private static boolean metroBrandLine(String line) {
+        if (line.indexOf(' ') >= 0 || line.length() < 3 || line.length() > 18) {
+            return false;
+        }
+        if (line.chars().anyMatch(Character::isDigit)) {
+            return false;
+        }
+        return line.equals(line.toUpperCase(Locale.forLanguageTag("hu")));
+    }
+
+    private static boolean metroSkipLine(String line) {
+        if (line.length() < 3) {
+            return true;
+        }
+        String folded = HungarianText.normalize(line);
+        if (folded.equals("metro")
+                || folded.contains("metro.hu")
+                || folded.contains("eseten")
+                || folded.matches("tobbfele|ketfele|gyujto|csomag|darab|doboz|lap")
+                || folded.contains("hogy")
+                || folded.contains("kedvenc")
+                || folded.contains("kedvezmeny")
+                || folded.matches(".*(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december).*")) {
+            return true;
+        }
+        if (line.split("\\s+").length >= 5 || metroPackLine(line)) {
+            return true;
+        }
+        return line.matches("(?iu).*\\d[\\d\\s.]*,-.*")
+                || line.matches("(?iu)^[\\d\\s./,+%\\-–]+$")
+                || line.matches("(?iu)^(?:kb\\.\\s*)?\\d.*(?:g|kg|dkg|ml|l|db)(?:/|\\b).*")
+                || line.matches("(?iu)^20\\d{2}\\.?$");
+    }
+
+    private static boolean metroSlogan(String line) {
+        String folded = HungarianText.normalize(line);
+        return folded.contains("erdemel")
+                || folded.contains("finom etel")
+                || folded.contains("dobd fel")
+                || folded.contains("kulonleges")
+                || folded.equals("valami");
+    }
+
+    private static boolean metroPackLine(String line) {
+        String folded = HungarianText.normalize(line);
+        return folded.matches("\\d+\\s*(?:db|gyujto|kg|csomag|darab|doboz)\\s*[:.]?\\s*(?:\\d.*)?");
     }
 
     static String dmTitle(String slug) {
@@ -633,6 +1222,10 @@ public class FlyerCatalogParser {
     }
 
     static String dmDisplayName(String rawTitle, String pageText) {
+        return dmDisplayName(rawTitle, pageText, "");
+    }
+
+    static String dmDisplayName(String rawTitle, String pageText, String catalogBrand) {
         if (rawTitle == null || rawTitle.isBlank()) {
             return "";
         }
@@ -641,6 +1234,9 @@ public class FlyerCatalogParser {
             return "";
         }
         String brand = dmPrintedBrand(title, pageText);
+        if (brand.isBlank() && !dmTitleAlreadyShowsNearbyLine(title, pageText)) {
+            brand = catalogBrand == null ? "" : catalogBrand.replaceAll("\\s+", " ").trim();
+        }
         if (brand.isBlank() || HungarianText.normalize(title).contains(HungarianText.normalize(brand))) {
             return title;
         }
@@ -678,21 +1274,12 @@ public class FlyerCatalogParser {
     }
 
     private static String dmPrintedBrand(String title, String pageText) {
-        if (pageText == null || pageText.isBlank()) {
+        int match = dmBestTitleLine(title, pageText);
+        if (match < 0) {
             return "";
         }
         String normTitle = HungarianText.normalize(title);
         String[] lines = pageText.split("\\R");
-        int match = -1;
-        for (int i = 0; i < lines.length; i++) {
-            if (dmLineBelongsToTitle(lines[i], normTitle)) {
-                match = i;
-                break;
-            }
-        }
-        if (match < 0) {
-            return "";
-        }
         for (int i = match - 1; i >= 0; i--) {
             String line = lines[i].replaceAll("\\s+", " ").trim();
             if (line.isBlank() || dmSkipLine(line) || dmLineBelongsToTitle(line, normTitle)) {
@@ -701,6 +1288,73 @@ public class FlyerCatalogParser {
             return dmLooksLikeBrand(line) ? line : "";
         }
         return "";
+    }
+
+    private static boolean dmTitleAlreadyShowsNearbyLine(String title, String pageText) {
+        int match = dmBestTitleLine(title, pageText);
+        if (match < 0 || pageText == null) {
+            return false;
+        }
+        String normTitle = HungarianText.normalize(title);
+        String[] lines = pageText.split("\\R");
+        int seen = 0;
+        for (int i = match - 1; i >= 0 && seen < 4; i--) {
+            String line = lines[i].replaceAll("\\s+", " ").trim();
+            if (line.isBlank() || dmSkipLine(line)) {
+                continue;
+            }
+            seen++;
+            String norm = HungarianText.normalize(line);
+            if (norm.length() >= 4 && !dmGenericWord(norm) && normTitle.contains(norm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int dmBestTitleLine(String title, String pageText) {
+        if (pageText == null || pageText.isBlank() || title == null || title.isBlank()) {
+            return -1;
+        }
+        String normTitle = HungarianText.normalize(title);
+        String[] lines = pageText.split("\\R");
+        int match = -1;
+        int bestScore = 0;
+        for (int i = 0; i < lines.length; i++) {
+            int score = dmTitleScore(lines[i], normTitle);
+            if (score > bestScore) {
+                bestScore = score;
+                match = i;
+            }
+        }
+        return match;
+    }
+
+    private static int dmTitleScore(String line, String normTitle) {
+        String norm = HungarianText.normalize(line);
+        int score = 0;
+        boolean distinctive = false;
+        for (String word : norm.split(" ")) {
+            if (word.length() < 4 || dmGenericWord(word)) {
+                continue;
+            }
+            distinctive = true;
+            if (!dmContainsWord(normTitle, word)) {
+                return 0;
+            }
+            score++;
+        }
+        return distinctive ? score : 0;
+    }
+
+    private static boolean dmGenericWord(String word) {
+        return word.equals("ajandekcsomag")
+                || word.equals("ajandek")
+                || word.equals("csomag")
+                || word.equals("termek")
+                || word.equals("termekek")
+                || word.equals("termekre")
+                || word.equals("tobbfele");
     }
 
     private static boolean dmLineBelongsToTitle(String line, String normTitle) {
@@ -2268,7 +2922,7 @@ public class FlyerCatalogParser {
                 || lower.contains("húspult")
                 || lower.contains("vásárlásától")
                 || lower.contains("kuponos")
-                || lower.contains("mosás")
+                || lower.matches("(?iu)^(?:akár\\s+)?\\d+\\s*mosás(?:ra|hoz|nak|ig)?$")
                 || lower.contains("vigyél vissza")
                 || lower.contains("db-tól")
                 || lower.contains("db-től")
@@ -2313,6 +2967,7 @@ public class FlyerCatalogParser {
         cleaned = DISCLAIMER.matcher(cleaned).replaceAll(" ");
         cleaned = cleaned.replaceAll("(?i)\\b\\d{5,8}\\b", " ");
         cleaned = cleaned.replaceAll("(?iu)(?:^|\\s)(?:csak|akció%?|szuper\\s*ár!?)(?=\\s|$)", " ");
+        cleaned = cleaned.replaceAll("(?iu)\\d{1,2}[,.]\\d{1,2}\\s*%", " ");
         cleaned = cleaned.replaceAll("[-+]?\\d{1,3}\\s*%", " ");
         cleaned = cleaned.replaceAll("(?iu)\\d{1,2}\\.\\d{1,2}\\.?", " ");
         cleaned = cleaned.replaceAll(
@@ -2381,7 +3036,7 @@ public class FlyerCatalogParser {
         if (isDisclaimerLine(lower)
                 || lower.matches("(?iu)^(csomag|darab|doboz|db|db[- ]*t[oóöő]l|csak|akció)$")
                 || lower.matches("(?iu)^\\d+\\s*(?:db|cs\\.?|darab|csomag)[- .]*t[oóöő]l$")
-                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan)$")
+                || lower.matches("(?iu)^(aldi|penny|tesco|spar|interspar|auchan|metro|real|reál|cba)$")
                 || lower.contains("darab/készlet")
                 || lower.contains("doboz díj")
                 || lower.equals("díj")

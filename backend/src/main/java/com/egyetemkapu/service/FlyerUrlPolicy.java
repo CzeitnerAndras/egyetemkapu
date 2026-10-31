@@ -41,10 +41,22 @@ public final class FlyerUrlPolicy {
             "shop.rossmann.hu",
             "magazin.microservices.rossmann.hu",
             "assets.microservices.rossmann.hu",
+            "storage.googleapis.com",
             "www.dm.hu",
             "dm.hu",
             "magazin.dm.hu",
-            "content.services.dmtech.com"
+            "content.services.dmtech.com",
+            "www.metro.hu",
+            "metro.hu",
+            "katalogus.metro.hu",
+            "components.me-catalogues.metronom.com",
+            "real.hu",
+            "www.real.hu",
+            "cba.hu",
+            "www.cba.hu",
+            "mediamarkt.hu",
+            "www.mediamarkt.hu",
+            "cms-images.mmst.eu"
     );
 
     static final int MAX_TEXT_CHARS = 4_000_000;

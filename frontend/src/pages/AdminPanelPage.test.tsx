@@ -9,10 +9,17 @@ jest.mock('../i18n/LanguageContext', () => {
     };
 });
 
-const mockInitialFetches = (pending: unknown[] = [], suggestions: unknown[] = []) => {
+const mockInitialFetches = (
+    pending: unknown[] = [],
+    suggestions: unknown[] = [],
+    syncRuns: unknown[] = [],
+    deadLetters: unknown = { reminders: [], flyerSyncs: [] },
+) => {
     (globalThis.fetch as jest.Mock)
         .mockResolvedValueOnce({ ok: true, json: async () => pending })
-        .mockResolvedValueOnce({ ok: true, json: async () => suggestions });
+        .mockResolvedValueOnce({ ok: true, json: async () => suggestions })
+        .mockResolvedValueOnce({ ok: true, json: async () => syncRuns })
+        .mockResolvedValueOnce({ ok: true, json: async () => deadLetters });
 };
 
 const waitForListsToLoad = async () => {
@@ -37,7 +44,7 @@ describe('AdminPanelPage Komponens', () => {
         mockInitialFetches();
         render(<AdminPanelPage />);
 
-        expect(screen.getAllByText('admin.loading')).toHaveLength(2);
+        expect(screen.getAllByText('admin.loading')).toHaveLength(4);
     });
 
     it('lekéri a várakozó dokumentumokat és az ötleteket a megfelelő végpontokról', async () => {
@@ -55,6 +62,53 @@ describe('AdminPanelPage Komponens', () => {
                 '/api/suggestions',
                 expect.objectContaining({ credentials: 'include' })
             );
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/flyers/admin/sync-runs',
+                expect.objectContaining({ credentials: 'include' })
+            );
+        });
+    });
+
+    // --- Sync runs ---
+    it('megjeleníti a bolt utolsó szinkronját', async () => {
+        mockInitialFetches([], [], [
+            { store: 'aldi', status: 'failed', startedAt: '2026-10-29T06:30:00', finishedAt: '2026-10-29T06:31:00', productCount: 0, errorMessage: 'aldi down' },
+            { store: 'spar', status: 'ok', startedAt: '2026-10-29T06:30:00', finishedAt: '2026-10-29T06:32:00', productCount: 840, errorMessage: null },
+        ]);
+
+        render(<AdminPanelPage />);
+
+        await waitFor(() => {
+            expect(screen.getByText('aldi')).toBeInTheDocument();
+            expect(screen.getByText('admin.sync.failed')).toBeInTheDocument();
+            expect(screen.getByText('aldi down')).toBeInTheDocument();
+            expect(screen.getByText(/840/)).toBeInTheDocument();
+            expect(screen.getByText('admin.sync.ok')).toBeInTheDocument();
+        });
+    });
+
+    it('a már kiküldött pinget nem küldi újra', async () => {
+        mockInitialFetches([], [], [], {
+            reminders: [{ id: 4, channel: 'DISCORD', kind: 'AT_DEADLINE', attempts: 5, lastError: 'discord 503', deadline: '2026-09-01T08:00:00', message: 'most lejár' }],
+            flyerSyncs: [],
+        });
+        (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: false,
+            status: 409,
+            json: async () => ({ result: 'ALREADY_SENT' }),
+        });
+
+        const user = userEvent.setup();
+        render(<AdminPanelPage />);
+        await waitForListsToLoad();
+        await user.click(screen.getByRole('button', { name: 'admin.queueRetry' }));
+
+        await waitFor(() => {
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                '/api/admin/dead-letters/reminders/4/retry',
+                expect.objectContaining({ method: 'POST', credentials: 'include' })
+            );
+            expect(screen.getByText('admin.queueAlreadySent')).toBeInTheDocument();
         });
     });
 

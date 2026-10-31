@@ -37,10 +37,25 @@ class FlyerUrlPolicyTest {
                 "https://magazin.microservices.rossmann.hu/api/magazines"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://assets.microservices.rossmann.hu/magazin-prod/333/333-1-3.webp"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://www.dm.hu/magazin-1616174"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://content.services.dmtech.com/rootpage-dm-shop-hu-hu/magazin-1616174"));
         assertTrue(FlyerUrlPolicy.isAllowed("https://magazin.dm.hu/expressz_2026-10-15/data.json"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.metro.hu/ajanlataink/katalogusok"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://katalogus.metro.hu/mm2610_brands/data.json"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://components.me-catalogues.metronom.com/api/catalog-filter?feeds=metro-nagykereskedelem"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://real.hu/aktualis-ajanlataink/"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.cba.hu/aktualis-ajanlataink/"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed("https://www.mediamarkt.hu/hu/campaign/promocioink"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://cms-images.mmst.eu/1h4udvs0ugq1/cover.jpg"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

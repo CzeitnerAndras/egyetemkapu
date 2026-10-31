@@ -53,7 +53,11 @@ public class FlyerHttpClient {
         boolean lidl = lidlHost(url);
         boolean rossmann = rossmannHost(url);
         boolean dm = dmHost(url);
-        headers.set(HttpHeaders.USER_AGENT, spar || auchan || coop || lidl || rossmann || dm ? BROWSER_UA : USER_AGENT);
+        boolean real = realHost(url);
+        boolean cba = cbaHost(url);
+        boolean mediaMarkt = mediaMarktHost(url);
+        headers.set(HttpHeaders.USER_AGENT,
+                spar || auchan || coop || lidl || rossmann || dm || real || cba || mediaMarkt ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.TEXT_HTML, MediaType.APPLICATION_JSON, MediaType.ALL));
         if (spar) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
@@ -73,6 +77,15 @@ public class FlyerHttpClient {
         } else if (dm) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
             headers.set(HttpHeaders.REFERER, "https://www.dm.hu/");
+        } else if (real) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.REFERER, "https://real.hu/aktualis-ajanlataink/");
+        } else if (cba) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.REFERER, "https://www.cba.hu/");
+        } else if (mediaMarkt) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.REFERER, "https://www.mediamarkt.hu/");
         }
         ResponseEntity<String> response = getFollowingRedirects(
                 url, new HttpEntity<>(headers), String.class);
@@ -125,7 +138,12 @@ public class FlyerHttpClient {
         boolean lidl = lidlHost(url) || lidlHost(referer);
         boolean rossmann = rossmannHost(url) || rossmannHost(referer);
         boolean dm = dmHost(url) || dmHost(referer);
-        headers.set(HttpHeaders.USER_AGENT, tesco || spar || auchan || coop || lidl || rossmann || dm ? BROWSER_UA : USER_AGENT);
+        boolean real = realHost(url) || realHost(referer);
+        boolean cba = cbaHost(url) || cbaHost(referer);
+        boolean mediaMarkt = mediaMarktHost(url) || mediaMarktHost(referer);
+        headers.set(HttpHeaders.USER_AGENT,
+                tesco || spar || auchan || coop || lidl || rossmann || dm || real || cba || mediaMarkt
+                        ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.APPLICATION_PDF, MediaType.ALL));
         if (tesco) {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
@@ -138,6 +156,12 @@ public class FlyerHttpClient {
             headers.set(HttpHeaders.REFERER, referer);
         } else if (tesco) {
             headers.set(HttpHeaders.REFERER, "https://www.tesco.hu/akciok/katalogusok");
+        } else if (real) {
+            headers.set(HttpHeaders.REFERER, "https://real.hu/aktualis-ajanlataink/");
+        } else if (cba) {
+            headers.set(HttpHeaders.REFERER, "https://www.cba.hu/");
+        } else if (mediaMarkt) {
+            headers.set(HttpHeaders.REFERER, "https://www.mediamarkt.hu/");
         } else if (spar) {
             headers.set(HttpHeaders.REFERER, "https://www.spar.hu/ajanlatok");
         } else if (auchan) {
@@ -224,7 +248,30 @@ public class FlyerHttpClient {
         if (value == null) {
             return false;
         }
-        return value.toLowerCase().contains("rossmann.hu");
+        String lower = value.toLowerCase();
+        return lower.contains("rossmann.hu") || lower.contains("storage.googleapis.com/magazin-prod/");
+    }
+
+    private static boolean mediaMarktHost(String value) {
+        if (value == null) {
+            return false;
+        }
+        String lower = value.toLowerCase();
+        return lower.contains("mediamarkt.hu") || lower.contains("cms-images.mmst.eu");
+    }
+
+    private static boolean cbaHost(String value) {
+        if (value == null) {
+            return false;
+        }
+        return value.toLowerCase().contains("cba.hu");
+    }
+
+    private static boolean realHost(String value) {
+        if (value == null) {
+            return false;
+        }
+        return value.toLowerCase().contains("real.hu");
     }
 
     private static boolean dmHost(String value) {

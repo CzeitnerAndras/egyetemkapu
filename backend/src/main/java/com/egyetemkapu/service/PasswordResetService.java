@@ -107,7 +107,7 @@ public class PasswordResetService {
 
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
-        refreshTokenService.deleteByUserId(user.getId());
+        refreshTokenService.endSession(user);
 
         return Optional.empty();
     }

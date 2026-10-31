@@ -1,5 +1,7 @@
 package com.egyetemkapu.controller;
 
+import com.egyetemkapu.dto.DocumentResponseDto;
+import com.egyetemkapu.dto.DocumentSearchHitDto;
 import com.egyetemkapu.model.Document;
 import com.egyetemkapu.repository.UserRepository;
 import com.egyetemkapu.model.DocumentStatus;
@@ -121,6 +123,26 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Jegyzet"))
                 .andExpect(jsonPath("$[0].status").value("APPROVED"))
                 .andExpect(jsonPath("$[0].uploader.username").value("anna"));
+    }
+
+    @Test
+    void searchDocuments_returnsRankedHits() throws Exception {
+        when(documentService.searchApproved("kerdes", "Fizika")).thenReturn(List.of(
+                new DocumentSearchHitDto(
+                        3L,
+                        "Kérdés",
+                        "Rövid mondat.",
+                        "Fizika",
+                        "jegyzet.pdf",
+                        LocalDateTime.of(2026, 3, 1, 10, 0),
+                        new DocumentResponseDto.UploaderDto("anna"),
+                        "A \u001EKérdés\u001F a tétel.")));
+
+        mockMvc.perform(get("/api/documents/search").param("q", "kerdes").param("category", "Fizika"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Kérdés"))
+                .andExpect(jsonPath("$[0].uploader.username").value("anna"))
+                .andExpect(jsonPath("$[0].snippet", containsString("Kérdés")));
     }
 
     @Test

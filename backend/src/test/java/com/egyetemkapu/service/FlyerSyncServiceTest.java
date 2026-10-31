@@ -22,9 +22,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.intThat;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -38,6 +42,7 @@ class FlyerSyncServiceTest {
     @Mock private FlyerPersistenceService flyerPersistenceService;
     @Mock private FlyerHttpClient httpClient;
     @Mock private FlyerPdfExtractor pdfExtractor;
+    @Mock private FlyerSyncLog syncLog;
 
     private FlyerCatalogParser parser;
     private FlyerSyncService service;
@@ -54,7 +59,19 @@ class FlyerSyncServiceTest {
                 pdfExtractor,
                 new FlyerExtractorRegistry(parser),
                 image -> List.of(),
-                clock);
+                clock,
+                syncLog);
+    }
+
+    @Test
+    void aSecondStoreRetryDoesNotStartAnotherSync() {
+        assertTrue(service.reserveStoreRetry("aldi"));
+        assertFalse(service.reserveStoreRetry("spar"));
+    }
+
+    @Test
+    void unknownStoreRetryIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> service.reserveStoreRetry("nincs"));
     }
 
     @Test
@@ -73,6 +90,18 @@ class FlyerSyncServiceTest {
         verify(flyerPersistenceService).replaceStore(eq("aldi"), captor.capture(), any());
         assertEquals("ALDI KW36", captor.getValue().getFirst().paper().title());
         assertEquals("Kakaóscsiga", captor.getValue().getFirst().products().getFirst().name());
+        verify(syncLog).record(eq("aldi"), any(), any(), intThat(count -> count > 0), isNull());
+    }
+
+    // --- Sync log ---
+    @Test
+    void syncAldiRecordsAFailureAndKeepsTheStoredFlyer() {
+        when(httpClient.getText(any())).thenThrow(new IllegalStateException("aldi down"));
+
+        service.syncAldi(LocalDate.of(2026, 9, 6));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("aldi"), any(), any());
+        verify(syncLog).record(eq("aldi"), any(), any(), eq(0), eq("aldi down"));
     }
 
     @Test
@@ -219,9 +248,10 @@ class FlyerSyncServiceTest {
         verify(flyerPersistenceService).replaceStore(eq("tesco"), captor.capture(), any());
         assertEquals(List.of("Tesco Hipermarket", "Tesco Szupermarket", "Tesco Katalógus"),
                 captor.getValue().stream().map(catalog -> catalog.paper().title()).toList());
-        assertTrue(captor.getValue().getFirst().paper().officialUrl().contains("/hipermarket/tesco-ujsag-2026-09-10/1"));
+        assertTrue(                captor.getValue().getFirst().paper().officialUrl().contains("/hipermarket/tesco-ujsag-2026-09-10/1"));
     }
 
+    // --- Recent Tesco ---
     @Test
     void syncTescoSkipsWhenRecentlySynced() {
         Flyer existing = new Flyer();
@@ -233,6 +263,7 @@ class FlyerSyncServiceTest {
 
         verify(httpClient, never()).postJson(any(), any());
         verify(flyerPersistenceService, never()).replaceStore(eq("tesco"), any(), any());
+        verify(syncLog, never()).record(any(), any(), any(), anyInt(), any());
     }
 
     @Test
@@ -363,7 +394,8 @@ class FlyerSyncServiceTest {
                         new FlyerCatalogParser.TextRun(64, 80, 70, 16, "párizsi"),
                         new FlyerCatalogParser.TextRun(20, 110, 40, 16, "289"),
                         new FlyerCatalogParser.TextRun(20, 130, 24, 16, "Ft")),
-                Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest")));
+                Clock.fixed(Instant.parse("2026-09-06T08:00:00Z"), ZoneId.of("Europe/Budapest")),
+                syncLog);
         when(httpClient.getText(org.mockito.ArgumentMatchers.anyString())).thenAnswer(invocation -> {
             String url = invocation.getArgument(0);
             if (url.contains("ajanlatkereso")) {
@@ -428,8 +460,15 @@ class FlyerSyncServiceTest {
                 "https://shop.rossmann.hu/magazin/altalanos/333");
         Flyer dm = storeFlyer("dm", "dm:expressz_2026-10-15",
                 "https://magazin.dm.hu/expressz_2026-10-15/");
+        Flyer metro = storeFlyer("metro", "metro:mm2610_brands",
+                "https://katalogus.metro.hu/mm2610_brands/");
+        Flyer real = storeFlyer("real", "real:kisalfold-oktober-28-31-01",
+                "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf");
+        Flyer cba = storeFlyer("cba", "cba:kiemelt:2026-10-05", "https://www.cba.hu/");
+        Flyer mediaMarkt = storeFlyer("mediamarkt", "mediamarkt:kedvezmenyeso:2026-07-24",
+                "https://www.mediamarkt.hu/hu/campaign/kedvezmenyeso");
         when(flyerRepository.findAll()).thenReturn(List.of(
-                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm));
+                tesco, penny, spar, inter, market, auchan, coop, lidl, rossmann, dm, metro, real, cba, mediaMarkt));
         lenient().when(flyerRepository.findProductNamesByStore(any())).thenReturn(List.of());
         lenient().when(httpClient.getText(any())).thenReturn("");
         lenient().when(httpClient.getBytes(any())).thenReturn(new byte[0]);
@@ -455,7 +494,8 @@ class FlyerSyncServiceTest {
                         new TextRun(66, 120, 50, 16, "Panni"),
                         new TextRun(300, 120, 36, 16, "Red"),
                         new TextRun(342, 120, 40, 16, "Bull")),
-                clock);
+                clock,
+                syncLog);
         Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
         coop.setId(7L);
         FlyerPage page = new FlyerPage();
@@ -771,6 +811,143 @@ class FlyerSyncServiceTest {
         service.syncDm(LocalDate.of(2026, 10, 16));
 
         verify(flyerPersistenceService, never()).replaceStore(eq("dm"), any(), any());
+    }
+
+    @Test
+    void syncMetroPersistsTheCurrentCatalogAndSkipsTheExpiredOne() {
+        String feed = "https://components.me-catalogues.metronom.com/api/catalog-filter"
+                + "?resolution=600&feeds=metro-nagykereskedelem&collection_id=6365"
+                + "&metatags%5B%5D=channel=website";
+        when(httpClient.getText(feed)).thenReturn("""
+                {"items":[
+                  {"slug":"regi-katalogus","name":"Régi katalógus","validFrom":"2026-09-01","validTo":"2026-09-15"},
+                  {"slug":"mm2610_brands","name":"Márkák katalógus 2026/10","validFrom":"2026-10-16","validTo":"2026-10-31"}
+                ]}
+                """);
+        when(httpClient.getText("https://katalogus.metro.hu/mm2610_brands/data.json")).thenReturn("""
+                {"config":{"publicationTitle":"Márkák katalógus 2026/10","downloadPdfUrl":"https://view.publitas.com/445/3454860/pdfs/markak.pdf"}}
+                """);
+        when(httpClient.getText("https://katalogus.metro.hu/mm2610_brands/spreads.json")).thenReturn("""
+                [{"pages":[{"number":1,"images":{"at1200":"/resize/cover.jpg"},"text":"DANONE\\nDANETTE PUDING\\n839,-"}]}]
+                """);
+
+        service.syncMetro(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("metro"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("Márkák katalógus 2026/10", catalog.paper().title());
+        assertEquals("metro:mm2610_brands", catalog.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 16), catalog.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), catalog.paper().validTo());
+        assertEquals("https://katalogus.metro.hu/resize/cover.jpg", catalog.pages().getFirst().imageUrl());
+        assertEquals("DANONE DANETTE PUDING", catalog.products().getFirst().name());
+        verify(httpClient, never()).getText("https://katalogus.metro.hu/regi-katalogus/data.json");
+    }
+
+    @Test
+    void syncMetroLeavesStoredFlyersAloneWhenTheFeedIsMissing() {
+        when(httpClient.getText(any())).thenReturn("");
+
+        service.syncMetro(LocalDate.of(2026, 10, 29));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("metro"), any(), any());
+    }
+
+    @Test
+    void syncRealPersistsTheWeekendPdfsAndSkipsTheExpiredOne() {
+        String page = "https://real.hu/aktualis-ajanlataink/";
+        String alfi = "https://real.hu/wp-content/uploads/2026/10/JAV4-Alfi-oktober-28-31.-01.pdf";
+        String kisalfold = "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf";
+        when(httpClient.getText(page)).thenReturn("""
+                <h3>Bevásárló hétvége - Pest megye</h3>
+                <a href="%s" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Kisalföld</h3>
+                <a href="%s" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Régi hétvége</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/09/regi-oktober-01-04.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                """.formatted(alfi, kisalfold));
+        when(httpClient.getBytes(eq(alfi), eq(page))).thenReturn(new byte[] {1, 2, 3});
+        when(httpClient.getBytes(eq(kisalfold), eq(page))).thenReturn(new byte[] {4, 5, 6});
+        when(pdfExtractor.extractDocument(any(), any(), eq(16))).thenReturn(
+                new FlyerPdfExtractor.ExtractedDocument(
+                        List.of(new FlyerCatalogParser.ParsedPage(1, null, "")),
+                        List.of(new FlyerCatalogParser.ParsedProduct("Pilos tej", 1, null))));
+
+        service.syncReal(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("real"), captor.capture(), any());
+        assertEquals(
+                List.of("real:jav4-alfi-oktober-28-31-01", "real:kisalfold-oktober-28-31-01"),
+                captor.getValue().stream().map(catalog -> catalog.paper().sourceKey()).toList());
+        assertEquals("Bevásárló hétvége - Pest megye", captor.getValue().getFirst().paper().title());
+        assertEquals("Pilos tej", captor.getValue().getFirst().products().getFirst().name());
+        verify(httpClient, never()).getBytes(
+                eq("https://real.hu/wp-content/uploads/2026/09/regi-oktober-01-04.pdf"), any());
+    }
+
+    @Test
+    void syncRealLeavesStoredFlyersAloneWhenThePageIsMissing() {
+        when(httpClient.getText("https://real.hu/aktualis-ajanlataink/")).thenReturn("");
+
+        service.syncReal(LocalDate.of(2026, 10, 29));
+
+        verify(flyerPersistenceService, never()).replaceStore(eq("real"), any(), any());
+    }
+
+    @Test
+    void syncCbaPersistsFeaturedProductsAndTheCurrentPoster() {
+        String poster = "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg";
+        when(httpClient.getText("https://www.cba.hu/aktualis-ajanlataink/")).thenReturn("""
+                <a href="%s" data-elementor-lightbox-title="CBA-Prima_OP_oktober_Piros"></a>
+                <img src="https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg">
+                """.formatted(poster));
+        when(httpClient.getText("https://www.cba.hu/")).thenReturn("""
+                <h3>Érvényes: 2026.10.05- 10.31.</h3>
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png">
+                <h2 class="woocommerce-loop-product__title">CBA PIROS GÉPSONKA</h2>
+                """);
+        when(httpClient.getBytes(eq(poster), eq("https://www.cba.hu/aktualis-ajanlataink/")))
+                .thenReturn(new byte[] {1, 2, 3});
+
+        service.syncCba(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("cba"), captor.capture(), any());
+        assertEquals(
+                List.of("cba:kiemelt:2026-10-05", "cba:cba-prima-op-oktober-piros"),
+                captor.getValue().stream().map(catalog -> catalog.paper().sourceKey()).toList());
+        assertEquals("CBA PIROS GÉPSONKA", captor.getValue().getFirst().products().getFirst().name());
+        assertEquals(poster, captor.getValue().get(1).pages().getFirst().imageUrl());
+        verify(httpClient, never()).getBytes(
+                eq("https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg"), any());
+    }
+
+    @Test
+    void syncMediaMarktPersistsTheCurrentCampaignProducts() {
+        String image = "https://cms-images.mmst.eu/1h4udvs0ugq1/cover/kedvezmenyeso.jpg";
+        when(httpClient.getText("https://www.mediamarkt.hu/hu/campaign/promocioink")).thenReturn("""
+                <p>Érvényes: 2026.07.24. - 2026.10.31.</p>
+                <a href="/hu/campaign/kedvezmenyeso"><h3>Kedvezményeső</h3></a>
+                <img src="%s">
+                """.formatted(image));
+        when(httpClient.getText("https://www.mediamarkt.hu/hu/campaign/kedvezmenyeso")).thenReturn("""
+                {"productName":"PHILIPS EP3343\\u002F50 Series 3300 LatteGo"}
+                """);
+
+        service.syncMediaMarkt(LocalDate.of(2026, 10, 29));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("mediamarkt"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("mediamarkt:kedvezmenyeso:2026-07-24", catalog.paper().sourceKey());
+        assertEquals(image, catalog.pages().getFirst().imageUrl());
+        assertEquals("PHILIPS EP3343/50 Series 3300 LatteGo", catalog.products().getFirst().name());
     }
 
     private static Flyer storeFlyer(String store, String sourceKey, String url) {

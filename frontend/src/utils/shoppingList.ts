@@ -1,6 +1,8 @@
+import { storeLabel } from './storeOrder';
+
 export const SHOPPING_LIST_KEY = 'egyetemkapu.shoppingList';
 
-export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm';
+export type ShoppingStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro' | 'real' | 'cba' | 'mediamarkt';
 
 export interface ShoppingListItem {
     id: string;
@@ -15,7 +17,7 @@ export interface ShoppingListItem {
 
 export type ShoppingListDraft = Omit<ShoppingListItem, 'id' | 'quantity'> & { quantity?: number };
 
-const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm'];
+const STORE_ORDER: ShoppingStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real', 'cba', 'mediamarkt'];
 
 {/* --- Item key --- */}
 export function itemKey(item: Pick<ShoppingListItem, 'productId' | 'flyerId' | 'pageNumber' | 'name'>): string {
@@ -71,7 +73,7 @@ export function formatShoppingListText(
     }
     return `${groups.map((group) => {
         const lines = group.items.map((item) => `${item.quantity}x ${item.name} — ${pageLabel(item)}`);
-        return [group.store.toUpperCase(), ...lines].join('\n');
+        return [storeLabel(group.store), ...lines].join('\n');
     }).join('\n\n')}\n`;
 }
 

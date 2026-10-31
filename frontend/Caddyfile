@@ -9,12 +9,54 @@ egyetemkapu.hu {
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-src https://www.youtube.com https://www.youtube-nocookie.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        Content-Security-Policy "default-src 'self'; script-src 'self' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://www.google.com/recaptcha/; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    }
+
+    @source path /source.html
+    header @source {
+        X-Frame-Options "SAMEORIGIN"
+        Content-Security-Policy "default-src 'self'; script-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    }
+
+    handle /api/bibliography/* {
+        reverse_proxy bibliography:8092 {
+            header_up X-Forwarded-For {remote_host}
+            health_uri /api/bibliography/health
+            health_interval 10s
+            health_timeout 2s
+            health_status 200
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 5s
+            }
+        }
+    }
+
+    handle /api/thesis/* {
+        reverse_proxy thesis:8091 {
+            header_up X-Forwarded-For {remote_host}
+            health_uri /api/thesis/health
+            health_interval 10s
+            health_timeout 2s
+            health_status 200
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 5s
+            }
+        }
     }
 
     handle /api/points/* {
         reverse_proxy points:8090 {
             header_up X-Forwarded-For {remote_host}
+            health_uri /api/points/health
+            health_interval 10s
+            health_timeout 2s
+            health_status 200
+            transport http {
+                dial_timeout 2s
+                response_header_timeout 5s
+            }
         }
     }
 

@@ -8,6 +8,7 @@ import {
     loadStoreOrder,
     reorderStores,
     saveStoreOrder,
+    storeLabel,
 } from '../utils/storeOrder';
 import {
     addItem,
@@ -22,7 +23,7 @@ import {
     type ShoppingListItem,
 } from '../utils/shoppingList';
 
-export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm';
+export type StoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'coop' | 'lidl' | 'rossmann' | 'dm' | 'metro' | 'real' | 'cba' | 'mediamarkt';
 
 interface FlyerSummary {
     id: number;
@@ -182,8 +183,6 @@ export default function SalesPapersPage() {
         if (!from && !to) return t('sales.noDate');
         return `${formatDmy(from)} – ${formatDmy(to)}`;
     };
-
-    const storeLabel = (store: StoreId) => store.toUpperCase();
 
     {/* --- Add to list --- */}
     const addToList = (draft: {

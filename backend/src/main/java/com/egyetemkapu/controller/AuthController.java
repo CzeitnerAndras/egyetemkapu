@@ -12,8 +12,10 @@ import com.egyetemkapu.security.UsernamePolicy;
 import com.egyetemkapu.service.EmailVerificationService;
 import com.egyetemkapu.service.PasswordResetService;
 import com.egyetemkapu.service.RefreshTokenService;
+import com.egyetemkapu.service.SiteMeters;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +49,12 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final boolean cookieSecure;
     private final boolean requireEmailVerification;
+    private SiteMeters siteMeters;
+
+    @Autowired(required = false)
+    public void setSiteMeters(SiteMeters siteMeters) {
+        this.siteMeters = siteMeters;
+    }
 
     public AuthController(
             UserRepository userRepository,
@@ -142,7 +151,7 @@ public class AuthController {
         userRepository.save(user);
 
         RefreshTokenService.IssuedRefreshToken refresh = refreshTokenService.createRefreshToken(user.getId());
-        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername()), cookieSecure);
+        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername(), user.getSessionVersion()), cookieSecure);
         AuthCookies.setRefresh(response, refresh.rawToken(), cookieSecure);
         return ResponseEntity.ok(Map.of("ok", true));
     }
@@ -150,13 +159,30 @@ public class AuthController {
     // --- Tokens ---
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        String rawToken = AuthCookies.readRefresh(request);
-        RefreshToken stored = refreshTokenService.findByRawToken(rawToken)
-                .map(refreshTokenService::verifyExpiration)
-                .orElseThrow(() -> new TokenRefreshException("A Refresh Token érvénytelen az adatbázisban!"));
+        long started = System.nanoTime();
+        try {
+            return rotateRefresh(request, response);
+        } finally {
+            if (siteMeters != null) {
+                siteMeters.recordRefresh(Duration.ofNanos(System.nanoTime() - started));
+            }
+        }
+    }
 
-        RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(stored);
-        AuthCookies.setAccess(response, jwtUtil.generateToken(stored.getUser().getUsername()), cookieSecure);
+    private ResponseEntity<?> rotateRefresh(HttpServletRequest request, HttpServletResponse response) {
+        String rawToken = AuthCookies.readRefresh(request);
+        Optional<RefreshToken> stored = refreshTokenService.findByRawToken(rawToken);
+        if (stored.isEmpty()) {
+            if (refreshTokenService.revokeIfReused(rawToken)) {
+                AuthCookies.clearSession(response, cookieSecure);
+            }
+            throw new TokenRefreshException("A Refresh Token érvénytelen az adatbázisban!");
+        }
+
+        RefreshToken current = refreshTokenService.verifyExpiration(stored.get());
+        RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(current);
+        User user = current.getUser();
+        AuthCookies.setAccess(response, jwtUtil.generateToken(user.getUsername(), user.getSessionVersion()), cookieSecure);
         AuthCookies.setRefresh(response, rotated.rawToken(), cookieSecure);
         return ResponseEntity.ok(Map.of("ok", true));
     }
@@ -165,9 +191,18 @@ public class AuthController {
     @LogAction("Kijelentkezés")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         String rawToken = AuthCookies.readRefresh(request);
-        refreshTokenService.findByRawToken(rawToken).ifPresent(token ->
-                refreshTokenService.deleteByUserId(token.getUser().getId())
-        );
+        User user = refreshTokenService.findByRawToken(rawToken)
+                .map(RefreshToken::getUser)
+                .orElse(null);
+        if (user == null) {
+            String access = AuthCookies.readAccess(request);
+            if (access != null && jwtUtil.validateToken(access)) {
+                user = userRepository.findByUsername(jwtUtil.extractUsername(access)).orElse(null);
+            }
+        }
+        if (user != null) {
+            refreshTokenService.endSession(user);
+        }
         AuthCookies.clearSession(response, cookieSecure);
         return ResponseEntity.ok(Map.of("message", "Sikeres kijelentkezés!"));
     }

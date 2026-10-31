@@ -653,4 +653,265 @@ class FlyerCatalogParserTest {
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
         assertEquals(1, products.getFirst().pageNumber());
     }
+
+    @Test
+    void dmHotspotNamesFollowTheOfferAboveThePriceInsteadOfTheFirstSharedWord() {
+        String page = """
+                LANGHAARMÄDCHEN
+                adventi kalendárium
+                Edényfogó
+                ajándékcsomag
+                karácsonyi mintával
+                NIVEA MEN
+                Time To Be Epic
+                ajándékcsomag
+                YOGI TEA
+                Lelki harmónia
+                teaválogatás
+                ajándékcsomag
+                NIVEA
+                Time To Reset
+                ajándékcsomag
+                Vaseline
+                Hya Gorgeous
+                ajándékcsomag
+                essence
+                Juicy Bomb
+                ajándékcsomag
+                AXE
+                Black
+                ajándékcsomag
+                """;
+        List<FlyerCatalogParser.ParsedProduct> products = parser.dmProducts("""
+                [
+                  {"products":[{"title":"Ajándékcsomag férfiaknak, Time to be Epic","brand":"NIVEA MEN"}]},
+                  {"products":[{"title":"Ajándékcsomag bőrápoláshoz, Time to Reset","brand":"NIVEA"}]},
+                  {"products":[{"title":"Edényfogó szett karácsonyi mintával","brand":"AMO LA CASA"}]},
+                  {"products":[{"title":"Adventi kalendárium, Merry Christmas","brand":"LANGHAARMÄDCHEN"}]},
+                  {"products":[{"title":"Ajándékcsomag, Lelki harmónia","brand":"Yogi"}]},
+                  {"products":[{"title":"Mini szájfény szett, Juicy Bomb","brand":"essence"}]},
+                  {"products":[{"title":"Férfi ajándékcsomag, Black","brand":"AXE"}]}
+                ]
+                """, 3, page);
+
+        assertEquals(List.of(
+                "NIVEA MEN Ajándékcsomag férfiaknak, Time to be Epic",
+                "NIVEA Ajándékcsomag bőrápoláshoz, Time to Reset",
+                "Edényfogó szett karácsonyi mintával",
+                "LANGHAARMÄDCHEN Adventi kalendárium, Merry Christmas",
+                "YOGI TEA Ajándékcsomag, Lelki harmónia",
+                "essence Mini szájfény szett, Juicy Bomb",
+                "AXE Férfi ajándékcsomag, Black"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+    }
+
+    @Test
+    void rossmannPdfUrlAcceptsEscapedSlashesAndWashCountsStayOnProductNames() {
+        assertEquals(
+                "https://storage.googleapis.com/magazin-prod/335/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf",
+                FlyerCatalogParser.rossmannMagazinePdfUrl(
+                        "{\"pdf\":\"https:\\/\\/storage.googleapis.com\\/magazin-prod\\/335\\/axufSVtpyTJBz1d1Urf3oipCmMVrPikiJHzVrJ8s.pdf\"}"));
+        assertFalse(FlyerCatalogParser.isWeakProductName(
+                "Silan Fresh Sky öblítő koncentrátum 64 mosás - 1408 ml"));
+        assertTrue(FlyerCatalogParser.isWeakProductName("60 mosás"));
+    }
+
+    @Test
+    void discoversCurrentMetroCatalogsAndDropsExpiredOnes() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMetroPapers("""
+                {"items":[
+                  {"slug":"regi-katalogus","name":"Régi katalógus","validFrom":"2026-09-01","validTo":"2026-09-15"},
+                  {"slug":"mm2610_brands","name":"Márkák katalógus 2026/10","validFrom":"2026-10-16","validTo":"2026-10-31T23:55:00.000+01:00"},
+                  {"slug":"not a slug","name":"Rossz"},
+                  {"slug":"olasz-katalogus","name":"Olasz katalógus"}
+                ]}
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals(List.of("metro:mm2610_brands", "metro:olasz-katalogus"),
+                papers.stream().map(FlyerCatalogParser.DiscoveredPaper::sourceKey).toList());
+        assertEquals("Márkák katalógus 2026/10", papers.getFirst().title());
+        assertEquals("https://katalogus.metro.hu/mm2610_brands/", papers.getFirst().officialUrl());
+        assertEquals(LocalDate.of(2026, 10, 16), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), papers.getFirst().validTo());
+    }
+
+    @Test
+    void metroPageTextKeepsTheBrandWithTheProductName() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.metroProducts("""
+                METRO.HU
+                2026.
+                OKTÓBER 16–31.
+                DANONE
+                DANETTE PUDING
+                többféle
+                4x90-125 g/gyűjtő
+                839,-
+                PICK
+                TÉLISZALÁMI
+                400 g/db
+                MAGYAR
+                tejföl 20%
+                gyűjtő
+                1 gyűjtő
+                3 gyűjtő
+                MAGYAR
+                UHT tej 2,8%
+                MAGYAR
+                ESL tej 2,8%
+                Válogasd össze kedvenc terméked íz
+                """, 2);
+
+        assertEquals(
+                List.of(
+                        "DANONE DANETTE PUDING",
+                        "PICK TÉLISZALÁMI",
+                        "MAGYAR tejföl",
+                        "MAGYAR UHT tej",
+                        "MAGYAR ESL tej"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+        assertEquals(2, products.getFirst().pageNumber());
+    }
+
+    @Test
+    void metroCheesePageJoinsNameLinesAndDropsTheGluedPrice() {
+        List<String> names = parser.metroProducts("""
+                Paysan Breton
+                camembert sajt
+                250 g/db
+                Gran Moravia
+                darabolt
+                parmezán jellegű
+                sajt
+                200 g/db
+                Niva
+                márványsajt
+                kb. 1,25 kg/db
+                Belga
+                vaj 82%
+                Brazzale
+                reszelt sajt mix
+                1 kg/db
+                3899,Natúr vagy füstölt
+                tehéntejes
+                gomolya sajt
+                kb. 1,5 kg/db
+                ALPRO
+                kókuszgurt
+                ALPRO
+                szójagurt
+                többféle
+                LURPAK
+                sótlan vaj
+                A FINOM ÉTEL
+                LURPAKOT ÉRDEMEL
+                200 g/db
+                LURPAK
+                kenhető keverék készítmény
+                ARLA
+                Apetina
+                feta sajt
+                500 g/db
+                DobD fel
+                valami
+                különlegessel!
+                """, 2).stream().map(FlyerCatalogParser.ParsedProduct::name).toList();
+
+        assertEquals(List.of(
+                "Paysan Breton camembert sajt",
+                "Gran Moravia darabolt parmezán jellegű sajt",
+                "Niva márványsajt",
+                "Belga vaj",
+                "Brazzale reszelt sajt mix",
+                "Natúr vagy füstölt tehéntejes gomolya sajt",
+                "ALPRO kókuszgurt",
+                "ALPRO szójagurt",
+                "LURPAK sótlan vaj",
+                "LURPAK kenhető keverék készítmény",
+                "ARLA Apetina feta sajt"), names);
+    }
+
+    @Test
+    void discoversCurrentRealPdfsAndJoinsRegionsThatShareOneFile() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverRealPapers("""
+                <h3 class="et_pb_toggle_title">Bevásárló hétvége - Pest megye</h3>
+                <iframe src="https://heyzine.com/flip-book/cdf837b5da.html"></iframe>
+                <a href="https://real.hu/wp-content/uploads/2026/10/JAV4-Alfi-oktober-28-31.-01.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Kelet Magyarország</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/10/JAV4-Alfi-oktober-28-31.-01.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Kisalföld</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <h3>Régi hétvége</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/09/regi-oktober-01-04.pdf" download="" class="promotion-pdf-download">Letöltöm</a>
+                <a href="https://real.hu/wp-content/uploads/2022/08/Uzletszabalyzat.pdf">Üzletszabályzat</a>
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals(
+                List.of("real:jav4-alfi-oktober-28-31-01", "real:kisalfold-oktober-28-31-01"),
+                papers.stream().map(FlyerCatalogParser.DiscoveredPaper::sourceKey).toList());
+        assertEquals("Bevásárló hétvége - Pest megye, Kelet Magyarország", papers.getFirst().title());
+        assertEquals(LocalDate.of(2026, 10, 28), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), papers.getFirst().validTo());
+        assertEquals(
+                "https://real.hu/wp-content/uploads/2026/10/Kisalfold-oktober-28-31.-01.pdf",
+                papers.get(1).pdfUrl());
+    }
+
+    @Test
+    void discoversCbaPostersAndFeaturedProducts() {
+        List<FlyerCatalogParser.DiscoveredPaper> posters = parser.discoverCbaPosters("""
+                <a href="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg" data-elementor-lightbox-title="CBA-Prima_OP_oktober_Piros">
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros-1024x484.jpg">
+                <img src="https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg">
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals(1, posters.size());
+        assertEquals("CBA Príma Piros", posters.getFirst().title());
+        assertEquals("cba:cba-prima-op-oktober-piros", posters.getFirst().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 1), posters.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), posters.getFirst().validTo());
+        assertEquals(
+                "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg",
+                posters.getFirst().pdfUrl());
+
+        FlyerCatalogParser.ParsedCatalog featured = parser.parseCbaFeatured("""
+                <h3>Érvényes: 2026.10.05- 10.31.</h3>
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png" alt="CBA PIROS GÉPSONKA">
+                <h2 class="woocommerce-loop-product__title">CBA PIROS GÉPSONKA</h2>
+                """, LocalDate.of(2026, 10, 29));
+
+        assertEquals("cba:kiemelt:2026-10-05", featured.paper().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 5), featured.paper().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), featured.paper().validTo());
+        assertEquals("CBA PIROS GÉPSONKA", featured.products().getFirst().name());
+        assertEquals(
+                "https://www.cba.hu/wp-content/uploads/2026/10/CBA-Piros-gepsonka.png",
+                featured.pages().getFirst().imageUrl());
+    }
+
+    @Test
+    void discoversTheCurrentMediaMarktCampaignAndItsProducts() {
+        String image = "https://cms-images.mmst.eu/1h4udvs0ugq1/cover/kedvezmenyeso.jpg";
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMediaMarktPapers("""
+                <p>Érvényes: 2026.07.24. - 2026.10.31.</p>
+                <a href="/hu/campaign/kedvezmenyeso"><h3>Kedvezményeső</h3></a>
+                <img src="%s?q=88&amp;w=495">
+                <p>Érvényes: 2026.09.01. - 2026.09.15.</p>
+                <a href="/hu/campaign/regi-akcio"><h3>Régi akció</h3></a>
+                <img src="https://cms-images.mmst.eu/1h4udvs0ugq1/cover/regi.jpg">
+                """.formatted(image), LocalDate.of(2026, 10, 29));
+
+        assertEquals(1, papers.size());
+        assertEquals("Kedvezményeső", papers.getFirst().title());
+        assertEquals("mediamarkt:kedvezmenyeso:2026-07-24", papers.getFirst().sourceKey());
+        assertEquals(LocalDate.of(2026, 7, 24), papers.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 10, 31), papers.getFirst().validTo());
+        assertEquals(image, papers.getFirst().pdfUrl());
+
+        List<FlyerCatalogParser.ParsedProduct> products = parser.mediaMarktProducts("""
+                {"productName":"PHILIPS EP3343\\u002F50 Series 3300 LatteGo"}
+                {"productName":"PHILIPS EP3343\\u002F50 Series 3300 LatteGo"}
+                """, 1);
+        assertEquals(List.of("PHILIPS EP3343/50 Series 3300 LatteGo"),
+                products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+    }
 }

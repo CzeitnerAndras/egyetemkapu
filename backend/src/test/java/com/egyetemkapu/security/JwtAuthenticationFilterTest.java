@@ -54,6 +54,7 @@ class JwtAuthenticationFilterTest {
 
         when(jwtUtil.validateToken("valid-token")).thenReturn(true);
         when(jwtUtil.extractUsername("valid-token")).thenReturn(username);
+        when(jwtUtil.sessionVersion("valid-token")).thenReturn(0);
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
     }
 
@@ -102,6 +103,20 @@ class JwtAuthenticationFilterTest {
         assertNotNull(auth);
         assertTrue(auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_USER")));
+    }
+
+    @Test
+    void oldSessionVersion_LeavesContextUnauthenticated() throws Exception {
+        User user = new User();
+        user.setUsername("teszt_elek");
+        user.setRole("ROLE_USER");
+        user.setSessionVersion(2);
+        when(jwtUtil.validateToken("valid-token")).thenReturn(true);
+        when(jwtUtil.extractUsername("valid-token")).thenReturn("teszt_elek");
+        when(jwtUtil.sessionVersion("valid-token")).thenReturn(1);
+        when(userRepository.findByUsername("teszt_elek")).thenReturn(Optional.of(user));
+
+        assertNull(runFilterWithToken("valid-token"));
     }
 
     @Test

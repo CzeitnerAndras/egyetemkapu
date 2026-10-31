@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Upload, Download, FileText, X, ChevronDown } from 'lucide-react';
+import { BookOpen, Upload, Download, FileText, X, ChevronDown, Search } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
 import { downloadAuthenticatedFile } from '../utils/downloadFile';
@@ -13,6 +13,35 @@ interface Document {
     fileName: string;
     uploader: { username: string };
     createdAt: string;
+    snippet?: string;
+}
+
+const MARK_START = '\u001e';
+const MARK_END = '\u001f';
+
+function HighlightedText({ text }: { text: string }) {
+    const chunks = text.split(MARK_START);
+    return (
+        <>
+            {chunks.map((chunk, index) => {
+                if (index === 0) {
+                    return <span key={index}>{chunk}</span>;
+                }
+                const end = chunk.indexOf(MARK_END);
+                if (end < 0) {
+                    return <span key={index}>{chunk}</span>;
+                }
+                return (
+                    <span key={index}>
+                        <mark className="bg-yellow-300 px-0.5 text-black dark:bg-yellow-400 secret:bg-[#1cf85d] secret:text-black">
+                            {chunk.slice(0, end)}
+                        </mark>
+                        {chunk.slice(end + MARK_END.length)}
+                    </span>
+                );
+            })}
+        </>
+    );
 }
 
 const KNOWLEDGE_CATEGORIES = [
@@ -35,6 +64,9 @@ export default function KnowledgeBasePage() {
     const { t, locale, language } = useLanguage();
     const [documents, setDocuments] = useState<Document[]>([]);
     const [categoryFilter, setCategoryFilter] = useState<string>('');
+    const [query, setQuery] = useState('');
+    const [submittedQuery, setSubmittedQuery] = useState('');
+    const [searchFailed, setSearchFailed] = useState(false);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [file, setFile] = useState<File | null>(null);
@@ -48,7 +80,7 @@ export default function KnowledgeBasePage() {
 
     useEffect(() => {
         fetchDocuments();
-    }, [categoryFilter]);
+    }, [categoryFilter, submittedQuery]);
 
     useEffect(() => {
         if (!isUploadModalOpen) {
@@ -68,21 +100,49 @@ export default function KnowledgeBasePage() {
 
     {/* --- Documents --- */}
     const fetchDocuments = async () => {
+        const text = submittedQuery.trim();
+        if (text.length === 1) {
+            setDocuments([]);
+            setSearchFailed(false);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
+        setSearchFailed(false);
         let url = '/api/documents';
-        if (categoryFilter) url += `?category=${categoryFilter}`;
+        if (text.length >= 2) {
+            const params = new URLSearchParams();
+            params.set('q', text);
+            if (categoryFilter) params.set('category', categoryFilter);
+            url = `/api/documents/search?${params.toString()}`;
+        } else if (categoryFilter) {
+            url += `?category=${categoryFilter}`;
+        }
 
         try {
             const res = await fetchWithAuth(url, {}, { redirectOnAuthFailure: false, retryOn401: false });
             if (res.ok) {
                 const data = await res.json();
                 setDocuments(data);
+            } else if (text.length >= 2) {
+                setDocuments([]);
+                setSearchFailed(true);
             }
         } catch (error) {
             console.error("Hiba a dokumentumok lekérésekor:", error);
+            if (text.length >= 2) {
+                setDocuments([]);
+                setSearchFailed(true);
+            }
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSearch = (event: React.FormEvent) => {
+        event.preventDefault();
+        setSubmittedQuery(query.trim());
     };
 
     {/* --- Upload --- */}
@@ -161,7 +221,26 @@ export default function KnowledgeBasePage() {
                     extra={
                     <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
 
-                        {/* --- Filter dropdown --- */}
+                        <form onSubmit={handleSearch} className="w-full md:w-64">
+                            <label className="sr-only" htmlFor="kb-search">{t('kb.searchLabel')}</label>
+                            <div className="relative">
+                                <button
+                                    type="submit"
+                                    className="absolute inset-y-0 left-0 flex cursor-pointer items-center px-3"
+                                    aria-label={t('kb.searchSubmit')}
+                                >
+                                    <Search className="h-5 w-5" />
+                                </button>
+                                <input
+                                    id="kb-search"
+                                    type="search"
+                                    value={query}
+                                    onChange={(event) => setQuery(event.target.value)}
+                                    placeholder={t('kb.searchPlaceholder')}
+                                    className="w-full border-4 border-black dark:border-gray-600 secret:border-[#1cf85d] bg-white dark:bg-[#121212] secret:bg-black text-black dark:text-white secret:text-[#1cf85d] secret:placeholder-[#1cf85d]/50 font-bold p-2 pl-11 shadow-[4px_4px_0px_#000] dark:shadow-none secret:font-mono focus:outline-none"
+                                />
+                            </div>
+                        </form>
                         <div className="relative w-full md:w-auto">
                             <button
                                 onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -204,12 +283,15 @@ export default function KnowledgeBasePage() {
                 {downloadMsg && (
                     <p className="mb-4 text-center font-bold text-red-700 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {downloadMsg}</p>
                 )}
+                {searchFailed && (
+                    <p className="mb-4 text-center font-bold text-red-700 dark:text-red-300 secret:text-[#1cf85d] secret:font-mono uppercase">&gt; {t('kb.searchError')}</p>
+                )}
 
                 {/* --- Document grid --- */}
                 {loading ? (
                     <p className="text-center text-gray-500 secret:text-[#1cf85d] secret:font-mono">{t('kb.loading')}</p>
                 ) : documents.length === 0 ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium text-lg secret:font-mono uppercase">&gt; {t('kb.empty')}</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 secret:text-[#1cf85d]/70 font-medium text-lg secret:font-mono uppercase">&gt; {t(submittedQuery.trim().length === 1 ? 'kb.searchShort' : submittedQuery.trim().length >= 2 ? 'kb.searchEmpty' : 'kb.empty')}</p>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {documents.map(doc => (
@@ -223,7 +305,7 @@ export default function KnowledgeBasePage() {
                                 </div>
 
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300 secret:text-[#1cf85d]/80 flex-1 mb-4 secret:font-mono line-clamp-3">
-                                    {doc.description}
+                                    {doc.snippet ? <HighlightedText text={doc.snippet} /> : doc.description}
                                 </p>
 
                                 <div className="flex justify-between items-center text-xs font-bold text-black dark:text-gray-400 secret:text-[#1cf85d]/60 mb-4 secret:font-mono">

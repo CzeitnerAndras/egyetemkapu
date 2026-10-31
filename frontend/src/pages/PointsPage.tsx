@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { Plus, Target, Trash2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { PageHeader, PageShell } from '../components/PageLayout';
+import { ToolDownNotice, toolFetch, toolIsDown, useToolHealth } from '../utils/toolFetch';
 
 interface PartRow {
     id: number;
@@ -87,6 +88,8 @@ export default function PointsPage() {
     const [result, setResult] = useState<PlanResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [failed, setFailed] = useState(false);
+    const down = useToolHealth('/api/points/health') || failed;
 
     const updatePart = (id: number, patch: Partial<PartRow>) => {
         setParts((current) => current.map((part) => (part.id === id ? { ...part, ...patch } : part)));
@@ -156,20 +159,27 @@ export default function PointsPage() {
 
         setLoading(true);
         try {
-            const response = await fetch('/api/points/plan', {
+            const response = await toolFetch('/api/points/plan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ parts: payloadParts, thresholds: payloadThresholds }),
             });
             const data: unknown = await response.json().catch(() => null);
+            if (toolIsDown(response.status)) {
+                setFailed(true);
+                setError(null);
+                return;
+            }
             if (!response.ok || !isPlan(data)) {
                 const detail = data && typeof data === 'object' && 'detail' in data ? String((data as { detail: unknown }).detail) : '';
                 setError(t(ERROR_KEYS[detail] ?? (response.status === 400 ? 'points.invalid' : 'points.error')));
                 return;
             }
+            setFailed(false);
             setResult(data);
         } catch {
-            setError(t('points.error'));
+            setFailed(true);
+            setError(null);
         } finally {
             setLoading(false);
         }
@@ -192,6 +202,7 @@ export default function PointsPage() {
             <p className="mb-6 max-w-3xl text-black dark:text-gray-200 secret:text-[#1cf85d] secret:font-mono">
                 {t('points.intro')}
             </p>
+            {down && <ToolDownNotice message={t('points.down')} />}
 
             <form onSubmit={handlePlan} className="flex flex-col gap-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 lg:items-start">
@@ -320,7 +331,7 @@ export default function PointsPage() {
 
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || down}
                     className="w-full bg-gradient-to-r from-blue-600 to-blue-950 dark:from-[#7e22ce] dark:to-[#a855f7] secret:bg-none secret:bg-transparent text-white secret:text-[#1cf85d] font-bold py-3 border-4 border-black dark:border-transparent secret:border-[#1cf85d] flex items-center justify-center cursor-pointer secret:font-mono uppercase disabled:opacity-50 shadow-[4px_4px_0px_#000] dark:shadow-md"
                 >
                     <Target className="w-5 h-5 mr-2" />

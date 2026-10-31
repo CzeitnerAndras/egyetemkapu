@@ -17,8 +17,10 @@ services:
     container_name: egyetemkapu-backend
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/egyetemkapu
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_USERNAME=egyetemkapu_app
+      - SPRING_DATASOURCE_PASSWORD=${DB_APP_PASSWORD}
+      - SPRING_FLYWAY_USER=${DB_USER}
+      - SPRING_FLYWAY_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=prod
       - JWT_SECRET=${JWT_SECRET}
       - AI_API_KEY=${AI_API_KEY:-nincs_megadva}
@@ -32,6 +34,10 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
       - MAIL_FROM=${MAIL_FROM:-noreply@egyetemkapu.hu}
       - EMAIL_VERIFICATION_ENABLED=${EMAIL_VERIFICATION_ENABLED:-false}
+      - RECAPTCHA_SITE_KEY=${RECAPTCHA_SITE_KEY:-}
+      - RECAPTCHA_SECRET_KEY=${RECAPTCHA_SECRET_KEY:-}
+      - OTEL_TRACING_ENABLED=true
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4318/v1/traces
       - TZ=Europe/Budapest
     ports:
       - "127.0.0.1:8080:8080"
@@ -48,10 +54,108 @@ services:
     container_name: egyetemkapu-points
     environment:
       - TZ=Europe/Budapest
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4318/v1/traces
     ports:
       - "127.0.0.1:8090:8090"
     networks:
       - app
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/api/points/health', timeout=2)
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  thesis:
+    build: ./thesis
+    container_name: egyetemkapu-thesis
+    environment:
+      - TZ=Europe/Budapest
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4318/v1/traces
+    ports:
+      - "127.0.0.1:8091:8091"
+    networks:
+      - app
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/api/thesis/health', timeout=2)
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  bibliography:
+    build: ./bibliography
+    container_name: egyetemkapu-bibliography
+    environment:
+      - TZ=Europe/Budapest
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://tempo:4318/v1/traces
+    ports:
+      - "127.0.0.1:8092:8092"
+    networks:
+      - app
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8092/api/bibliography/health', timeout=2)
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: egyetemkapu-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo.yaml:ro
+    networks:
+      - app
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: egyetemkapu-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - app
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: egyetemkapu-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-egyetemkapu}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - app
+    depends_on:
+      - prometheus
+      - tempo
     restart: unless-stopped
 
   frontend:
@@ -70,6 +174,8 @@ services:
     depends_on:
       - backend
       - points
+      - thesis
+      - bibliography
     restart: unless-stopped
 
 networks:

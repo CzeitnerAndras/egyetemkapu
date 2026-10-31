@@ -17,6 +17,16 @@ jest.mock('./components/Navbar', () => ({
     default: () => <nav>navbar</nav>,
 }));
 
+jest.mock('./components/SiteFooter', () => ({
+    __esModule: true,
+    default: () => <footer>footer</footer>,
+}));
+
+jest.mock('./pages/LegalPage', () => ({
+    __esModule: true,
+    default: ({ kind }: { kind: string }) => <div>{kind}-page</div>,
+}));
+
 jest.mock('./components/DocumentTitle', () => ({
     __esModule: true,
     default: () => null,
@@ -39,6 +49,8 @@ jest.mock('./pages/CalendarPage', () => ({ __esModule: true, default: () => <div
 jest.mock('./pages/ProfilePage', () => ({ __esModule: true, default: () => <div>profile-page</div> }));
 jest.mock('./pages/CalculatorPage', () => ({ __esModule: true, default: () => <div>calculator-page</div> }));
 jest.mock('./pages/PointsPage', () => ({ __esModule: true, default: () => <div>points-page</div> }));
+jest.mock('./pages/ThesisPage', () => ({ __esModule: true, default: () => <div>thesis-page</div> }));
+jest.mock('./pages/BibliographyPage', () => ({ __esModule: true, default: () => <div>bibliography-page</div> }));
 jest.mock('./pages/KnowledgeBasePage', () => ({ __esModule: true, default: () => <div>knowledge-page</div> }));
 jest.mock('./pages/ReferencePage', () => ({ __esModule: true, default: () => <div>reference-page</div> }));
 jest.mock('./pages/FocusRoomPage', () => ({ __esModule: true, default: () => <div>focus-page</div> }));
@@ -65,12 +77,17 @@ const directRoutes: Array<[string, string]> = [
     ['/profile', 'profile-page'],
     ['/kalkulator', 'calculator-page'],
     ['/pontok', 'points-page'],
+    ['/terjedelem', 'thesis-page'],
+    ['/irodalomjegyzek', 'bibliography-page'],
     ['/tudastar', 'knowledge-page'],
     ['/hivatkozas', 'reference-page'],
     ['/tanuloszoba', 'focus-page'],
     ['/otletlada', 'idea-page'],
     ['/admin', 'admin-page'],
     ['/about', 'about-page'],
+    ['/adatvedelem', 'privacy-page'],
+    ['/impresszum', 'imprint-page'],
+    ['/felhasznalasi-feltetelek', 'terms-page'],
     ['/faq', 'faq-page'],
     ['/settings', 'settings-page'],
     ['/linktar', 'links-page'],
@@ -85,6 +102,9 @@ const redirects: Array<[string, string, string]> = [
     ['/links', 'links-page', '/linktar'],
     ['/flyers', 'sales-page', '/akcios-ujsag'],
     ['/flashcards', 'flashcards-page', '/kartyak'],
+    ['/privacy', 'privacy-page', '/adatvedelem'],
+    ['/imprint', 'imprint-page', '/impresszum'],
+    ['/terms', 'terms-page', '/felhasznalasi-feltetelek'],
 ];
 
 describe('App', () => {

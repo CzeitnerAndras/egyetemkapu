@@ -20,6 +20,9 @@ public class RefreshToken {
     @Column(nullable = false, unique = true)
     private String token;
 
+    @Column(name = "previous_token", unique = true)
+    private String previousToken;
+
     @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
 

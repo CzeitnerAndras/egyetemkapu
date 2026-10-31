@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -68,6 +69,26 @@ class RossmannPrintedNamesTest {
                 || name.toLowerCase().contains("legjobb")
                 || name.toLowerCase().contains("sprayre")), names.toString());
         assertTrue(names.stream().filter(name -> name.contains("FÁTYOLMASZK")).count() == 1, names.toString());
+    }
+
+    @Test
+    void readsTheCoverOffersPrintedBesideTheShelfPrice() {
+        List<TextRun> runs = List.of(
+                new TextRun(117.3f, 242.1f, 61.3f, 6.5f, "MAX FACTOR", "ROSSMANNSans-Black", 10f),
+                new TextRun(109.7f, 285.4f, 81.7f, 5.6f, "MAX FACTOR GLOW", "ROSSMANNSans-Black", 9f),
+                new TextRun(109.7f, 295.2f, 103.9f, 5.6f, "FRAMER 20 BRONZOSÍTÓ", "ROSSMANNSans-Black", 9f),
+                new TextRun(109.7f, 304.9f, 91.1f, 5.6f, "ÉS RAGYOGÁSFOKOZÓ", "ROSSMANNSans-Black", 9f),
+                new TextRun(109.7f, 322.8f, 44.3f, 12.3f, "5399", "ROSSMANNSans-Black", 19f),
+                new TextRun(109.7f, 375.1f, 66.7f, 17.6f, "4049", "ROSSMANNSans-Black", 28f),
+                new TextRun(272.4f, 267.8f, 55.8f, 5.6f, "SILAN ÖBLÍTŐ", "ROSSMANNSans-Black", 9f),
+                new TextRun(301.3f, 278.3f, 26.9f, 5.5f, "1661 Ft", "ROSSMANNSans-Bold", 9f),
+                new TextRun(262.7f, 300.8f, 56.5f, 17.6f, "1199", "ROSSMANNSans-Black", 28f));
+
+        List<String> names = RossmannPrintedNames.read(runs, 1).stream().map(ParsedProduct::name).toList();
+
+        assertEquals(List.of(
+                "SILAN ÖBLÍTŐ",
+                "MAX FACTOR GLOW FRAMER 20 BRONZOSÍTÓ ÉS RAGYOGÁSFOKOZÓ"), names);
     }
 
     private static TextRun line(String text, float x, float y, float width, float size, String font) {

@@ -6,6 +6,8 @@ import com.egyetemkapu.dto.FlyerSummaryDto;
 import com.egyetemkapu.model.Flyer;
 import com.egyetemkapu.model.FlyerPage;
 import com.egyetemkapu.model.FlyerProduct;
+import com.egyetemkapu.repository.FlyerProductRepository;
+import com.egyetemkapu.repository.FlyerProductRepository.SearchRow;
 import com.egyetemkapu.repository.FlyerRepository;
 import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import com.egyetemkapu.service.flyer.FlyerProductExtractor;
@@ -24,19 +26,25 @@ import java.util.Set;
 @Service
 public class FlyerQueryService {
 
+    private static final int MAX_QUERY_LENGTH = 200;
+
     private final FlyerRepository flyerRepository;
+    private final FlyerProductRepository flyerProductRepository;
     private final FlyerSyncService flyerSyncService;
     private final Clock clock;
     private final FlyerExtractorRegistry extractors;
     private static final List<String> STORE_ORDER = List.of(
-            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann", "dm");
+            "spar", "penny", "tesco", "aldi", "auchan", "coop", "lidl", "rossmann", "dm", "metro", "real", "cba",
+            "mediamarkt");
 
     public FlyerQueryService(
             FlyerRepository flyerRepository,
+            FlyerProductRepository flyerProductRepository,
             FlyerSyncService flyerSyncService,
             Clock clock,
             FlyerExtractorRegistry extractors) {
         this.flyerRepository = flyerRepository;
+        this.flyerProductRepository = flyerProductRepository;
         this.flyerSyncService = flyerSyncService;
         this.clock = clock;
         this.extractors = extractors;
@@ -72,44 +80,35 @@ public class FlyerQueryService {
     }
 
     // --- Search ---
-    @Transactional
+    @Transactional(readOnly = true)
     public List<FlyerSearchHitDto> search(String query) {
         refreshIfStale();
-        if (query == null || HungarianText.normalize(query).isEmpty()) {
+        String folded = HungarianText.normalize(query);
+        if (folded.isEmpty()) {
             return List.of();
         }
-        List<FlyerSearchHitDto> hits = new ArrayList<>();
-        Set<String> seen = new LinkedHashSet<>();
-        LocalDate today = LocalDate.now(clock);
-        for (Flyer flyer : flyerRepository.findAllByOrderByStoreAscTitleAsc()) {
-            if (!listed(flyer, today)) {
-                continue;
-            }
-            if (flyer.getProducts() == null) {
-                continue;
-            }
-            for (FlyerProduct product : flyer.getProducts()) {
-                if (!HungarianText.contains(product.getName(), query)) {
-                    continue;
-                }
-                String key = flyer.getStore() + ":" + HungarianText.normalize(product.getName());
-                if (seen.add(key)) {
-                    hits.add(new FlyerSearchHitDto(
-                            flyer.getId(),
-                            flyer.getStore(),
-                            flyer.getTitle(),
-                            product.getPageNumber(),
-                            product.getName(),
-                            HungarianText.snippet(product.getName(), query, 80),
-                            "product",
-                            product.getId()
-                    ));
-                }
-            }
+        if (folded.length() < 2) {
+            return List.of();
         }
-        return hits.size() > 80 ? hits.subList(0, 80) : hits;
+        if (folded.length() > MAX_QUERY_LENGTH) {
+            folded = folded.substring(0, MAX_QUERY_LENGTH);
+        }
+        LocalDate today = LocalDate.now(clock);
+        List<FlyerSearchCandidate> candidates = new ArrayList<>();
+        for (SearchRow row : flyerProductRepository.searchCandidates(
+                folded, FlyerSearchRank.likePattern(folded), today, today.plusDays(8))) {
+            candidates.add(new FlyerSearchCandidate(
+                    row.getProductId(),
+                    row.getFlyerId(),
+                    row.getStore(),
+                    row.getTitle(),
+                    row.getPageNumber() == null ? 0 : row.getPageNumber(),
+                    row.getName()));
+        }
+        return FlyerSearchRank.rank(candidates, query);
     }
 
+    // --- Repair ---
     private void reparseProductsFromPageText(Flyer flyer) {
         if (flyer.getPages() == null || flyer.getPages().isEmpty()
                 || "rossmann".equals(flyer.getStore())
@@ -154,14 +153,20 @@ public class FlyerQueryService {
         return value.length() <= max ? value : value.substring(0, max);
     }
 
+    // --- Refresh ---
     private void refreshIfStale() {
         if (flyerSyncService.isStale(LocalDateTime.now(clock))) {
             flyerSyncService.refreshAsync();
         }
         flyerSyncService.refreshRossmannOnce();
         flyerSyncService.refreshDmOnce();
+        flyerSyncService.refreshMetroOnce();
+        flyerSyncService.refreshRealOnce();
+        flyerSyncService.refreshCbaOnce();
+        flyerSyncService.refreshMediaMarktOnce();
     }
 
+    // --- Order ---
     private static boolean listed(Flyer flyer, LocalDate today) {
         if (flyer.getPages() == null || flyer.getPages().isEmpty()) {
             return false;

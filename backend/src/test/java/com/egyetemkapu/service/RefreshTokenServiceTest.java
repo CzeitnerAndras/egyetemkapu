@@ -49,6 +49,7 @@ class RefreshTokenServiceTest {
 
         assertEquals(42L, existing.getId());
         assertEquals(PasswordResetTokens.hash(issued.rawToken()), existing.getToken());
+        assertNull(existing.getPreviousToken());
         assertNotEquals(issued.rawToken(), existing.getToken());
         verify(refreshTokenRepository, never()).deleteByUser(any());
     }
@@ -67,8 +68,20 @@ class RefreshTokenServiceTest {
         assertFalse(issued.rawToken().isBlank());
         verify(refreshTokenRepository).save(argThat(saved ->
                 saved.getUser().equals(user)
+                        && saved.getPreviousToken() == null
                         && PasswordResetTokens.hash(issued.rawToken()).equals(saved.getToken())
                         && saved.getExpiryDate().isAfter(LocalDateTime.now())));
+    }
+
+    @Test
+    void createRefreshToken_MissingUser_Throws() {
+        when(userRepository.findById(9L)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> refreshTokenService.createRefreshToken(9L));
+
+        assertEquals("Felhasználó nem található", exception.getMessage());
+        verify(refreshTokenRepository, never()).save(any());
     }
 
     @Test
@@ -89,6 +102,7 @@ class RefreshTokenServiceTest {
 
         RefreshTokenService.IssuedRefreshToken rotated = refreshTokenService.rotate(current);
 
+        assertEquals("regi-hash", current.getPreviousToken());
         assertEquals(PasswordResetTokens.hash(rotated.rawToken()), current.getToken());
         assertNotEquals("regi-hash", current.getToken());
         assertTrue(current.getExpiryDate().isAfter(LocalDateTime.now().plusDays(6)));
@@ -117,5 +131,41 @@ class RefreshTokenServiceTest {
 
         assertEquals("A Refresh Token lejárt! Kérlek, jelentkezz be újra.", exception.getMessage());
         verify(refreshTokenRepository, times(1)).delete(token);
+    }
+
+    @Test
+    void revokeIfReused_EndsTheSessionThatReplacedTheToken() {
+        User user = new User();
+        user.setId(1L);
+        user.setSessionVersion(3);
+        RefreshToken current = new RefreshToken();
+        current.setUser(user);
+        current.setPreviousToken(PasswordResetTokens.hash("regi"));
+        when(refreshTokenRepository.findByPreviousToken(PasswordResetTokens.hash("regi")))
+                .thenReturn(Optional.of(current));
+
+        assertTrue(refreshTokenService.revokeIfReused("regi"));
+
+        assertEquals(4, user.getSessionVersion());
+        verify(userRepository).save(user);
+        verify(refreshTokenRepository).deleteByUser(user);
+    }
+
+    @Test
+    void revokeIfReused_UnknownToken_DoesNothing() {
+        when(refreshTokenRepository.findByPreviousToken(any())).thenReturn(Optional.empty());
+
+        assertFalse(refreshTokenService.revokeIfReused("ismeretlen"));
+
+        verify(userRepository, never()).save(any());
+        verify(refreshTokenRepository, never()).deleteByUser(any());
+    }
+
+    @Test
+    void revokeIfReused_BlankToken_DoesNothing() {
+        assertFalse(refreshTokenService.revokeIfReused(" "));
+
+        verify(refreshTokenRepository, never()).findByPreviousToken(any());
+        verify(userRepository, never()).save(any());
     }
 }

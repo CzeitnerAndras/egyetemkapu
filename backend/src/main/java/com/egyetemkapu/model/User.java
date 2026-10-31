@@ -48,4 +48,8 @@ public class User {
     @JsonIgnore
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = true;
+
+    @JsonIgnore
+    @Column(name = "session_version", nullable = false)
+    private int sessionVersion = 0;
 }

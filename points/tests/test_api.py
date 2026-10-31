@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.rate_limit import LIMIT
 
 client = TestClient(app)
 
@@ -71,3 +72,35 @@ def test_a_missing_part_list_is_rejected_by_the_schema():
     response = client.post("/api/points/plan", json={"parts": []})
 
     assert response.status_code == 422
+
+
+def test_a_burst_from_one_address_is_limited_and_health_stays_open():
+    headers = {"X-Forwarded-For": "203.0.113.10"}
+
+    for _ in range(LIMIT):
+        response = client.post("/api/points/plan", json=SAMPLE, headers=headers)
+        assert response.status_code == 200
+
+    blocked = client.post("/api/points/plan", json=SAMPLE, headers=headers)
+    assert blocked.status_code == 429
+    assert blocked.json()["detail"] == "too_many_requests"
+    assert client.get("/api/points/health", headers=headers).status_code == 200
+    assert client.post(
+        "/api/points/plan",
+        json=SAMPLE,
+        headers={"X-Forwarded-For": "203.0.113.11"},
+    ).status_code == 200
+
+
+def test_metrics_skip_health_and_count_a_plan():
+    before = client.get("/api/points/metrics").json()["requests"]
+
+    assert client.get("/api/points/health").status_code == 200
+    assert client.post("/api/points/plan", json=SAMPLE).status_code == 200
+
+    body = client.get("/api/points/metrics").json()
+    assert body["service"] == "points"
+    assert body["requests"] == before + 1
+    assert body["errors"] <= body["requests"]
+    assert "errorRate" in body
+    assert "latencyMsP95" in body
