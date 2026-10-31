@@ -10,6 +10,12 @@ services:
       - pgdata:/var/lib/postgresql/data
     networks:
       - app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
     restart: unless-stopped
 
   backend:
@@ -18,7 +24,7 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/egyetemkapu
       - SPRING_DATASOURCE_USERNAME=egyetemkapu_app
-      - SPRING_DATASOURCE_PASSWORD=${DB_APP_PASSWORD}
+      - SPRING_DATASOURCE_PASSWORD=${DB_APP_PASSWORD:?DB_APP_PASSWORD kell a .env-ben}
       - SPRING_FLYWAY_USER=${DB_USER}
       - SPRING_FLYWAY_PASSWORD=${DB_PASSWORD}
       - SPRING_PROFILES_ACTIVE=prod
@@ -46,7 +52,8 @@ services:
     networks:
       - app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   points:

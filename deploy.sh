@@ -21,7 +21,7 @@ ensure_app_db_role() {
   if ! grep -q '^DB_APP_PASSWORD=.\+' .env; then
     local pass
     if command -v openssl >/dev/null 2>&1; then
-      pass=$(openssl rand -base64 24 | tr -d '\n')
+      pass=$(openssl rand -base64 24 | tr -d '\n=+/')
     else
       pass=$(python3 -c 'import secrets; print(secrets.token_urlsafe(24), end="")')
     fi
@@ -73,6 +73,7 @@ echo "==> Konténerek újraépítése"
 docker compose up -d --build
 
 echo "==> Várakozás az API-ra"
+crashloop=0
 for _ in $(seq 1 30); do
     if curl -fsS --resolve egyetemkapu.hu:443:127.0.0.1 \
             https://egyetemkapu.hu/api/users/count > /dev/null; then
@@ -80,11 +81,20 @@ for _ in $(seq 1 30); do
         docker image prune -f
         exit 0
     fi
+
+    restarts=$(docker inspect egyetemkapu-backend --format '{{.RestartCount}}' 2>/dev/null || echo 0)
+    if [ "${restarts:-0}" -gt 3 ]; then
+        echo "HIBA: a backend összeomlási ciklusban van (újraindítások: $restarts)" >&2
+        crashloop=1
+        break
+    fi
     sleep 5
 done
 
-echo "HIBA: az oldal 150 másodperc alatt sem válaszolt HTTPS-en" >&2
+if [ "$crashloop" -ne 1 ]; then
+    echo "HIBA: az oldal 150 másodperc alatt sem válaszolt HTTPS-en" >&2
+fi
 docker compose ps >&2
 docker compose logs --tail 50 frontend >&2
-docker compose logs --tail 50 backend >&2
+docker compose logs --tail 150 backend >&2
 exit 1
