@@ -44,7 +44,6 @@ jobs:
         run: |
           sed -i 's/\r$//' mvnw
           bash mvnw -B test
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -56,7 +55,6 @@ jobs:
             python -m pip install -r "$svc/requirements.txt"
             python -m pytest "$svc"
           done
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -69,7 +67,6 @@ jobs:
         run: |
           npm ci
           npm test
-
   # --- Deploy ---
   deploy:
     needs: test
@@ -98,5 +95,6 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
           # A DEPLOY_PATH-nak absolút útvonalnak kell lennie (pl. /root/egyetemkapu),
           # mert a "~" az idézőjelek között nem oldódik fel a szerveren.
+          # A git pull a deploy.sh indítása ELŐTT fut, hogy mindig az új deploy.sh fusson.
           ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
-            "cd '$DEPLOY_PATH' && bash deploy.sh"
+            "cd '$DEPLOY_PATH' && git pull --ff-only && bash deploy.sh"
