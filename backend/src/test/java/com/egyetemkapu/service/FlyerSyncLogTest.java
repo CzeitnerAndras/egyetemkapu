@@ -43,6 +43,18 @@ class FlyerSyncLogTest {
     }
 
     @Test
+    void blankErrorIsStoredAsAFailedRunWithoutAMessage() {
+        LocalDateTime started = LocalDateTime.of(2026, 10, 29, 6, 30);
+        log.record("real", started, started.plusSeconds(1), 12, "   ");
+
+        ArgumentCaptor<FlyerSyncRun> saved = ArgumentCaptor.forClass(FlyerSyncRun.class);
+        verify(repository).save(saved.capture());
+        assertEquals("failed", saved.getValue().getStatus());
+        assertEquals(0, saved.getValue().getProductCount());
+        assertNull(saved.getValue().getErrorMessage());
+    }
+
+    @Test
     void recordsAFailureWithAShortError() {
         LocalDateTime started = LocalDateTime.of(2026, 10, 29, 6, 30);
         log.record("coop", started, started.plusSeconds(3), 40, "x".repeat(1200));
