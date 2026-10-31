@@ -197,15 +197,67 @@
             background: radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.9) 100%);
         }
 
+        #hud {
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .overlay .hint {
+            margin-top: 22px;
+            font-size: 14px;
+            opacity: 0.7;
+            letter-spacing: 0.1em;
+        }
+
+        #level-select {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .lvl-btn {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            color: var(--phosphor);
+            font-family: inherit;
+            font-size: 18px;
+            font-weight: 700;
+            text-shadow: inherit;
+            border: 2px solid var(--phosphor);
+            cursor: pointer;
+        }
+
+        .lvl-btn:hover:not(:disabled) {
+            background: var(--phosphor);
+            color: #000;
+            text-shadow: none;
+        }
+
+        .lvl-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 850px) {
             #touch-controls { display: flex; }
             header p, #return-btn { font-size: 14px; }
+        }
+
+        @media (max-width: 600px) {
+            header > p:first-child { display: none; }
         }
     </style>
 </head>
 <body>
     <header>
         <p>&gt; run:// source</p>
+        <p id="hud"></p>
         <button id="return-btn" type="button">&lt;&lt; return</button>
     </header>
 
@@ -217,14 +269,23 @@
                 <h1>Soul Escape</h1>
                 <p>
                     Use WASD or arrow keys to move and jump.<br>
-                    Avoid the acid. Reach the portal to win.
+                    Avoid the acid and the spikes. Ride the moving platforms and bounce on the springs.<br>
+                    Reach the portal to clear each level. R restarts the level.
                 </p>
                 <button class="btn" id="start-btn" type="button">Start</button>
+                <p class="hint">Levels</p>
+                <div id="level-select"></div>
+            </div>
+
+            <div id="level-screen" class="overlay" style="display: none;">
+                <h1 id="level-title">Level clear</h1>
+                <p id="level-msg"></p>
+                <button class="btn" id="next-btn" type="button">Next level</button>
             </div>
 
             <div id="win-screen" class="overlay" style="display: none;">
                 <h1>Victory</h1>
-                <p>You escaped the dungeon.</p>
+                <p id="win-msg">You escaped the dungeon.</p>
                 <button class="btn" id="replay-btn" type="button">Play again</button>
             </div>
 
