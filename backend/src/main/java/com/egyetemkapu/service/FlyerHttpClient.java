@@ -23,6 +23,7 @@ public class FlyerHttpClient {
             "Egyetemkapu/1.0 (+https://egyetemkapu.hu; student flyer search)";
     private static final String BROWSER_UA =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/172.16.1.3 Safari/537.36";
+    private static final String ACCEPT_LANGUAGE_HU = "hu-HU,hu;q=0.9,en;q=0.8";
 
     private final RestTemplate restTemplate;
 
@@ -60,31 +61,31 @@ public class FlyerHttpClient {
                 spar || auchan || coop || lidl || rossmann || dm || real || cba || mediaMarkt ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.TEXT_HTML, MediaType.APPLICATION_JSON, MediaType.ALL));
         if (spar) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.spar.hu/");
         } else if (auchan) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://auchan.hu/");
         } else if (coop) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.coop.hu/");
         } else if (lidl) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.lidl.hu/");
         } else if (rossmann) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://shop.rossmann.hu/magazin");
         } else if (dm) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.dm.hu/");
         } else if (real) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://real.hu/aktualis-ajanlataink/");
         } else if (cba) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.cba.hu/");
         } else if (mediaMarkt) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.mediamarkt.hu/");
         }
         ResponseEntity<String> response = getFollowingRedirects(
@@ -141,16 +142,15 @@ public class FlyerHttpClient {
         boolean real = realHost(url) || realHost(referer);
         boolean cba = cbaHost(url) || cbaHost(referer);
         boolean mediaMarkt = mediaMarktHost(url) || mediaMarktHost(referer);
-        headers.set(HttpHeaders.USER_AGENT,
-                tesco || spar || auchan || coop || lidl || rossmann || dm || real || cba || mediaMarkt
-                        ? BROWSER_UA : USER_AGENT);
+        boolean browserProfile = tesco || spar || auchan || coop || lidl || rossmann
+                || dm || real || cba || mediaMarkt;
+        headers.set(HttpHeaders.USER_AGENT, browserProfile ? BROWSER_UA : USER_AGENT);
         headers.setAccept(List.of(MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, MediaType.APPLICATION_PDF, MediaType.ALL));
-        if (tesco) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
-            headers.set(HttpHeaders.ORIGIN, "https://www.tesco.hu");
+        if (browserProfile) {
+            headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
         }
-        if (auchan) {
-            headers.set(HttpHeaders.ACCEPT_LANGUAGE, "hu-HU,hu;q=0.9,en;q=0.8");
+        if (tesco) {
+            headers.set(HttpHeaders.ORIGIN, "https://www.tesco.hu");
         }
         if (referer != null && !referer.isBlank()) {
             headers.set(HttpHeaders.REFERER, referer);
