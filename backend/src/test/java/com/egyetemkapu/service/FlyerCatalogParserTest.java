@@ -940,6 +940,25 @@ class FlyerCatalogParserTest {
                 """, 1);
         assertEquals(List.of("PHILIPS EP3343/50 Series 3300 LatteGo"),
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+        assertEquals(1, products.getFirst().pageNumber());
+        assertNull(products.getFirst().imageUrl());
+    }
+
+    @Test
+    void mediaMarktProductsUseTheirOwnPhotosAsPages() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.mediaMarktProducts("""
+                CofrMediaAssetsFeature:Media:hu:1529778":{"productMainImage":{"link":"https:\\u002F\\u002Fassets.mmsrg.com\\u002Fisr\\u002F166325\\u002Fc1\\u002F-\\u002FASSET_MMS_1"}}
+                "manufacturerName":"PHILIPS","productName":"PHILIPS 100PQS9001 4K UHD QLED"
+                CofrMediaAssetsFeature:Media:hu:1487398":{"productMainImage":{"link":"https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_2?q=80"}}
+                "id":"Media:hu:1487398","productName":"PHILIPS 55MLED920"
+                {"productName":"Termék neve"}
+                """, 1);
+
+        assertEquals(2, products.size());
+        assertEquals(1, products.get(0).pageNumber());
+        assertEquals("https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_1", products.get(0).imageUrl());
+        assertEquals(2, products.get(1).pageNumber());
+        assertEquals("https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_2", products.get(1).imageUrl());
     }
 
     @Test

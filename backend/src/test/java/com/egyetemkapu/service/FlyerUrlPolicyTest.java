@@ -56,6 +56,8 @@ class FlyerUrlPolicyTest {
         assertTrue(FlyerUrlPolicy.isAllowed("https://www.mediamarkt.hu/hu/campaign/promocioink"));
         assertTrue(FlyerUrlPolicy.isAllowed(
                 "https://cms-images.mmst.eu/1h4udvs0ugq1/cover.jpg"));
+        assertTrue(FlyerUrlPolicy.isAllowed(
+                "https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_187630007"));
         assertDoesNotThrow(() -> FlyerUrlPolicy.assertAllowed("https://www.penny.hu/ajanlatok"));
         assertTrue(FlyerUrlPolicy.MAX_BINARY_BYTES >= 40 * 1024 * 1024);
     }

@@ -12,11 +12,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,6 +32,18 @@ import static org.mockito.Mockito.when;
 class FlyerHttpClientTest {
 
     private HttpServer server;
+
+    @Test
+    void ungzipReadsACompressedHtmlPage() throws Exception {
+        byte[] html = "<a href=\"https://real.hu/wp-content/uploads/2026/11/ujsag.pdf\">pdf</a>"
+                .getBytes(StandardCharsets.UTF_8);
+        ByteArrayOutputStream packed = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzip = new GZIPOutputStream(packed)) {
+            gzip.write(html);
+        }
+        String text = new String(FlyerHttpClient.ungzip(packed.toByteArray()), StandardCharsets.UTF_8);
+        assertTrue(text.contains("ujsag.pdf"));
+    }
 
     @BeforeEach
     void startServer() throws Exception {
@@ -110,10 +124,14 @@ class FlyerHttpClientTest {
     @Test
     void storePagesSendABrowserProfileAndTheStoreReferer() {
         RestTemplate restTemplate = mock(RestTemplate.class);
-        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(String.class)))
-                .thenReturn(ResponseEntity.ok("page"));
         when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(), eq(byte[].class)))
-                .thenReturn(ResponseEntity.ok(new byte[] { 1, 2 }));
+                .thenAnswer(invocation -> {
+                    URI uri = invocation.getArgument(0);
+                    if (uri.getPath() != null && uri.getPath().endsWith(".jpg")) {
+                        return ResponseEntity.ok(new byte[] { 1, 2 });
+                    }
+                    return ResponseEntity.ok("page".getBytes(StandardCharsets.UTF_8));
+                });
         FlyerHttpClient client = new FlyerHttpClient(restTemplate);
         List<String> pages = List.of(
                 "https://www.mediamarkt.hu/hu/campaign/x",
@@ -129,18 +147,16 @@ class FlyerHttpClientTest {
             assertEquals(2, client.getBytes("https://cms-images.mmst.eu/a.jpg").length);
         }
 
-        ArgumentCaptor<HttpEntity<?>> textCalls = ArgumentCaptor.forClass(HttpEntity.class);
-        org.mockito.Mockito.verify(restTemplate, org.mockito.Mockito.times(4))
-                .exchange(any(URI.class), eq(HttpMethod.GET), textCalls.capture(), eq(String.class));
-        assertBrowser(textCalls.getAllValues().get(0), "https://www.mediamarkt.hu/");
-        assertBrowser(textCalls.getAllValues().get(1), "https://www.cba.hu/");
-        assertBrowser(textCalls.getAllValues().get(2), "https://real.hu/aktualis-ajanlataink/");
-        assertTrue(textCalls.getAllValues().get(3).getHeaders().getFirst(HttpHeaders.USER_AGENT).startsWith("Egyetemkapu/"));
-
-        ArgumentCaptor<HttpEntity<?>> imageCall = ArgumentCaptor.forClass(HttpEntity.class);
-        org.mockito.Mockito.verify(restTemplate)
-                .exchange(any(URI.class), eq(HttpMethod.GET), imageCall.capture(), eq(byte[].class));
-        assertBrowser(imageCall.getValue(), "https://www.mediamarkt.hu/");
+        ArgumentCaptor<URI> uris = ArgumentCaptor.forClass(URI.class);
+        ArgumentCaptor<HttpEntity<?>> calls = ArgumentCaptor.forClass(HttpEntity.class);
+        org.mockito.Mockito.verify(restTemplate, org.mockito.Mockito.times(5))
+                .exchange(uris.capture(), eq(HttpMethod.GET), calls.capture(), eq(byte[].class));
+        assertBrowser(calls.getAllValues().get(0), "https://www.mediamarkt.hu/");
+        assertBrowser(calls.getAllValues().get(1), "https://www.cba.hu/");
+        assertBrowser(calls.getAllValues().get(2), "https://real.hu/aktualis-ajanlataink/");
+        assertTrue(calls.getAllValues().get(3).getHeaders().getFirst(HttpHeaders.USER_AGENT).startsWith("Egyetemkapu/"));
+        assertTrue(uris.getAllValues().get(4).getPath().endsWith(".jpg"));
+        assertBrowser(calls.getAllValues().get(4), "https://www.mediamarkt.hu/");
     }
 
     @Test
