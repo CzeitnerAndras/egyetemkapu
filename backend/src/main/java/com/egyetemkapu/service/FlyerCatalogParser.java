@@ -155,7 +155,7 @@ public class FlyerCatalogParser {
     private static final Pattern LIDL_TITLE = Pattern.compile(
             "(?is)<span\\s+class=\"flyer__title\">\\s*([^<]+?)\\s*</span>");
     private static final Pattern AUCHAN_PAGE_TOKEN = Pattern.compile(
-            "token=([A-Za-z0-9_~-]+)&token_path=([^&\"']+Pages[^&\"']*)&expires=(\\d+)",
+            "token=([A-Za-z0-9_~.=-]+)(?:&token_ignore_params=(true|1))?&token_path=([^&\"']+Pages[^&\"']*)&expires=(\\d+)",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern PRICE_TOKEN = Pattern.compile(
             "(?:\\d{1,3}(?:[ .]\\d{3})+|\\d{1,6})(?:[,]\\d{1,2})?\\s*(?:Ft(?:/[\\p{L}0-9]+)?|,-)",
@@ -1779,9 +1779,10 @@ public class FlyerCatalogParser {
         }
         Matcher matcher = AUCHAN_PAGE_TOKEN.matcher(html);
         while (matcher.find()) {
-            String path = matcher.group(2);
+            String path = matcher.group(3);
             if (path.toLowerCase(Locale.ROOT).contains("pages")) {
-                return new String[] { matcher.group(1), path, matcher.group(3) };
+                String ignore = matcher.group(2) == null ? "" : matcher.group(2);
+                return new String[] { matcher.group(1), path, matcher.group(4), ignore };
             }
         }
         return null;
@@ -1791,9 +1792,13 @@ public class FlyerCatalogParser {
         if (guid == null || guid.isBlank() || token == null || token.length < 3 || pageNumber < 1) {
             return null;
         }
+        String ignore = token.length > 3 && !token[3].isBlank()
+                ? "&token_ignore_params=" + token[3]
+                : "";
         return FlyerUrlPolicy.allowedOrNull(
                 "https://cdn.ipaper.io/iPaper/Papers/" + guid + "/Pages/" + pageNumber
                         + "/Zoom.jpg?token=" + token[0]
+                        + ignore
                         + "&token_path=" + token[1]
                         + "&expires=" + token[2]);
     }
