@@ -456,7 +456,34 @@ class FlyerCatalogParserTest {
         assertTrue(catalog.pages().getFirst().text().contains("CSIRKE"));
         assertTrue(catalog.pages().getFirst().imageUrl().contains("/Pages/1/Zoom.jpg"));
         assertTrue(catalog.pages().getFirst().imageUrl().contains("cdn.ipaper.io"));
+        assertFalse(catalog.pages().getFirst().imageUrl().contains("token_ignore_params"));
         assertEquals("Auchan Hipermarket", catalog.paper().title());
+    }
+
+    @Test
+    void parsesAuchanIpaperImagesThatRequireTokenIgnoreParams() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "auchan",
+                "Auchan Hipermarket",
+                "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr44/2026-10-29-11-04-heti-hipermarket-ajanlataink/",
+                null,
+                "auchan:2026-10-29-11-04-heti-hipermarket-ajanlataink",
+                LocalDate.of(2026, 10, 29),
+                LocalDate.of(2026, 11, 4));
+        String html = """
+                <script>window.staticSettings = {
+                  "name":"2026-10-29-11-04-heti-hipermarket-ajanlataink",
+                  "pages":[1,2],
+                  "pageTexts":["KACSACOMB 1299 Ft","KARFIOL 399 Ft"]
+                };</script>
+                "aws":{"url":"https://cdn.ipaper.io/iPaper/Papers/386e4f68-e89a-4f43-8ecd-613a25b9c020/","policy":"token=HS256-bxReWT8qooEUZBdaVOtPEgT4Weg_ZY9FBYM283acoro\\u0026token_ignore_params=true\\u0026token_path=%2fiPaper%2fPapers%2f386e4f68-e89a-4f43-8ecd-613a25b9c020%2fPages%2f\\u0026expires=1793888238"}
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parseAuchanIpaper(paper, html);
+        String image = catalog.pages().getFirst().imageUrl();
+        assertTrue(image.contains("/Pages/1/Zoom.jpg"));
+        assertTrue(image.contains("token=HS256-bxReWT8qooEUZBdaVOtPEgT4Weg_ZY9FBYM283acoro"));
+        assertTrue(image.contains("token_ignore_params=true"));
+        assertTrue(image.contains("expires=1793888238"));
     }
 
     @Test
