@@ -456,7 +456,34 @@ class FlyerCatalogParserTest {
         assertTrue(catalog.pages().getFirst().text().contains("CSIRKE"));
         assertTrue(catalog.pages().getFirst().imageUrl().contains("/Pages/1/Zoom.jpg"));
         assertTrue(catalog.pages().getFirst().imageUrl().contains("cdn.ipaper.io"));
+        assertFalse(catalog.pages().getFirst().imageUrl().contains("token_ignore_params"));
         assertEquals("Auchan Hipermarket", catalog.paper().title());
+    }
+
+    @Test
+    void parsesAuchanIpaperImagesThatRequireTokenIgnoreParams() {
+        FlyerCatalogParser.DiscoveredPaper paper = new FlyerCatalogParser.DiscoveredPaper(
+                "auchan",
+                "Auchan Hipermarket",
+                "https://reklamujsag.auchan.hu/online-katalogusok/2026/tr44/2026-10-29-11-04-heti-hipermarket-ajanlataink/",
+                null,
+                "auchan:2026-10-29-11-04-heti-hipermarket-ajanlataink",
+                LocalDate.of(2026, 10, 29),
+                LocalDate.of(2026, 11, 4));
+        String html = """
+                <script>window.staticSettings = {
+                  "name":"2026-10-29-11-04-heti-hipermarket-ajanlataink",
+                  "pages":[1,2],
+                  "pageTexts":["KACSACOMB 1299 Ft","KARFIOL 399 Ft"]
+                };</script>
+                "aws":{"url":"https://cdn.ipaper.io/iPaper/Papers/386e4f68-e89a-4f43-8ecd-613a25b9c020/","policy":"token=HS256-bxReWT8qooEUZBdaVOtPEgT4Weg_ZY9FBYM283acoro\\u0026token_ignore_params=true\\u0026token_path=%2fiPaper%2fPapers%2f386e4f68-e89a-4f43-8ecd-613a25b9c020%2fPages%2f\\u0026expires=1793888238"}
+                """;
+        FlyerCatalogParser.ParsedCatalog catalog = parser.parseAuchanIpaper(paper, html);
+        String image = catalog.pages().getFirst().imageUrl();
+        assertTrue(image.contains("/Pages/1/Zoom.jpg"));
+        assertTrue(image.contains("token=HS256-bxReWT8qooEUZBdaVOtPEgT4Weg_ZY9FBYM283acoro"));
+        assertTrue(image.contains("token_ignore_params=true"));
+        assertTrue(image.contains("expires=1793888238"));
     }
 
     @Test
@@ -913,5 +940,75 @@ class FlyerCatalogParserTest {
                 """, 1);
         assertEquals(List.of("PHILIPS EP3343/50 Series 3300 LatteGo"),
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
+        assertEquals(1, products.getFirst().pageNumber());
+        assertNull(products.getFirst().imageUrl());
+    }
+
+    @Test
+    void mediaMarktProductsUseTheirOwnPhotosAsPages() {
+        List<FlyerCatalogParser.ParsedProduct> products = parser.mediaMarktProducts("""
+                CofrMediaAssetsFeature:Media:hu:1529778":{"productMainImage":{"link":"https:\\u002F\\u002Fassets.mmsrg.com\\u002Fisr\\u002F166325\\u002Fc1\\u002F-\\u002FASSET_MMS_1"}}
+                "manufacturerName":"PHILIPS","productName":"PHILIPS 100PQS9001 4K UHD QLED"
+                CofrMediaAssetsFeature:Media:hu:1487398":{"productMainImage":{"link":"https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_2?q=80"}}
+                "id":"Media:hu:1487398","productName":"PHILIPS 55MLED920"
+                {"productName":"Termék neve"}
+                """, 1);
+
+        assertEquals(2, products.size());
+        assertEquals(1, products.get(0).pageNumber());
+        assertEquals("https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_1", products.get(0).imageUrl());
+        assertEquals(2, products.get(1).pageNumber());
+        assertEquals("https://assets.mmsrg.com/isr/166325/c1/-/ASSET_MMS_2", products.get(1).imageUrl());
+    }
+
+    @Test
+    void discoversRealPdfsWhenTheDownloadAttributeHasNoValue() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverRealPapers("""
+                <h3>Országos újság</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/11/2026_orszagos_ujsag_november_S.pdf" download class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Alfi</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/11/JAV4-Alfi-november-04-08.-01.pdf" download class="promotion-pdf-download">Letöltöm</a>
+                <h3>Pontgyűjtő</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/11/Alfi_RealPont1_11_2026_S.pdf" download class="promotion-pdf-download">Letöltöm</a>
+                """, LocalDate.of(2026, 11, 4));
+
+        assertEquals(3, papers.size());
+        assertEquals(LocalDate.of(2026, 11, 1), papers.get(0).validFrom());
+        assertEquals(LocalDate.of(2026, 11, 30), papers.get(0).validTo());
+        assertEquals(LocalDate.of(2026, 11, 4), papers.get(1).validFrom());
+        assertEquals(LocalDate.of(2026, 11, 8), papers.get(1).validTo());
+        assertEquals(LocalDate.of(2026, 11, 1), papers.get(2).validFrom());
+        assertEquals(LocalDate.of(2026, 11, 30), papers.get(2).validTo());
+    }
+
+    @Test
+    void keepsTheNewestCbaPostersAfterTheirNamedMonthHasEnded() {
+        List<FlyerCatalogParser.DiscoveredPaper> posters = parser.discoverCbaPosters("""
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg">
+                <img src="https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg">
+                """, LocalDate.of(2026, 11, 4));
+
+        assertEquals(1, posters.size());
+        assertEquals("cba:cba-prima-op-oktober-piros", posters.getFirst().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 1), posters.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 11, 30), posters.getFirst().validTo());
+    }
+
+    @Test
+    void discoversMediaMarktPromoListTeasers() {
+        String image = "https://cms-images.mmst.eu/1h4udvs0ugq1/cover/xiaomi.jpg";
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMediaMarktPapers("""
+                <p class="mms-ui-fRqpoc">Érvényes: 2026.10.13. - 2026.11.13.</p>
+                </div>
+                <a class="mms-ui-cJiGkM" href="/hu/promo-list/xiaomi_porszivo_261013"><h3>Xiaomi porszívók</h3></a>
+                <img src="%s?q=88&amp;w=495">
+                """.formatted(image), LocalDate.of(2026, 11, 4));
+
+        assertEquals(1, papers.size());
+        assertEquals("Xiaomi porszívók", papers.getFirst().title());
+        assertEquals("mediamarkt:xiaomi_porszivo_261013:2026-10-13", papers.getFirst().sourceKey());
+        assertEquals("https://www.mediamarkt.hu/hu/promo-list/xiaomi_porszivo_261013", papers.getFirst().officialUrl());
+        assertEquals(image, papers.getFirst().pdfUrl());
+        assertEquals(LocalDate.of(2026, 11, 13), papers.getFirst().validTo());
     }
 }

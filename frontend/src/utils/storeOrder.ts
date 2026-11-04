@@ -2,7 +2,7 @@ export type OrderedStoreId = 'aldi' | 'spar' | 'penny' | 'tesco' | 'auchan' | 'c
 
 export const STORE_ORDER_KEY = 'egyetemkapu.storeOrder';
 
-export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real', 'cba', 'mediamarkt'];
+export const DEFAULT_STORE_ORDER: OrderedStoreId[] = ['spar', 'penny', 'tesco', 'aldi', 'auchan', 'coop', 'lidl', 'rossmann', 'dm', 'metro', 'real', 'mediamarkt'];
 
 export function storeLabel(store: OrderedStoreId): string {
     if (store === 'real') {
