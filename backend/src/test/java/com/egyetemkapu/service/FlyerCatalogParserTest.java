@@ -941,4 +941,55 @@ class FlyerCatalogParserTest {
         assertEquals(List.of("PHILIPS EP3343/50 Series 3300 LatteGo"),
                 products.stream().map(FlyerCatalogParser.ParsedProduct::name).toList());
     }
+
+    @Test
+    void discoversRealPdfsWhenTheDownloadAttributeHasNoValue() {
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverRealPapers("""
+                <h3>Országos újság</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/11/2026_orszagos_ujsag_november_S.pdf" download class="promotion-pdf-download">Letöltöm</a>
+                <h3>Bevásárló hétvége - Alfi</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/11/JAV4-Alfi-november-04-08.-01.pdf" download class="promotion-pdf-download">Letöltöm</a>
+                <h3>Pontgyűjtő</h3>
+                <a href="https://real.hu/wp-content/uploads/2026/11/Alfi_RealPont1_11_2026_S.pdf" download class="promotion-pdf-download">Letöltöm</a>
+                """, LocalDate.of(2026, 11, 4));
+
+        assertEquals(3, papers.size());
+        assertEquals(LocalDate.of(2026, 11, 1), papers.get(0).validFrom());
+        assertEquals(LocalDate.of(2026, 11, 30), papers.get(0).validTo());
+        assertEquals(LocalDate.of(2026, 11, 4), papers.get(1).validFrom());
+        assertEquals(LocalDate.of(2026, 11, 8), papers.get(1).validTo());
+        assertEquals(LocalDate.of(2026, 11, 1), papers.get(2).validFrom());
+        assertEquals(LocalDate.of(2026, 11, 30), papers.get(2).validTo());
+    }
+
+    @Test
+    void keepsTheNewestCbaPostersAfterTheirNamedMonthHasEnded() {
+        List<FlyerCatalogParser.DiscoveredPaper> posters = parser.discoverCbaPosters("""
+                <img src="https://www.cba.hu/wp-content/uploads/2026/10/CBA-Prima_OP_oktober_Piros.jpg">
+                <img src="https://www.cba.hu/wp-content/uploads/2026/09/CBA-Prima_OP_szeptember_Regi.jpg">
+                """, LocalDate.of(2026, 11, 4));
+
+        assertEquals(1, posters.size());
+        assertEquals("cba:cba-prima-op-oktober-piros", posters.getFirst().sourceKey());
+        assertEquals(LocalDate.of(2026, 10, 1), posters.getFirst().validFrom());
+        assertEquals(LocalDate.of(2026, 11, 30), posters.getFirst().validTo());
+    }
+
+    @Test
+    void discoversMediaMarktPromoListTeasers() {
+        String image = "https://cms-images.mmst.eu/1h4udvs0ugq1/cover/xiaomi.jpg";
+        List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverMediaMarktPapers("""
+                <p class="mms-ui-fRqpoc">Érvényes: 2026.10.13. - 2026.11.13.</p>
+                </div>
+                <a class="mms-ui-cJiGkM" href="/hu/promo-list/xiaomi_porszivo_261013"><h3>Xiaomi porszívók</h3></a>
+                <img src="%s?q=88&amp;w=495">
+                """.formatted(image), LocalDate.of(2026, 11, 4));
+
+        assertEquals(1, papers.size());
+        assertEquals("Xiaomi porszívók", papers.getFirst().title());
+        assertEquals("mediamarkt:xiaomi_porszivo_261013:2026-10-13", papers.getFirst().sourceKey());
+        assertEquals("https://www.mediamarkt.hu/hu/promo-list/xiaomi_porszivo_261013", papers.getFirst().officialUrl());
+        assertEquals(image, papers.getFirst().pdfUrl());
+        assertEquals(LocalDate.of(2026, 11, 13), papers.getFirst().validTo());
+    }
 }
