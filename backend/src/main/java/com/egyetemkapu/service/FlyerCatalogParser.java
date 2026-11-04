@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -126,6 +127,9 @@ public class FlyerCatalogParser {
             "(?i)(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december)"
                     + "[-_. ]+(\\d{1,2})[-_. ]+(\\d{1,2})");
     private static final Pattern REAL_UPLOAD_DATE = Pattern.compile("/(20\\d{2})/(\\d{2})/");
+    private static final Pattern REAL_NUMERIC_MONTH = Pattern.compile("(?i)[_-](\\d{2})[_-](20\\d{2})");
+    private static final Pattern REAL_MONTH_NAME = Pattern.compile(
+            "(?i)(januar|februar|marcius|aprilis|majus|junius|julius|augusztus|szeptember|oktober|november|december)");
     private static final Pattern CBA_IMAGE = Pattern.compile(
             "https://(?:www\\.)?cba\\.hu/wp-content/uploads/(20\\d{2})/(\\d{2})/(CBA[^\\s\"'<>]+?\\.(?:jpe?g|png|webp))",
             Pattern.CASE_INSENSITIVE);
@@ -136,8 +140,9 @@ public class FlyerCatalogParser {
     private static final Pattern CBA_VALID = Pattern.compile(
             "Érvényes:\\s*(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
     private static final Pattern MM_TEASER = Pattern.compile(
-            "(?is)<p[^>]*>\\s*Érvényes:\\s*([^<]{8,80})</p>\\s*"
-                    + "<a[^>]*href=\"(/hu/campaign/[a-z0-9-]+)\"[^>]*>\\s*<h3[^>]*>\\s*([^<]{2,140})\\s*</h3>");
+            "(?is)<p[^>]*>\\s*Érvényes:\\s*([^<]{8,80})</p>\\s*(?:</div>\\s*)*"
+                    + "<a[^>]*href=\"(/hu/(?:campaign|promo-list)/[a-z0-9_-]+)\"[^>]*>\\s*"
+                    + "<h3[^>]*>\\s*([^<]{2,140})\\s*</h3>");
     private static final Pattern MM_IMAGE = Pattern.compile(
             "https://cms-images\\.mmst\\.eu/[^\\s\"'<>]+?\\.(?:jpe?g|png|webp)");
     private static final Pattern MM_RANGE = Pattern.compile(
@@ -664,36 +669,60 @@ public class FlyerCatalogParser {
             return range;
         }
         Matcher upload = REAL_UPLOAD_DATE.matcher(pdfUrl);
-        Matcher file = REAL_FILE_RANGE.matcher(pdfUrl);
-        if (!upload.find() || !file.find()) {
+        if (!upload.find()) {
             return range;
         }
         int year = Integer.parseInt(upload.group(1));
-        int month = realMonth(file.group(1));
-        if (month == 0) {
+        int uploadMonth = Integer.parseInt(upload.group(2));
+        Matcher file = REAL_FILE_RANGE.matcher(pdfUrl);
+        if (file.find()) {
+            int month = realMonth(file.group(1));
+            if (month == 0) {
+                return range;
+            }
+            try {
+                int startDay = Integer.parseInt(file.group(2));
+                int endDay = Integer.parseInt(file.group(3));
+                LocalDate from = LocalDate.of(year, month, startDay);
+                int endMonth = month;
+                int endYear = year;
+                if (endDay < startDay) {
+                    endMonth++;
+                    if (endMonth == 13) {
+                        endMonth = 1;
+                        endYear++;
+                    }
+                }
+                LocalDate to = LocalDate.of(endYear, endMonth, endDay);
+                if (!to.isBefore(from)) {
+                    range[0] = from;
+                    range[1] = to;
+                }
+            } catch (RuntimeException ignored) {
+                return new LocalDate[2];
+            }
             return range;
         }
-        try {
-            int startDay = Integer.parseInt(file.group(2));
-            int endDay = Integer.parseInt(file.group(3));
-            LocalDate from = LocalDate.of(year, month, startDay);
-            int endMonth = month;
-            int endYear = year;
-            if (endDay < startDay) {
-                endMonth++;
-                if (endMonth == 13) {
-                    endMonth = 1;
-                    endYear++;
-                }
-            }
-            LocalDate to = LocalDate.of(endYear, endMonth, endDay);
-            if (!to.isBefore(from)) {
-                range[0] = from;
-                range[1] = to;
-            }
-        } catch (RuntimeException ignored) {
-            return new LocalDate[2];
+        int month = 0;
+        Matcher named = REAL_MONTH_NAME.matcher(pdfUrl);
+        if (named.find()) {
+            month = realMonth(named.group(1));
         }
+        if (month == 0) {
+            Matcher numeric = REAL_NUMERIC_MONTH.matcher(pdfUrl);
+            if (numeric.find() && numeric.group(2).equals(Integer.toString(year))) {
+                month = Integer.parseInt(numeric.group(1));
+            }
+        }
+        if (month == 0) {
+            month = uploadMonth;
+        }
+        if (month < 1 || month > 12) {
+            return range;
+        }
+        LocalDate from = LocalDate.of(year, month, 1);
+        range[0] = from;
+        range[1] = from.withDayOfMonth(from.lengthOfMonth());
         return range;
     }
 
@@ -814,6 +843,7 @@ public class FlyerCatalogParser {
 
     public List<DiscoveredPaper> discoverCbaPosters(String html, LocalDate today) {
         Map<String, DiscoveredPaper> papers = new LinkedHashMap<>();
+        Map<String, YearMonth> months = new LinkedHashMap<>();
         if (html == null || html.isBlank()) {
             return List.of();
         }
@@ -838,6 +868,7 @@ public class FlyerCatalogParser {
             if (month >= 1 && month <= 12) {
                 from = LocalDate.of(year, month, 1);
                 to = from.plusMonths(1).minusDays(1);
+                months.put(image, YearMonth.of(year, month));
             }
             papers.put(image, new DiscoveredPaper(
                     "cba",
@@ -848,7 +879,29 @@ public class FlyerCatalogParser {
                     from,
                     to));
         }
-        return keepCurrentOrUpcoming(papers.values(), today);
+        YearMonth newest = months.values().stream().max(Comparator.naturalOrder()).orElse(null);
+        if (newest == null || today != null && newest.isBefore(YearMonth.from(today).minusMonths(1))) {
+            return List.of();
+        }
+        List<DiscoveredPaper> kept = new ArrayList<>();
+        for (Map.Entry<String, DiscoveredPaper> entry : papers.entrySet()) {
+            if (!newest.equals(months.get(entry.getKey()))) {
+                continue;
+            }
+            DiscoveredPaper paper = entry.getValue();
+            if (today != null && paper.validTo() != null && paper.validTo().isBefore(today)) {
+                paper = new DiscoveredPaper(
+                        paper.store(),
+                        paper.title(),
+                        paper.officialUrl(),
+                        paper.pdfUrl(),
+                        paper.sourceKey(),
+                        paper.validFrom(),
+                        today.withDayOfMonth(today.lengthOfMonth()));
+            }
+            kept.add(paper);
+        }
+        return kept;
     }
 
     static LocalDate[] cbaValidity(String text) {
@@ -911,7 +964,8 @@ public class FlyerCatalogParser {
         }
         Matcher matcher = MM_TEASER.matcher(html);
         while (matcher.find()) {
-            String slug = matcher.group(2).substring("/hu/campaign/".length());
+            String path = matcher.group(2);
+            String slug = path.substring(path.lastIndexOf('/') + 1);
             if (papers.containsKey(slug)) {
                 continue;
             }
@@ -923,7 +977,7 @@ public class FlyerCatalogParser {
             papers.put(slug, new DiscoveredPaper(
                     "mediamarkt",
                     matcher.group(3).replaceAll("\\s+", " ").trim(),
-                    "https://www.mediamarkt.hu/hu/campaign/" + slug,
+                    "https://www.mediamarkt.hu" + path,
                     image,
                     "mediamarkt:" + slug + ":" + range[0],
                     range[0],
