@@ -23,6 +23,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,8 @@ public class FlyerSyncService {
             "aldi", "spar", "penny", "tesco", "auchan", "coop", "lidl", "rossmann", "dm", "metro", "real", "cba",
             "mediamarkt");
     private static final int LIDL_MAX_PDF_PAGES = 80;
+    private static final int LIDL_SCAN_LIMIT = 16;
+    private static final int LIDL_MAX_CATALOGS = 8;
     private static final String LIDL_OVERVIEW = "https://www.lidl.hu/c/szorolap/s10013623";
     private static final String ROSSMANN_LIST = "https://magazin.microservices.rossmann.hu/api/magazines";
     private static final String DM_PAGE =
@@ -372,7 +375,7 @@ public class FlyerSyncService {
             List<ParsedCatalog> catalogs = new ArrayList<>();
             FlyerProductExtractor extractor = extractors.forStore("lidl");
             for (DiscoveredPaper paper : papers) {
-                if (catalogs.size() >= 4) {
+                if (catalogs.size() >= LIDL_SCAN_LIMIT) {
                     break;
                 }
                 String api = FlyerCatalogParser.lidlFlyerUrl(paper.sourceKey());
@@ -383,13 +386,22 @@ public class FlyerSyncService {
                 if (!keepCatalog(catalog, today)) {
                     continue;
                 }
-                catalog = withLidlPdfProducts(catalog, extractor);
                 catalogs.add(catalog);
             }
-            if (!catalogs.isEmpty()) {
-                flyerPersistenceService.replaceStore("lidl", catalogs, LocalDateTime.now(clock));
+            catalogs.sort(Comparator
+                    .comparing((ParsedCatalog catalog) -> lidlStartsLater(catalog, today))
+                    .thenComparing(catalog -> catalog.paper().validFrom(), Comparator.nullsLast(Comparator.naturalOrder())));
+            if (catalogs.size() > LIDL_MAX_CATALOGS) {
+                catalogs = new ArrayList<>(catalogs.subList(0, LIDL_MAX_CATALOGS));
             }
-            return productCount(catalogs);
+            List<ParsedCatalog> stored = new ArrayList<>();
+            for (ParsedCatalog catalog : catalogs) {
+                stored.add(withLidlPdfProducts(catalog, extractor));
+            }
+            if (!stored.isEmpty()) {
+                flyerPersistenceService.replaceStore("lidl", stored, LocalDateTime.now(clock));
+            }
+            return productCount(stored);
         });
     }
 
@@ -1251,6 +1263,11 @@ public class FlyerSyncService {
     }
 
     private record SparPdf(String url, byte[] bytes) {
+    }
+
+    private static boolean lidlStartsLater(ParsedCatalog catalog, LocalDate today) {
+        LocalDate from = catalog.paper().validFrom();
+        return today != null && from != null && from.isAfter(today);
     }
 
     private static boolean keepCatalog(ParsedCatalog catalog, LocalDate today) {
