@@ -683,6 +683,52 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void syncLidlKeepsTheCurrentLeafletWhenNextWeekIsListedFirst() {
+        StringBuilder html = new StringBuilder();
+        for (int i = 1; i <= 8; i++) {
+            String id = "00000000-0000-4000-8000-00000000000" + i;
+            html.append(lidlFlyerLink(id, "akcios-ujsag-45-het-" + i, "Akciós újság – 45. hét"));
+            when(httpClient.getText("https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=" + id))
+                    .thenReturn(lidlFlyerJson("Akciós újság – 45. hét", "2026-11-05", "2026-11-11"));
+        }
+        String currentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+        html.append(lidlFlyerLink(currentId, "akcios-ujsag-44-het-2026", "Akciós újság – 44. hét"));
+        when(httpClient.getText("https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=" + currentId))
+                .thenReturn(lidlFlyerJson("Akciós újság – 44. hét", "2026-10-29", "2026-11-04"));
+        when(httpClient.getText("https://www.lidl.hu/c/szorolap/s10013623")).thenReturn(html.toString());
+
+        service.syncLidl(LocalDate.of(2026, 11, 4));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("lidl"), captor.capture(), any());
+        assertTrue(captor.getValue().stream().anyMatch(catalog ->
+                "Akciós újság – 44. hét".equals(catalog.paper().title())
+                        && LocalDate.of(2026, 10, 29).equals(catalog.paper().validFrom())));
+    }
+
+    private static String lidlFlyerLink(String id, String slug, String title) {
+        return """
+                <a href="https://www.lidl.hu/l/hu/ujsag/%s/ar/0" id="flyer-%s">
+                    <span class="flyer__title">%s</span>
+                </a>
+                """.formatted(slug, id, title);
+    }
+
+    private static String lidlFlyerJson(String title, String from, String to) {
+        return """
+                {"flyer":{
+                  "title":"%s",
+                  "pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/x.pdf",
+                  "flyerUrlAbsolute":"https://www.lidl.hu/l/hu/ujsag/akcios-ujsag/ar/0",
+                  "offerStartDate":"%s",
+                  "offerEndDate":"%s",
+                  "pages":[{"number":1,"image":"https://imgproxy.leaflets.schwarz/cover.jpg","keyWords":"Tej"}]
+                }}
+                """.formatted(title, from, to);
+    }
+
+    @Test
     void syncRossmannPersistsCurrentMagazinesAndSkipsExpiredOnes() {
         when(httpClient.getText("https://magazin.microservices.rossmann.hu/api/magazines")).thenReturn("""
                 [
