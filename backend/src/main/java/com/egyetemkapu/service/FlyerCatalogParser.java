@@ -148,6 +148,9 @@ public class FlyerCatalogParser {
     private static final Pattern MM_RANGE = Pattern.compile(
             "(20\\d{2})\\.\\s*(\\d{1,2})\\.\\s*(\\d{1,2})\\.?\\s*-\\s*(?:(20\\d{2})\\.\\s*)?(\\d{1,2})\\.\\s*(\\d{1,2})");
     private static final Pattern MM_PRODUCT = Pattern.compile("\"productName\":\"((?:\\\\.|[^\"\\\\])*)\"");
+    private static final Pattern MM_MEDIA_ID = Pattern.compile("Media:hu:(\\d+)");
+    private static final Pattern MM_PRODUCT_IMAGE = Pattern.compile(
+            "(?s)CofrMediaAssetsFeature:Media:hu:(\\d+)\".{0,600}?\"productMainImage\":\\{.{0,600}?\"link\":\"([^\"]+)\"");
     private static final Pattern MM_UNICODE = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
     private static final Pattern DM_PRINTED_RANGE = Pattern.compile(
             "(?iu)(?:(20\\d{2})\\.\\s*)?"
@@ -991,17 +994,54 @@ public class FlyerCatalogParser {
         if (html == null || html.isBlank()) {
             return List.of();
         }
+        Map<String, String> images = mediaMarktImages(html);
         Matcher matcher = MM_PRODUCT.matcher(html);
-        while (matcher.find() && products.size() < 40) {
+        List<ParsedProduct> found = new ArrayList<>();
+        while (matcher.find() && found.size() < 40) {
             String name = mediaMarktUnescape(matcher.group(1)).replaceAll("\\s+", " ").trim();
-            if (name.length() < 4 || isWeakProductName(name)) {
+            if (name.length() < 4 || isWeakProductName(name) || "termék neve".equalsIgnoreCase(name)) {
                 continue;
             }
+            found.add(new ParsedProduct(name, pageNumber, images.get(nearestMediaId(html, matcher.start()))));
+        }
+        boolean photos = found.stream().anyMatch(product -> product.imageUrl() != null);
+        int photoPage = 1;
+        for (ParsedProduct product : found) {
+            if (photos && product.imageUrl() == null) {
+                continue;
+            }
+            int page = product.imageUrl() == null ? pageNumber : photoPage++;
             products.putIfAbsent(
-                    pageNumber + ":" + HungarianText.normalize(name),
-                    new ParsedProduct(name, pageNumber, null));
+                    page + ":" + HungarianText.normalize(product.name()),
+                    new ParsedProduct(product.name(), page, product.imageUrl()));
         }
         return new ArrayList<>(products.values());
+    }
+
+    private static Map<String, String> mediaMarktImages(String html) {
+        Map<String, String> images = new LinkedHashMap<>();
+        Matcher matcher = MM_PRODUCT_IMAGE.matcher(html);
+        while (matcher.find()) {
+            String image = mediaMarktUnescape(matcher.group(2));
+            int query = image.indexOf('?');
+            if (query >= 0) {
+                image = image.substring(0, query);
+            }
+            if (FlyerUrlPolicy.isAllowed(image)) {
+                images.putIfAbsent(matcher.group(1), image);
+            }
+        }
+        return images;
+    }
+
+    private static String nearestMediaId(String html, int end) {
+        int start = Math.max(0, end - 2500);
+        Matcher matcher = MM_MEDIA_ID.matcher(html.substring(start, end));
+        String id = null;
+        while (matcher.find()) {
+            id = matcher.group(1);
+        }
+        return id;
     }
 
     static LocalDate[] mediaMarktRange(String text) {

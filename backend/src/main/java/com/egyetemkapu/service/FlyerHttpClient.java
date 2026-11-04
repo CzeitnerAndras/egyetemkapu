@@ -10,11 +10,13 @@ import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.GZIPInputStream;
 
 @Component
 public class FlyerHttpClient {
@@ -88,9 +90,9 @@ public class FlyerHttpClient {
             headers.set(HttpHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HU);
             headers.set(HttpHeaders.REFERER, "https://www.mediamarkt.hu/");
         }
-        ResponseEntity<String> response = getFollowingRedirects(
-                url, new HttpEntity<>(headers), String.class);
-        String body = response.getBody() == null ? "" : response.getBody();
+        ResponseEntity<byte[]> response = getFollowingRedirects(
+                url, new HttpEntity<>(headers), byte[].class);
+        String body = new String(ungzip(response.getBody()), StandardCharsets.UTF_8);
         return body.length() <= FlyerUrlPolicy.MAX_TEXT_CHARS
                 ? body
                 : body.substring(0, FlyerUrlPolicy.MAX_TEXT_CHARS);
@@ -179,7 +181,7 @@ public class FlyerHttpClient {
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
         }
-        byte[] body = response.getBody() == null ? new byte[0] : response.getBody();
+        byte[] body = ungzip(response.getBody());
         if (body.length > FlyerUrlPolicy.MAX_BINARY_BYTES) {
             throw new IllegalArgumentException("A fájl túl nagy.");
         }
@@ -257,7 +259,9 @@ public class FlyerHttpClient {
             return false;
         }
         String lower = value.toLowerCase();
-        return lower.contains("mediamarkt.hu") || lower.contains("cms-images.mmst.eu");
+        return lower.contains("mediamarkt.hu")
+                || lower.contains("cms-images.mmst.eu")
+                || lower.contains("assets.mmsrg.com");
     }
 
     private static boolean cbaHost(String value) {
@@ -296,6 +300,17 @@ public class FlyerHttpClient {
         }
         String path = url.split("\\?", 2)[0].toLowerCase();
         return path.endsWith(".pdf");
+    }
+
+    static byte[] ungzip(byte[] body) {
+        if (body == null || body.length < 2 || (body[0] & 0xFF) != 0x1F || (body[1] & 0xFF) != 0x8B) {
+            return body == null ? new byte[0] : body;
+        }
+        try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(body))) {
+            return in.readAllBytes();
+        } catch (IOException e) {
+            return body;
+        }
     }
 
     static boolean isPdf(byte[] body) {

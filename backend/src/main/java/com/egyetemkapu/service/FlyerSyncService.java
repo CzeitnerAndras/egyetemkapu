@@ -729,6 +729,16 @@ public class FlyerSyncService {
                     continue;
                 }
                 List<ParsedProduct> products = parser.mediaMarktProducts(safeText(paper.officialUrl()), 1);
+                List<ParsedPage> pages = new ArrayList<>();
+                for (ParsedProduct product : products) {
+                    if (product.imageUrl() == null || product.imageUrl().isBlank()) {
+                        continue;
+                    }
+                    pages.add(new ParsedPage(product.pageNumber(), product.imageUrl(), ""));
+                }
+                if (pages.isEmpty()) {
+                    pages = List.of(new ParsedPage(1, image, ""));
+                }
                 DiscoveredPaper saved = new DiscoveredPaper(
                         "mediamarkt",
                         paper.title(),
@@ -737,10 +747,7 @@ public class FlyerSyncService {
                         paper.sourceKey(),
                         paper.validFrom(),
                         paper.validTo());
-                ParsedCatalog catalog = new ParsedCatalog(
-                        saved,
-                        List.of(new ParsedPage(1, image, "")),
-                        products);
+                ParsedCatalog catalog = new ParsedCatalog(saved, pages, products);
                 if (keepCatalog(catalog, today)) {
                     catalogs.add(catalog);
                 }

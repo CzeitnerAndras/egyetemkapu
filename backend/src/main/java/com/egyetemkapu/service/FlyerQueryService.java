@@ -112,7 +112,8 @@ public class FlyerQueryService {
     private void reparseProductsFromPageText(Flyer flyer) {
         if (flyer.getPages() == null || flyer.getPages().isEmpty()
                 || "rossmann".equals(flyer.getStore())
-                || "dm".equals(flyer.getStore())) {
+                || "dm".equals(flyer.getStore())
+                || "mediamarkt".equals(flyer.getStore())) {
             return;
         }
         List<FlyerCatalogParser.ParsedProduct> incoming = new ArrayList<>();
