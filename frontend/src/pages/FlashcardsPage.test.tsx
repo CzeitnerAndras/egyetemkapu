@@ -36,6 +36,17 @@ describe('FlashcardsPage', () => {
         render(<FlashcardsPage />);
 
         expect(await screen.findByText('cards.needLogin')).toBeInTheDocument();
+        expect(screen.queryByText('cards.loadError')).not.toBeInTheDocument();
+    });
+
+    it('a vendég 403-as válaszra is belépést kér', async () => {
+        (globalThis.fetch as jest.Mock).mockResolvedValue(json({}, false, 403));
+
+        render(<FlashcardsPage />);
+
+        expect(await screen.findByText('cards.needLogin')).toBeInTheDocument();
+        expect(screen.queryByText('cards.loadError')).not.toBeInTheDocument();
+        expect(screen.queryByText('cards.pickDeck')).not.toBeInTheDocument();
     });
 
     it('új paklit lehet felvenni, és utána a kártyalista jelenik meg', async () => {

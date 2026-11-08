@@ -168,7 +168,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'about.f13': 'Terjedelem-ellenőr absztrakthoz és fejezethez',
     'about.f14': 'Irodalomjegyzék-rendező magyar ábécé szerint',
     'about.stack': 'Technológiai háttér',
-    'about.version': 'Verzió 1.0',
+    'about.version': 'Verzió 1.1',
     'about.frontend': 'Frontend',
     'about.backendDb': 'Háttér és üzemeltetés',
 
@@ -849,7 +849,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     'about.f13': 'Length checker for an abstract or a chapter',
     'about.f14': 'Bibliography sorter in Hungarian alphabetical order',
     'about.stack': 'Technology',
-    'about.version': 'Version 1.0',
+    'about.version': 'Version 1.1',
     'about.frontend': 'Frontend',
     'about.backendDb': 'Backend & hosting',
 

@@ -22,6 +22,8 @@ interface Card {
 
 const auth = { redirectOnAuthFailure: false, retryOn401: false };
 
+const loggedOut = (status: number) => status === 401 || status === 403;
+
 export default function FlashcardsPage() {
     const { t } = useLanguage();
     const [decks, setDecks] = useState<Deck[]>([]);
@@ -45,7 +47,7 @@ export default function FlashcardsPage() {
     const cardTotal = decks.reduce((sum, deck) => sum + deck.cardCount, 0);
 
     const readJson = async (res: Response, failureKey = 'cards.saveError') => {
-        if (res.status === 401) {
+        if (loggedOut(res.status)) {
             setNeedsLogin(true);
             return null;
         }
@@ -90,7 +92,7 @@ export default function FlashcardsPage() {
         const fetchDecks = async () => {
             try {
                 const res = await fetchWithAuth('/api/flashcards/decks', {}, auth);
-                if (res.status === 401) {
+                if (loggedOut(res.status)) {
                     setNeedsLogin(true);
                     return;
                 }
@@ -150,7 +152,7 @@ export default function FlashcardsPage() {
     const deleteDeck = async (deckId: number) => {
         if (!window.confirm(t('cards.confirmDeleteDeck'))) return;
         const res = await fetchWithAuth(`/api/flashcards/decks/${deckId}`, { method: 'DELETE' }, auth);
-        if (res.status === 401) {
+        if (loggedOut(res.status)) {
             setNeedsLogin(true);
             return;
         }
@@ -207,7 +209,11 @@ export default function FlashcardsPage() {
         if (!window.confirm(t('cards.confirmDeleteCard'))) return;
         const res = await fetchWithAuth(`/api/flashcards/cards/${cardId}`, { method: 'DELETE' }, auth);
         if (!res.ok) {
-            setError(res.status === 401 ? t('cards.needLogin') : t('cards.saveError'));
+            if (loggedOut(res.status)) {
+                setNeedsLogin(true);
+                return;
+            }
+            setError(t('cards.saveError'));
             return;
         }
         if (selectedId) {
