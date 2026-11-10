@@ -618,7 +618,9 @@ public class FlyerSyncService {
                     products.addAll(extracted.products());
                 }
                 if (products.isEmpty()) {
-                    products.addAll(realProductsFromImages(pdf, pages, extractor));
+                    ReadLeaflet read = realProductsFromImages(pdf, pages, extractor);
+                    pages = read.pages();
+                    products.addAll(read.products());
                 }
                 ParsedCatalog catalog = extractor.fillProducts(new ParsedCatalog(paper, pages, products));
                 if (!keepCatalog(catalog, today)) {
@@ -633,23 +635,33 @@ public class FlyerSyncService {
         });
     }
 
-    private List<ParsedProduct> realProductsFromImages(
+    private record ReadLeaflet(List<ParsedPage> pages, List<ParsedProduct> products) {
+    }
+
+    private ReadLeaflet realProductsFromImages(
             byte[] pdf, List<ParsedPage> pages, FlyerProductExtractor extractor) {
-        List<ParsedProduct> products = new ArrayList<>();
         if (pdf == null || pdf.length == 0 || pages == null) {
-            return products;
+            return new ReadLeaflet(pages == null ? List.of() : pages, List.of());
         }
+        List<ParsedPage> readPages = new ArrayList<>();
+        List<ParsedProduct> products = new ArrayList<>();
         for (ParsedPage page : pages) {
-            if (products.size() >= 200) {
-                break;
+            if (products.size() >= 640) {
+                readPages.add(page);
+                continue;
             }
             byte[] png = pdfExtractor.renderPagePng(pdf, page.pageNumber());
             if (png == null || png.length == 0) {
+                readPages.add(page);
                 continue;
             }
-            products.addAll(extractor.extractFromLayout(coopPageOcr.read(png), page.pageNumber()));
+            List<ParsedProduct> pageProducts =
+                    extractor.extractFromLayout(coopPageOcr.read(png), page.pageNumber());
+            products.addAll(pageProducts);
+            String text = pageProducts.isEmpty() ? page.text() : joinProductNames(pageProducts);
+            readPages.add(new ParsedPage(page.pageNumber(), page.imageUrl(), text));
         }
-        return products;
+        return new ReadLeaflet(readPages, products);
     }
 
     @Async

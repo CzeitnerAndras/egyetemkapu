@@ -6,7 +6,9 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-RUN apk add --no-cache tzdata
+RUN apk add --no-cache tzdata tesseract-ocr \
+    && src="$(ls /usr/lib/libtesseract.so.* | head -n 1)" \
+    && ln -sf "$src" /usr/lib/libtesseract.so
 ENV TZ=Europe/Budapest
 ENV JAVA_TOOL_OPTIONS=-Duser.timezone=Europe/Budapest
 COPY --from=build /app/target/*.jar app.jar
