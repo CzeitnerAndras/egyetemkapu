@@ -790,6 +790,57 @@ class FlyerExtractorsTest {
                 "DANONE Actimel"), names, names.toString());
     }
 
+    @Test
+    void genericExtractorReadsRealLeafletWordsAroundEachPrice() {
+        List<TextRun> runs = List.of(
+                new TextRun(607, 642, 44, 12, "Falusi"),
+                new TextRun(658, 642, 52, 12, "Csabai"),
+                new TextRun(717, 642, 55, 14, "lángolt"),
+                new TextRun(778, 642, 60, 12, "kolbász"),
+                new TextRun(642, 659, 77, 14, "Csemege,"),
+                new TextRun(725, 658, 53, 15, "Csípős"),
+                new TextRun(784, 658, 18, 15, "kg"),
+                new TextRun(690, 675, 29, 9, "3290"),
+                new TextRun(723, 674, 31, 12, "Ft/kg"),
+                new TextRun(297, 674, 79, 15, "Jogobella"),
+                new TextRun(383, 674, 82, 15, "ivójoghurt"),
+                new TextRun(470, 674, 68, 13, "többféle"),
+                new TextRun(395, 692, 45, 14, "250"),
+                new TextRun(389, 708, 22, 9, "996"),
+                new TextRun(415, 707, 31, 11, "Ft/kg"),
+                new TextRun(35, 852, 45, 15, "Falusi"),
+                new TextRun(86, 852, 69, 12, "Palackos"),
+                new TextRun(161, 852, 30, 12, "ESL"),
+                new TextRun(196, 853, 19, 14, "tej"),
+                new TextRun(557, 907, 30, 12, "Tibi"),
+                new TextRun(592, 907, 49, 12, "táblás"),
+                new TextRun(646, 907, 81, 12, "csokoládé"),
+                new TextRun(732, 907, 68, 12, "többféle"),
+                new TextRun(61, 1149, 63, 12, "Nescafé"),
+                new TextRun(130, 1149, 94, 15, "Cappuccino"),
+                new TextRun(230, 1149, 54, 12, "instant"),
+                new TextRun(306, 1194, 57, 14, "Apenta"),
+                new TextRun(369, 1197, 78, 9, "szénsavas"),
+                new TextRun(453, 1194, 66, 12, "üdítőital,"),
+                new TextRun(613, 1286, 50, 12, "Perfex"),
+                new TextRun(759, 1285, 96, 15, "toalettpapír"),
+                new TextRun(118, 1361, 110, 26, "Ajánlataink"),
+                new TextRun(254, 1361, 41, 20, "Reál"),
+                new TextRun(304, 1361, 106, 20, "üzletekben"),
+                new TextRun(657, 1361, 113, 25, "érvényesek"),
+                new TextRun(65, 412, 22, 36, "5"),
+                new TextRun(98, 412, 110, 36, "NAPIG"));
+        List<String> names = generic.extractFromLayout(runs, 1).stream().map(ParsedProduct::name).toList();
+        assertTrue(names.contains("Falusi Csabai lángolt kolbász"), names.toString());
+        assertTrue(names.contains("Jogobella ivójoghurt többféle"), names.toString());
+        assertTrue(names.contains("Falusi Palackos ESL tej"), names.toString());
+        assertTrue(names.contains("Tibi táblás csokoládé többféle"), names.toString());
+        assertTrue(names.contains("Nescafé Cappuccino instant"), names.toString());
+        assertTrue(names.stream().noneMatch(name -> name.toLowerCase().contains("ajánlat")
+                || name.toLowerCase().contains("érvény")
+                || name.equalsIgnoreCase("5 napig")), names.toString());
+    }
+
     private static byte[] pdf(Line... lines) throws Exception {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             PDPage page = new PDPage();
