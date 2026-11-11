@@ -1158,16 +1158,13 @@ public class FlyerCatalogParser {
         }
         List<String> lines = new ArrayList<>();
         for (String raw : pageText.split("\\R")) {
-            String line = raw.replace('\u00a0', ' ').replaceAll("\\s+", " ").trim();
-            if (!line.isEmpty()) {
-                lines.add(line);
-            }
+            lines.add(raw.replace('\u00a0', ' ').replaceAll("\\s+", " ").trim());
         }
         LinkedHashMap<String, ParsedProduct> products = new LinkedHashMap<>();
         List<String> group = new ArrayList<>();
         for (int i = 0; i < lines.size() && products.size() < 80; i++) {
             String line = lines.get(i);
-            if (metroSkipLine(line) || metroSlogan(line)) {
+            if (line.isEmpty() || metroSkipLine(line) || metroSlogan(line)) {
                 addMetroGroup(products, group, pageNumber);
                 continue;
             }
@@ -1195,9 +1192,18 @@ public class FlyerCatalogParser {
         }
         boolean described = group.stream().anyMatch(part -> !metroTitleLine(part));
         if (!described) {
-            return metroBrandLine(line) && !next.isBlank();
+            return metroBrandLine(line) && !next.isBlank() && metroNamedStack(group);
         }
         return !next.isBlank() || metroBrandLine(line);
+    }
+
+    private static boolean metroNamedStack(List<String> group) {
+        for (String part : group) {
+            if (part.indexOf(' ') >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean metroTitleLine(String line) {
@@ -1269,7 +1275,13 @@ public class FlyerCatalogParser {
                 || folded.contains("finom etel")
                 || folded.contains("dobd fel")
                 || folded.contains("kulonleges")
-                || folded.equals("valami");
+                || folded.equals("valami")
+                || folded.contains("hozd ki")
+                || folded.contains("legtobbet")
+                || folded.contains("vasarlasaid")
+                || folded.contains("ajanlatainkat")
+                || folded.equals("tovabbi")
+                || folded.startsWith("keresd");
     }
 
     private static boolean metroPackLine(String line) {

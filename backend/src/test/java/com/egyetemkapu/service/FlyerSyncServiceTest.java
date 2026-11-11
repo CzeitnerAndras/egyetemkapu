@@ -936,6 +936,49 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void syncRealReadsNamesFromThePagePictureWhenThePdfHasNoText() {
+        String page = "https://real.hu/aktualis-ajanlataink/";
+        String pdf = "https://real.hu/wp-content/uploads/2026/11/2026_orszagos_ujsag_november_S.pdf";
+        when(httpClient.getText(page)).thenReturn("""
+                <h3>Reál ajánlat</h3>
+                <a href="%s" download class="promotion-pdf-download">Letöltöm</a>
+                """.formatted(pdf));
+        when(httpClient.getBytes(eq(pdf), eq(page))).thenReturn(new byte[] {1, 2, 3});
+        when(pdfExtractor.extractDocument(any(), any(), eq(16))).thenReturn(
+                new FlyerPdfExtractor.ExtractedDocument(
+                        List.of(new FlyerCatalogParser.ParsedPage(1, null, "")),
+                        List.of()));
+        when(pdfExtractor.renderPagePng(any(), eq(1))).thenReturn(new byte[] {9, 9});
+        FlyerSyncService reading = new FlyerSyncService(
+                flyerRepository,
+                flyerPersistenceService,
+                httpClient,
+                parser,
+                pdfExtractor,
+                new FlyerExtractorRegistry(parser),
+                image -> List.of(
+                        new TextRun(297, 674, 79, 15, "Jogobella"),
+                        new TextRun(383, 674, 82, 15, "ivójoghurt"),
+                        new TextRun(470, 674, 68, 13, "többféle"),
+                        new TextRun(118, 1361, 110, 26, "Ajánlataink"),
+                        new TextRun(657, 1361, 113, 25, "érvényesek")),
+                Clock.fixed(Instant.parse("2026-11-10T08:00:00Z"), ZoneId.of("Europe/Budapest")),
+                syncLog);
+
+        reading.syncReal(LocalDate.of(2026, 11, 10));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<FlyerCatalogParser.ParsedCatalog>> captor = ArgumentCaptor.forClass(List.class);
+        verify(flyerPersistenceService).replaceStore(eq("real"), captor.capture(), any());
+        FlyerCatalogParser.ParsedCatalog catalog = captor.getValue().getFirst();
+        assertEquals("Jogobella ivójoghurt többféle", catalog.products().getFirst().name());
+        assertEquals(1, catalog.products().getFirst().pageNumber());
+        assertEquals("Jogobella ivójoghurt többféle", catalog.pages().getFirst().text());
+        assertTrue(catalog.products().stream().noneMatch(product ->
+                product.name().toLowerCase().contains("ajánlat")));
+    }
+
+    @Test
     void syncRealLeavesStoredFlyersAloneWhenThePageIsMissing() {
         when(httpClient.getText("https://real.hu/aktualis-ajanlataink/")).thenReturn("");
 

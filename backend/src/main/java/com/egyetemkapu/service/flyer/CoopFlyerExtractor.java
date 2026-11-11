@@ -14,11 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-/*
-Coop leaflets on katalogus.coop.hu are pictures. Publitas and the PDF have no text layer,
-so names come from OCR words with positions. A product is the short stack of words sitting
-on one offer; prices, units and the full-width slogans are not part of that stack.
- */
 public class CoopFlyerExtractor extends GenericFlyerExtractor {
 
     private static final Pattern UNIT = Pattern.compile(
@@ -37,8 +32,10 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
             "talcas", "vedogazas", "vedogazi", "t-dog");
     private static final Pattern FOOTNOTE = Pattern.compile(
             "tokehus|matric|megjel|fekunt|fekint|baromfi|vagott|www|coop\\.hu|ertekesit|pultban");
-    private static final Pattern FLAVOR_ONLY = Pattern.compile(
-            "^(?:citrom|csokolades|csokis|kokusz-afonya|kokusz afonya|tejkreames|fekete ribizli)(?: iz)?$");
+    private static final Pattern DETAIL_ONLY = Pattern.compile(
+            "^(?:citrom|eper|malna|oszibarack|barack|meggy|ananasz|banan|narancs|vanilia"
+                    + "|csokolades|csokis|kokusz-afonya|kokusz afonya|tejkreames|fekete ribizli|erdei gyumolcs"
+                    + "|(?:tej|et|feher)?csokolade)(?: iz)?$");
     private static final int MAX_WORDS = 8;
 
     public CoopFlyerExtractor(FlyerCatalogParser parser) {
@@ -61,7 +58,7 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
             if (line.isBlank() || isTextLayerNoise(line)) {
                 continue;
             }
-            String name = FlyerCatalogParser.tidyProductName(line);
+            String name = stripIngredientNote(FlyerCatalogParser.tidyProductName(line));
             if (name.isBlank() || isTextLayerNoise(name) || FlyerCatalogParser.isJunkProductName(name)) {
                 continue;
             }
@@ -107,7 +104,7 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
         attachLoosePhrases(groups);
         List<String> blocks = new ArrayList<>();
         for (List<TextRun> group : groups.values()) {
-            String text = polish(readingOrder(group));
+            String text = stripIngredientNote(polish(readingOrder(group)));
             if (!text.isBlank() && !isAsideNoise(text)) {
                 blocks.add(text);
             }
@@ -293,7 +290,7 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
     private static boolean isAsideNoise(String text) {
         String key = HungarianText.normalize(text);
         if (key.isBlank() || LEGAL.matcher(key).find() || FOOTNOTE.matcher(key).find()
-                || FLAVOR_ONLY.matcher(key).matches() || PROMO.matcher(text).find() || key.contains("ft/")) {
+                || isOfferDetail(text) || PROMO.matcher(text).find() || key.contains("ft/")) {
             return true;
         }
         if ((key.contains("plusz") || key.contains("mozzarella") || key.contains("paradicsom"))
@@ -371,7 +368,60 @@ public class CoopFlyerExtractor extends GenericFlyerExtractor {
             return true;
         }
         String key = HungarianText.normalize(text);
-        return key.contains("jo szomszed") || key.contains("uzletlanc");
+        return key.contains("jo szomszed") || key.contains("uzletlanc") || isOfferDetail(text);
+    }
+
+    public static boolean savedNameNeedsReread(String name) {
+        if (name == null || name.isBlank()) {
+            return false;
+        }
+        return HungarianText.normalize(name).contains("tartalmaz") || isOfferDetail(name);
+    }
+
+    private static boolean isOfferDetail(String text) {
+        String key = detailKey(stripIngredientNote(text));
+        return !key.isBlank() && DETAIL_ONLY.matcher(key).matches();
+    }
+
+    private static String stripIngredientNote(String text) {
+        if (text == null || text.isBlank() || !HungarianText.normalize(text).contains("tartalmaz")) {
+            return text == null ? "" : text.trim();
+        }
+        String[] words = text.trim().split("\\s+");
+        int contains = -1;
+        for (int i = 0; i < words.length; i++) {
+            if ("tartalmaz".equals(HungarianText.normalize(words[i]))) {
+                contains = i;
+                break;
+            }
+        }
+        if (contains < 0) {
+            return text.trim();
+        }
+        int start = contains;
+        while (start > 0 && ingredientWord(words[start - 1])) {
+            start--;
+        }
+        List<String> kept = new ArrayList<>();
+        for (int i = 0; i < start; i++) {
+            kept.add(words[i]);
+        }
+        for (int i = contains + 1; i < words.length; i++) {
+            kept.add(words[i]);
+        }
+        return String.join(" ", kept).trim();
+    }
+
+    private static boolean ingredientWord(String word) {
+        String key = HungarianText.normalize(word).replaceAll("[^a-z]", "");
+        return key.equals("novenyi") || key.equals("es") || key.equals("tartalmaz")
+                || key.equals("cukrot") || key.equals("cukor")
+                || key.equals("edesitoszert") || key.equals("edesitoszerrel") || key.equals("edesitoszer")
+                || key.contains("zsir") || key.contains("olaj");
+    }
+
+    private static String detailKey(String text) {
+        return HungarianText.normalize(text).replaceAll("[^a-z\\s]", " ").replaceAll("\\s+", " ").trim();
     }
 
     private static boolean isUnitPhrase(String text) {
