@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -77,8 +78,7 @@ public class FlyerPageProxyService {
             }
         }
         if (imageUrl != null) {
-            CachedImage image = fetchAllowed(imageUrl, flyer.getOfficialUrl());
-            image = withPennyTextLayer(image, imageUrl, flyer.getOfficialUrl());
+            CachedImage image = fetchPageImage(flyer, pageNumber, imageUrl);
             putImage(cacheKey, image);
             return respond(image);
         }
@@ -131,9 +131,10 @@ public class FlyerPageProxyService {
         }
         String key = official + ":" + pageNumber;
         String cached = spreadsImageCache.get(key);
-        if (cached != null) {
+        if (signedUrlUsable(cached, Instant.now())) {
             return cached;
         }
+        spreadsImageCache.remove(key);
         try {
             FlyerUrlPolicy.assertAllowed(official);
             String html = httpClient.getText(official);
@@ -190,6 +191,47 @@ public class FlyerPageProxyService {
         }
     }
 
+    private CachedImage fetchPageImage(Flyer flyer, int pageNumber, String imageUrl) {
+        try {
+            return withPennyTextLayer(fetchAllowed(imageUrl, flyer.getOfficialUrl()), imageUrl, flyer.getOfficialUrl());
+        } catch (RuntimeException first) {
+            if (!FlyerCatalogParser.isAuchanIpaperUrl(flyer.getOfficialUrl())) {
+                throw first;
+            }
+            invalidateSignedUrls(flyer.getOfficialUrl());
+            String fresh = lookupIpaperImage(flyer, pageNumber);
+            if (fresh == null || fresh.equals(imageUrl)) {
+                throw first;
+            }
+            return withPennyTextLayer(fetchAllowed(fresh, flyer.getOfficialUrl()), fresh, flyer.getOfficialUrl());
+        }
+    }
+
+    private void invalidateSignedUrls(String official) {
+        String prefix = official + ":";
+        spreadsImageCache.keySet().removeIf(key -> key.startsWith(prefix));
+    }
+
+    static boolean signedUrlUsable(String url, Instant now) {
+        if (url == null || url.isBlank()) {
+            return false;
+        }
+        int marker = url.indexOf("expires=");
+        if (marker < 0) {
+            return true;
+        }
+        int start = marker + "expires=".length();
+        int end = start;
+        while (end < url.length() && Character.isDigit(url.charAt(end))) {
+            end++;
+        }
+        if (end == start) {
+            return false;
+        }
+        long expires = Long.parseLong(url.substring(start, end));
+        return expires > now.plusSeconds(300).getEpochSecond();
+    }
+
     private CachedImage fetchAllowed(String url, String referer) {
         FlyerUrlPolicy.assertAllowed(url);
         ResponseEntity<byte[]> remote = httpClient.getBytesWithHeaders(url, referer);
@@ -218,8 +260,11 @@ public class FlyerPageProxyService {
     }
 
     private void putImage(String key, CachedImage image) {
-        if (imageCache.size() >= MAX_CACHE) {
-            imageCache.clear();
+        if (imageCache.size() >= MAX_CACHE && !imageCache.containsKey(key)) {
+            String oldest = imageCache.keys().hasMoreElements() ? imageCache.keys().nextElement() : null;
+            if (oldest != null) {
+                imageCache.remove(oldest);
+            }
         }
         imageCache.put(key, image);
     }
