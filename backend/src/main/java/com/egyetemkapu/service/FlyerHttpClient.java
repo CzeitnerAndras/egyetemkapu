@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
@@ -177,9 +178,14 @@ public class FlyerHttpClient {
         } else if (dm) {
             headers.set(HttpHeaders.REFERER, "https://www.dm.hu/");
         }
-        ResponseEntity<byte[]> response = getFollowingRedirects(url, new HttpEntity<>(headers), byte[].class);
+        ResponseEntity<byte[]> response;
+        try {
+            response = getFollowingRedirects(url, new HttpEntity<>(headers), byte[].class);
+        } catch (RestClientException ex) {
+            throw new IllegalArgumentException("Az oldal nem jeleníthető meg.");
+        }
         if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new IllegalArgumentException("Ez a forrás nem engedélyezett.");
+            throw new IllegalArgumentException("Az oldal nem jeleníthető meg.");
         }
         byte[] body = ungzip(response.getBody());
         if (body.length > FlyerUrlPolicy.MAX_BINARY_BYTES) {
