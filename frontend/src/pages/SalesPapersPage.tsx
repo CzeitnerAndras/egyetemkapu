@@ -238,24 +238,37 @@ export default function SalesPapersPage() {
             return;
         }
         let cancelled = false;
+        let attempt = 0;
+        let retryTimer = 0;
         setPageStatus('loading');
-        const probe = new Image();
-        const succeed = () => {
-            if (!cancelled) setPageStatus('ok');
-        };
-        const fail = () => {
-            if (!cancelled) setPageStatus('error');
-        };
-        probe.onload = succeed;
-        probe.onerror = fail;
-        probe.src = pageSrc;
-        if (probe.complete) {
-            if (probe.naturalWidth > 0) {
-                succeed();
-            } else {
-                fail();
+        const load = () => {
+            const probe = new Image();
+            const succeed = () => {
+                if (!cancelled) setPageStatus('ok');
+            };
+            const fail = () => {
+                if (cancelled) {
+                    return;
+                }
+                if (attempt < 1) {
+                    attempt += 1;
+                    retryTimer = window.setTimeout(load, 500);
+                    return;
+                }
+                setPageStatus('error');
+            };
+            probe.onload = succeed;
+            probe.onerror = fail;
+            probe.src = pageSrc;
+            if (probe.complete) {
+                if (probe.naturalWidth > 0) {
+                    succeed();
+                } else {
+                    fail();
+                }
             }
-        }
+        };
+        load();
         const pages = viewer.flyer.pages;
         const index = pages.findIndex((page) => page.pageNumber === viewer.page);
         [index - 1, index + 1].forEach((nearby) => {
@@ -267,6 +280,7 @@ export default function SalesPapersPage() {
         });
         return () => {
             cancelled = true;
+            window.clearTimeout(retryTimer);
         };
     }, [pageSrc, viewer]);
 
