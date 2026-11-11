@@ -9,6 +9,7 @@ import com.egyetemkapu.service.FlyerCatalogParser.ParsedCatalog;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedPage;
 import com.egyetemkapu.service.FlyerCatalogParser.ParsedProduct;
 import com.egyetemkapu.service.FlyerCatalogParser.TextRun;
+import com.egyetemkapu.service.flyer.CoopFlyerExtractor;
 import com.egyetemkapu.service.flyer.CoopPageOcr;
 import com.egyetemkapu.service.flyer.FlyerExtractorRegistry;
 import com.egyetemkapu.service.flyer.FlyerProductExtractor;
@@ -962,7 +963,8 @@ public class FlyerSyncService {
             }
             String key = HungarianText.normalize(name);
             boolean singleWord = !name.trim().contains(" ");
-            if (key.contains("pultban")
+            if (CoopFlyerExtractor.savedNameNeedsReread(name)
+                    || key.contains("pultban")
                     || key.contains("kiszerel")
                     || key.contains("ft/")
                     || key.contains("felzsiros")
