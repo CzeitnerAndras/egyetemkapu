@@ -6,49 +6,89 @@ import io.github.bucket4j.Refill;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class RateLimitingService {
 
-    private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    static final int MAX_BUCKETS = 5_000;
+    private static final Duration IDLE_TTL = Duration.ofMinutes(15);
+
+    private final Map<String, Slot> cache = new ConcurrentHashMap<>();
+
+    int bucketCount() {
+        return cache.size();
+    }
 
     // --- Buckets ---
     public Bucket resolveBucket(String username) {
-        return cache.computeIfAbsent(username, this::newBucket);
+        return resolve(username, 5, Duration.ofMinutes(1));
     }
 
     public Bucket resolveForgotPasswordBucket(String clientKey) {
-        return cache.computeIfAbsent("forgot:" + clientKey, key -> newFixedBucket(5, Duration.ofMinutes(15)));
+        return resolve("forgot:" + clientKey, 5, Duration.ofMinutes(15));
     }
 
     public Bucket resolvePasswordResetBucket(String clientKey) {
-        return cache.computeIfAbsent("reset:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+        return resolve("reset:" + clientKey, 10, Duration.ofMinutes(15));
     }
 
     public Bucket resolveLoginBucket(String clientKey) {
-        return cache.computeIfAbsent("login:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+        return resolve("login:" + clientKey, 10, Duration.ofMinutes(15));
     }
 
     public Bucket resolveRegisterBucket(String clientKey) {
-        return cache.computeIfAbsent("register:" + clientKey, key -> newFixedBucket(5, Duration.ofMinutes(15)));
+        return resolve("register:" + clientKey, 5, Duration.ofMinutes(15));
     }
 
     public Bucket resolveVerifyEmailBucket(String clientKey) {
-        return cache.computeIfAbsent("verify:" + clientKey, key -> newFixedBucket(10, Duration.ofMinutes(15)));
+        return resolve("verify:" + clientKey, 10, Duration.ofMinutes(15));
     }
 
     public Bucket resolveFlyerPageBucket(String clientKey) {
-        return cache.computeIfAbsent("flyer-page:" + clientKey, key -> newFixedBucket(30, Duration.ofMinutes(1)));
+        return resolve("flyer-page:" + clientKey, 30, Duration.ofMinutes(1));
     }
 
     public Bucket resolveSuggestionBucket(String clientKey) {
-        return cache.computeIfAbsent("suggestion:" + clientKey, key -> newFixedBucket(8, Duration.ofMinutes(15)));
+        return resolve("suggestion:" + clientKey, 8, Duration.ofMinutes(15));
     }
 
-    private Bucket newBucket(String username) {
-        return newFixedBucket(5, Duration.ofMinutes(1));
+    private Bucket resolve(String key, int capacity, Duration period) {
+        long now = System.nanoTime();
+        Slot slot = cache.compute(key, (ignored, existing) -> {
+            if (existing != null) {
+                existing.seenAt.set(now);
+                return existing;
+            }
+            return new Slot(newFixedBucket(capacity, period), new AtomicLong(now));
+        });
+        if (cache.size() > MAX_BUCKETS) {
+            prune(now);
+        }
+        return slot.bucket;
+    }
+
+    private void prune(long now) {
+        long idle = IDLE_TTL.toNanos();
+        cache.entrySet().removeIf(entry -> now - entry.getValue().seenAt.get() > idle);
+        if (cache.size() <= MAX_BUCKETS) {
+            return;
+        }
+        List<Map.Entry<String, Slot>> oldest = new ArrayList<>(cache.entrySet());
+        oldest.sort(Comparator.comparingLong(entry -> entry.getValue().seenAt.get()));
+        int extra = cache.size() - MAX_BUCKETS;
+        for (int i = 0; i < extra && i < oldest.size(); i++) {
+            Map.Entry<String, Slot> entry = oldest.get(i);
+            cache.remove(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private record Slot(Bucket bucket, AtomicLong seenAt) {
     }
 
     private Bucket newFixedBucket(int capacity, Duration period) {
