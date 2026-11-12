@@ -2,23 +2,24 @@ services:
   db:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: catalog
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-catalog}
+      MYSQL_ROOT_HOST: localhost
       MYSQL_DATABASE: catalog
-    ports:
-      - "3306:3306"
+      MYSQL_USER: catalog_app
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:-catalog}
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pcatalog"]
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-catalog}"]
       interval: 3s
       timeout: 5s
       retries: 20
   app:
     build: .
     ports:
-      - "8088:8080"
+      - "127.0.0.1:8088:8080"
     environment:
       DATABASE_DSN: mysql:host=db;dbname=catalog;charset=utf8mb4
-      DATABASE_USER: root
-      DATABASE_PASSWORD: catalog
+      DATABASE_USER: catalog_app
+      DATABASE_PASSWORD: ${MYSQL_APP_PASSWORD:-catalog}
     volumes:
       - .:/app
     depends_on:

@@ -18,6 +18,18 @@ egyetemkapu.hu {
         Content-Security-Policy "default-src 'self'; script-src 'self'; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
     }
 
+    handle /api/bibliography/metrics {
+        respond 404
+    }
+
+    handle /api/thesis/metrics {
+        respond 404
+    }
+
+    handle /api/points/metrics {
+        respond 404
+    }
+
     handle /api/bibliography/* {
         reverse_proxy bibliography:8092 {
             header_up X-Forwarded-For {remote_host}
