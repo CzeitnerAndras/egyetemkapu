@@ -4,6 +4,8 @@ import com.egyetemkapu.service.flyer.FlyerProductExtractor;
 import com.egyetemkapu.service.flyer.GenericFlyerExtractor;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
@@ -130,6 +132,10 @@ public class FlyerPdfExtractor {
             if (pageNumber > document.getNumberOfPages() || pageNumber > FlyerUrlPolicy.MAX_PDF_PAGES) {
                 return new byte[0];
             }
+            PDPage page = document.getPage(pageNumber - 1);
+            if (renderedEdgeExceeds(page, 120)) {
+                return new byte[0];
+            }
             PDFRenderer renderer = new PDFRenderer(document);
             BufferedImage image = renderer.renderImageWithDPI(pageNumber - 1, 120);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -138,6 +144,26 @@ public class FlyerPdfExtractor {
         } catch (Exception e) {
             return new byte[0];
         }
+    }
+
+    static boolean renderedEdgeExceeds(PDPage page, float dpi) {
+        if (page == null || dpi <= 0) {
+            return true;
+        }
+        PDRectangle box = page.getCropBox();
+        if (box == null) {
+            return true;
+        }
+        double scale = dpi / 72d;
+        double width = Math.abs(box.getWidth()) * scale;
+        double height = Math.abs(box.getHeight()) * scale;
+        int rotation = page.getRotation();
+        if (rotation == 90 || rotation == 270) {
+            double swap = width;
+            width = height;
+            height = swap;
+        }
+        return width > FlyerUrlPolicy.MAX_IMAGE_EDGE || height > FlyerUrlPolicy.MAX_IMAGE_EDGE;
     }
 
     private static final class LayoutStripper extends PDFTextStripper {
