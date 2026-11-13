@@ -8,11 +8,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Component;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -309,14 +313,36 @@ public class FlyerHttpClient {
     }
 
     static byte[] ungzip(byte[] body) {
+        return ungzip(body, FlyerUrlPolicy.MAX_BINARY_BYTES);
+    }
+
+    static byte[] ungzip(byte[] body, int maxBytes) {
         if (body == null || body.length < 2 || (body[0] & 0xFF) != 0x1F || (body[1] & 0xFF) != 0x8B) {
             return body == null ? new byte[0] : body;
         }
         try (GZIPInputStream in = new GZIPInputStream(new ByteArrayInputStream(body))) {
-            return in.readAllBytes();
+            return readLimited(in, maxBytes);
         } catch (IOException e) {
             return body;
         }
+    }
+
+    static byte[] readLimited(InputStream in, int maxBytes) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int total = 0;
+        int read;
+        while ((read = in.read(buffer)) >= 0) {
+            if (read == 0) {
+                continue;
+            }
+            if (total > maxBytes - read) {
+                throw new IllegalArgumentException("A fájl túl nagy.");
+            }
+            out.write(buffer, 0, read);
+            total += read;
+        }
+        return out.toByteArray();
     }
 
     static boolean isPdf(byte[] body) {
@@ -337,7 +363,28 @@ public class FlyerHttpClient {
     private static void useUtf8ForText(RestTemplate template) {
         template.getMessageConverters().replaceAll(converter ->
                 converter instanceof StringHttpMessageConverter
-                        ? new StringHttpMessageConverter(StandardCharsets.UTF_8)
+                        ? new LimitedStringConverter()
                         : converter);
+        template.getMessageConverters().removeIf(converter -> converter instanceof ByteArrayHttpMessageConverter);
+        template.getMessageConverters().add(0, new LimitedByteArrayConverter());
+    }
+
+    private static final class LimitedByteArrayConverter extends ByteArrayHttpMessageConverter {
+        @Override
+        public byte[] readInternal(Class<? extends byte[]> clazz, HttpInputMessage inputMessage) throws IOException {
+            return readLimited(inputMessage.getBody(), FlyerUrlPolicy.MAX_BINARY_BYTES);
+        }
+    }
+
+    private static final class LimitedStringConverter extends StringHttpMessageConverter {
+        private LimitedStringConverter() {
+            super(StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public String readInternal(Class<? extends String> clazz, HttpInputMessage inputMessage) throws IOException {
+            byte[] bytes = readLimited(inputMessage.getBody(), FlyerUrlPolicy.MAX_TEXT_CHARS * 4);
+            return new String(bytes, StandardCharsets.UTF_8);
+        }
     }
 }

@@ -61,10 +61,34 @@ ensure_app_db_role() {
       -f - < db/app-role.sql
 }
 
+ensure_grafana_password() {
+  if [ ! -f .env ]; then
+    echo "HIBA: .env hiányzik" >&2
+    exit 1
+  fi
+  if grep -q '^GRAFANA_ADMIN_PASSWORD=.\+' .env; then
+    return 0
+  fi
+  local pass
+  if command -v openssl >/dev/null 2>&1; then
+    pass=$(openssl rand -base64 24 | tr -d '\n=+/')
+  else
+    pass=$(python3 -c 'import secrets; print(secrets.token_urlsafe(24), end="")')
+  fi
+  if [ -n "$(tail -c 1 .env || true)" ]; then
+    printf '\n' >> .env
+  fi
+  printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$pass" >> .env
+  echo "==> GRAFANA_ADMIN_PASSWORD hiányzott, új jelszó került a .env-be"
+}
+
 cd "$(dirname "$0")"
 
 echo "==> Friss kód lehúzása"
 git pull --ff-only
+
+echo "==> Grafana jelszó"
+ensure_grafana_password
 
 echo "==> Alkalmazás adatbázis-szerep"
 ensure_app_db_role

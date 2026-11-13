@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -43,6 +44,22 @@ class FlyerHttpClientTest {
         }
         String text = new String(FlyerHttpClient.ungzip(packed.toByteArray()), StandardCharsets.UTF_8);
         assertTrue(text.contains("ujsag.pdf"));
+    }
+
+    @Test
+    void ungzipStopsWhenTheExpandedFileIsTooLarge() throws Exception {
+        byte[] zeros = new byte[64 * 1024];
+        ByteArrayOutputStream packed = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzip = new GZIPOutputStream(packed)) {
+            gzip.write(zeros);
+        }
+        assertThrows(IllegalArgumentException.class, () -> FlyerHttpClient.ungzip(packed.toByteArray(), 1024));
+    }
+
+    @Test
+    void readLimitedStopsAtTheCap() {
+        assertThrows(IllegalArgumentException.class,
+                () -> FlyerHttpClient.readLimited(new ByteArrayInputStream(new byte[2048]), 100));
     }
 
     @BeforeEach

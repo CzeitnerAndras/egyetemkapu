@@ -6,6 +6,7 @@ import { PageShell } from '../components/PageLayout';
 import LinkifiedText from '../components/LinkifiedText';
 import { sendPresenceHeartbeat } from '../utils/presence';
 import { fetchWithAuth } from '../utils/authApi';
+import { isAdminRole } from '../utils/roles';
 
 interface EventItem {
   id: number;
@@ -106,7 +107,7 @@ export default function HomePage() {
         .then(data => {
           if (data) {
             const userRole = data.role || (data.roles && data.roles[0]) || '';
-            if (userRole.includes('ADMIN') || data.isAdmin) {
+            if (isAdminRole(userRole)) {
               setIsAdmin(true);
             }
           }

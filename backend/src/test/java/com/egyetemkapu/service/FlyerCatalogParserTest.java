@@ -858,6 +858,58 @@ class FlyerCatalogParserTest {
     }
 
     @Test
+    void metroStackedHeadlineStaysOneProductAndDropsTheSlogan() {
+        List<String> names = parser.metroProducts("""
+                *
+                METRO.HU
+                11
+                2026.
+                NOVEMBER 2-30.
+
+                HOZD KI A LEGTÖBBET
+                VÁSÁRLÁSAIDBÓL!
+
+                Keresd kiemelt termékeinket egész évben!
+
+                NANNA
+                TOPPING
+                HABSPRAY
+
+                MAJONÉZ
+
+                5 kg/db
+
+                250 ml/db
+
+                1 db:
+
+                485,-
+
+                1 l: 1940,-
+
+                1 kg: 660,-
+
+                PÁPAI
+                FÜSTÖLT-FŐTT TARJA
+                SZELETELT
+
+                3299,LINDOR
+                CSOKOLÁDÉ DESSZERT
+
+                többféle
+                200 g/db
+
+                kg
+                """, 1).stream().map(FlyerCatalogParser.ParsedProduct::name).toList();
+
+        assertEquals(List.of(
+                "NANNA TOPPING HABSPRAY",
+                "MAJONÉZ",
+                "PÁPAI FÜSTÖLT-FŐTT TARJA SZELETELT",
+                "LINDOR CSOKOLÁDÉ DESSZERT"), names);
+    }
+
+    @Test
     void discoversCurrentRealPdfsAndJoinsRegionsThatShareOneFile() {
         List<FlyerCatalogParser.DiscoveredPaper> papers = parser.discoverRealPapers("""
                 <h3 class="et_pb_toggle_title">Bevásárló hétvége - Pest megye</h3>

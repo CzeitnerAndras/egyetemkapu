@@ -11,13 +11,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -171,8 +175,8 @@ public class FlyerPageProxyService {
 
     static byte[] overlayImages(byte[] baseBytes, byte[] overlayBytes) {
         try {
-            BufferedImage base = ImageIO.read(new ByteArrayInputStream(baseBytes));
-            BufferedImage overlay = ImageIO.read(new ByteArrayInputStream(overlayBytes));
+            BufferedImage base = readBoundedImage(baseBytes);
+            BufferedImage overlay = readBoundedImage(overlayBytes);
             if (base == null || overlay == null
                     || tooLarge(base) || tooLarge(overlay)) {
                 return new byte[0];
@@ -310,6 +314,35 @@ public class FlyerPageProxyService {
                 && body.length >= 12
                 && body[0] == 'R' && body[1] == 'I' && body[2] == 'F' && body[3] == 'F'
                 && body[8] == 'W' && body[9] == 'E' && body[10] == 'B' && body[11] == 'P';
+    }
+
+    static BufferedImage readBoundedImage(byte[] bytes) throws IOException {
+        if (bytes == null || bytes.length == 0) {
+            return null;
+        }
+        try (ImageInputStream input = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
+            if (input == null) {
+                return null;
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) {
+                return null;
+            }
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+                if (width < 1 || height < 1
+                        || width > FlyerUrlPolicy.MAX_IMAGE_EDGE
+                        || height > FlyerUrlPolicy.MAX_IMAGE_EDGE) {
+                    return null;
+                }
+                return reader.read(0);
+            } finally {
+                reader.dispose();
+            }
+        }
     }
 
     private static boolean tooLarge(BufferedImage image) {

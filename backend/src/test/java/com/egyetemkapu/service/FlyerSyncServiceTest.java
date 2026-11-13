@@ -536,6 +536,20 @@ class FlyerSyncServiceTest {
     }
 
     @Test
+    void beginCoopRereadWhenASavedNameIsAVarietyOrIngredientNote() {
+        Flyer coop = storeFlyer("coop", "coop:alfold", "https://katalogus.coop.hu/coop-alfold/");
+        coop.setId(8L);
+        for (String name : List.of("Tejcsokoládé", "Citrom", "Növényi zsírt/olajat tartalmaz", "Pecsenye kacsa")) {
+            FlyerProduct product = new FlyerProduct();
+            product.setName(name);
+            product.setPageNumber(1);
+            coop.addProduct(product);
+        }
+
+        assertTrue(service.beginCoopReread(coop));
+    }
+
+    @Test
     void isStaleWhenCoopProductNamesAreSingleWords() {
         Flyer tesco = storeFlyer("tesco", "tesco:HM:2026-09-03", "https://www.tesco.hu/akciok");
         Flyer penny = storeFlyer("penny", "penny:rewe:202636",

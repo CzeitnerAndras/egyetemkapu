@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public final class FlyerUrlPolicy {
 
@@ -60,6 +61,9 @@ public final class FlyerUrlPolicy {
             "assets.mmsrg.com"
     );
 
+    private static final Pattern ROSSMANN_PDF = Pattern.compile(
+            "^/magazin-prod/\\d{1,6}/[A-Za-z0-9]{6,80}\\.pdf$");
+
     static final int MAX_TEXT_CHARS = 4_000_000;
     static final int MAX_BINARY_BYTES = 80 * 1024 * 1024;
     static final int MAX_PDF_PAGES = 64;
@@ -87,7 +91,14 @@ public final class FlyerUrlPolicy {
             while (host.endsWith(".")) {
                 host = host.substring(0, host.length() - 1);
             }
-            return ALLOWED_HOSTS.contains(host);
+            if (!ALLOWED_HOSTS.contains(host)) {
+                return false;
+            }
+            if ("storage.googleapis.com".equals(host)) {
+                String path = uri.getPath();
+                return path != null && ROSSMANN_PDF.matcher(path).matches();
+            }
+            return true;
         } catch (IllegalArgumentException ex) {
             return false;
         }

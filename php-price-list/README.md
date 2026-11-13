@@ -46,4 +46,4 @@ MySQL, ha van Docker:
 docker compose up --build
 ```
 
-A szolgáltatás a 8088-as porton hallgat, a MySQL a 3306-on. A jelszó a compose fájlban `catalog`, csak helyi gyakorlásra.
+A szolgáltatás csak ezen a gépen hallgat, a `http://localhost:8088` címen. A MySQL nem kap saját portot: a `catalog_app` felhasználó a Compose hálózaton éri el, a root csak a `db` konténerből. A jelszó alapból `catalog`, helyi gyakorlásra; felülírható a `MYSQL_ROOT_PASSWORD` és a `MYSQL_APP_PASSWORD` változóval.

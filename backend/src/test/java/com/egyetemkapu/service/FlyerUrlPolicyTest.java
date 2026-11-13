@@ -67,6 +67,10 @@ class FlyerUrlPolicyTest {
         assertFalse(FlyerUrlPolicy.isAllowed("https://169.254.169.254/publitas/x"));
         assertFalse(FlyerUrlPolicy.isAllowed("http://www.spar.hu/insecure.pdf"));
         assertFalse(FlyerUrlPolicy.isAllowed("https://ujsagomat.hu/stolen.pdf"));
+        assertFalse(FlyerUrlPolicy.isAllowed("https://storage.googleapis.com/other-bucket/file.pdf"));
+        assertFalse(FlyerUrlPolicy.isAllowed("https://storage.googleapis.com/magazin-prod/333/a.pdf"));
+        assertFalse(FlyerUrlPolicy.isAllowed(
+                "https://storage.googleapis.com/magazin-prod/333/abcdef.pdf/../other.pdf"));
         assertFalse(FlyerUrlPolicy.isAllowed("https://www.spar.hu.evil.example/x.pdf"));
         assertFalse(FlyerUrlPolicy.isAllowed("https://user:pass@www.spar.hu/x.pdf"));
         assertFalse(FlyerUrlPolicy.isAllowed("not a url"));

@@ -22,6 +22,7 @@ import ReferencePage from './pages/ReferencePage';
 import FocusRoomPage from './pages/FocusRoomPage';
 import IdeaBoxPage from './pages/IdeaBoxPage';
 import AdminPanelPage from './pages/AdminPanelPage';
+import RequireAdmin from './components/RequireAdmin';
 import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
 import SettingsPage from './pages/SettingsPage';
@@ -97,7 +98,7 @@ function App() {
           <Route path="/hivatkozas" element={<ReferencePage />} />
           <Route path="/tanuloszoba" element={<FocusRoomPage />} />
           <Route path="/otletlada" element={<IdeaBoxPage />} />
-          <Route path="/admin" element={<AdminPanelPage />} />
+          <Route path="/admin" element={<RequireAdmin><AdminPanelPage /></RequireAdmin>} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/adatvedelem" element={<LegalPage kind="privacy" />} />
           <Route path="/impresszum" element={<LegalPage kind="imprint" />} />
