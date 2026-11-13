@@ -757,6 +757,61 @@ class FlyerExtractorsTest {
     }
 
     @Test
+    void coopExtractorDropsVarietyLinesAndIngredientNotes() {
+        CoopFlyerExtractor extractor = new CoopFlyerExtractor(parser);
+        List<TextRun> runs = List.of(
+                new TextRun(40, 100, 36, 16, "Tibi"),
+                new TextRun(82, 100, 78, 16, "Mikulás"),
+                new TextRun(40, 128, 110, 14, "Tejcsokoládé"),
+                new TextRun(40, 200, 62, 16, "Danone"),
+                new TextRun(108, 200, 70, 16, "Actimel"),
+                new TextRun(700, 80, 52, 12, "Citrom"),
+                new TextRun(700, 420, 40, 12, "Eper"),
+                new TextRun(40, 360, 48, 16, "Rama"),
+                new TextRun(94, 360, 80, 16, "főzőkrém"),
+                new TextRun(40, 386, 62, 11, "növényi"),
+                new TextRun(108, 386, 78, 11, "zsírt/olajat"),
+                new TextRun(192, 386, 72, 11, "tartalmaz"),
+                new TextRun(520, 520, 62, 11, "növényi"),
+                new TextRun(588, 520, 78, 11, "zsírt/olajat"),
+                new TextRun(672, 520, 72, 11, "tartalmaz")
+        );
+
+        List<String> names = extractor.extractFromLayout(runs, 1).stream().map(ParsedProduct::name).toList();
+
+        assertTrue(names.contains("Tibi Mikulás"), names.toString());
+        assertTrue(names.contains("Danone Actimel"), names.toString());
+        assertTrue(names.contains("Rama főzőkrém"), names.toString());
+        assertTrue(names.stream().noneMatch(name -> name.toLowerCase().contains("tejcsokol")
+                || name.equalsIgnoreCase("Citrom")
+                || name.equalsIgnoreCase("Eper")
+                || name.toLowerCase().contains("tartalmaz")
+                || name.toLowerCase().contains("növényi")), names.toString());
+
+        String page = """
+                Tibi Mikulás
+                Tejcsokoládé
+                25 g
+                299 Ft
+                Danone Actimel
+                Citrom
+                Eper
+                Növényi zsírt/olajat tartalmaz
+                Rama főzőkrém növényi zsírt/olajat tartalmaz
+                Pecsenye kacsa
+                """;
+        List<String> fromText = extractor.extractFromPageText(page, 1).stream().map(ParsedProduct::name).toList();
+        assertTrue(fromText.contains("Tibi Mikulás"), fromText.toString());
+        assertTrue(fromText.contains("Danone Actimel"), fromText.toString());
+        assertTrue(fromText.contains("Rama főzőkrém"), fromText.toString());
+        assertTrue(fromText.contains("Pecsenye kacsa"), fromText.toString());
+        assertTrue(fromText.stream().noneMatch(name -> name.toLowerCase().contains("tejcsokol")
+                || name.equalsIgnoreCase("Citrom")
+                || name.equalsIgnoreCase("Eper")
+                || name.toLowerCase().contains("tartalmaz")), fromText.toString());
+    }
+
+    @Test
     void lidlExtractorJoinsCondensedBoldNamesAndDropsHeadlines() {
         LidlFlyerExtractor extractor = new LidlFlyerExtractor(parser);
         String nameFont = "WOFSCA+LidlFontCondPro-Bold";
