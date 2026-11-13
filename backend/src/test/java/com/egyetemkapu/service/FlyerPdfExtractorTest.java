@@ -3,6 +3,7 @@ package com.egyetemkapu.service;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,15 @@ class FlyerPdfExtractorTest {
             document.save(out);
             assertEquals(FlyerUrlPolicy.MAX_PDF_PAGES, extractor.extractPages(out.toByteArray()).size());
             assertEquals(0, extractor.renderPagePng(out.toByteArray(), FlyerUrlPolicy.MAX_PDF_PAGES + 1).length);
+        }
+    }
+
+    @Test
+    void renderSkipsAPageThatWouldExceedTheEdgeCap() throws Exception {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            document.addPage(new PDPage(new PDRectangle(20_000, 20_000)));
+            document.save(out);
+            assertEquals(0, extractor.renderPagePng(out.toByteArray(), 1).length);
         }
     }
 
