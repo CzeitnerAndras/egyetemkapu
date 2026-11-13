@@ -83,7 +83,6 @@ const directRoutes: Array<[string, string]> = [
     ['/hivatkozas', 'reference-page'],
     ['/tanuloszoba', 'focus-page'],
     ['/otletlada', 'idea-page'],
-    ['/admin', 'admin-page'],
     ['/about', 'about-page'],
     ['/adatvedelem', 'privacy-page'],
     ['/impresszum', 'imprint-page'],
@@ -132,6 +131,38 @@ describe('App', () => {
 
         expect(screen.getByText(label)).toBeInTheDocument();
         expect(window.location.pathname).toBe(destination);
+    });
+
+    it('shows the admin page only after the account is confirmed as admin', async () => {
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({ username: 'admin_elek', role: 'ROLE_ADMIN' }),
+        }) as unknown as typeof fetch;
+        window.history.pushState({}, '', '/admin');
+
+        render(<App />);
+
+        expect(await screen.findByText('admin-page')).toBeInTheDocument();
+        globalThis.fetch = originalFetch;
+    });
+
+    it('sends a normal user away from /admin', async () => {
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({ username: 'hallgato', role: 'ROLE_USER' }),
+        }) as unknown as typeof fetch;
+        window.history.pushState({}, '', '/admin');
+
+        render(<App />);
+
+        expect(await screen.findByText('home-page')).toBeInTheDocument();
+        expect(screen.queryByText('admin-page')).not.toBeInTheDocument();
+        expect(window.location.pathname).toBe('/');
+        globalThis.fetch = originalFetch;
     });
 
     it('keeps the flyer host on the sales papers page', () => {

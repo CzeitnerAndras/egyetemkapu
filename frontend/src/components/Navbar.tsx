@@ -3,6 +3,7 @@ import { Mail, User, Menu, Moon, Sun, Info, HelpCircle, Settings, ShieldAlert, F
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fetchWithAuth, clearSession } from '../utils/authApi';
+import { isAdminRole } from '../utils/roles';
 
 export default function Navbar() {
   const { language, toggleLanguage, t } = useLanguage();
@@ -43,7 +44,7 @@ export default function Navbar() {
         setIsLoggedIn(true);
         setUsername(data.username);
         const userRole = data.role || (data.roles && data.roles[0]) || '';
-        setIsAdmin(userRole.includes('ADMIN') || !!data.isAdmin);
+        setIsAdmin(isAdminRole(userRole));
       }
     } catch (err) {
       console.error("Hiba a név lekérésekor:", err);
