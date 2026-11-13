@@ -59,4 +59,14 @@ class RateLimitingServiceTest {
         }
         assertFalse(bucket.tryConsume(1));
     }
+
+    @Test
+    void dropsTheOldestBucketWhenTheCacheIsFull() {
+        Bucket oldest = service.resolveLoginBucket("old");
+        for (int i = 0; i < RateLimitingService.MAX_BUCKETS; i++) {
+            service.resolveLoginBucket("ip-" + i);
+        }
+        assertTrue(service.bucketCount() <= RateLimitingService.MAX_BUCKETS);
+        assertNotSame(oldest, service.resolveLoginBucket("old"));
+    }
 }
